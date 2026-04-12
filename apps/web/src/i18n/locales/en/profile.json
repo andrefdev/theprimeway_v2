@@ -1,0 +1,20 @@
+{
+  "title": "My Profile",
+  "memberSince": "Member since {{date}}",
+  "name": "Name",
+  "namePlaceholder": "Your full name",
+  "email": "Email",
+  "emailReadonly": "Email cannot be changed",
+  "saveProfile": "Save",
+  "profileUpdated": "Profile updated",
+  "failedToUpdate": "Failed to update profile",
+  "gamificationStats": "Your Progress",
+  "viewDetails": "View details",
+  "level": "Level",
+  "dayStreak": "Day streak",
+  "rank": "Rank",
+  "account": "Account",
+  "changePassword": "Change password",
+  "changePasswordDescription": "Update your password in settings",
+  "goToSettings": "Settings"
+}

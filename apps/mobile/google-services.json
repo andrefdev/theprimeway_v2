@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "28742624888",
+    "project_id": "theprimeway-52c77",
+    "storage_bucket": "theprimeway-52c77.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:28742624888:android:42edee616aa53f76982f8d",
+        "android_client_info": {
+          "package_name": "app.theprimeway.twa"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDa3gaSIJ_y0b2UnxbgNwHjcAJdr0GCuWA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

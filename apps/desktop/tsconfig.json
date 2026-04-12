@@ -1,0 +1,10 @@
+{
+  "extends": "@repo/config-ts/react.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "paths": {
+      "@/*": ["./overlay/src/*"]
+    }
+  },
+  "include": ["overlay/src"]
+}

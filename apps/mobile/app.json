@@ -1,0 +1,125 @@
+{
+  "expo": {
+    "name": "The Prime Way",
+    "slug": "theprimeway",
+    "version": "1.5.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "theprimeway",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/images/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#280FFB"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.indrox.theprimeway",
+      "buildNumber": "9",
+      "associatedDomains": [
+        "applinks:theprimeway.com",
+        "applinks:app.theprimeway.app"
+      ],
+      "infoPlist": {
+        "NSCalendarsUsageDescription": "To sync your tasks with your calendar",
+        "NSCameraUsageDescription": "To add photos to your receipts and profile",
+        "NSPhotoLibraryUsageDescription": "To upload profile pictures and receipts",
+        "NSFaceIDUsageDescription": "To authenticate securely",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "config": {
+        "usesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "edgeToEdgeEnabled": true,
+      "package": "app.theprimeway.twa",
+      "versionCode": 14,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#1a08c7"
+      },
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "theprimeway.com",
+              "pathPrefix": "/app"
+            },
+            {
+              "scheme": "https",
+              "host": "app.theprimeway.app",
+              "pathPrefix": "/"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ],
+      "permissions": [
+        "android.permission.NOTIFICATIONS",
+        "android.permission.READ_CALENDAR",
+        "android.permission.WRITE_CALENDAR",
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/icon.png",
+          "color": "#280FFB",
+          "defaultChannel": "default"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app needs access to your photos."
+        }
+      ],
+      "expo-calendar",
+      "expo-localization",
+      "expo-web-browser",
+      "@react-native-google-signin/google-signin",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "minSdkVersion": 24,
+            "targetSdkVersion": 35,
+            "compileSdkVersion": 35
+          },
+          "ios": {
+            "deploymentTarget": "15.1"
+          }
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "4ab324fd-7652-4c0a-83e2-06fa5a85458a"
+      }
+    }
+  }
+}

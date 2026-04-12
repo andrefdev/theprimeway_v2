@@ -1,0 +1,20 @@
+{
+  "title": "Mi Perfil",
+  "memberSince": "Miembro desde {{date}}",
+  "name": "Nombre",
+  "namePlaceholder": "Tu nombre completo",
+  "email": "Correo electrónico",
+  "emailReadonly": "El correo no se puede cambiar",
+  "saveProfile": "Guardar",
+  "profileUpdated": "Perfil actualizado",
+  "failedToUpdate": "Error al actualizar perfil",
+  "gamificationStats": "Tu Progreso",
+  "viewDetails": "Ver detalles",
+  "level": "Nivel",
+  "dayStreak": "Días de racha",
+  "rank": "Rango",
+  "account": "Cuenta",
+  "changePassword": "Cambiar contraseña",
+  "changePasswordDescription": "Actualiza tu contraseña en configuración",
+  "goToSettings": "Configuración"
+}

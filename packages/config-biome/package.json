@@ -1,0 +1,5 @@
+{
+  "name": "@repo/config-biome",
+  "private": true,
+  "files": ["biome.json"]
+}

@@ -1,0 +1,1362 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model FinanceAccount {
+  id             String    @id @default(uuid())
+  userId         String?   @map("user_id")
+  user           User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name           String
+  type           String
+  bankName       String?   @map("bank_name")
+  accountNumber  String?   @map("account_number")
+  currency       String?   @default("USD")
+  initialBalance Decimal?  @default(0)
+  currentBalance Decimal?  @default(0)
+  creditLimit    Decimal?
+  isActive       Boolean?  @default(true) @map("is_active")
+  createdAt      DateTime? @default(now()) @map("created_at")
+  updatedAt      DateTime? @default(now()) @map("updated_at")
+
+  transactions         Transaction[] @relation("TransactionAccount")
+  transferTransactions Transaction[] @relation("TransactionTransferAccount")
+  savingsGoals         SavingsGoal[]
+  recurringExpenses    RecurringExpense[]
+  investmentHoldings   InvestmentHolding[]
+
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Budget {
+  id          String    @id @default(uuid())
+  userId      String?   @map("user_id")
+  user        User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  periodType  String    @map("period_type")
+  startDate   DateTime  @map("start_date")
+  endDate     DateTime  @map("end_date")
+  totalAmount Decimal   @map("total_amount")
+  currency     String?   @default("USD")
+  categoryType String   @default("expense") @map("category_type")
+  variability  String?  @map("variability")
+  isActive    Boolean?  @default(true) @map("is_active")
+  isArchived  Boolean?  @default(false) @map("is_archived")
+  createdAt   DateTime? @default(now()) @map("created_at")
+  updatedAt   DateTime? @default(now()) @map("updated_at")
+
+  transactions Transaction[]
+  focusFinanceLinks FocusFinanceLink[]
+  recurringExpenses RecurringExpense[]
+
+  @@index([userId])
+  @@map("budgets")
+}
+
+model IncomeSource {
+  id                   String    @id @default(uuid())
+  userId               String    @map("user_id")
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name                 String
+  type                 String    @default("fixed")
+  category             String?
+  frequency            String    @default("monthly") @map("frequency")
+  baseAmount           Decimal?  @map("base_amount")
+  currency             String?   @default("USD")
+  probability          Decimal?  @default(1.0) @map("probability")
+  estimationStrategy   String    @default("average") @map("estimation_strategy")
+  historicalWindowDays Int?      @default(90) @map("historical_window_days")
+  isActive             Boolean?  @default(true) @map("is_active")
+  notes                String?
+  createdAt            DateTime? @default(now()) @map("created_at")
+  updatedAt            DateTime? @default(now()) @map("updated_at")
+
+  transactions Transaction[]
+
+  @@index([userId])
+  @@map("income_sources")
+}
+
+model InvestmentHolding {
+  id              String    @id @default(uuid())
+  userId          String    @map("user_id")
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId       String?   @map("account_id")
+  account         FinanceAccount? @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  name            String
+  ticker          String?
+  category        String    @default("stock") // stock | etf | mutual_fund | crypto | bond | real_estate | other
+  quantity        Decimal   @default(0)
+  avgCostPrice    Decimal   @default(0) @map("avg_cost_price")
+  currentPrice    Decimal   @default(0) @map("current_price")
+  currency        String    @default("USD")
+  lastPriceUpdate DateTime? @map("last_price_update")
+  notes           String?
+  createdAt       DateTime? @default(now()) @map("created_at")
+  updatedAt       DateTime? @default(now()) @map("updated_at")
+
+  @@index([userId])
+  @@index([accountId])
+  @@map("investment_holdings")
+}
+
+model RecurringExpense {
+  id         String    @id @default(uuid())
+  userId     String    @map("user_id")
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name       String
+  description String?
+  type       String    @default("fixed") // fixed | variable
+  category   String?   // housing, utilities, subscriptions, transport, food, health, education, entertainment, other
+  frequency  String    @default("monthly") // weekly | biweekly | monthly | quarterly | yearly
+  baseAmount Decimal?  @map("base_amount")
+  currency   String?   @default("USD")
+  dueDay     Int?      @map("due_day") // day of month (1-31)
+  isAutoPay  Boolean?  @default(false) @map("is_auto_pay")
+  budgetId   String?   @map("budget_id")
+  accountId  String?   @map("account_id")
+  isActive   Boolean?  @default(true) @map("is_active")
+  notes      String?
+  createdAt  DateTime? @default(now()) @map("created_at")
+  updatedAt  DateTime? @default(now()) @map("updated_at")
+
+  budget       Budget?          @relation(fields: [budgetId], references: [id], onDelete: SetNull)
+  account      FinanceAccount?  @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  transactions Transaction[]
+
+  @@index([userId])
+  @@index([budgetId])
+  @@index([accountId])
+  @@map("recurring_expenses")
+}
+
+model Debt {
+  id                String    @id @default(uuid())
+  userId            String    @map("user_id")
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name              String
+  description       String?
+  category          String?
+  totalAmount       Decimal   @map("total_amount")
+  paidAmount        Decimal?  @default(0) @map("paid_amount")
+  currency          String?   @default("USD")
+  creditor          String?
+  dueDate           DateTime? @map("due_date")
+  interestRate      Decimal?  @default(0) @map("interest_rate")
+  isActive          Boolean?  @default(true) @map("is_active")
+  paymentDay        Int?      @map("payment_day")
+  installmentAmount Decimal?  @map("installment_amount")
+  installmentCount  Int?      @map("installment_count")
+  isRecurring       Boolean?  @default(false) @map("is_recurring")
+  nextPaymentDate   DateTime? @map("next_payment_date")
+  debtType          String?   @default("owed") @map("debt_type")
+  createdAt         DateTime? @default(now()) @map("created_at")
+  updatedAt         DateTime? @default(now()) @map("updated_at")
+
+  transactions Transaction[]
+
+  @@index([userId])
+  @@map("debts")
+}
+
+model ExchangeRate {
+  id           String    @id @default(uuid())
+  fromCurrency String    @map("from_currency")
+  toCurrency   String    @map("to_currency")
+  rate         Decimal
+  date         DateTime
+  source       String    @default("api")
+  createdAt    DateTime? @default(now()) @map("created_at")
+  updatedAt    DateTime? @default(now()) @map("updated_at")
+
+  @@index([fromCurrency, toCurrency, date])
+  @@unique([fromCurrency, toCurrency, date])
+  @@map("exchange_rates")
+}
+
+model SavingsGoal {
+  id                  String    @id @default(uuid())
+  userId              String?   @map("user_id")
+  user                User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId           String?   @map("account_id")
+  name                String
+  description         String?
+  targetAmount        Decimal   @map("target_amount")
+  currentAmount       Decimal?  @default(0) @map("current_amount")
+  currency            String?   @default("USD")
+  targetDate          DateTime? @map("target_date")
+  monthlyContribution Decimal?  @map("monthly_contribution")
+  status              String    @default("active")
+  createdAt           DateTime? @default(now()) @map("created_at")
+  updatedAt           DateTime? @default(now()) @map("updated_at")
+
+  account FinanceAccount? @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  focusFinanceLinks FocusFinanceLink[]
+
+  @@index([userId])
+  @@map("savings_goals")
+}
+
+model ImportBatch {
+  id                String    @id @default(uuid())
+  userId            String    @map("user_id")
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  batchName         String    @map("batch_name")
+  totalTransactions Int       @default(0) @map("total_transactions")
+  importedAt        DateTime? @default(now()) @map("imported_at")
+  status            String    @default("pending_review")
+  createdAt         DateTime? @default(now()) @map("created_at")
+  updatedAt         DateTime? @default(now()) @map("updated_at")
+
+  transactions Transaction[]
+
+  @@index([userId])
+  @@map("import_batches")
+}
+
+model UserCurrencySettings {
+  id                  String    @id @default(uuid())
+  userId              String    @map("user_id")
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  baseCurrency        String    @default("USD") @map("base_currency")
+  preferredCurrencies Json      @map("preferred_currencies")
+  createdAt           DateTime? @default(now()) @map("created_at")
+  updatedAt           DateTime? @default(now()) @map("updated_at")
+
+  @@unique([userId])
+  @@map("user_currency_settings")
+}
+
+model Transaction {
+  id                 String    @id @default(uuid())
+  userId             String    @map("user_id")
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId          String    @map("account_id")
+  budgetId           String?   @map("budget_id")
+  debtId             String?   @map("debt_id")
+  incomeSourceId     String?   @map("income_source_id")
+  recurringExpenseId String?   @map("recurring_expense_id")
+  type               String
+  amount             Decimal
+  description        String
+  notes              String?
+  date               DateTime
+  isRecurring        Boolean?  @default(false) @map("is_recurring")
+  recurringPattern   String?   @map("recurring_pattern")
+  transferAccountId  String?   @map("transfer_account_id")
+  tags               Json
+  receiptUrl         String?   @map("receipt_url")
+  status             String    @default("pending")
+  reviewedAt         DateTime? @map("reviewed_at")
+  reviewedBy         String?   @map("reviewed_by")
+  exclusionReason    String?   @map("exclusion_reason")
+  sourceType         String    @default("manual") @map("source_type")
+  importBatchId      String?   @map("import_batch_id")
+  createdAt          DateTime? @default(now()) @map("created_at")
+  updatedAt          DateTime? @default(now()) @map("updated_at")
+  exchangeRate       Decimal?  @default(1.0) @map("exchange_rate")
+  currency           String?   @default("USD")
+  baseCurrencyAmount Decimal?  @map("base_currency_amount")
+  exchangeRateDate   DateTime? @map("exchange_rate_date")
+  isManualRate       Boolean?  @default(false) @map("is_manual_rate")
+
+  account         FinanceAccount  @relation("TransactionAccount", fields: [accountId], references: [id], onDelete: Cascade)
+  budget          Budget?         @relation(fields: [budgetId], references: [id], onDelete: SetNull)
+  debt            Debt?           @relation(fields: [debtId], references: [id], onDelete: SetNull)
+  incomeSource    IncomeSource?    @relation(fields: [incomeSourceId], references: [id], onDelete: SetNull)
+  recurringExpense RecurringExpense? @relation(fields: [recurringExpenseId], references: [id], onDelete: SetNull)
+  transferAccount FinanceAccount? @relation("TransactionTransferAccount", fields: [transferAccountId], references: [id], onDelete: SetNull)
+  importBatch     ImportBatch?    @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([userId, status])
+  @@index([userId, type])
+  @@index([userId, date])
+  @@index([userId, status, date])
+  @@index([accountId])
+  @@index([budgetId])
+  @@index([debtId])
+  @@index([incomeSourceId])
+  @@index([recurringExpenseId])
+  @@index([importBatchId])
+  @@index([date])
+  @@map("transactions")
+}
+
+model SubscriptionPlan {
+  id                       String    @id @default(uuid())
+  name                     String
+  displayName              String    @map("display_name")
+  description              String?
+  price                    Decimal
+  currency                 String    @default("USD")
+  billingInterval          String    @default("monthly") @map("billing_interval")
+  lemonSqueezyProductId    String?   @map("lemon_squeezy_product_id")
+  lemonSqueezyVariantId    String?   @unique @map("lemon_squeezy_variant_id")
+  trialPeriodDays          Int?      @default(14) @map("trial_period_days")
+  maxHabits                Int?      @default(5) @map("max_habits")
+  maxGoals                 Int?      @default(3) @map("max_goals")
+  maxNotes                 Int?      @default(50) @map("max_notes")
+  maxTasks                 Int?      @default(20) @map("max_tasks")
+  maxPomodoroSessionsDaily Int?      @default(10) @map("max_pomodoro_sessions_daily")
+  hasAiAssistant           Boolean?  @default(false) @map("has_ai_assistant")
+  hasHealthModule          Boolean?  @default(false) @map("has_health_module")
+  hasAdvancedAnalytics     Boolean?  @default(false) @map("has_advanced_analytics")
+  hasCustomThemes          Boolean?  @default(false) @map("has_custom_themes")
+  hasExportData            Boolean?  @default(false) @map("has_export_data")
+  hasPrioritySupport       Boolean?  @default(false) @map("has_priority_support")
+  isActive                 Boolean?  @default(true) @map("is_active")
+  sortOrder                Int?      @default(0) @map("sort_order")
+  createdAt                DateTime? @default(now()) @map("created_at")
+  updatedAt                DateTime? @default(now()) @map("updated_at")
+
+  subscriptions UserSubscription[]
+
+  @@map("subscription_plans")
+}
+
+model Habit {
+  id              String    @id @default(uuid())
+  userId          String?   @map("user_id")
+  user            User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name            String
+  description     String?
+  category        String?
+  color           String?   @default("#3B82F6")
+  targetFrequency Int?      @default(1) @map("target_frequency")
+  frequencyType   String?   @map("frequency_type")
+  weekDays        Json?     @map("week_days")
+  isActive        Boolean?  @default(true) @map("is_active")
+  goalId          String?   @map("goal_id")
+  createdAt       DateTime? @default(now()) @map("created_at")
+  updatedAt       DateTime? @default(now()) @map("updated_at")
+
+  logs HabitLog[]
+  focusHabitLinks FocusHabitLink[]
+
+  @@index([userId])
+  @@index([userId, isActive])
+  @@index([goalId])
+  @@map("habits")
+}
+
+model HabitLog {
+  id             String    @id @default(uuid())
+  habitId        String?   @map("habit_id")
+  userId         String?   @map("user_id")
+  user           User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date           DateTime
+  completedCount Int?      @default(0) @map("completed_count")
+  notes          String?
+  createdAt      DateTime? @default(now()) @map("created_at")
+  updatedAt      DateTime? @default(now()) @map("updated_at")
+
+  habit Habit? @relation(fields: [habitId], references: [id], onDelete: Cascade)
+
+  @@unique([habitId, date])
+  @@index([userId])
+  @@map("habit_logs")
+}
+
+model LemonSqueezyWebhook {
+  id             String    @id @default(uuid())
+  eventName      String    @map("event_name")
+  lemonSqueezyId String?   @map("lemon_squeezy_id")
+  userId         String?   @map("user_id")
+  user           User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscriptionId String?   @map("subscription_id")
+  webhookData    Json      @map("webhook_data")
+  processed      Boolean?  @default(false)
+  errorMessage   String?   @map("error_message")
+  createdAt      DateTime? @default(now()) @map("created_at")
+
+  subscription UserSubscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@map("lemon_squeezy_webhooks")
+}
+
+model NoteCategory {
+  id        String    @id @default(uuid())
+  userId    String?   @map("user_id")
+  user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  color     String?   @default("#6B7280")
+  icon      String?
+  createdAt DateTime? @default(now()) @map("created_at")
+  updatedAt DateTime? @default(now()) @map("updated_at")
+
+  notes Note[]
+
+  @@index([userId])
+  @@map("note_categories")
+}
+
+model Note {
+  id         String    @id @default(uuid())
+  userId     String?   @map("user_id")
+  user       User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryId String?   @map("category_id")
+  title      String
+  content    String?
+  tags       Json
+  isPinned   Boolean?  @default(false) @map("is_pinned")
+  isArchived Boolean?  @default(false) @map("is_archived")
+  deletedAt  DateTime? @map("deleted_at")
+  createdAt  DateTime? @default(now()) @map("created_at")
+  updatedAt  DateTime? @default(now()) @map("updated_at")
+
+  category NoteCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([categoryId])
+  @@index([userId, deletedAt])
+  @@map("notes")
+}
+
+model PomodoroDailyStat {
+  id             String    @id @default(uuid())
+  userId         String?   @map("user_id")
+  user           User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date           DateTime
+  focusSessions  Int?      @default(0) @map("focus_sessions")
+  shortBreaks    Int?      @default(0) @map("short_breaks")
+  longBreaks     Int?      @default(0) @map("long_breaks")
+  totalFocusTime Int?      @default(0) @map("total_focus_time")
+  totalBreakTime Int?      @default(0) @map("total_break_time")
+  createdAt      DateTime? @default(now()) @map("created_at")
+  updatedAt      DateTime? @default(now()) @map("updated_at")
+
+  @@unique([userId, date])
+  @@index([userId])
+  @@map("pomodoro_daily_stats")
+}
+
+model PomodoroSession {
+  id              String    @id @default(uuid())
+  userId          String?   @map("user_id")
+  user            User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  taskId          String?   @map("task_id")
+  sessionType     String    @default("focus") @map("session_type")
+  plannedDuration Int       @map("planned_duration")
+  actualDuration  Int?      @map("actual_duration")
+  startedAt       DateTime  @map("started_at")
+  completedAt     DateTime? @map("completed_at")
+  isCompleted     Boolean?  @default(false) @map("is_completed")
+  notes           String?
+  createdAt       DateTime? @default(now()) @map("created_at")
+
+  task Task? @relation(fields: [taskId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([taskId])
+  @@map("pomodoro_sessions")
+}
+
+model Task {
+  id          String    @id @default(uuid())
+  userId      String?   @map("user_id")
+  user        User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weeklyGoalId String?   @map("weekly_goal_id")
+  title       String
+  description String?
+  status      String    @default("open")  // open | completed
+  priority    String    @default("medium")
+  dueDate     DateTime? @map("due_date")
+  completedAt DateTime? @map("completed_at")
+  tags        Json
+  estimatedDurationMinutes Int?      @map("estimated_duration_minutes")
+  actualDurationMinutes    Int?      @default(0) @map("actual_duration_minutes")
+  actualDurationSeconds    Int?      @default(0) @map("actual_duration_seconds")
+  scheduledDate            DateTime? @map("scheduled_date")      // YYYY-MM-DD intent (stored as datetime)
+  scheduledStart           DateTime? @map("scheduled_start")     // Full datetime for calendar
+  scheduledEnd             DateTime? @map("scheduled_end")       // Full datetime for calendar
+  actualStart              DateTime? @map("actual_start")        // When task actually started
+  actualEnd                DateTime? @map("actual_end")          // When task actually ended
+  isAllDay                 Boolean?  @default(false) @map("is_all_day")
+  source                   String?   @default("manual")          // manual|autoschedule|dragged|recovered
+  backlogState             String?   @default("none") @map("backlog_state")
+  archivedAt               DateTime? @map("archived_at")         // When task was archived
+  orderInDay               Int?      @map("order_in_day")        // Sort order within day
+  lockedTime               Boolean?  @default(false) @map("locked_time")  // User pinned time slot
+  syncToCalendar           Boolean?  @default(false) @map("sync_to_calendar") // Sync task to Google Calendar
+  lastReminderSentAt       DateTime? @map("last_reminder_sent_at")         // Prevent duplicate reminders
+  aiTimebox                Int?      @map("ai_timebox")                    // AI-suggested timebox in minutes
+  aiInsightJson            Json?     @map("ai_insight_json")               // AI-generated insights for task
+  createdAt   DateTime? @default(now()) @map("created_at")
+  updatedAt   DateTime? @default(now()) @map("updated_at")
+
+  sessions PomodoroSession[]
+  focusTaskLinks FocusTaskLink[]
+  calendarBindings TaskCalendarBinding[]
+  weeklyGoal WeeklyGoal? @relation(fields: [weeklyGoalId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([userId, status])
+  @@index([userId, scheduledDate])
+  @@index([weeklyGoalId])
+  @@map("tasks")
+}
+
+
+model Goal {
+  id            String    @id @default(uuid())
+  userId        String?   @map("user_id")
+  user          User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title         String
+  description   String?
+  deadline      DateTime?
+  progress      Int?      @default(0)
+  type          String    @default("short-term")
+  status        String    @default("in-progress")
+  relatedTasks  Json?
+  createdAt     DateTime? @default(now()) @map("created_at")
+  updatedAt     DateTime? @default(now()) @map("updated_at")
+
+  @@index([userId])
+  @@index([userId, status])
+  @@map("goals")
+}
+
+model HealthMetric {
+  id           String    @id @default(uuid())
+  userId       String?   @map("user_id")
+  user         User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type         String
+  unit         String?
+  numericValue Decimal?  @map("numeric_value")
+  stringValue  String?   @map("string_value")
+  date         DateTime
+  notes        String?
+  metadata     Json?
+  createdAt    DateTime? @default(now()) @map("created_at")
+  updatedAt    DateTime? @default(now()) @map("updated_at")
+
+  @@index([userId, type, date])
+  @@map("health_metrics")
+}
+
+model UserProfile {
+  id                          String    @id @default(uuid())
+  userId                      String?   @map("user_id")
+  user                        User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName                   String?   @map("first_name")
+  lastName                    String?   @map("last_name")
+  displayName                 String?   @map("display_name")
+  profilePicture      String?   @map("profile_picture")
+  bio                 String?
+  primaryGoal         String?   @map("primary_goal")
+  lastProfileUpdate   DateTime? @default(now()) @map("last_profile_update")
+  createdAt                   DateTime? @default(now()) @map("created_at")
+  updatedAt                   DateTime? @default(now()) @map("updated_at")
+
+  @@unique([userId])
+  @@map("user_profiles")
+}
+
+model UserSettings {
+  id        String    @id @default(uuid())
+  userId    String?   @map("user_id")
+  user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  locale    String    @default("en")
+  theme     String    @default("dark")
+  timezone  String    @default("UTC")
+  aiDataSharing Boolean   @default(true) @map("ai_data_sharing")
+  createdAt DateTime? @default(now()) @map("created_at")
+  updatedAt DateTime? @default(now()) @map("updated_at")
+
+  @@unique([userId])
+  @@map("user_settings")
+}
+
+model UserSubscription {
+  id                         String    @id @default(uuid())
+  userId                     String?   @map("user_id")
+  user                       User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planId                     String?   @map("plan_id")
+  lemonSqueezySubscriptionId String?   @map("lemon_squeezy_subscription_id")
+  lemonSqueezyOrderId        String?   @map("lemon_squeezy_order_id")
+  lemonSqueezyCustomerId     String?   @map("lemon_squeezy_customer_id")
+  updatePaymentMethodUrl     String?   @map("update_payment_method_url")
+  status                     String?   @default("pending")
+  currency                   String?   @default("USD")
+  amount                     Decimal
+  billingInterval            String    @map("billing_interval")
+  trialStartsAt              DateTime? @map("trial_starts_at")
+  trialEndsAt                DateTime? @map("trial_ends_at")
+  startsAt                   DateTime  @map("starts_at")
+  endsAt                     DateTime? @map("ends_at")
+  cancelledAt                DateTime? @map("cancelled_at")
+  nextBillingDate            DateTime? @map("next_billing_date")
+  metadata                   Json?     @map("metadata")
+  createdAt                  DateTime? @default(now()) @map("created_at")
+  updatedAt                  DateTime? @default(now()) @map("updated_at")
+
+  plan     SubscriptionPlan?     @relation(fields: [planId], references: [id], onDelete: SetNull)
+  webhooks LemonSqueezyWebhook[]
+
+  @@unique([lemonSqueezySubscriptionId])
+  @@index([userId])
+  @@index([planId])
+  @@map("user_subscriptions")
+}
+
+model UserUsageStat {
+  id                    String    @id @default(uuid())
+  userId                String?   @map("user_id")
+  user                  User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currentHabits         Int?      @default(0) @map("current_habits")
+  currentGoals          Int?      @default(0) @map("current_goals")
+  currentNotes          Int?      @default(0) @map("current_notes")
+  currentTasks          Int?      @default(0) @map("current_tasks")
+  dailyPomodoroSessions Int?      @default(0) @map("daily_pomodoro_sessions")
+  dailyAiRequests       Int?      @default(0) @map("daily_ai_requests")
+  monthlyExports        Int?      @default(0) @map("monthly_exports")
+  dailyResetDate        DateTime? @map("daily_reset_date")
+  monthlyResetDate      DateTime? @map("monthly_reset_date")
+  createdAt             DateTime? @default(now()) @map("created_at")
+  updatedAt             DateTime? @default(now()) @map("updated_at")
+
+  @@unique([userId])
+  @@index([userId])
+  @@map("user_usage_stats")
+}
+
+model UserFeatureOverride {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  featureKey String   @map("feature_key")
+  enabled    Boolean
+  reason     String?
+  createdBy  String?  @map("created_by")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, featureKey])
+  @@index([userId])
+  @@map("user_feature_overrides")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  passwordHash  String?
+
+  accounts Account[]
+  sessions Session[]
+
+  // Finance
+  financeAccounts       FinanceAccount[]
+  budgets               Budget[]
+  incomeSources         IncomeSource[]
+  recurringExpenses     RecurringExpense[]
+  investmentHoldings    InvestmentHolding[]
+  debts                 Debt[]
+  savingsGoals          SavingsGoal[]
+  importBatches         ImportBatch[]
+  currencySettings      UserCurrencySettings?
+  transactions          Transaction[]
+
+  // Habits
+  habits                Habit[]
+  habitLogs             HabitLog[]
+
+  // Notes
+  noteCategories        NoteCategory[]
+  notes                 Note[]
+
+  // Tasks & Pomodoro
+  pomodoroDailyStats    PomodoroDailyStat[]
+  pomodoroSessions      PomodoroSession[]
+  tasks                 Task[]
+  goals                 Goal[]
+  weeklyGoals           WeeklyGoal[]
+  calendarAccounts      CalendarAccount[]
+
+  // Health
+  healthMetrics         HealthMetric[]
+
+  // Profile & Settings
+  profile               UserProfile?
+  settings              UserSettings?
+  subscriptions         UserSubscription[]
+  lemonSqueezyWebhooks  LemonSqueezyWebhook[]
+  
+  // Chat
+  chatThreads           ChatThread[]
+  
+  // Roadmap
+  primeVisions          PrimeVision[]
+  quarterlyGoals        QuarterlyGoal[]
+  goalHealthSnapshots   GoalHealthSnapshot[]
+  
+  // Reading
+  userBooks             UserBook[]
+  readingGoals          ReadingGoal[]
+
+  // System
+  pushSubscriptions     PushSubscription[]
+  usageStats            UserUsageStat?
+  workPreferences       UserWorkPreferences[]
+  devices               UserDevice[]
+  notificationPreferences NotificationPreferences?
+  onboarding            UserOnboarding?
+
+  // Personalization
+  sectionCustomizations SectionCustomization[]
+
+  // Gamification
+  gamificationProfile   GamificationProfile?
+  xpEvents              XpEvent[]
+  dailyXpSnapshots      DailyXpSnapshot[]
+  userAchievements      UserAchievement[]
+  dailyChallenges       DailyChallenge[]
+
+  // Feature flags
+  role                  String               @default("user") // "user" | "admin"
+  featureOverrides      UserFeatureOverride[]
+}
+
+model NotificationPreferences {
+  id                    String    @id @default(uuid())
+  userId                String    @unique @map("user_id")
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Notification types - ALL enabled by default
+  habitReminders        Boolean   @default(true) @map("habit_reminders")
+  pomodoroAlerts        Boolean   @default(true) @map("pomodoro_alerts")
+  taskReminders         Boolean   @default(true) @map("task_reminders")
+  dailyMotivation       Boolean   @default(true) @map("daily_motivation")
+  marketingMessages     Boolean   @default(true) @map("marketing_messages")
+
+  // Reminder configuration
+  taskReminderOffset    Int       @default(30) @map("task_reminder_offset")    // minutes before due
+  habitReminderTime     String    @default("20:00") @map("habit_reminder_time") // HH:mm user local time
+
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@map("notification_preferences")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@unique([provider, providerAccountId], name: "provider_providerAccountId")
+  @@map("auth_accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("auth_sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("auth_verification_tokens")
+}
+
+model PushSubscription {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String
+  keys      Json
+  createdAt DateTime? @default(now()) @map("created_at")
+  updatedAt DateTime? @default(now()) @map("updated_at")
+
+  @@index([userId])
+  @@unique([endpoint])
+  @@map("push_subscriptions")
+}
+
+// One-time password for email verification during registration
+model EmailOtp {
+  id         String   @id @default(uuid())
+  email      String
+  code       String
+  expiresAt  DateTime @map("expires_at")
+  attempts   Int      @default(0) @map("attempts")
+  consumed   Boolean  @default(false) @map("consumed")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([email])
+  @@map("email_otp")
+}
+
+model ChatThread {
+  id             String    @id @default(uuid())
+  userId         String    @map("user_id")
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title          String?
+  lastMessageAt  DateTime? @map("last_message_at")
+  createdAt      DateTime? @default(now()) @map("created_at")
+  updatedAt      DateTime? @default(now()) @map("updated_at")
+
+  messages ChatMessage[]
+
+  @@index([userId])
+  @@map("chat_threads")
+}
+
+model ChatMessage {
+  id        String    @id @default(uuid())
+  threadId  String    @map("thread_id")
+  role      String
+  content   String
+  model     String?
+  toolName  String?   @map("tool_name")
+  createdAt DateTime? @default(now()) @map("created_at")
+
+  thread ChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  @@index([threadId])
+  @@map("chat_messages")
+}
+
+// Prime Roadmap Enums
+enum PillarArea {
+  finances
+  career
+  health
+  relationships
+  mindset
+  lifestyle
+}
+
+// Prime Roadmap Models
+model PrimeVision {
+  id        String    @id @default(uuid())
+  userId    String?   @map("user_id")
+  user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  narrative String?
+  status    String    @default("active")
+  createdAt DateTime? @default(now()) @map("created_at")
+  updatedAt DateTime? @default(now()) @map("updated_at")
+
+  threeYearGoals ThreeYearGoal[]
+
+  @@index([userId])
+  @@map("prime_visions")
+}
+
+model ThreeYearGoal {
+  id        String    @id @default(uuid())
+  userId    String?   @map("user_id")
+  visionId  String?   @map("vision_id")
+  area      PillarArea
+  title     String
+  description String?
+  createdAt DateTime? @default(now()) @map("created_at")
+  updatedAt DateTime? @default(now()) @map("updated_at")
+
+  vision   PrimeVision? @relation(fields: [visionId], references: [id], onDelete: Cascade)
+  annualGoals AnnualGoal[]
+
+  @@index([userId])
+  @@index([visionId])
+  @@map("three_year_goals")
+}
+
+model AnnualGoal {
+  id           String    @id @default(uuid())
+  userId       String?   @map("user_id")
+  threeYearGoalId String? @map("three_year_goal_id")
+  title        String
+  description  String?
+  targetMetrics Json?
+  targetDate   DateTime?
+  progress     Int?      @default(0)
+  createdAt    DateTime? @default(now()) @map("created_at")
+  updatedAt    DateTime? @default(now()) @map("updated_at")
+
+  threeYearGoal ThreeYearGoal?      @relation(fields: [threeYearGoalId], references: [id], onDelete: Cascade)
+  quarterlyGoals QuarterlyGoal[]
+
+  @@index([userId])
+  @@index([threeYearGoalId])
+  @@map("annual_goals")
+}
+
+model QuarterlyGoal {
+  id         String    @id @default(uuid())
+  userId     String?   @map("user_id")
+  user       User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  annualGoalId String?  @map("annual_goal_id")
+  year       Int
+  quarter    Int
+  title      String
+  objectives Json?
+  startDate  DateTime?
+  endDate    DateTime?
+  progress   Int?      @default(0)
+  createdAt  DateTime? @default(now()) @map("created_at")
+  updatedAt  DateTime? @default(now()) @map("updated_at")
+
+  annualGoal AnnualGoal? @relation(fields: [annualGoalId], references: [id], onDelete: Cascade)
+  taskLinks    FocusTaskLink[]
+  habitLinks   FocusHabitLink[]
+  financeLinks FocusFinanceLink[]
+  healthSnapshots GoalHealthSnapshot[]
+  weeklyGoals  WeeklyGoal[]
+
+  @@index([userId])
+  @@index([annualGoalId])
+  @@index([year, quarter])
+  @@map("quarterly_goals")
+}
+
+model FocusTaskLink {
+  id       String    @id @default(uuid())
+  quarterlyGoalId String @map("quarterly_goal_id")
+  taskId   String    @map("task_id")
+  weight   Decimal?  @default(1)
+  createdAt DateTime? @default(now()) @map("created_at")
+
+  quarterlyGoal QuarterlyGoal @relation(fields: [quarterlyGoalId], references: [id], onDelete: Cascade)
+  task  Task               @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([quarterlyGoalId])
+  @@index([taskId])
+  @@map("focus_task_links")
+}
+
+model FocusHabitLink {
+  id       String    @id @default(uuid())
+  quarterlyGoalId String @map("quarterly_goal_id")
+  habitId  String    @map("habit_id")
+  weight   Decimal?  @default(1)
+  createdAt DateTime? @default(now()) @map("created_at")
+
+  quarterlyGoal QuarterlyGoal @relation(fields: [quarterlyGoalId], references: [id], onDelete: Cascade)
+  habit Habit             @relation(fields: [habitId], references: [id], onDelete: Cascade)
+
+  @@index([quarterlyGoalId])
+  @@index([habitId])
+  @@map("focus_habit_links")
+}
+
+model FocusFinanceLink {
+  id            String    @id @default(uuid())
+  quarterlyGoalId String  @map("quarterly_goal_id")
+  savingsGoalId String?   @map("savings_goal_id")
+  budgetId      String?   @map("budget_id")
+  type          String    @default("saving")
+  targetAmount  Decimal?
+  createdAt     DateTime? @default(now()) @map("created_at")
+
+  quarterlyGoal QuarterlyGoal @relation(fields: [quarterlyGoalId], references: [id], onDelete: Cascade)
+  savingsGoal SavingsGoal?      @relation(fields: [savingsGoalId], references: [id], onDelete: Cascade)
+  budget      Budget?           @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+
+  @@index([quarterlyGoalId])
+  @@index([savingsGoalId])
+  @@index([budgetId])
+  @@map("focus_finance_links")
+}
+
+model GoalHealthSnapshot {
+  id            String    @id @default(uuid())
+  userId        String?   @map("user_id")
+  user          User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quarterlyGoalId String  @map("quarterly_goal_id")
+  weekStart     DateTime  @map("week_start")
+  momentumScore Int       @default(0)
+  status        String    @default("neutral")
+  createdAt     DateTime? @default(now()) @map("created_at")
+
+  quarterlyGoal QuarterlyGoal @relation(fields: [quarterlyGoalId], references: [id], onDelete: Cascade)
+
+  @@unique([quarterlyGoalId, weekStart])
+  @@index([userId])
+  @@map("goal_health_snapshots")
+}
+
+model CalendarAccount {
+  id           String    @id @default(uuid())
+  userId       String?   @map("user_id")
+  user         User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider     String
+  email        String?
+  accessToken  String?
+  refreshToken String?
+  expiresAt    DateTime?
+  scopes       Json?
+  isPrimary    Boolean?  @default(false)
+  createdAt    DateTime? @default(now()) @map("created_at")
+  updatedAt    DateTime? @default(now()) @map("updated_at")
+
+  calendars Calendar[]
+
+  @@index([userId])
+  @@map("calendar_accounts")
+}
+
+model Calendar {
+  id                 String          @id @default(uuid())
+  calendarAccountId  String          @map("calendar_account_id")
+  providerCalendarId String
+  name               String
+  color              String?
+  isPrimary          Boolean?        @default(false)
+  isSelectedForSync  Boolean?        @default(false)
+  createdAt          DateTime?       @default(now()) @map("created_at")
+  updatedAt          DateTime?       @default(now()) @map("updated_at")
+
+  account CalendarAccount @relation(fields: [calendarAccountId], references: [id], onDelete: Cascade)
+  bindings TaskCalendarBinding[]
+
+  @@index([calendarAccountId])
+  @@map("calendars")
+}
+
+model TaskCalendarBinding {
+  id                    String    @id @default(uuid())
+  taskId                String    @map("task_id")
+  calendarId            String    @map("calendar_id")
+  calendarProvider      String
+  externalEventId       String?
+  externalRecurringEventId String?
+  lastSyncedAt          DateTime?
+  lastSyncDirection     String?
+  isActive              Boolean?  @default(true)
+  createdAt             DateTime? @default(now()) @map("created_at")
+  updatedAt             DateTime? @default(now()) @map("updated_at")
+
+  task     Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  calendar Calendar @relation(fields: [calendarId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([calendarId])
+  @@index([externalEventId])
+  @@map("task_calendar_bindings")
+}
+
+model WeeklyGoal {
+  id              String    @id @default(uuid())
+  userId          String?   @map("user_id")
+  user            User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quarterlyGoalId String?   @map("quarterly_goal_id") // Relation to QuarterlyGoal
+  weekStartDate   DateTime  @map("week_start_date") // Monday
+  title           String
+  description     String?
+  status          String    @default("planned") // planned, in_progress, completed, canceled
+  order           Int       @default(0)
+  parentGoalId    String?   @map("parent_goal_id") // Optional link to AnnualGoal for multi-year planning
+  createdAt       DateTime? @default(now()) @map("created_at")
+  updatedAt       DateTime? @default(now()) @map("updated_at")
+
+  quarterlyGoal QuarterlyGoal? @relation(fields: [quarterlyGoalId], references: [id], onDelete: Cascade)
+  tasks        Task[]
+
+  @@index([userId])
+  @@index([quarterlyGoalId])
+  @@index([weekStartDate])
+  @@index([parentGoalId])
+  @@map("weekly_goals")
+}
+
+model UserWorkPreferences {
+  id                          String    @id @default(uuid())
+  userId                      String?   @map("user_id")
+  user                        User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  timeZone                    String
+  workStartHour               Int
+  workEndHour                 Int
+  workDays                    Json?
+  defaultTaskDurationMinutes  Int?
+  maxTasksPerDay              Int?
+  overflowStrategy            String?
+  createdAt                   DateTime? @default(now()) @map("created_at")
+  updatedAt                   DateTime? @default(now()) @map("updated_at")
+
+  @@index([userId])
+  @@map("user_work_preferences")
+}
+
+model UserDevice {
+  id           String    @id @default(uuid())
+  userId       String    @map("user_id")
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fcmToken     String    @unique @map("fcm_token")
+  deviceType   String    @map("device_type") // "web" | "android" | "ios"
+  deviceName   String?   @map("device_name")
+  isActive     Boolean   @default(true) @map("is_active")
+  lastUsedAt   DateTime  @default(now()) @map("last_used_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([fcmToken])
+  @@map("user_devices")
+}
+
+model RevokedToken {
+  id        String   @id @default(uuid())
+  tokenHash String   @unique @map("token_hash")
+  userId    String   @map("user_id")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([tokenHash])
+  @@index([expiresAt])
+  @@map("revoked_tokens")
+}
+
+model UserOnboarding {
+  id             String    @id @default(uuid())
+  userId         String    @unique @map("user_id")
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isCompleted    Boolean   @default(false) @map("is_completed")
+  currentStep    String    @default("goals") // goals | habits | tasks | finances | notes | completed
+  skippedSteps   Json?     @map("skipped_steps") // Array of skipped step IDs
+  completedSteps Json?     @map("completed_steps") // Array of completed step IDs with timestamps
+  dismissedAt    DateTime? @map("dismissed_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  @@map("user_onboarding")
+}
+
+// ─── Reading / Biblioteca ───────────────────────────────────────
+
+model BookMaster {
+  id             String    @id @default(uuid())
+  source         String    @default("open_library")
+  workKey        String    @unique @map("work_key")
+  editionKey     String?   @map("edition_key")
+  title          String
+  subtitle       String?
+  description    String?
+  authors        Json      @default("[]")
+  coverUrl       String?   @map("cover_url")
+  pages          Int?
+  publishYear    Int?      @map("publish_year")
+  language       String?
+  subjects       Json      @default("[]")
+  isbnList       Json      @default("[]") @map("isbn_list")
+  openLibraryUrl String?   @map("open_library_url")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  userBooks UserBook[]
+
+  @@index([workKey])
+  @@map("book_masters")
+}
+
+model UserBook {
+  id                 String    @id @default(uuid())
+  userId             String    @map("user_id")
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookId             String    @map("book_id")
+  book               BookMaster @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  status             String    @default("to_read")
+  priority           String    @default("medium")
+  plannedQuarter     String?   @map("planned_quarter")
+  plannedStartDate   DateTime? @map("planned_start_date")
+  targetFinishDate   DateTime? @map("target_finish_date")
+  startedAt          DateTime? @map("started_at")
+  finishedAt         DateTime? @map("finished_at")
+  currentPage        Int?      @map("current_page")
+  totalPagesSnapshot Int?      @map("total_pages_snapshot")
+  progressPercent    Int       @default(0) @map("progress_percent")
+  rating             Int?
+  review             String?
+  notes              String?
+  tags               Json      @default("[]")
+  favorite           Boolean   @default(false)
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  @@unique([userId, bookId])
+  @@index([userId])
+  @@index([userId, status])
+  @@index([userId, plannedQuarter])
+  @@map("user_books")
+}
+
+model ReadingGoal {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  periodType  String   @map("period_type")
+  targetBooks Int      @map("target_books")
+  startDate   DateTime @map("start_date")
+  endDate     DateTime @map("end_date")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([userId, periodType])
+  @@map("reading_goals")
+}
+
+// ─── Personalization ───────────────────────────────────────────────
+
+model SectionCustomization {
+  id             String    @id @default(uuid())
+  userId         String    @map("user_id")
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sectionId      String    @map("section_id")
+  coverImageUrl  String?   @map("cover_image_url")
+  coverImageType String?   @default("none") @map("cover_image_type")
+  coverPositionY Int?      @default(50) @map("cover_position_y")
+  iconType       String?   @default("default") @map("icon_type")
+  iconValue      String?   @map("icon_value")
+  createdAt      DateTime? @default(now()) @map("created_at")
+  updatedAt      DateTime? @default(now()) @map("updated_at")
+
+  @@unique([userId, sectionId])
+  @@index([userId])
+  @@map("section_customizations")
+}
+
+// ─── Gamification ───────────────────────────────────────────────
+
+model GamificationProfile {
+  id                String    @id @default(uuid())
+  userId            String    @unique @map("user_id")
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  totalXp           Int       @default(0) @map("total_xp")
+  level             Int       @default(1)
+  rank              String    @default("E") // E, D, C, B, A, S
+  dailyGoal         Int       @default(50) @map("daily_goal")
+  currentStreak     Int       @default(0) @map("current_streak")
+  longestStreak     Int       @default(0) @map("longest_streak")
+  lastActiveDate    String?   @map("last_active_date") // YYYY-MM-DD
+  achievementsCount Int       @default(0) @map("achievements_count")
+  title             String?   // Chosen display title from unlocked achievements
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@map("gamification_profiles")
+}
+
+model XpEvent {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  source     String   // task | habit | pomodoro | challenge | streak_bonus | achievement
+  sourceId   String?  @map("source_id") // ID of the task/habit/session that generated XP
+  amount     Int
+  metadata   Json?    // e.g. { priority: "high", taskTitle: "..." }
+  earnedAt   DateTime @default(now()) @map("earned_at")
+  earnedDate String   @map("earned_date") // YYYY-MM-DD in user's timezone for daily aggregation
+
+  @@index([userId])
+  @@index([userId, earnedDate])
+  @@index([userId, source])
+  @@map("xp_events")
+}
+
+model DailyXpSnapshot {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date       String   // YYYY-MM-DD
+  totalXp    Int      @default(0) @map("total_xp")
+  goalMet    Boolean  @default(false) @map("goal_met")
+  taskXp     Int      @default(0) @map("task_xp")
+  habitXp    Int      @default(0) @map("habit_xp")
+  pomodoroXp Int      @default(0) @map("pomodoro_xp")
+  bonusXp    Int      @default(0) @map("bonus_xp")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, date])
+  @@index([userId])
+  @@map("daily_xp_snapshots")
+}
+
+model Achievement {
+  id        String @id @default(uuid())
+  key       String @unique // "first_task", "streak_7", "rank_s", etc.
+  category  String // tasks | habits | streaks | pomodoro | milestones | ranks
+  titleEn   String @map("title_en")
+  titleEs   String @map("title_es")
+  descEn    String @map("desc_en")
+  descEs    String @map("desc_es")
+  iconName  String @map("icon_name") // lucide icon name
+  xpReward  Int    @default(0) @map("xp_reward")
+  condition Json   // { type: "streak_days", value: 7 } or { type: "total_xp", value: 1000 }
+  rarity    String @default("common") // common | rare | epic | legendary
+  sortOrder Int    @default(0) @map("sort_order")
+
+  userAchievements UserAchievement[]
+
+  @@map("achievements")
+}
+
+model UserAchievement {
+  id            String      @id @default(uuid())
+  userId        String      @map("user_id")
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievementId String      @map("achievement_id")
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  unlockedAt    DateTime    @default(now()) @map("unlocked_at")
+
+  @@unique([userId, achievementId])
+  @@index([userId])
+  @@map("user_achievements")
+}
+
+model DailyChallenge {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date         String   // YYYY-MM-DD
+  type         String   // complete_tasks | pomodoro_sessions | habit_streak | earn_xp
+  titleEn      String   @map("title_en")
+  titleEs      String   @map("title_es")
+  descEn       String   @map("desc_en")
+  descEs       String   @map("desc_es")
+  xpReward     Int      @map("xp_reward")
+  targetValue  Int      @map("target_value")
+  currentValue Int      @default(0) @map("current_value")
+  isCompleted  Boolean  @default(false) @map("is_completed")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, date, type])
+  @@index([userId, date])
+  @@map("daily_challenges")
+}

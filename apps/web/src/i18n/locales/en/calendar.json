@@ -1,0 +1,23 @@
+{
+  "title": "Calendar",
+  "dayMon": "Mon",
+  "dayTue": "Tue",
+  "dayWed": "Wed",
+  "dayThu": "Thu",
+  "dayFri": "Fri",
+  "daySat": "Sat",
+  "daySun": "Sun",
+  "viewMonth": "Month",
+  "viewWeek": "Week",
+  "today": "Today",
+  "tomorrow": "Tomorrow",
+  "item": "item",
+  "items": "items",
+  "allDay": "All day",
+  "scheduled": "Scheduled",
+  "nothingScheduled": "Nothing scheduled",
+  "nothingScheduledDescription": "No tasks or events for this day.",
+  "integrationTitle": "Google Calendar integration",
+  "integrationDescription": "Connect your Google Calendar to see events here. Go to Settings to set up the connection.",
+  "comingSoon": "Calendar integration coming soon"
+}

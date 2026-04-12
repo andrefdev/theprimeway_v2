@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "skills": {
+    "gluestack-components": {
+      "source": "thebushidocollective/han",
+      "sourceType": "github",
+      "computedHash": "d7a935a022f55f039a2a5673d9b4541f3b7d94b965b8ed1a95a1be0c5f3ca4b2"
+    },
+    "gluestack-ui-v4": {
+      "source": "gluestack/agent-skills",
+      "sourceType": "github",
+      "computedHash": "81407cacc7d3eff17da0399f1bb84db6118363283fd07a2217030d75f702388b"
+    }
+  }
+}

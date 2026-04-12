@@ -1,0 +1,2056 @@
+{
+  "common": {
+    "basics": {
+      "appName": "The Prime Way",
+      "appDescription": "The Prime Way es una aplicacion de productividad personal y seguimiento de habitos que te ayuda a mantenerte organizado y motivado."
+    },
+    "back": "Atras",
+    "next": "Siguiente",
+    "actions": {
+      "save": "Guardar",
+      "cancel": "Cancelar",
+      "delete": "Eliminar",
+      "edit": "Editar",
+      "create": "Crear",
+      "update": "Actualizar",
+      "add": "Agregar",
+      "close": "Cerrar",
+      "confirm": "Confirmar",
+      "back": "Atras",
+      "next": "Siguiente",
+      "previous": "Anterior",
+      "submit": "Enviar",
+      "search": "Buscar",
+      "filter": "Filtrar",
+      "clear": "Limpiar",
+      "reset": "Reiniciar",
+      "viewDetails": "Ver Detalles",
+      "copy": "Copiar",
+      "refresh": "Actualizar",
+      "loading": "Cargando...",
+      "saving": "Guardando...",
+      "deleting": "Eliminando...",
+      "processing": "Procesando...",
+      "upload": "Subir",
+      "uploading": "Subiendo...",
+      "download": "Descargar",
+      "share": "Compartir",
+      "export": "Exportar",
+      "import": "Importar",
+      "continue": "Continuar",
+      "skip": "Saltar",
+      "finish": "Terminar",
+      "or": "O",
+      "retry": "Reintentar",
+      "done": "Listo",
+      "select": "Seleccionar",
+      "dismiss": "Descartar"
+    },
+    "status": {
+      "success": "Exito",
+      "error": "Error",
+      "warning": "Advertencia",
+      "info": "Informacion",
+      "active": "Activo",
+      "inactive": "Inactivo",
+      "pending": "Pendiente",
+      "completed": "Completado",
+      "archived": "Archivado"
+    },
+    "time": {
+      "today": "Hoy",
+      "tomorrow": "Manana",
+      "yesterday": "Ayer",
+      "days": "Dias",
+      "hours": "Horas",
+      "minutes": "minutos",
+      "date": "Fecha",
+      "time": "Hora",
+      "duration": "Duracion",
+      "startDate": "Fecha de Inicio",
+      "endDate": "Fecha de Fin",
+      "dueDate": "Fecha de Vencimiento"
+    },
+    "placeholders": {
+      "search": "Buscar...",
+      "select": "Seleccionar...",
+      "email": "ejemplo@correo.com",
+      "password": "Tu contrasena",
+      "name": "Escribe un nombre..."
+    },
+    "validation": {
+      "required": "Este campo es requerido",
+      "email": "Introduce un email valido",
+      "emailRequired": "Por favor introduce un email valido",
+      "passwordMin": "La contrasena debe tener al menos {min} caracteres",
+      "confirmPasswordMin": "La confirmacion debe tener al menos {min} caracteres",
+      "passwordsMismatch": "Las contrasenas no coinciden",
+      "minLength": "Debe tener al menos {min} caracteres",
+      "maxLength": "No puede exceder {max} caracteres",
+      "genericError": "Ha ocurrido un error inesperado"
+    },
+    "empty": {
+      "title": "Nada aqui todavia",
+      "description": "Comienza creando tu primer elemento"
+    },
+    "network": {
+      "offline": "Estas sin conexion",
+      "offlineDescription": "Por favor verifica tu conexion a internet",
+      "retry": "Toca para reintentar"
+    },
+    "pullToRefresh": "Desliza para actualizar"
+  },
+  "auth": {
+    "login": {
+      "title": "Iniciar Sesion",
+      "description": "Introduce tu email y contrasena para acceder",
+      "email": "Email",
+      "password": "Contrasena",
+      "emailPlaceholder": "ejemplo@correo.com",
+      "passwordPlaceholder": "Tu contrasena",
+      "submit": "Iniciar Sesion",
+      "forgotPassword": "Olvidaste tu contrasena?",
+      "noAccount": "No tienes cuenta?",
+      "registerLink": "Registrate aqui",
+      "success": "Bienvenido de nuevo!",
+      "successMessage": "Sesion iniciada correctamente!",
+      "errorTitle": "Error al iniciar sesion"
+    },
+    "register": {
+      "title": "Crear Cuenta",
+      "description": "Unete a The Prime Way",
+      "name": "Nombre",
+      "email": "Email",
+      "password": "Contrasena",
+      "confirmPassword": "Confirmar Contrasena",
+      "namePlaceholder": "Tu nombre",
+      "emailPlaceholder": "ejemplo@correo.com",
+      "passwordPlaceholder": "Min. 8 caracteres",
+      "confirmPasswordPlaceholder": "Confirma tu contrasena",
+      "submit": "Crear Cuenta",
+      "hasAccount": "Ya tienes cuenta?",
+      "loginLink": "Inicia sesion aqui",
+      "success": "Cuenta creada exitosamente!",
+      "successMessage": "Registro exitoso!",
+      "successDescription": "Bienvenido a The Prime Way!",
+      "errorTitle": "Error al registrarse"
+    },
+    "otp": {
+      "title": "Verificar Email",
+      "label": "Codigo de verificacion",
+      "helper": "Ingresa el codigo de 6 digitos enviado a tu correo",
+      "verify": "Verificar y Crear Cuenta",
+      "verifying": "Verificando...",
+      "error": "Verificacion fallida",
+      "backToLogin": "Volver al inicio de sesion",
+      "codeSentTitle": "Codigo enviado",
+      "codeSentDescription": "Enviamos un codigo de verificacion a tu correo",
+      "resend": "Reenviar codigo",
+      "resendIn": "Reenviar en {seconds}s"
+    },
+    "forgotPassword": {
+      "title": "Restablecer Contrasena",
+      "description": "Ingresa tu email para recibir un enlace de restablecimiento",
+      "email": "Email",
+      "emailPlaceholder": "tu@ejemplo.com",
+      "submit": "Enviar Enlace",
+      "sending": "Enviando...",
+      "sentTitle": "Revisa tu Email",
+      "sentDescription": "Hemos enviado un enlace de restablecimiento a {email}",
+      "backToLogin": "Volver al Inicio de Sesion",
+      "error": "Error al enviar el email de restablecimiento"
+    },
+    "oauth": {
+      "continueWithGithub": "Continuar con GitHub",
+      "continueWithGoogle": "Continuar con Google",
+      "continueWithApple": "Continuar con Apple",
+      "comingSoonTitle": "Proximamente",
+      "comingSoonGoogle": "El inicio de sesion con Google estara disponible pronto.",
+      "comingSoonApple": "El inicio de sesion con Apple estara disponible pronto.",
+      "errorTitle": "Error de inicio de sesion",
+      "errorDescription": "Hubo un error al iniciar sesion. Por favor, intentalo de nuevo.",
+      "accountNotLinkedGeneric": "Este correo electronico ya esta asociado con otra cuenta.",
+      "accountNotLinkedTitle": "Cuenta no vinculada"
+    },
+    "profile": {
+      "calendarConnected": "Calendario conectado",
+      "calendarConnectedDescription": "Tu Google Calendar se ha vinculado correctamente.",
+      "logoutSuccess": "Sesion cerrada correctamente",
+      "logoutError": "Error al cerrar sesion",
+      "title": "Perfil",
+      "update": "Actualizar Perfil",
+      "personalInfo": "Informacion Personal",
+      "firstName": "Nombre",
+      "lastName": "Apellido",
+      "displayName": "Nombre para mostrar",
+      "email": "Email",
+      "bio": "Biografia",
+      "primaryGoal": "Objetivo Principal",
+      "save": "Guardar Cambios",
+      "saving": "Guardando...",
+      "success": "Perfil actualizado correctamente",
+      "error": "Error al actualizar perfil",
+      "imageUploadSuccess": "Foto de perfil actualizada",
+      "imageUploadError": "Error al subir foto",
+      "changePhoto": "Cambiar foto",
+      "takePhoto": "Tomar foto",
+      "chooseFromLibrary": "Elegir de la galeria",
+      "uploadPhotoHelper": "Sube una foto (JPG, PNG). Max 5MB.",
+      "placeholders": {
+        "firstName": "Tu nombre",
+        "lastName": "Tu apellido",
+        "displayName": "Como quieres que te llamemos",
+        "bio": "Cuentanos sobre ti...",
+        "primaryGoal": "Cual es tu objetivo principal?"
+      }
+    },
+    "common": {
+      "or": "O",
+      "continueWithGoogle": "Continuar con Google",
+      "continueWithGithub": "Continuar con GitHub",
+      "continueWithApple": "Continuar con Apple",
+      "logout": "Cerrar Sesion"
+    },
+    "biometric": {
+      "title": "Inicio de Sesion Biometrico",
+      "description": "Usa Face ID o huella digital para iniciar sesion",
+      "enable": "Activar Inicio Biometrico",
+      "disable": "Desactivar Inicio Biometrico",
+      "prompt": "Autenticate para continuar",
+      "error": "Error en autenticacion biometrica",
+      "notAvailable": "La autenticacion biometrica no esta disponible en este dispositivo"
+    }
+  },
+  "navigation": {
+    "dashboard": "Panel de Control",
+    "tasks": "Tareas",
+    "habits": "Habitos",
+    "goals": "Objetivos",
+    "finances": "Finanzas",
+    "notes": "Notas",
+    "pomodoro": "Pomodoro",
+    "health": "Salud",
+    "ai": "Asistente IA",
+    "settings": "Configuracion",
+    "profile": "Perfil",
+    "today": "Hoy",
+    "weeklyPlan": "Plan semanal",
+    "focus": "Foco",
+    "all": "Todas",
+    "more": "Mas",
+    "calendar": "Calendario",
+    "home": "Inicio",
+    "aiChat": "Chat IA",
+    "reading": "Lectura",
+    "premium": "Premium",
+    "subscription": "Suscripcion",
+    "notifications": "Notificaciones",
+    "hub": {
+      "goalsAndGrowth": "Metas y Crecimiento",
+      "productivity": "Productividad",
+      "account": "Cuenta",
+      "primeRoadmap": "Prime Roadmap",
+      "setUpVision": "Configura tu Vision",
+      "setUpVisionDescription": "Deja que el coach IA te guie para definir tu vision de vida y metas",
+      "startAlignment": "Iniciar Alineacion",
+      "visionAligned": "Vision Alineada"
+    }
+  },
+  "features": {
+    "dashboard": {
+      "title": "Panel de Control",
+      "welcome": "Bienvenido de nuevo, {name}!",
+      "greeting": {
+        "morning": "Buenos dias",
+        "afternoon": "Buenas tardes",
+        "evening": "Buenas noches"
+      },
+      "seeAll": "Ver todo",
+      "dailyBrief": "Tu Resumen Diario",
+      "dailyBriefSummary": "{{tasks}} tareas hoy, {{completedHabits}}/{{totalHabits}} habitos completados.",
+      "noTasksToday": "No hay tareas para hoy",
+      "noHabitsToday": "No hay habitos para hoy",
+      "sections": {
+        "today": "Hoy",
+        "habits": "Habitos"
+      },
+      "quickActions": {
+        "title": "Acciones Rapidas",
+        "addTask": "Nueva Tarea",
+        "addHabit": "Nuevo Habito",
+        "addExpense": "Agregar Gasto",
+        "startFocus": "Foco",
+        "pomodoro": "Pomodoro",
+        "addTransaction": "Transaccion",
+        "addNote": "Nueva Nota",
+        "aiChat": "Chat IA",
+        "taskShort": "Tarea",
+        "focusShort": "Foco",
+        "expenseShort": "Gasto",
+        "noteShort": "Nota"
+      },
+      "stats": {
+        "tasks": {
+          "title": "Tareas completadas",
+          "subtitle": "Hoy"
+        },
+        "spend": {
+          "title": "Gasto mensual",
+          "subtitle": "Mes Actual"
+        },
+        "habits": {
+          "title": "Racha de habitos",
+          "subtitle": "Mejor Racha"
+        },
+        "goals": {
+          "title": "Objetivos Activos",
+          "subtitle": "En Progreso"
+        },
+        "days": "dias",
+        "tasksDone": "Tareas Hechas",
+        "habitsLabel": "Habitos",
+        "focusTime": "Tiempo de Foco",
+        "remaining": "Restante"
+      },
+      "widgets": {
+        "tasks": {
+          "title": "Tareas de Hoy",
+          "addTask": "Agregar Tarea",
+          "viewAll": "Ver Todo",
+          "focus": "Iniciar Foco",
+          "noTasks": "No hay tareas programadas para hoy"
+        },
+        "finances": {
+          "title": "Finanzas Recientes",
+          "viewAll": "Ver Todo",
+          "noTransactions": "No hay transacciones recientes",
+          "addTransaction": "Agregar Transaccion",
+          "defaultDescription": "Transaccion"
+        },
+        "habits": {
+          "title": "Habitos de Hoy",
+          "manage": "Gestionar",
+          "noHabitsToday": "No hay habitos programados para hoy",
+          "newHabit": "Crear nuevo habito",
+          "success": "Exito",
+          "updated": "Habito actualizado",
+          "error": "Error",
+          "updateFailed": "Error al actualizar el habito"
+        },
+        "goals": {
+          "title": "Objetivos - T{quarter}",
+          "viewRoadmap": "Ver Roadmap",
+          "noGoals": "No hay objetivos activos para este trimestre",
+          "setGoals": "Establecer Objetivos"
+        },
+        "calendar": {
+          "title": "Proximos eventos",
+          "viewAll": "Ver Calendario",
+          "noEvents": "No hay eventos proximos",
+          "manageCalendar": "Gestionar calendario",
+          "today": "Hoy",
+          "tomorrow": "Manana",
+          "joinMeeting": "Unirse",
+          "meetingCode": "Codigo de reunion"
+        }
+      }
+    },
+    "goals": {
+      "widget": {
+        "title": "Objetivos - T{quarter}",
+        "viewRoadmap": "Ver Roadmap",
+        "noGoals": "No hay objetivos activos para este trimestre",
+        "setGoals": "Establecer Objetivos"
+      },
+      "title": "Objetivos",
+      "newGoal": "Nuevo Objetivo",
+      "roadmap": "Hoja de Ruta",
+      "exampleData": {
+        "banner": "Este es un ejemplo para ayudarte a entender la jerarquia. Toca para descartar.",
+        "dismiss": "Descartar ejemplo",
+        "visionTitle": "Vivir una vida equilibrada y plena",
+        "visionNarrative": "En 10 anos quiero estar sano, ser libre financieramente y rodeado de relaciones significativas.",
+        "pillarTitle": "Salud",
+        "outcomeTitle": "Correr un maraton",
+        "outcomeDescription": "Entrenar consistentemente para completar un maraton de 42K en 12 meses.",
+        "focusTitle": "4 entrenamientos por semana"
+      },
+      "quarterlyGoals": "Objetivos Trimestrales",
+      "journeyView": "Vista de Viaje",
+      "primeVision": "Vision Prime",
+      "visionLabel": "Vision",
+      "visionTooltip": "Tu vision a 10 anos",
+      "primePillars": "Pilares Prime",
+      "primeOutcomes": "Resultados Prime",
+      "primeFocus": "Enfoque Trimestral",
+      "primeFocuses": "Enfoques Trimestrales",
+      "focusesTooltip": "Enfoques trimestrales de este resultado",
+      "pillarsTooltip": "Areas estrategicas (3 anos)",
+      "noQuarterlyGoals": "No hay objetivos trimestrales",
+      "hierarchyRequired": "Para crear una meta trimestral, primero necesitas completar la estructura base de tus objetivos.",
+      "hierarchySteps": "Pasos a seguir",
+      "stepCreatePillar": "Crear un Pilar (area estrategica a 3 anos)",
+      "stepCreateOutcome": "Crear un Resultado (objetivo clave a 1 ano)",
+      "stepCreateFocus": "Crear una Meta Trimestral (enfoque del trimestre)",
+      "useRoadmapTab": "Ve a la pestana 'Hoja de Ruta' para comenzar a crear tus objetivos siguiendo esta jerarquia.",
+      "objectives": "Objetivos",
+      "progress": "Progreso",
+      "period": "Periodo",
+      "editFocus": "Editar Enfoque",
+      "description": "Establece y sigue tus objetivos ambiciosos",
+      "sections": {
+        "active": "Objetivos Activos",
+        "completed": "Objetivos Completados",
+        "upcoming": "Proximos Objetivos"
+      },
+      "actions": {
+        "create": "Crear Objetivo",
+        "edit": "Editar Objetivo",
+        "delete": "Eliminar Objetivo",
+        "viewDetails": "Ver Detalles",
+        "save": "Guardar",
+        "cancel": "Cancelar",
+        "add": "Agregar"
+      },
+      "vision": {
+        "title": "Vision",
+        "form": {
+          "create": "Crear Vision",
+          "edit": "Editar Vision"
+        }
+      },
+      "pillar": {
+        "title": "Pilar",
+        "form": {
+          "create": "Crear Pilar",
+          "edit": "Editar Pilar"
+        }
+      },
+      "outcome": {
+        "title": "Resultado",
+        "form": {
+          "create": "Crear Resultado",
+          "edit": "Editar Resultado"
+        }
+      },
+      "focus": {
+        "title": "Enfoque",
+        "form": {
+          "create": "Crear Enfoque",
+          "edit": "Editar Enfoque"
+        }
+      },
+      "status": {
+        "notStarted": "No Iniciado",
+        "inProgress": "En Progreso",
+        "completed": "Completado",
+        "cancelled": "Cancelado"
+      },
+      "priority": {
+        "low": "Baja",
+        "medium": "Media",
+        "high": "Alta"
+      },
+      "form": {
+        "title": "Titulo",
+        "description": "Descripcion",
+        "startDate": "Fecha de Inicio",
+        "endDate": "Fecha de Fin",
+        "priority": "Prioridad",
+        "status": "Estado",
+        "progress": "Progreso",
+        "area": "Area",
+        "narrative": "Narrativa",
+        "year": "Ano",
+        "quarter": "Trimestre"
+      },
+      "edit": "Editar",
+      "createFocus": "Crear Foco",
+      "delete": "Eliminar",
+      "createOutcome": "Crear Resultado",
+      "editOutcome": "Editar Resultado",
+      "deadline": "Fecha Limite",
+      "cancel": "Cancelar",
+      "save": "Guardar",
+      "create": "Crear",
+      "area": "Area",
+      "year": "Ano",
+      "quarter": "Trimestre",
+      "areas": {
+        "mindset": "Mentalidad",
+        "finances": "Finanzas",
+        "career": "Carrera",
+        "health": "Salud",
+        "relationships": "Relaciones",
+        "lifestyle": "Estilo de Vida"
+      },
+      "messages": {
+        "created": "Objetivo creado exitosamente",
+        "updated": "Objetivo actualizado exitosamente",
+        "deleted": "Objetivo eliminado exitosamente"
+      },
+      "levels": {
+        "vision": "Vision (10 anos)",
+        "pillar": "Pilar (3 anos)",
+        "outcome": "Resultado (1 ano)",
+        "focus": "Foco (Trimestral)"
+      }
+    },
+    "tasks": {
+      "title": "Tareas",
+      "description": "Gestiona tus tareas y mantente organizado",
+      "newTask": "Nueva Tarea",
+      "editTask": "Editar Tarea",
+      "views": {
+        "list": "Lista",
+        "board": "Tablero",
+        "calendar": "Calendario",
+        "planner": "Planificador",
+        "week": "Semana"
+      },
+      "status": {
+        "open": "Pendiente",
+        "completed": "Completada",
+        "done": "Hecha"
+      },
+      "priority": {
+        "low": "Baja",
+        "medium": "Media",
+        "high": "Alta",
+        "med": "Med"
+      },
+      "createTask": "Crear Tarea",
+      "taskTitleRequired": "El titulo es obligatorio",
+      "taskTitleMaxLength": "El titulo es demasiado largo",
+      "taskDescriptionMaxLength": "La descripcion es demasiado larga",
+      "dueDateInvalid": "Fecha invalida",
+      "workDurationMin": "La duracion debe ser al menos 1 minuto",
+      "workDurationMax": "La duracion debe ser menor a 8 horas",
+      "invalidTags": "Etiquetas invalidas",
+      "labels": {
+        "title": "Titulo",
+        "description": "Descripcion",
+        "priority": "Prioridad",
+        "status": "Estado",
+        "estimatedTime": "Tiempo estimado",
+        "tags": "Etiquetas",
+        "dueDate": "Fecha Limite",
+        "estimatedDuration": "Duracion Estimada (minutos)"
+      },
+      "dateLabels": {
+        "today": "Hoy",
+        "tomorrow": "Manana",
+        "daysLeft": "dias restantes",
+        "daysOverdue": "dias de retraso",
+        "overdue": "Vencida"
+      },
+      "allTasksMessages": {
+        "today": "Hoy",
+        "tomorrow": "Manana",
+        "yesterday": "Ayer"
+      },
+      "actions": {
+        "start": "Iniciar",
+        "edit": "Editar",
+        "delete": "Eliminar",
+        "create": "Crear",
+        "deleteConfirm": "Eliminar tarea?"
+      },
+      "weeklyPlanning": {
+        "taskMoved": "Tarea movida",
+        "movedToDate": "Tarea movida a {date}",
+        "movedToBacklog": "Tarea movida al backlog"
+      },
+      "todayTasks": "Tareas de Hoy",
+      "loading": "Cargando...",
+      "noTasksForToday": "No hay tareas para hoy",
+      "understood": "Entendido",
+      "messages": {
+        "created": "Tarea creada correctamente",
+        "updated": "Tarea actualizada correctamente",
+        "deleted": "Tarea eliminada correctamente",
+        "completed": "Tarea marcada como completada",
+        "taskCreated": "Tarea creada correctamente",
+        "taskUpdated": "Tarea actualizada correctamente",
+        "taskDeleted": "Tarea eliminada correctamente",
+        "taskDeletedDesc": "Esta accion no se puede deshacer.",
+        "taskRescheduled": "Tarea reprogramada",
+        "taskScheduled": "Tarea programada",
+        "taskScheduledDescription": "La tarea ha sido programada exitosamente",
+        "taskUnschedulled": "Tarea desprogramada",
+        "taskUnschedulledDescription": "Tarea removida del horario",
+        "taskUpdateFailed": "Error al actualizar tarea",
+        "taskDeleteFailed": "Error al eliminar tarea",
+        "taskScheduledTomorrow": "Tarea programada para manana",
+        "taskScheduledTomorrowDescription": "No hay espacio disponible hoy. Tarea programada para manana.",
+        "error": "Ocurrio un error"
+      },
+      "backlog": "Backlog",
+      "backlogEmpty": "No hay tareas en el backlog",
+      "reschedule": "Reprogramar",
+      "noDate": "Sin fecha",
+      "allTasks": "Todas las tareas",
+      "noTasksFound": "No se encontraron tareas.",
+      "archive": "Archivo",
+      "quickAddPlaceholder": "Agregar tarea...",
+      "focus": {
+        "actual": "Actual",
+        "planned": "Estimado",
+        "startLabel": "Inicio:",
+        "dueLabel": "Vence",
+        "stop": "Detener",
+        "start": "Iniciar"
+      },
+      "addTaskDescription": "Agrega una tarea para empezar tu dia",
+      "loadingFocus": "Cargando tareas prioritarias...",
+      "focusHeader": "{{count}} tarea de alta prioridad para enfocarse",
+      "focusHeaderPlural": "{{count}} tareas de alta prioridad para enfocarse",
+      "allClear": "Todo al dia!",
+      "allClearDescription": "No hay tareas de alta prioridad ahora. Buen trabajo.",
+      "searchPlaceholder": "Buscar tareas...",
+      "clearFilters": "Limpiar filtros",
+      "taskCount": "{{count}} tarea",
+      "taskCountPlural": "{{count}} tareas",
+      "noMatchingTasks": "No hay tareas que coincidan",
+      "noTasksYet": "No hay tareas aun",
+      "noMatchingTasksDescription": "Intenta un termino de busqueda diferente o limpia los filtros",
+      "noTasksYetDescription": "Crea tu primera tarea para empezar a organizar",
+      "loadingWeekly": "Cargando vista semanal...",
+      "allWeek": "Toda la semana",
+      "noTasksThisWeek": "No hay tareas esta semana",
+      "noTasksThisWeekDescription": "Programa tareas para verlas en la vista semanal",
+      "swipe": {
+        "done": "Hecho",
+        "undo": "Deshacer",
+        "delete": "Eliminar"
+      },
+      "placeholders": {
+        "taskTitle": "Que necesitas hacer?",
+        "taskDescription": "Agrega mas detalles...",
+        "tagInput": "Agrega etiqueta y presiona enter"
+      },
+      "completedCount": "{{completed}}/{{total}} completadas",
+      "filterAll": "Todas",
+      "errorLoadingTitle": "No se pudieron cargar las tareas",
+      "errorLoadingDescription": "Verifica tu conexion e intentalo de nuevo"
+    },
+    "habits": {
+      "title": "Habitos",
+      "description": "Construye rutinas positivas",
+      "newHabit": "Nuevo Habito",
+      "streak": "{{days}} dias de racha",
+      "habitTracker": "Rastreador de Habitos",
+      "habit": "Habito",
+      "habitStats": "Estadisticas de Habitos",
+      "habitTitle": "Nombre del Habito",
+      "habitTitlePlaceholder": "ej. Leer 30 minutos",
+      "habitDescription": "Descripcion",
+      "habitDescriptionPlaceholder": "Por que es importante este habito?",
+      "habitCategory": "Categoria",
+      "customCategory": "Categoria Personalizada",
+      "habitColor": "Color",
+      "habitTitleRequired": "El nombre del habito es obligatorio",
+      "habitTitleMaxLength": "El nombre del habito es demasiado largo",
+      "habitDescriptionMaxLength": "La descripcion es demasiado larga",
+      "createNewHabitToTrack": "Crea un nuevo habito para rastrear",
+      "updateHabitDetails": "Actualizar detalles del habito",
+      "actions": {
+        "create": "Crear Habito",
+        "update": "Actualizar Habito",
+        "edit": "Editar Habito",
+        "delete": "Eliminar Habito"
+      },
+      "completionRate": "Tasa de Finalizacion",
+      "longestStreaks": "Rachas mas largas",
+      "streakRanking": "Ranking de Rachas",
+      "errorLoadingHabits": "Error al cargar habitos",
+      "days": {
+        "sun": "Dom",
+        "mon": "Lun",
+        "tue": "Mar",
+        "wed": "Mie",
+        "thu": "Jue",
+        "fri": "Vie",
+        "sat": "Sab"
+      },
+      "frequency": {
+        "label": "Frecuencia",
+        "weekDaysLabel": "Dias Especificos",
+        "dailyLabel": "Diario",
+        "selectDays": "Seleccionar Dias",
+        "daily": "Diario",
+        "weekly": "Semanal",
+        "monthly": "Mensual",
+        "custom": "Personalizado"
+      },
+      "categories": {
+        "healthFitness": "Salud y Fitness",
+        "learningDevelopment": "Aprendizaje y Desarrollo",
+        "workProductivity": "Trabajo y Productividad",
+        "mindfulnessWellbeing": "Mindfulness y Bienestar",
+        "socialRelationships": "Social y Relaciones",
+        "creativeHobbies": "Creatividad y Hobbies",
+        "financeMoney": "Finanzas y Dinero",
+        "homeEnvironment": "Hogar y Entorno"
+      },
+      "stats": {
+        "completionRate": "Tasa de completado",
+        "bestStreak": "Mejor racha"
+      },
+      "messages": {
+        "created": "Habito creado",
+        "updated": "Habito actualizado",
+        "deleted": "Habito eliminado",
+        "completed": "Bien hecho!",
+        "uncompleted": "Habito desmarcado",
+        "futureNotAllowed": "No puedes marcar habitos en el futuro"
+      },
+      "deleteTitle": "Eliminar habito?",
+      "deleteConfirmation": "Estas seguro de que quieres eliminar este habito? Esta accion no se puede deshacer."
+    },
+    "finances": {
+      "title": "Finanzas",
+      "description": "Controla tus ingresos y gastos",
+      "unbudgeted": "Sin Presupuesto",
+      "nav": {
+        "today": "Hoy",
+        "monthly": "Sistema Mensual",
+        "history": "Historial",
+        "overview": "Resumen",
+        "transactions": "Transacciones",
+        "budgets": "Presupuestos",
+        "accounts": "Cuentas",
+        "goals": "Metas de Ahorro",
+        "debts": "Deudas",
+        "planning": "Planificacion"
+      },
+      "today": {
+        "narrativePositive": "Este mes vas ",
+        "narrativeGood": "Vas bien.",
+        "narrativeNegative": "Este mes vas ",
+        "narrativeCaution": "Ten cuidado.",
+        "availableToday": "Disponible hoy",
+        "basedOnBudgets": "Basado en tu presupuesto mensual restante",
+        "addExpense": "Gasto",
+        "addIncome": "Ingreso",
+        "budgetAlert": "{{category}} esta al {{percentage}}%",
+        "netWorthTrend": "Tendencia de Patrimonio"
+      },
+      "monthly": {
+        "title": "Sistema Mensual",
+        "budgets": {
+          "title": "Presupuestos",
+          "manage": "Gestionar",
+          "empty": "No hay presupuestos definidos",
+          "create": "Crear Presupuesto",
+          "spent": "Gastado",
+          "remaining": "Restante"
+        },
+        "flow": {
+          "title": "Flujo de Caja",
+          "income": "Entra",
+          "expense": "Sale",
+          "net": "Neto"
+        },
+        "debts": {
+          "title": "Deudas",
+          "manage": "Gestionar",
+          "empty": "Sin deudas rastreadas",
+          "add": "Agregar Deuda",
+          "minPayment": "Min"
+        },
+        "accounts": {
+          "title": "Cuentas",
+          "add": "Agregar",
+          "manage": "Gestionar",
+          "empty": "No hay cuentas conectadas",
+          "connect": "Conectar Cuenta"
+        },
+        "goals": {
+          "title": "Metas de Ahorro",
+          "add": "Agregar",
+          "manage": "Gestionar",
+          "empty": "No hay metas de ahorro activas",
+          "create": "Crear Meta",
+          "monthlyContribution": "Ahorrar"
+        },
+        "income": {
+          "title": "Planeacion de Ingresos",
+          "add": "Agregar Fuente",
+          "manage": "Gestionar",
+          "empty": "No hay fuentes de ingreso planeadas",
+          "create": "Planear Ingreso"
+        }
+      },
+      "steps": {
+        "essentials": "Esenciales",
+        "amountCurrency": "Monto y Moneda",
+        "advanced": "Avanzado",
+        "details": "Detalles",
+        "goalDetails": "Detalles de Meta",
+        "targets": "Objetivos",
+        "timeline": "Cronologia",
+        "identity": "Identidad",
+        "configuration": "Configuracion",
+        "allocation": "Asignacion"
+      },
+      "createBudget": "Crear Presupuesto",
+      "editBudget": "Editar Presupuesto",
+      "createBudgetDescription": "Crea un nuevo presupuesto para rastrear tus gastos",
+      "editBudgetDescription": "Actualiza los detalles de tu presupuesto",
+      "budgetName": "Nombre del Presupuesto",
+      "enterBudgetName": "Ingresa el nombre",
+      "descriptionField": "Descripcion",
+      "enterDescription": "Ingresa una descripcion",
+      "optional": "Opcional",
+      "period": "Periodo",
+      "selectPeriod": "Seleccionar Periodo",
+      "quarterly": "Trimestral",
+      "budgetType": "Tipo de Presupuesto",
+      "income": "Ingreso",
+      "expense": "Gasto",
+      "variability": "Variabilidad",
+      "selectVariability": "Seleccionar Variabilidad",
+      "startDate": "Fecha de Inicio",
+      "endDate": "Fecha de Fin",
+      "totalAmount": "Monto Total",
+      "addSource": "Agregar Fuente",
+      "editSource": "Editar Fuente",
+      "incomeSourceFormDescription": "Agrega una nueva fuente de ingresos a tu plan.",
+      "notApplicableForFixed": "La configuracion avanzada no aplica para ingresos fijos.",
+      "createFinancialGoal": "Crear Meta Financiera",
+      "editGoal": "Editar Meta",
+      "updateGoalDetails": "Actualiza los detalles de tu meta",
+      "setSavingsTarget": "Establece una meta de ahorro",
+      "goalTitle": "Titulo de la Meta",
+      "emergencyFund": "Fondo de Emergencia",
+      "priority": "Prioridad",
+      "low": "Baja",
+      "medium": "Media",
+      "high": "Alta",
+      "targetAmount": "Monto Objetivo",
+      "currentAmountOptional": "Monto Actual (Opcional)",
+      "deadline": "Fecha Limite",
+      "selectDate": "Seleccionar Fecha",
+      "name": "Nombre",
+      "namePlaceholder": "ej. Salario, Freelance",
+      "type": "Tipo",
+      "selectType": "Seleccionar Tipo",
+      "fixed": "Fijo",
+      "variable": "Variable",
+      "frequency": "Frecuencia",
+      "selectFrequency": "Seleccionar Frecuencia",
+      "frequencies": {
+        "daily": "Diario",
+        "weekly": "Semanal",
+        "monthly": "Mensual",
+        "yearly": "Anual"
+      },
+      "currency": "Moneda",
+      "baseAmount": "Monto Base",
+      "estimatedAmount": "Monto Estimado",
+      "fixedAmount": "Monto Fijo",
+      "probability": "Probabilidad",
+      "estimationStrategy": "Estrategia de Estimacion",
+      "average": "Promedio",
+      "moving_average": "Promedio Movil",
+      "median": "Mediana",
+      "historicalWindowDays": "Ventana Historica (Dias)",
+      "category": "Categoria",
+      "salary": "Salario",
+      "rent": "Renta",
+      "pension": "Pension",
+      "sales": "Ventas",
+      "commissions": "Comisiones",
+      "projects": "Proyectos",
+      "other": "Otro",
+      "active": "Activo",
+      "isActiveDesc": "Esta fuente de ingresos esta activa?",
+      "notes": "Notas",
+      "additionalNotes": "Notas Adicionales",
+      "history": {
+        "title": "Historial",
+        "views": {
+          "feed": "Feed",
+          "table": "Tabla"
+        },
+        "today": "Hoy",
+        "yesterday": "Ayer",
+        "noTransactions": "No hay transacciones"
+      },
+      "planning": {
+        "expectedIncome": "Ingreso Esperado",
+        "plannedExpenses": "Gastos Planeados",
+        "savingsTarget": "Meta de Ahorro",
+        "freeCashFlow": "Flujo de Caja Libre"
+      },
+      "health_good": "Saludable",
+      "health_warning": "Requiere Atencion",
+      "health_critical": "Critico",
+      "incomeSources": {
+        "title": "Fuentes de Ingreso",
+        "noIncomeSources": "No hay fuentes de ingreso",
+        "addSource": "Agregar Fuente",
+        "source": "Fuente",
+        "selectSource": "Seleccionar fuente"
+      },
+      "overview": "Resumen Financiero",
+      "financialOverview": {
+        "title": "Resumen Financiero",
+        "monthlyTrend": "Tendencia Mensual",
+        "noTrendData": "No hay datos de tendencia disponibles",
+        "expenses": "Gastos",
+        "cashFlowAnalysis": "Analisis de Flujo de Caja",
+        "averageMonthlyIncome": "Promedio de Ingresos Mensuales",
+        "averageMonthlyExpenses": "Promedio de Gastos Mensuales",
+        "averageNetIncome": "Promedio de Ingreso Neto"
+      },
+      "transactions": {
+        "title": "Transacciones",
+        "add": "Agregar Transaccion",
+        "income": "Ingreso",
+        "expense": "Gasto",
+        "transfer": "Transferencia",
+        "searchTransactions": "Buscar transacciones...",
+        "recent": "Transacciones Recientes",
+        "latestActivity": "Ultima actividad financiera",
+        "noTransactions": "No se encontraron transacciones",
+        "allCount": "{{count}} transacciones",
+        "unbudgeted": "Sin presupuesto",
+        "status": {
+          "pending": "Pendiente",
+          "cleared": "Liquidado",
+          "reconciled": "Conciliado",
+          "excluded": "Excluido",
+          "included": "Incluido"
+        },
+        "filters": {
+          "allAccounts": "Todas las Cuentas",
+          "allTypes": "Todos los Tipos",
+          "type": "Tipo",
+          "account": "Cuenta"
+        },
+        "columns": {
+          "description": "Descripcion",
+          "budget": "Presupuesto",
+          "date": "Fecha",
+          "status": "Estado",
+          "amount": "Cantidad",
+          "actions": "Acciones"
+        },
+        "form": {
+          "title": "Detalles de la Transaccion",
+          "additional": "Adicional",
+          "details": "Detalles",
+          "description": "Descripcion",
+          "date": "Fecha",
+          "amount": "Cantidad",
+          "type": "Tipo",
+          "account": "Cuenta",
+          "fromAccount": "Desde Cuenta",
+          "toAccount": "Para Cuenta",
+          "budget": "Presupuesto",
+          "tags": "Etiquetas",
+          "notes": "Notas",
+          "debt": {
+            "markAsPayment": "Marcar como Pago de Deuda",
+            "select": "Seleccionar Deuda"
+          },
+          "placeholders": {
+            "description": "Ingresa una descripcion",
+            "notes": "Ingresa notas",
+            "tags": "Ingresa etiquetas",
+            "selectAccount": "Seleccionar cuenta",
+            "selectTargetAccount": "Seleccionar cuenta destino",
+            "selectBudget": "Seleccionar presupuesto"
+          }
+        }
+      },
+      "budgets": {
+        "title": "Presupuestos",
+        "create": "Crear Presupuesto",
+        "spent": "Gastado",
+        "remaining": "Restante",
+        "noBudgets": "No hay presupuestos definidos",
+        "addBudget": "Agregar Presupuesto"
+      },
+      "addTransactionDialog": "Anadir Transaccion",
+      "goals": {
+        "title": "Metas de Ahorro",
+        "noGoals": "No hay metas de ahorro",
+        "addGoal": "Agregar Meta"
+      },
+      "debts": {
+        "title": "Deudas",
+        "actions": {
+          "add": "Agregar Deuda",
+          "edit": "Editar Deuda",
+          "delete": "Eliminar Deuda",
+          "makePayment": "Realizar Pago",
+          "viewMore": "Ver Mas",
+          "viewLess": "Ver Menos",
+          "cancel": "Cancelar",
+          "search": "Buscar..."
+        },
+        "fields": {
+          "name": "Nombre de la Deuda",
+          "namePlaceholder": "ej., Tarjeta de Credito",
+          "creditor": "Acreedor",
+          "creditorPlaceholder": "Nombre del Banco",
+          "category": "Categoria",
+          "categoryPlaceholder": "Seleccionar categoria",
+          "description": "Descripcion",
+          "descriptionPlaceholder": "Por que es importante esta deuda?",
+          "totalAmount": "Monto Total",
+          "totalAmountPlaceholder": "0.00",
+          "paidAmount": "Monto Pagado",
+          "paidAmountPlaceholder": "0.00",
+          "currency": "Moneda",
+          "interestRate": "Tasa de Interes (%)",
+          "interestRatePlaceholder": "0.00",
+          "dueDate": "Fecha de Vencimiento (Opcional)",
+          "paymentDay": "Dia de Pago",
+          "paymentDayPlaceholder": "1-31",
+          "installmentCount": "Numero de Cuotas",
+          "installmentCountPlaceholder": "12",
+          "installmentAmount": "Monto de la Cuota",
+          "remaining": "Restante",
+          "progress": "Progreso"
+        },
+        "status": {
+          "paid": "Pagado",
+          "overdue": "Vencido",
+          "dueIn": "Vence en",
+          "active": "Activo",
+          "inactive": "Inactivo"
+        },
+        "categories": {
+          "creditCard": "Tarjeta de Credito",
+          "personalLoan": "Prestamo Personal",
+          "mortgage": "Hipoteca",
+          "studentLoan": "Prestamo Estudiantil",
+          "autoLoan": "Prestamo Automotriz",
+          "medical": "Medico",
+          "business": "Negocio",
+          "other": "Otro"
+        },
+        "installments": {
+          "title": "Cuotas",
+          "overdueByDays": "Vencido hace {days} dias",
+          "dueToday": "Vence hoy",
+          "dueTomorrow": "Vence manana",
+          "dueInDays": "Vence en {days} dias",
+          "nextPaymentDate": "Proximo Pago",
+          "count": "Cuotas",
+          "interest": "Interes",
+          "totalWithInterest": "Total con Interes",
+          "totalInterest": "Interes Total",
+          "calculate": "Calcular"
+        },
+        "steps": {
+          "basicInfo": "Informacion Basica",
+          "financialDetails": "Detalles Financieros",
+          "installments": "Cuotas"
+        },
+        "filters": {
+          "allCategories": "Todas las Categorias"
+        },
+        "messages": {
+          "loading": "Cargando deudas...",
+          "noDebtsFound": "No se encontraron deudas con tus criterios",
+          "noDebtsYet": "Aun no tienes deudas",
+          "addFirst": "Agrega tu primera deuda para comenzar a rastrear",
+          "deleteConfirmTitle": "Eliminar Deuda?",
+          "deleteConfirmDescription": "Estas seguro de que deseas eliminar esta deuda? Esta accion no se puede deshacer.",
+          "saveFailed": "Error al guardar",
+          "saveFailedDescription": "Error al guardar los detalles de la deuda. Intentalo de nuevo.",
+          "createTitle": "Crear Nueva Deuda",
+          "createDescription": "Agrega una nueva deuda para rastrear",
+          "updateTitle": "Editar Deuda",
+          "updateDescription": "Actualiza los detalles de la deuda"
+        }
+      },
+      "totalBalance": "Balance Total",
+      "monthlyIncome": "Ingresos Mensuales",
+      "monthlyExpenses": "Gastos Mensuales",
+      "savingsRate": "Tasa de Ahorro",
+      "positiveCashFlow": "Flujo de caja positivo",
+      "negativeCashFlow": "Flujo de caja negativo",
+      "thisMonth": "Este mes",
+      "ofMonthlyIncome": "de los ingresos mensuales",
+      "noBudget": "Sin presupuesto",
+      "actions": {
+        "edit": "Editar",
+        "saving": "Guardando...",
+        "deactivate": "Desactivar",
+        "activate": "Activar"
+      },
+      "accounts": {
+        "title": "Cuentas",
+        "add": "Agregar Cuenta",
+        "edit": "Editar Cuenta",
+        "delete": "Eliminar",
+        "noAccountsFound": "No se encontraron cuentas",
+        "noAccountsDescription": "Comienza creando tu primera cuenta bancaria o financiera.",
+        "copied": "Numero de cuenta copiado",
+        "confirmDelete": "Estas seguro de que deseas eliminar esta cuenta? Esta accion no se puede deshacer.",
+        "currentBalance": "Saldo Actual",
+        "creditLimit": "Limite de Credito",
+        "types": {
+          "checking": "Cuenta Corriente",
+          "savings": "Cuenta de Ahorros",
+          "credit_card": "Tarjeta de Credito",
+          "investment": "Cuenta de Inversion",
+          "cash": "Efectivo",
+          "loan": "Cuenta de Prestamo"
+        },
+        "form": {
+          "descriptions": {
+            "edit": "Actualiza los detalles permitidos de tu cuenta.",
+            "editLocked": "Campos como tipo de cuenta, moneda y saldo inicial no se pueden cambiar despues de la creacion porque impactan los calculos financieros.",
+            "create": "Crea una nueva cuenta bancaria o financiera"
+          },
+          "name": "Nombre de la Cuenta",
+          "type": "Tipo de Cuenta",
+          "currency": "Moneda",
+          "initialBalance": "Saldo Inicial",
+          "creditLimit": "Limite de Credito",
+          "bankName": "Nombre del Banco",
+          "accountNumber": "Numero de Cuenta",
+          "isActive": "Cuenta Activa",
+          "isActiveDesc": "Habilitar esta cuenta para transacciones",
+          "placeholders": {
+            "name": "Ingresa el nombre de la cuenta",
+            "selectCurrency": "Seleccionar moneda",
+            "bankName": "Ingresa el nombre del banco",
+            "accountNumber": "Ingresa el numero de cuenta"
+          },
+          "saveChanges": "Guardar Cambios"
+        }
+      },
+      "planningDescription": "Planifica tu futuro financiero",
+      "net": "Neto",
+      "expensesShort": "Gastos",
+      "incomeShort": "Ingresos",
+      "activeBudgets": "Presupuestos Activos",
+      "savingsShort": "Ahorros",
+      "recentTransactions": "Transacciones Recientes",
+      "noTransactionsYet": "No hay transacciones aun",
+      "perMonth": "/mes",
+      "targetLabel": "Meta",
+      "ofAmount": "de {amount}",
+      "transactionForm": {
+        "title": "Nueva Transaccion",
+        "type": "Tipo",
+        "income": "Ingreso",
+        "expense": "Gasto",
+        "transfer": "Transferencia",
+        "amount": "Monto",
+        "description": "Descripcion",
+        "descriptionPlaceholder": "Para que fue?",
+        "account": "Cuenta",
+        "notes": "Notas (opcional)",
+        "notesPlaceholder": "Detalles adicionales...",
+        "saving": "Guardando...",
+        "addTransaction": "Agregar Transaccion"
+      },
+      "quickAdd": "Agregar rapido",
+      "savingsOverview": "Resumen de Ahorros",
+      "recurringExpenses": {
+        "title": "Recurrentes",
+        "autoPay": "Auto",
+        "inactive": "Inactivo",
+        "amount": "Monto",
+        "paymentDay": "Dia",
+        "totalMonthly": "Total Mensual",
+        "activeExpenses": "gastos activos",
+        "messages": {
+          "noExpensesYet": "No hay gastos recurrentes aun",
+          "addFirst": "Agrega tu primer gasto recurrente para comenzar a rastrear"
+        }
+      },
+      "incomeSection": {
+        "title": "Ingresos",
+        "active": "Activo",
+        "inactive": "Inactivo",
+        "amountPerFrequency": "Por periodo",
+        "monthlyEquivalent": "Mensual",
+        "totalMonthly": "Ingreso Mensual Total",
+        "activeSources": "fuentes activas",
+        "messages": {
+          "noSourcesYet": "No hay fuentes de ingreso aun",
+          "addFirst": "Agrega tu primera fuente de ingreso para comenzar a rastrear"
+        }
+      },
+      "pending": {
+        "title": "Pendientes",
+        "approve": "Aprobar",
+        "exclude": "Excluir",
+        "awaiting": "En espera de revision",
+        "transactions": "transacciones",
+        "messages": {
+          "noPending": "No hay transacciones pendientes",
+          "allReviewed": "Todas las transacciones han sido revisadas"
+        }
+      },
+      "investmentForm": {
+        "title": "Nueva Inversion",
+        "name": "Nombre de la Inversion",
+        "namePlaceholder": "ej. Acciones Apple, Bitcoin",
+        "ticker": "Simbolo Ticker",
+        "tickerPlaceholder": "ej. AAPL, BTC",
+        "type": "Tipo de Inversion",
+        "platform": "Plataforma",
+        "platformPlaceholder": "ej. Robinhood, Coinbase",
+        "totalInvested": "Monto Invertido",
+        "currentValue": "Valor Actual",
+        "purchaseDate": "Fecha de Compra",
+        "notes": "Notas (opcional)",
+        "notesPlaceholder": "Detalles adicionales...",
+        "saving": "Guardando...",
+        "addInvestment": "Agregar Inversion",
+        "types": {
+          "stocks": "Acciones",
+          "bonds": "Bonos",
+          "etf": "ETF",
+          "crypto": "Cripto",
+          "real_estate": "Bienes Raices",
+          "mutual_fund": "Fondo Mutuo",
+          "other": "Otro"
+        }
+      },
+      "accountForm": {
+        "title": "Nueva Cuenta",
+        "editTitle": "Editar Cuenta",
+        "name": "Nombre de la Cuenta",
+        "namePlaceholder": "ej. Cuenta Principal",
+        "type": "Tipo de Cuenta",
+        "bankName": "Nombre del Banco",
+        "bankNamePlaceholder": "ej. BBVA, Santander",
+        "currency": "Moneda",
+        "initialBalance": "Saldo Inicial",
+        "creditLimit": "Limite de Credito (opcional)",
+        "saving": "Guardando...",
+        "addAccount": "Agregar Cuenta",
+        "saveChanges": "Guardar Cambios",
+        "types": {
+          "checking": "Corriente",
+          "savings": "Ahorros",
+          "credit": "Tarjeta de Credito",
+          "investment": "Inversion",
+          "cash": "Efectivo",
+          "other": "Otro"
+        }
+      },
+      "investments": {
+        "title": "Inversiones",
+        "invested": "Invertido",
+        "current": "Actual",
+        "gain": "Ganancia",
+        "portfolioValue": "Valor del Portafolio",
+        "position": "posicion",
+        "positions": "posiciones",
+        "since": "Desde",
+        "noInvestmentsYet": "No hay inversiones aun",
+        "noInvestmentsDescription": "Agrega tu primera inversion para comenzar a rastrear tu portafolio"
+      }
+    },
+    "ai": {
+      "title": "Asistente IA",
+      "description": "Tu asistente personal de productividad",
+      "inputPlaceholder": "Preguntame lo que sea...",
+      "welcome": "Hola, en que puedo ayudarte hoy?",
+      "disclaimer": "La IA puede cometer errores. Verifica la informacion importante.",
+      "openButton": "Abrir Asistente IA",
+      "examples": {
+        "title": "Prueba preguntando sobre:",
+        "tasks": "Como puedo mejorar mi gestion de tareas?",
+        "finance": "Como puedo ahorrar mas dinero?",
+        "goals": "Ayudame a establecer metas realistas"
+      },
+      "chat": {
+        "emptyTitle": "Vision Assistant",
+        "emptyDescription": "Tu companero para alcanzar tu Prime State. Preguntame sobre tu vision, finanzas, tareas o productividad.",
+        "placeholder": "Escribe un mensaje...",
+        "microphone": "Microfono",
+        "searchModel": "Buscar modelo...",
+        "noModels": "No se encontraron modelos.",
+        "chatError": "Error en el chat: ",
+        "saveError": "Error al guardar",
+        "connectionError": "Error de conexion",
+        "saved": "Guardado",
+        "proposalConfirmed": "Propuesta confirmada y guardada exitosamente.",
+        "proposalCancelled": "Propuesta cancelada",
+        "proposalRejectedSystem": "El usuario rechazo la propuesta. Pregunta si desea modificar algo."
+      },
+      "comingSoon": "Chat IA disponible pronto! Conecta tu backend para habilitar esta funcion.",
+      "primeAI": "Prime IA",
+      "askAnything": "Pregunta lo que sea...",
+      "suggestions": {
+        "vision": "Quiero crear mi vision personal",
+        "finances": "Ayudame a organizar mis finanzas",
+        "quarterGoals": "Planificar mis objetivos del trimestre",
+        "productivity": "Analizar mi productividad",
+        "todayTasks": "Cuales son mis tareas de hoy?",
+        "analyzeFinances": "Analizar mis finanzas",
+        "reviewGoals": "Revisar mis objetivos",
+        "planWeek": "Planificar mi semana",
+        "productivityTips": "Consejos de productividad",
+        "monthlyReport": "Reporte mensual"
+      },
+      "tools": {
+        "getPrimeVisions": {
+          "label": "Vision personal",
+          "loadingLabel": "Consultando vision personal..."
+        },
+        "getPrimePillars": {
+          "label": "Pilares estrategicos",
+          "loadingLabel": "Consultando pilares..."
+        },
+        "getPrimeOutcomes": {
+          "label": "Resultados esperados",
+          "loadingLabel": "Consultando objetivos..."
+        },
+        "getPrimeQuarterFocuses": {
+          "label": "Focos trimestrales",
+          "loadingLabel": "Consultando focos..."
+        },
+        "getUserTasks": {
+          "label": "Tareas",
+          "loadingLabel": "Consultando tareas..."
+        },
+        "getTasks": {
+          "label": "Tareas",
+          "loadingLabel": "Consultando tareas..."
+        },
+        "getFinancialSummary": {
+          "label": "Resumen financiero",
+          "loadingLabel": "Analizando finanzas..."
+        },
+        "getBudgets": {
+          "label": "Presupuestos",
+          "loadingLabel": "Consultando presupuestos..."
+        },
+        "getDebts": {
+          "label": "Deudas",
+          "loadingLabel": "Consultando deudas..."
+        },
+        "getSavingsGoals": {
+          "label": "Objetivos de ahorro",
+          "loadingLabel": "Consultando ahorros..."
+        },
+        "getGoals": {
+          "label": "Objetivos",
+          "loadingLabel": "Consultando objetivos..."
+        },
+        "createPrimeVision": {
+          "label": "Crear / actualizar vision personal",
+          "loadingLabel": "Preparando propuesta...",
+          "writeLabel": "Guardar Vision"
+        },
+        "createPrimePillar": {
+          "label": "Crear pilar estrategico",
+          "loadingLabel": "Preparando pilar...",
+          "writeLabel": "Guardar Pilar"
+        },
+        "createPrimeOutcome": {
+          "label": "Crear resultado esperado",
+          "loadingLabel": "Preparando objetivo...",
+          "writeLabel": "Guardar Objetivo"
+        },
+        "createPrimeQuarterFocus": {
+          "label": "Crear foco trimestral",
+          "loadingLabel": "Preparando foco...",
+          "writeLabel": "Guardar Foco"
+        },
+        "executingFallback": "Ejecutando",
+        "deletePrimeVision": {
+          "label": "Eliminar vision personal",
+          "loadingLabel": "Preparando eliminacion...",
+          "writeLabel": "Eliminar definitivamente"
+        }
+      },
+      "areas": {
+        "finances": "Finanzas",
+        "career": "Carrera",
+        "health": "Salud",
+        "relationships": "Relaciones",
+        "mindset": "Mentalidad",
+        "lifestyle": "Estilo de Vida"
+      },
+      "proposal": {
+        "pending": "Pendiente de confirmacion",
+        "warning": "Esta accion modificara tus datos. Revisa los detalles antes de confirmar.",
+        "cancel": "Cancelar",
+        "saving": "Guardando...",
+        "fields": {
+          "title": "Titulo",
+          "narrative": "Narrativa",
+          "area": "Area",
+          "description": "Descripcion",
+          "targetDate": "Fecha objetivo",
+          "period": "Periodo"
+        },
+        "deleteWarning": "Esto eliminara permanentemente la vision y TODOS sus pilares, objetivos y focos trimestrales. Esta accion no se puede deshacer.",
+        "deleting": "Eliminando..."
+      }
+    },
+    "settings": {
+      "title": "Configuracion",
+      "dangerous": "Zona de Peligro",
+      "preferences": {
+        "title": "Preferencias",
+        "description": "Gestiona tu idioma, region y moneda"
+      },
+      "currency": {
+        "title": "Moneda",
+        "description": "Configura tus preferencias de moneda"
+      },
+      "theme": {
+        "title": "Tema",
+        "light": "Claro",
+        "dark": "Oscuro",
+        "system": "Sistema",
+        "description": "Elige tu tema preferido"
+      },
+      "language": {
+        "title": "Idioma",
+        "select": "Seleccionar idioma",
+        "description": "Elige tu idioma preferido"
+      },
+      "languageLabel": "Idioma",
+      "selectLanguage": "Seleccionar idioma",
+      "languageUpdateSuccess": "Idioma actualizado correctamente",
+      "languageUpdateError": "Error al actualizar idioma",
+      "workingHours": {
+        "title": "Horario Laboral",
+        "description": "Configura tu horario de trabajo",
+        "startLabel": "Hora de inicio",
+        "endLabel": "Hora de fin",
+        "defaultTaskDuration": "Duracion predeterminada (min)",
+        "maxTasksPerDay": "Max. tareas por dia",
+        "workDays": "Dias laborales",
+        "overflowStrategy": {
+          "label": "Estrategia de desbordamiento",
+          "backlog": "Mover al Backlog",
+          "overtime": "Programar igual (Horas extra)"
+        },
+        "days": {
+          "mon": "Lun",
+          "tue": "Mar",
+          "wed": "Mie",
+          "thu": "Jue",
+          "fri": "Vie",
+          "sat": "Sab",
+          "sun": "Dom"
+        }
+      },
+      "timezone": {
+        "title": "Zona Horaria",
+        "description": "Configura tu zona horaria local",
+        "label": "Zona Horaria"
+      },
+      "calendars": {
+        "title": "Calendarios",
+        "description": "Gestiona tus calendarios conectados",
+        "connectGoogle": "Conectar Google Calendar",
+        "noCalendars": "No hay calendarios conectados",
+        "primary": "Principal",
+        "secondary": "Secundario",
+        "useForSync": "Sincronizar"
+      },
+      "notifications": {
+        "title": "Notificaciones",
+        "description": "Gestiona tus preferencias de notificaciones",
+        "enableTitle": "Activar Notificaciones",
+        "enableDescription": "Activa las notificaciones para mantenerte al dia.",
+        "enableButton": "Activar",
+        "permissionDenied": "Permiso denegado. Por favor activa las notificaciones en la configuracion del dispositivo.",
+        "notSupported": "Notificaciones no soportadas en este dispositivo.",
+        "types": {
+          "habitReminders": {
+            "title": "Recordatorios de Habitos",
+            "description": "Recibe recordatorios para completar tus habitos"
+          },
+          "pomodoroAlerts": {
+            "title": "Alertas Pomodoro",
+            "description": "Notificaciones para sesiones de foco y descansos"
+          },
+          "taskReminders": {
+            "title": "Recordatorios de Tareas",
+            "description": "Recordatorios para tareas proximas a vencer"
+          },
+          "dailyMotivation": {
+            "title": "Motivacion Diaria",
+            "description": "Motivacion matutina para empezar tu dia"
+          },
+          "marketingMessages": {
+            "title": "Novedades y Consejos",
+            "description": "Noticias y consejos de productividad"
+          }
+        }
+      },
+      "dangerZone": {
+        "title": "Zona de Peligro",
+        "description": "Acciones irreversibles como eliminar cuenta"
+      },
+      "deleteAccount": {
+        "title": "Eliminar Cuenta",
+        "description": "Eliminar permanentemente tu cuenta y datos",
+        "dialogTitle": "Eliminar Cuenta",
+        "warning": "Esta accion no se puede deshacer. Esto eliminara permanentemente tu cuenta y borrara tus datos de nuestros servidores.",
+        "consequencesTitle": "Consecuencias:",
+        "consequence1": "Todas tus tareas, habitos y objetivos se perderan.",
+        "consequence2": "Tu informacion de perfil sera eliminada.",
+        "consequence3": "Perderas acceso a todas las funciones premium.",
+        "consequence4": "La suscripcion sera cancelada (si aplica).",
+        "understand": "Entiendo, eliminar mi cuenta",
+        "finalConfirmationTitle": "Estas absolutamente seguro?",
+        "finalConfirmationDescription": "Por favor escribe DELETE para confirmar.",
+        "typeDelete": "Escribe DELETE",
+        "cancel": "Cancelar",
+        "deleteForever": "Eliminar para siempre",
+        "deleting": "Eliminando...",
+        "confirmationError": "Confirmacion incorrecta",
+        "confirmationErrorDescription": "Por favor escribe DELETE para confirmar.",
+        "successTitle": "Cuenta eliminada",
+        "successDescription": "Tu cuenta ha sido eliminada exitosamente.",
+        "errorTitle": "Error",
+        "errorDescription": "Error al eliminar la cuenta. Por favor intentalo de nuevo."
+      },
+      "about": {
+        "title": "Acerca de",
+        "version": "Version",
+        "buildNumber": "Numero de Build",
+        "rateApp": "Calificar la App",
+        "contactSupport": "Contactar Soporte",
+        "privacyPolicy": "Politica de Privacidad",
+        "termsOfService": "Terminos de Servicio",
+        "licenses": "Licencias de Codigo Abierto"
+      }
+    },
+    "pomodoro": {
+      "title": "Pomodoro",
+      "modes": {
+        "work": "Enfoque",
+        "shortBreak": "Descanso Corto",
+        "longBreak": "Descanso Largo"
+      },
+      "actions": {
+        "start": "Iniciar",
+        "pause": "Pausar",
+        "reset": "Reiniciar"
+      },
+      "statistics": {
+        "title": "Estadisticas",
+        "todayFocus": "Foco de Hoy",
+        "weeklyFocus": "Foco Semanal",
+        "monthlyFocus": "Foco Mensual",
+        "dailyAverage": "Promedio Diario",
+        "sessionsPerDay": "Sesiones/Dia",
+        "summary": "Resumen",
+        "todayProductivity": "Productividad de Hoy",
+        "completedSessions": "Sesiones Completadas",
+        "focusTime": "Tiempo de Foco",
+        "breakTime": "Tiempo de Descanso",
+        "totalTime": "Tiempo Total",
+        "shortBreaks": "Descansos Cortos",
+        "longBreaks": "Descansos Largos",
+        "dailyProductivity": "Productividad Diaria",
+        "focusTimeOverTime": "Tiempo de Foco en el Tiempo",
+        "noDataAvailable": "No hay datos disponibles",
+        "startPomodoroToSeeStats": "Inicia un Pomodoro para ver estadisticas",
+        "hours": "Horas",
+        "sessions": "Sesiones"
+      },
+      "settings": {
+        "title": "Configuracion del Temporizador",
+        "description": "Personaliza tus sesiones de enfoque y descansos",
+        "workDuration": "Duracion de Enfoque",
+        "shortBreakDuration": "Descanso Corto",
+        "longBreakDuration": "Descanso Largo",
+        "longBreakInterval": "Intervalo de Descanso Largo",
+        "sound": "Sonido",
+        "soundEnabled": "Habilitar Sonido",
+        "soundVolume": "Volumen",
+        "notificationSound": "Sonido de Notificacion",
+        "vibration": "Vibracion",
+        "vibrationEnabled": "Habilitar Vibracion",
+        "keepScreenOn": "Mantener Pantalla Encendida",
+        "reset": "Restablecer",
+        "cancel": "Cancelar",
+        "save": "Guardar",
+        "workDurationHelp": "Tiempo dedicado a trabajar",
+        "shortBreakDurationHelp": "Tiempo de descanso corto",
+        "longBreakDurationHelp": "Tiempo de descanso largo",
+        "longBreakIntervalHelp": "Cada cuantas sesiones tomar un descanso largo",
+        "sounds": {
+          "newNotification1": "Notificacion 1",
+          "newNotification2": "Notificacion 2",
+          "newNotification3": "Notificacion 3",
+          "newNotification4": "Notificacion 4",
+          "notificationEffect": "Efecto",
+          "none": "Ninguno"
+        },
+        "messages": {
+          "saved": "Configuracion guardada"
+        }
+      },
+      "backgroundTimer": {
+        "title": "Temporizador Activo",
+        "body": "Sesion de enfoque en progreso"
+      }
+    },
+    "notes": {
+      "title": "Notas",
+      "newNote": "Nueva Nota",
+      "sidebar": {
+        "allNotes": "Todas las Notas",
+        "categories": "Categorias",
+        "pinned": "Fijadas",
+        "archived": "Archivadas"
+      },
+      "categories": {
+        "createCategory": "Crear Categoria",
+        "createCategoryDescription": "Crea una nueva categoria para tus notas",
+        "editCategory": "Editar Categoria",
+        "editCategoryDescription": "Editar detalles de la categoria",
+        "categoryName": "Nombre de la Categoria",
+        "categoryNamePlaceholder": "ej. Trabajo",
+        "categoryColor": "Color",
+        "categoryIcon": "Icono",
+        "optional": "(Opcional)",
+        "iconHint": "Elige un icono",
+        "deleteCategory": "Eliminar Categoria",
+        "deleteCategoryConfirm": "Estas seguro de que quieres eliminar la categoria \"{{categoryName}}\"?",
+        "deleteCategoryWarning": "Todas las notas en esta categoria quedaran sin categoria.",
+        "deletingCategory": "Eliminando...",
+        "updateCategory": "Actualizar Categoria",
+        "messages": {
+          "categoryCreated": "Categoria creada",
+          "categoryCreatedDescription": "Categoria creada correctamente",
+          "categoryUpdated": "Categoria actualizada",
+          "categoryUpdatedDescription": "Categoria actualizada correctamente",
+          "categoryDeleted": "Categoria eliminada",
+          "categoryDeletedDescription": "Categoria eliminada correctamente"
+        },
+        "searchIcons": "Buscar iconos",
+        "icons": "Iconos",
+        "emojis": "Emojis",
+        "preview": "Vista previa"
+      },
+      "actions": {
+        "cancel": "Cancelar",
+        "save": "Guardar",
+        "saving": "Guardando...",
+        "expand": "Expandir",
+        "edit": "Editar",
+        "delete": "Eliminar",
+        "archive": "Archivar",
+        "unarchive": "Desarchivar",
+        "back": "Atras",
+        "more": "Mas opciones",
+        "pin": "Fijar",
+        "unpin": "Desfijar",
+        "share": "Compartir"
+      },
+      "bulkActions": {
+        "selectedCount": "{{count}} seleccionados",
+        "selectAll": "Seleccionar todo",
+        "clearSelection": "Limpiar seleccion",
+        "changeCategory": "Cambiar categoria",
+        "deleteSelected": "Eliminar seleccionados"
+      },
+      "messages": {
+        "error": "Error",
+        "errorDescription": "Algo salio mal. Por favor, intentelo de nuevo.",
+        "noteCreated": "Nota creada exitosamente",
+        "noteUpdated": "Nota actualizada exitosamente",
+        "noteDeleted": "Nota eliminada exitosamente",
+        "errorCreatingNote": "Error al crear la nota",
+        "errorUpdatingNote": "Error al actualizar la nota",
+        "errorDeletingNote": "Error al eliminar la nota",
+        "success": "Exito"
+      },
+      "filterByTags": "Filtrar por Etiquetas",
+      "filterByTagsDescription": "Selecciona etiquetas para filtrar notas",
+      "searchTags": "Buscar etiquetas...",
+      "availableTags": "Etiquetas Disponibles",
+      "selectedTags": "Etiquetas Seleccionadas",
+      "noTagsAvailable": "No hay etiquetas disponibles",
+      "noTagsFound": "No se encontraron etiquetas",
+      "clearAll": "Limpiar todas",
+      "selectAll": "Seleccionar todas",
+      "noNotesDescription": "Crea una nota para comenzar.",
+      "close": "Cerrar",
+      "search": "Buscar notas...",
+      "noNotes": "No se encontraron notas",
+      "pinned": "Fijada",
+      "errorLoadingTitle": "No se pudieron cargar las notas",
+      "errorLoadingDescription": "Verifica tu conexion e intentalo de nuevo",
+      "editor": {
+        "placeholder": "Empieza a escribir...",
+        "titlePlaceholder": "Titulo de la nota",
+        "contentPlaceholder": "Empieza a escribir... soporta **negritas**, *cursiva*, # encabezados, - listas, > citas",
+        "tapToWrite": "Toca para empezar a escribir..."
+      },
+      "tags": "Etiquetas",
+      "editDescription": "Edita los detalles de tu nota",
+      "createDescription": "Crea una nueva nota",
+      "noteTitle": "Titulo de la nota",
+      "noteContent": "Contenido",
+      "tagsPlaceholder": "Anadir etiquetas...",
+      "selectCategory": "Seleccionar categoria",
+      "noCategory": "Sin categoria",
+      "deleteConfirm": "Estas seguro de que quieres eliminar esta nota?"
+    },
+    "calendar": {
+      "title": "Calendario",
+      "description": "Ve tu agenda de un vistazo",
+      "views": {
+        "month": "Mes",
+        "week": "Semana",
+        "day": "Dia",
+        "agenda": "Agenda"
+      },
+      "events": {
+        "title": "Eventos",
+        "noEvents": "No hay eventos",
+        "upcoming": "Proximos Eventos",
+        "allDay": "Todo el dia",
+        "joinMeeting": "Unirse",
+        "meetingCode": "Codigo de reunion"
+      },
+      "sync": {
+        "connected": "Calendario conectado",
+        "disconnected": "Calendario desconectado",
+        "syncNow": "Sincronizar ahora",
+        "lastSync": "Ultima sincronizacion: {time}"
+      }
+    },
+    "subscription": {
+      "title": "Desbloquea tu Potencial",
+      "description": "Elige el plan que se adapte a tu viaje de productividad.",
+      "plans": {
+        "free": {
+          "title": "Gratis",
+          "description": "Funciones basicas para comenzar"
+        },
+        "pro": {
+          "title": "Pro",
+          "description": "Acceso completo a todas las funciones"
+        }
+      },
+      "currentPlan": "Plan Actual",
+      "upgrade": "Mejorar Plan",
+      "restore": "Restaurar Compras",
+      "managePlan": "Gestionar Suscripcion",
+      "features": {
+        "unlimitedTasks": "Tareas ilimitadas",
+        "unlimitedHabits": "Habitos ilimitados",
+        "aiAssistant": "Asistente IA",
+        "advancedFinances": "Finanzas avanzadas",
+        "prioritySupport": "Soporte prioritario",
+        "calendarSync": "Sincronizacion de calendario"
+      },
+      "billing": {
+        "monthly": "Mensual",
+        "yearly": "Anual",
+        "savePercent": "Ahorra {percent}%",
+        "perMonth": "/mes",
+        "perYear": "/ano"
+      },
+      "currentPlanBadge": "Plan Actual",
+      "popular": "POPULAR",
+      "freeTrial": "Inicia Prueba Gratis de 14 Dias",
+      "secure": "Seguro",
+      "cancelAnytime": "Cancela Cuando Quieras",
+      "messages": {
+        "upgradeSuccess": "Bienvenido a Pro!",
+        "restoreSuccess": "Compras restauradas",
+        "restoreNone": "No hay compras para restaurar",
+        "error": "Algo salio mal. Por favor intentalo de nuevo."
+      }
+    },
+    "kyc": {
+      "title": "Verificacion de Identidad",
+      "description": "Verifica tu identidad para desbloquear todas las funciones.",
+      "steps": {
+        "personalInfo": "Informacion Personal",
+        "documentUpload": "Subir Documento",
+        "selfie": "Verificacion con Selfie",
+        "review": "Revision"
+      },
+      "fields": {
+        "fullName": "Nombre Completo",
+        "dateOfBirth": "Fecha de Nacimiento",
+        "nationality": "Nacionalidad",
+        "documentType": "Tipo de Documento",
+        "documentNumber": "Numero de Documento"
+      },
+      "documents": {
+        "passport": "Pasaporte",
+        "nationalId": "Cedula de Identidad",
+        "driversLicense": "Licencia de Conducir"
+      },
+      "upload": {
+        "front": "Frente del documento",
+        "back": "Reverso del documento",
+        "selfie": "Toma una selfie",
+        "instructions": "Asegurate de que el documento sea claramente visible y este bien iluminado",
+        "takePhoto": "Tomar Foto",
+        "chooseFromLibrary": "Elegir de la Galeria",
+        "retake": "Volver a tomar"
+      },
+      "status": {
+        "pending": "En Revision",
+        "approved": "Verificado",
+        "rejected": "Rechazado",
+        "pendingDescription": "Tus documentos estan siendo revisados. Esto puede tomar hasta 24 horas.",
+        "rejectedDescription": "Tu verificacion fue rechazada. Por favor intentalo de nuevo."
+      },
+      "messages": {
+        "submitted": "Documentos enviados exitosamente",
+        "error": "Error al enviar documentos"
+      }
+    },
+    "notifications": {
+      "title": "Notificaciones",
+      "empty": "No hay notificaciones aun",
+      "markAllRead": "Marcar todas como leidas",
+      "markRead": "Marcar como leida",
+      "clearAll": "Limpiar todas",
+      "types": {
+        "taskDue": "Tarea vencida",
+        "habitReminder": "Recordatorio de habito",
+        "goalProgress": "Progreso de objetivo",
+        "pomodoroComplete": "Pomodoro completado",
+        "dailyMotivation": "Motivacion diaria",
+        "system": "Sistema"
+      },
+      "permissions": {
+        "title": "Activar Notificaciones",
+        "description": "Mantente al dia con recordatorios oportunos para tus tareas, habitos y sesiones de enfoque.",
+        "enable": "Activar Notificaciones",
+        "later": "Quiza Despues",
+        "goToSettings": "Ir a Configuracion"
+      },
+      "reminders": {
+        "habitReminder": "Recordatorio Diario",
+        "habitReminderDescription": "Recibe un recordatorio para completar este habito",
+        "taskReminder": "Recordatorio de Tarea",
+        "taskReminderDescription": "Recibe una notificacion antes de que venza tu tarea",
+        "setTime": "Establecer hora del recordatorio",
+        "enabled": "Recordatorio activado",
+        "disabled": "Recordatorio desactivado",
+        "at": "a las"
+      }
+    },
+    "onboarding": {
+      "buttons": {
+        "done": "Finalizar",
+        "next": "Siguiente",
+        "back": "Volver",
+        "getStarted": "Comenzar",
+        "skip": "Saltar"
+      },
+      "skipConfirmDescription": "Estas seguro de que quieres saltar el tutorial?",
+      "tooltips": {
+        "goals": "Elige las areas de tu vida que mas te importan. Estas se convierten en tus Pilares — la base de todos tus objetivos y habitos.",
+        "habits": "Los habitos son acciones diarias o semanales que se acumulan con el tiempo. Empieza con un habito pequeno y construye desde ahi.",
+        "tasks": "Las tareas son acciones puntuales con fechas limite. Captura lo que necesitas hacer para que nada se te escape.",
+        "finances": "Controla tu dinero entre cuentas, presupuestos y metas de ahorro. Empieza configurando tu moneda y primera cuenta."
+      },
+      "steps": {
+        "welcome": {
+          "title": "Bienvenido a The Prime Way",
+          "description": "Tu companero de productividad todo en uno"
+        },
+        "goals": {
+          "title": "Define tus Objetivos",
+          "description": "Empieza definiendo lo que quieres lograr."
+        },
+        "habits": {
+          "title": "Crea Habitos",
+          "description": "Crea habitos para alcanzar tus objetivos."
+        },
+        "tasks": {
+          "title": "Gestiona Tareas",
+          "description": "Organiza tus tareas diarias."
+        },
+        "financeaccounts": {
+          "title": "Conecta Cuentas",
+          "description": "Vincula tus cuentas financieras."
+        },
+        "financetransactions": {
+          "title": "Rastrea Transacciones",
+          "description": "Monitorea tus ingresos y gastos."
+        },
+        "notes": {
+          "title": "Toma Notas",
+          "description": "Captura tus ideas y pensamientos."
+        },
+        "notifications": {
+          "title": "Mantente al Dia",
+          "description": "Activa las notificaciones para no perderte tareas ni habitos."
+        }
+      },
+      "habitsSetup": {
+        "step": "Paso 2 de 5",
+        "title": "Crea tu primer habito",
+        "description": "Empieza a construir consistencia con un habito diario simple.",
+        "habitName": "Nombre del habito",
+        "habitPlaceholder": "ej., Leer por 30 minutos",
+        "orPickSuggestion": "O elige una sugerencia",
+        "suggestions": {
+          "read": "Leer por 30 minutos",
+          "exercise": "Ejercicio",
+          "meditate": "Meditar",
+          "water": "Tomar 8 vasos de agua",
+          "journal": "Escribir un diario",
+          "noSocial": "Sin redes sociales antes del mediodia"
+        }
+      },
+      "tasksSetup": {
+        "step": "Paso 3 de 5",
+        "title": "Crea tu primera tarea",
+        "description": "Cual es lo mas importante que necesitas hacer hoy?",
+        "taskName": "Nombre de la tarea",
+        "taskPlaceholder": "ej., Planificar mi semana",
+        "orPickSuggestion": "O elige una sugerencia",
+        "suggestions": {
+          "planWeek": "Planificar mi semana",
+          "setupBudget": "Configurar mi presupuesto",
+          "defineGoals": "Definir 3 metas mensuales",
+          "organizeWorkspace": "Organizar mi espacio de trabajo",
+          "reviewPriorities": "Revisar mis prioridades",
+          "scheduleWorkout": "Programar un entrenamiento"
+        }
+      },
+      "financesSetup": {
+        "step": "Paso 4 de 5",
+        "title": "Configura tus finanzas",
+        "description": "Elige tu moneda y crea tu primera cuenta financiera.",
+        "baseCurrency": "Moneda base",
+        "accountName": "Nombre de la cuenta",
+        "accountNamePlaceholder": "ej., Mi Cuenta Principal",
+        "accountType": "Tipo de cuenta",
+        "accountTypes": {
+          "checking": "Cuenta Corriente",
+          "savings": "Cuenta de Ahorros",
+          "creditCard": "Tarjeta de Credito",
+          "cash": "Efectivo",
+          "investment": "Inversion"
+        }
+      },
+      "goalsSetup": {
+        "step": "Paso 1 de 5",
+        "title": "Cuales son tus objetivos?",
+        "description": "Selecciona las areas en las que quieres enfocarte. Siempre puedes cambiar esto despues.",
+        "pillars": {
+          "finances": "Finanzas",
+          "financesDescription": "Presupuesta, ahorra e invierte sabiamente",
+          "career": "Carrera",
+          "careerDescription": "Crece profesionalmente y destaca",
+          "health": "Salud",
+          "healthDescription": "Ejercicio, nutricion y bienestar",
+          "relationships": "Relaciones",
+          "relationshipsDescription": "Fortalece conexiones personales",
+          "mindset": "Mentalidad",
+          "mindsetDescription": "Claridad mental y crecimiento personal",
+          "lifestyle": "Estilo de vida",
+          "lifestyleDescription": "Disena la vida que quieres vivir"
+        }
+      },
+      "welcome": {
+        "tagline": "Tu sistema operativo de vida todo en uno",
+        "subtitle": "Tareas, habitos, objetivos, finanzas y mas\ntodo en un solo lugar.",
+        "minuteText": "Solo tomara un minuto"
+      },
+      "completion": {
+        "title": "Todo listo!",
+        "description": "Tu espacio de trabajo esta listo. Esto es todo\nlo que puedes hacer con The Prime Way:",
+        "button": "Empezar a usar The Prime Way",
+        "settingsHint": "Puedes personalizar todo en Configuracion",
+        "features": {
+          "tasks": "Tareas",
+          "habits": "Habitos",
+          "goals": "Objetivos",
+          "finances": "Finanzas",
+          "notes": "Notas",
+          "calendar": "Calendario"
+        }
+      }
+    },
+    "profile": {
+      "title": "Perfil",
+      "editProfile": "Editar Perfil",
+      "personalInfo": "Informacion Personal",
+      "firstName": "Nombre",
+      "lastName": "Apellido",
+      "displayName": "Nombre para mostrar",
+      "email": "Email",
+      "bio": "Biografia",
+      "primaryGoal": "Objetivo Principal",
+      "save": "Guardar Cambios",
+      "saving": "Guardando...",
+      "success": "Perfil actualizado correctamente",
+      "error": "Error al actualizar perfil",
+      "imageUploadSuccess": "Foto de perfil actualizada",
+      "imageUploadError": "Error al subir foto",
+      "changePhoto": "Cambiar foto",
+      "takePhoto": "Tomar foto",
+      "chooseFromLibrary": "Elegir de la galeria",
+      "uploadPhotoHelper": "Sube una foto (JPG, PNG). Max 5MB.",
+      "stats": {
+        "tasksCompleted": "Tareas Completadas",
+        "habitsStreak": "Mejor Racha",
+        "goalsAchieved": "Objetivos Alcanzados",
+        "focusHours": "Horas de Enfoque"
+      },
+      "placeholders": {
+        "firstName": "Tu nombre",
+        "lastName": "Tu apellido",
+        "displayName": "Como quieres que te llamemos",
+        "bio": "Cuentanos sobre ti...",
+        "primaryGoal": "Cual es tu objetivo principal?"
+      },
+      "logout": "Cerrar Sesion",
+      "logoutConfirm": "Estas seguro de que quieres cerrar sesion?",
+      "logoutSuccess": "Sesion cerrada correctamente",
+      "logoutError": "Error al cerrar sesion",
+      "version": "Version {version}"
+    },
+    "reading": {
+      "title": "Lectura",
+      "tabs": {
+        "library": "Biblioteca",
+        "explore": "Explorar",
+        "plan": "Plan",
+        "goals": "Metas"
+      },
+      "searchPlaceholder": "Buscar libros...",
+      "stats": {
+        "toRead": "Por Leer",
+        "reading": "Leyendo",
+        "done": "Leidos",
+        "favorites": "Favoritos"
+      },
+      "emptyLibrary": "Tu biblioteca esta vacia",
+      "emptyLibraryDescription": "Busca libros para agregar a tu lista de lectura",
+      "searchBooks": "Buscar Libros"
+    },
+    "more": {
+      "title": "Mas",
+      "version": "The Prime Way v{version}"
+    },
+    "health": {
+      "title": "Salud",
+      "metrics": {
+        "weight": "Peso",
+        "sleep": "Sueno",
+        "water": "Agua"
+      }
+    }
+  }
+}

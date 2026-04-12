@@ -1,0 +1,79 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "ThePrimeWay",
+  "identifier": "app.theprimeway.desktop",
+  "version": "0.1.0",
+  "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:5173",
+    "beforeDevCommand": "pnpm --filter @repo/web dev & pnpm dev:overlay",
+    "beforeBuildCommand": "pnpm build:overlay"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "ThePrimeWay",
+        "url": "http://localhost:5173",
+        "width": 1280,
+        "height": 800,
+        "minWidth": 900,
+        "minHeight": 600,
+        "center": true,
+        "decorations": false,
+        "transparent": false,
+        "visible": true,
+        "resizable": true,
+        "titleBarStyle": "Overlay"
+      },
+      {
+        "label": "overlay",
+        "title": "",
+        "url": "http://localhost:5174/overlay/",
+        "width": 72,
+        "height": 72,
+        "x": 20,
+        "y": 20,
+        "decorations": false,
+        "transparent": true,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "resizable": false,
+        "visible": false,
+        "shadow": false
+      }
+    ],
+    "trayIcon": {
+      "iconPath": "icons/tray-icon.png",
+      "iconAsTemplate": true,
+      "menuOnLeftClick": false
+    },
+    "security": {
+      "csp": "default-src 'self'; connect-src 'self' https://api.theprimeway.app http://localhost:3001; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  },
+  "plugins": {
+    "global-shortcut": {},
+    "notification": {},
+    "autostart": {},
+    "single-instance": {},
+    "positioner": {},
+    "window-state": {},
+    "deep-link": {
+      "desktop": {
+        "schemes": ["theprimeway"]
+      }
+    }
+  }
+}

@@ -1,0 +1,134 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* ============================================================
+     THE PRIME WAY — Design System Tokens
+     ============================================================
+     Brand palette: Clean Blue
+     Primary:      hsl(230 80% 50%)  — #1A40CC
+     Hover:        hsl(230 80% 55%)
+     Secondary:    hsl(230 70% 58%)  — accent blue
+     Dark Primary: hsl(225 70% 70%)  — light cornflower for contrast
+     ============================================================ */
+
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 220 20% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 20% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 20% 10%;
+    --primary: 230 80% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 230 70% 58%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 10% 46%;
+    --accent: 230 70% 58%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 230 80% 50%;
+    --radius: 0.75rem;
+
+    /* Extended brand tokens */
+    --primary-hover: 230 80% 55%;
+    --accent-light: 230 65% 72%;
+    --background-highlight: 230 55% 95%;
+
+    /* Semantic colors */
+    --success: 150 60% 40%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 80% 48%;
+    --warning-foreground: 0 0% 100%;
+    --info: 199 70% 46%;
+    --info-foreground: 0 0% 100%;
+
+    /* Finance semantic — reuse success/destructive/info */
+    --income: 150 60% 40%;
+    --expense: 0 75% 55%;
+    --transfer: 199 70% 46%;
+
+    /* Priority semantic — reuse destructive/warning/info */
+    --priority-high: 0 75% 55%;
+    --priority-medium: 38 80% 48%;
+    --priority-low: 199 70% 46%;
+
+    /* Gamification — reuse primary */
+    --xp: 230 80% 50%;
+    --xp-glow: 230 65% 72%;
+    --streak-fire: 15 85% 50%;
+    --streak-legendary: 45 80% 47%;
+    --level-gold: 45 80% 47%;
+
+    /* Chart colors */
+    --chart-1: 230 80% 50%;
+    --chart-2: 150 60% 40%;
+    --chart-3: 38 80% 48%;
+    --chart-4: 230 70% 58%;
+    --chart-5: 0 75% 55%;
+  }
+
+  .dark:root {
+    --background: 220 20% 7%;
+    --foreground: 0 0% 96%;
+    --card: 220 16% 10%;
+    --card-foreground: 0 0% 96%;
+    --popover: 220 16% 12%;
+    --popover-foreground: 0 0% 96%;
+    --primary: 225 70% 70%;
+    --primary-foreground: 220 20% 7%;
+    --secondary: 225 55% 62%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 220 12% 14%;
+    --muted-foreground: 220 8% 55%;
+    --accent: 225 55% 62%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 65% 58%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 12% 18%;
+    --input: 220 12% 18%;
+    --ring: 225 70% 70%;
+
+    /* Extended brand tokens */
+    --primary-hover: 225 70% 76%;
+    --accent-light: 225 50% 74%;
+    --background-highlight: 225 40% 18%;
+
+    /* Semantic colors */
+    --success: 150 55% 50%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 75% 55%;
+    --warning-foreground: 0 0% 100%;
+    --info: 199 65% 55%;
+    --info-foreground: 0 0% 100%;
+
+    /* Finance semantic — reuse success/destructive/info */
+    --income: 150 55% 50%;
+    --expense: 0 65% 58%;
+    --transfer: 199 65% 55%;
+
+    /* Priority semantic — reuse destructive/warning/info */
+    --priority-high: 0 65% 58%;
+    --priority-medium: 38 75% 55%;
+    --priority-low: 199 65% 55%;
+
+    /* Gamification — reuse primary */
+    --xp: 225 70% 70%;
+    --xp-glow: 225 50% 74%;
+    --streak-fire: 15 80% 58%;
+    --streak-legendary: 45 70% 58%;
+    --level-gold: 45 70% 58%;
+
+    /* Chart colors */
+    --chart-1: 225 70% 70%;
+    --chart-2: 150 55% 50%;
+    --chart-3: 38 75% 55%;
+    --chart-4: 225 55% 62%;
+    --chart-5: 0 65% 58%;
+  }
+}

@@ -1,0 +1,64 @@
+import { OpenAPIHono } from '@hono/zod-openapi'
+import { createMiddleware } from 'hono/factory'
+import { cronService } from '../services/cron.service'
+
+export const cronRoutes = new OpenAPIHono()
+
+// ---------------------------------------------------------------------------
+// Cron Auth Middleware
+// ---------------------------------------------------------------------------
+const cronAuthMiddleware = createMiddleware(async (c, next) => {
+  const authHeader = c.req.header('Authorization') || c.req.header('authorization')
+  if (process.env.CRON_SECRET && authHeader === `Bearer ${process.env.CRON_SECRET}`) {
+    await next()
+    return
+  }
+
+  const apiKey = c.req.header('X-API-Key') || c.req.header('x-api-key')
+  if (process.env.ADMIN_API_KEY && apiKey === process.env.ADMIN_API_KEY) {
+    await next()
+    return
+  }
+
+  return c.json({ error: 'Unauthorized' }, 401)
+})
+
+cronRoutes.use('*', cronAuthMiddleware)
+
+// POST /daily-motivation
+cronRoutes.post('/daily-motivation', async (c) => {
+  try {
+    const result = await cronService.sendDailyMotivation()
+    return c.json(result)
+  } catch (error) {
+    console.error('[CRON_DAILY_MOTIVATION]', error)
+    return c.json({ error: 'Internal Server Error' }, 500)
+  }
+})
+
+// GET & POST /reminders
+const handleReminders = async (c: any) => {
+  try {
+    const now = new Date()
+    const result = await cronService.processReminders(now)
+    return c.json(result)
+  } catch (error) {
+    console.error('[CRON_REMINDERS]', error)
+    return c.json({ error: 'Internal Server Error' }, 500)
+  }
+}
+
+cronRoutes.get('/reminders', handleReminders)
+cronRoutes.post('/reminders', handleReminders)
+
+// POST /habit-reminders
+cronRoutes.post('/habit-reminders', async (c) => {
+  try {
+    const now = new Date()
+    const result = await cronService.processHabitRemindersOnly(now)
+    return c.json({ success: true, ...result })
+  } catch (error) {
+    console.error('[CRON_HABIT_REMINDERS]', error)
+    return c.json({ error: 'Internal Server Error' }, 500)
+  }
+})

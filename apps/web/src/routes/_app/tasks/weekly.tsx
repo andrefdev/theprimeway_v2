@@ -1,0 +1,140 @@
+import { createFileRoute } from '@tanstack/react-router'
+import { useQuery } from '@tanstack/react-query'
+import { tasksQueries, useUpdateTask, useDeleteTask } from '../../../features/tasks/queries'
+import { WeekPlanner } from '../../../features/tasks/components/week-planner'
+import { TaskDialog } from '../../../features/tasks/components/task-dialog'
+import { QueryError } from '../../../components/query-error'
+import { Button } from '@/components/ui/button'
+import { SectionHeader } from '@/components/section-header'
+import { TasksNav } from '../../../features/tasks/components/tasks-nav'
+import { SkeletonList } from '@/components/ui/skeleton-list'
+import { ChevronLeftIcon, ChevronRightIcon, PlusIcon } from '../../../components/icons'
+import { toast } from 'sonner'
+import { format, startOfWeek, addWeeks } from 'date-fns'
+import { useState, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
+import { useLocale } from '../../../i18n/useLocale'
+import type { Task } from '@repo/shared/types'
+
+export const Route = createFileRoute('/_app/tasks/weekly')({
+  component: TasksWeeklyPage,
+})
+
+function TasksWeeklyPage() {
+  const { t } = useTranslation('tasks')
+  const { dateFnsLocale } = useLocale()
+  const [weekOffset, setWeekOffset] = useState(0)
+
+  const weekStart = useMemo(() => {
+    const base = startOfWeek(new Date(), { weekStartsOn: 1 })
+    return weekOffset === 0 ? base : addWeeks(base, weekOffset)
+  }, [weekOffset])
+
+  const referenceDate = format(weekStart, 'yyyy-MM-dd')
+  const tasksQuery = useQuery(tasksQueries.list({ weekStart: referenceDate, limit: '200' }))
+  const updateTask = useUpdateTask()
+  const deleteTask = useDeleteTask()
+
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [editingTask, setEditingTask] = useState<Task | null>(null)
+  const [defaultDate, setDefaultDate] = useState<string | undefined>()
+
+  const tasks = tasksQuery.data?.data ?? []
+
+  function openCreate(date?: string) {
+    setEditingTask(null)
+    setDefaultDate(date)
+    setDialogOpen(true)
+  }
+
+  function openEdit(task: Task) {
+    setEditingTask(task)
+    setDialogOpen(true)
+  }
+
+  async function toggleTask(task: Task) {
+    const newStatus = task.status === 'completed' ? 'open' : 'completed'
+    try {
+      await updateTask.mutateAsync({ id: task.id, data: { status: newStatus } })
+      toast.success(newStatus === 'completed' ? t('taskCompleted') : t('taskReopened'))
+    } catch {
+      toast.error(t('failedToUpdate'))
+    }
+  }
+
+  async function handleDelete(task: Task) {
+    try {
+      await deleteTask.mutateAsync(task.id)
+      toast.success(t('taskDeleted'))
+    } catch {
+      toast.error(t('failedToDelete'))
+    }
+  }
+
+  async function handleMoveToDay(taskId: string, newDate: string) {
+    try {
+      await updateTask.mutateAsync({ id: taskId, data: { scheduledDate: newDate } })
+      toast.success(t('taskMoved'))
+    } catch {
+      toast.error(t('failedToUpdate'))
+    }
+  }
+
+  const weekEnd = addWeeks(weekStart, 1)
+  const weekLabel = `${format(weekStart, 'MMM d', { locale: dateFnsLocale })} - ${format(weekEnd, 'MMM d, yyyy', { locale: dateFnsLocale })}`
+
+  return (
+    <div>
+      <TasksNav />
+      <SectionHeader
+        sectionId="tasks"
+        title={t('thisWeek')}
+        description={weekLabel}
+        actions={
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="icon-sm" onClick={() => setWeekOffset((v) => v - 1)}>
+              <ChevronLeftIcon />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setWeekOffset(0)}
+              disabled={weekOffset === 0}
+            >
+              {t('todayBadge')}
+            </Button>
+            <Button variant="outline" size="icon-sm" onClick={() => setWeekOffset((v) => v + 1)}>
+              <ChevronRightIcon />
+            </Button>
+            <Button onClick={() => openCreate()}>
+              <PlusIcon /> {t('addTask')}
+            </Button>
+          </div>
+        }
+      />
+      <div className="mx-auto w-full px-6 pb-6 space-y-6">
+        {tasksQuery.isLoading && <SkeletonList lines={7} />}
+        {tasksQuery.isError && <QueryError message={t('failedToLoad')} onRetry={() => tasksQuery.refetch()} />}
+
+        {!tasksQuery.isLoading && !tasksQuery.isError && (
+          <WeekPlanner
+            tasks={tasks}
+            weekStart={weekStart}
+            onToggle={toggleTask}
+            onEdit={openEdit}
+            onDelete={handleDelete}
+            onMoveToDay={handleMoveToDay}
+            onQuickAdd={(date) => openCreate(date)}
+          />
+        )}
+      </div>
+
+      <TaskDialog
+        open={dialogOpen}
+        onClose={() => { setDialogOpen(false); setEditingTask(null); setDefaultDate(undefined) }}
+        task={editingTask}
+        defaultDate={defaultDate}
+      />
+    </div>
+  )
+}

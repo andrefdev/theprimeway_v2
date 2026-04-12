@@ -1,0 +1,24 @@
+{
+  "name": "theprimeway",
+  "private": true,
+  "packageManager": "pnpm@9.12.2",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "format": "turbo run format",
+    "typecheck": "turbo run typecheck",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "db:reset": "docker compose down -v && docker compose up -d && turbo run db:migrate",
+    "db:studio": "turbo run db:studio --filter=@repo/api"
+  },
+  "devDependencies": {
+    "turbo": "^2.9.5"
+  }
+}

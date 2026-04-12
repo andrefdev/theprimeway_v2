@@ -1,0 +1,2076 @@
+{
+  "common": {
+    "basics": {
+      "appName": "The Prime Way",
+      "appDescription": "The Prime Way is a personal productivity and habit tracking app that helps you stay organized and motivated."
+    },
+    "back": "Back",
+    "next": "Next",
+    "actions": {
+      "save": "Save",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "edit": "Edit",
+      "create": "Create",
+      "update": "Update",
+      "add": "Add",
+      "close": "Close",
+      "confirm": "Confirm",
+      "back": "Back",
+      "next": "Next",
+      "previous": "Previous",
+      "submit": "Submit",
+      "search": "Search",
+      "filter": "Filter",
+      "clear": "Clear",
+      "reset": "Reset",
+      "viewDetails": "View Details",
+      "copy": "Copy",
+      "refresh": "Refresh",
+      "loading": "Loading...",
+      "saving": "Saving...",
+      "deleting": "Deleting...",
+      "processing": "Processing...",
+      "upload": "Upload",
+      "uploading": "Uploading...",
+      "download": "Download",
+      "share": "Share",
+      "export": "Export",
+      "import": "Import",
+      "continue": "Continue",
+      "skip": "Skip",
+      "finish": "Finish",
+      "or": "Or",
+      "retry": "Retry",
+      "done": "Done",
+      "select": "Select",
+      "dismiss": "Dismiss"
+    },
+    "status": {
+      "success": "Success",
+      "error": "Error",
+      "warning": "Warning",
+      "info": "Info",
+      "active": "Active",
+      "inactive": "Inactive",
+      "pending": "Pending",
+      "completed": "Completed",
+      "archived": "Archived"
+    },
+    "time": {
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "yesterday": "Yesterday",
+      "days": "Days",
+      "hours": "Hours",
+      "minutes": "minutes",
+      "date": "Date",
+      "time": "Time",
+      "duration": "Duration",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "dueDate": "Due Date"
+    },
+    "placeholders": {
+      "search": "Search...",
+      "select": "Select...",
+      "email": "example@email.com",
+      "password": "Your password",
+      "name": "Enter a name..."
+    },
+    "validation": {
+      "required": "This field is required",
+      "email": "Enter a valid email",
+      "emailRequired": "Please enter a valid email",
+      "passwordMin": "Password must be at least {min} characters",
+      "confirmPasswordMin": "Confirmation must be at least {min} characters",
+      "passwordsMismatch": "Passwords do not match",
+      "minLength": "Must be at least {min} characters",
+      "maxLength": "Cannot exceed {max} characters",
+      "genericError": "An unexpected error occurred"
+    },
+    "empty": {
+      "title": "Nothing here yet",
+      "description": "Get started by creating your first item"
+    },
+    "network": {
+      "offline": "You are offline",
+      "offlineDescription": "Please check your internet connection",
+      "retry": "Tap to retry"
+    },
+    "pullToRefresh": "Pull to refresh"
+  },
+  "auth": {
+    "login": {
+      "title": "Sign In",
+      "description": "Enter your email and password to access",
+      "email": "Email",
+      "password": "Password",
+      "emailPlaceholder": "example@email.com",
+      "passwordPlaceholder": "Your password",
+      "submit": "Sign In",
+      "forgotPassword": "Forgot your password?",
+      "noAccount": "Don't have an account?",
+      "registerLink": "Sign up here",
+      "success": "Welcome back!",
+      "successMessage": "Successfully signed in!",
+      "errorTitle": "Error signing in"
+    },
+    "register": {
+      "title": "Create Account",
+      "description": "Join The Prime Way",
+      "name": "Name",
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "namePlaceholder": "Your name",
+      "emailPlaceholder": "example@email.com",
+      "passwordPlaceholder": "Min. 8 characters",
+      "confirmPasswordPlaceholder": "Confirm your password",
+      "submit": "Create Account",
+      "hasAccount": "Already have an account?",
+      "loginLink": "Sign in here",
+      "success": "Account created successfully!",
+      "successMessage": "Registration successful!",
+      "successDescription": "Welcome to The Prime Way!",
+      "errorTitle": "Error registering"
+    },
+    "otp": {
+      "title": "Verify Email",
+      "label": "Verification Code",
+      "helper": "Enter the 6-digit code sent to your email",
+      "verify": "Verify & Create Account",
+      "verifying": "Verifying...",
+      "error": "Verification failed",
+      "backToLogin": "Back to login",
+      "codeSentTitle": "Code sent",
+      "codeSentDescription": "We sent a verification code to your email",
+      "resend": "Resend code",
+      "resendIn": "Resend in {seconds}s"
+    },
+    "forgotPassword": {
+      "title": "Reset Password",
+      "description": "Enter your email to receive a reset link",
+      "email": "Email",
+      "emailPlaceholder": "you@example.com",
+      "submit": "Send Reset Link",
+      "sending": "Sending...",
+      "sentTitle": "Check Your Email",
+      "sentDescription": "We've sent a reset link to {email}",
+      "backToLogin": "Back to Login",
+      "error": "Failed to send reset email"
+    },
+    "oauth": {
+      "continueWithGithub": "Continue with GitHub",
+      "continueWithGoogle": "Continue with Google",
+      "continueWithApple": "Continue with Apple",
+      "comingSoonTitle": "Coming Soon",
+      "comingSoonGoogle": "Google login will be available soon.",
+      "comingSoonApple": "Apple login will be available soon.",
+      "errorTitle": "Login error",
+      "errorDescription": "There was an error signing in. Please try again.",
+      "accountNotLinkedGeneric": "This email is already associated with another account.",
+      "accountNotLinkedTitle": "Account not linked"
+    },
+    "profile": {
+      "calendarConnected": "Calendar connected",
+      "calendarConnectedDescription": "Your Google Calendar has been successfully linked.",
+      "logoutSuccess": "Successfully signed out",
+      "logoutError": "Error signing out",
+      "title": "Profile",
+      "update": "Update Profile",
+      "personalInfo": "Personal Information",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "displayName": "Display Name",
+      "email": "Email",
+      "bio": "Bio",
+      "primaryGoal": "Primary Goal",
+      "save": "Save Changes",
+      "saving": "Saving...",
+      "success": "Profile updated successfully",
+      "error": "Error updating profile",
+      "imageUploadSuccess": "Profile picture updated",
+      "imageUploadError": "Error uploading picture",
+      "changePhoto": "Change photo",
+      "takePhoto": "Take photo",
+      "chooseFromLibrary": "Choose from library",
+      "uploadPhotoHelper": "Upload a photo (JPG, PNG). Max 5MB.",
+      "placeholders": {
+        "firstName": "Your first name",
+        "lastName": "Your last name",
+        "displayName": "How should we call you",
+        "bio": "Tell us about yourself...",
+        "primaryGoal": "What is your main goal?"
+      }
+    },
+    "common": {
+      "or": "Or",
+      "continueWithGoogle": "Continue with Google",
+      "continueWithGithub": "Continue with GitHub",
+      "continueWithApple": "Continue with Apple",
+      "logout": "Sign Out"
+    },
+    "biometric": {
+      "title": "Biometric Login",
+      "description": "Use Face ID or fingerprint to sign in",
+      "enable": "Enable Biometric Login",
+      "disable": "Disable Biometric Login",
+      "prompt": "Authenticate to continue",
+      "error": "Biometric authentication failed",
+      "notAvailable": "Biometric authentication is not available on this device"
+    }
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "tasks": "Tasks",
+    "habits": "Habits",
+    "goals": "Goals",
+    "finances": "Finances",
+    "notes": "Notes",
+    "pomodoro": "Pomodoro",
+    "health": "Health",
+    "ai": "AI Assistant",
+    "settings": "Settings",
+    "profile": "Profile",
+    "today": "Today",
+    "weeklyPlan": "Weekly Plan",
+    "focus": "Focus",
+    "all": "All",
+    "more": "More",
+    "calendar": "Calendar",
+    "home": "Home",
+    "aiChat": "AI Chat",
+    "reading": "Reading",
+    "premium": "Premium",
+    "subscription": "Subscription",
+    "notifications": "Notifications",
+    "hub": {
+      "goalsAndGrowth": "Goals & Growth",
+      "productivity": "Productivity",
+      "account": "Account",
+      "primeRoadmap": "Prime Roadmap",
+      "setUpVision": "Set Up Your Vision",
+      "setUpVisionDescription": "Let AI coach guide you to define your life vision and goals",
+      "startAlignment": "Start Alignment",
+      "visionAligned": "Vision Aligned"
+    }
+  },
+  "features": {
+    "dashboard": {
+      "title": "Dashboard",
+      "welcome": "Welcome back, {name}!",
+      "greeting": {
+        "morning": "Good morning",
+        "afternoon": "Good afternoon",
+        "evening": "Good evening"
+      },
+      "seeAll": "See all",
+      "dailyBrief": "Your Daily Brief",
+      "dailyBriefSummary": "{{tasks}} tasks today, {{completedHabits}}/{{totalHabits}} habits done.",
+      "noTasksToday": "No tasks for today",
+      "noHabitsToday": "No habits for today",
+      "sections": {
+        "today": "Today",
+        "habits": "Habits"
+      },
+      "quickActions": {
+        "title": "Quick Actions",
+        "addTask": "New Task",
+        "addHabit": "New Habit",
+        "addExpense": "Add Expense",
+        "startFocus": "Focus",
+        "pomodoro": "Pomodoro",
+        "addTransaction": "Transaction",
+        "addNote": "New Note",
+        "aiChat": "AI Chat",
+        "taskShort": "Task",
+        "focusShort": "Focus",
+        "expenseShort": "Expense",
+        "noteShort": "Note"
+      },
+      "stats": {
+        "tasks": {
+          "title": "Tasks completed",
+          "subtitle": "Today"
+        },
+        "spend": {
+          "title": "Monthly spend",
+          "subtitle": "Current Month"
+        },
+        "habits": {
+          "title": "Habit streak",
+          "subtitle": "Best Streak"
+        },
+        "goals": {
+          "title": "Active Goals",
+          "subtitle": "In Progress"
+        },
+        "days": "days",
+        "tasksDone": "Tasks Done",
+        "habitsLabel": "Habits",
+        "focusTime": "Focus Time",
+        "remaining": "Remaining"
+      },
+      "widgets": {
+        "tasks": {
+          "title": "Today's Tasks",
+          "addTask": "Add Task",
+          "viewAll": "View All",
+          "focus": "Start Focus",
+          "noTasks": "No tasks scheduled for today"
+        },
+        "finances": {
+          "title": "Recent Finances",
+          "viewAll": "View All",
+          "noTransactions": "No recent transactions",
+          "addTransaction": "Add Transaction",
+          "defaultDescription": "Transaction"
+        },
+        "habits": {
+          "title": "Today's Habits",
+          "manage": "Manage",
+          "noHabitsToday": "No habits scheduled for today",
+          "newHabit": "Create new habit",
+          "success": "Success",
+          "updated": "Habit updated",
+          "error": "Error",
+          "updateFailed": "Failed to update habit"
+        },
+        "goals": {
+          "title": "Goals - Q{quarter}",
+          "viewRoadmap": "View Roadmap",
+          "noGoals": "No active goals for this quarter",
+          "setGoals": "Set Goals"
+        },
+        "calendar": {
+          "title": "Upcoming events",
+          "viewAll": "View Calendar",
+          "noEvents": "No upcoming events",
+          "manageCalendar": "Manage calendar",
+          "today": "Today",
+          "tomorrow": "Tomorrow",
+          "joinMeeting": "Join",
+          "meetingCode": "Meeting code"
+        }
+      }
+    },
+    "goals": {
+      "widget": {
+        "title": "Goals - Q{quarter}",
+        "viewRoadmap": "View Roadmap",
+        "noGoals": "No active goals for this quarter",
+        "setGoals": "Set Goals"
+      },
+      "title": "Goals",
+      "newGoal": "New Goal",
+      "roadmap": "Roadmap",
+      "exampleData": {
+        "banner": "This is an example to help you understand the hierarchy. Tap to dismiss.",
+        "dismiss": "Dismiss example",
+        "visionTitle": "Live a balanced, fulfilling life",
+        "visionNarrative": "In 10 years I want to be healthy, financially free, and surrounded by meaningful relationships.",
+        "pillarTitle": "Health",
+        "outcomeTitle": "Run a marathon",
+        "outcomeDescription": "Train consistently to complete a full 42K marathon within 12 months.",
+        "focusTitle": "4 workouts per week"
+      },
+      "quarterlyGoals": "Quarterly Goals",
+      "journeyView": "Journey View",
+      "primeVision": "Prime Vision",
+      "visionLabel": "Vision",
+      "visionTooltip": "Your 10-year vision",
+      "primePillars": "Prime Pillars",
+      "primeOutcomes": "Prime Outcomes",
+      "primeFocus": "Quarterly Focus",
+      "primeFocuses": "Quarterly Focuses",
+      "focusesTooltip": "Quarterly focuses for this outcome",
+      "pillarsTooltip": "Strategic areas (3 years)",
+      "noQuarterlyGoals": "No quarterly goals",
+      "hierarchyRequired": "To create a quarterly goal, you first need to complete the base structure of your goals.",
+      "hierarchySteps": "Steps to follow",
+      "stepCreatePillar": "Create a Pillar (3-year strategic area)",
+      "stepCreateOutcome": "Create an Outcome (1-year key objective)",
+      "stepCreateFocus": "Create a Quarterly Goal (Quarterly focus)",
+      "useRoadmapTab": "Go to the 'Roadmap' tab to start creating your goals following this hierarchy.",
+      "objectives": "Objectives",
+      "progress": "Progress",
+      "period": "Period",
+      "editFocus": "Edit Focus",
+      "description": "Set and track your ambitious goals",
+      "sections": {
+        "active": "Active Goals",
+        "completed": "Completed Goals",
+        "upcoming": "Upcoming Goals"
+      },
+      "actions": {
+        "create": "Create Goal",
+        "edit": "Edit Goal",
+        "delete": "Delete Goal",
+        "viewDetails": "View Details",
+        "save": "Save",
+        "cancel": "Cancel",
+        "add": "Add"
+      },
+      "vision": {
+        "title": "Vision",
+        "form": {
+          "create": "Create Vision",
+          "edit": "Edit Vision"
+        }
+      },
+      "pillar": {
+        "title": "Pillar",
+        "form": {
+          "create": "Create Pillar",
+          "edit": "Edit Pillar"
+        }
+      },
+      "outcome": {
+        "title": "Outcome",
+        "form": {
+          "create": "Create Outcome",
+          "edit": "Edit Outcome"
+        }
+      },
+      "focus": {
+        "title": "Focus",
+        "form": {
+          "create": "Create Focus",
+          "edit": "Edit Focus"
+        }
+      },
+      "status": {
+        "notStarted": "Not Started",
+        "inProgress": "In Progress",
+        "completed": "Completed",
+        "cancelled": "Cancelled"
+      },
+      "priority": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High"
+      },
+      "form": {
+        "title": "Title",
+        "description": "Description",
+        "startDate": "Start Date",
+        "endDate": "End Date",
+        "priority": "Priority",
+        "status": "Status",
+        "progress": "Progress",
+        "area": "Area",
+        "narrative": "Narrative",
+        "year": "Year",
+        "quarter": "Quarter"
+      },
+      "edit": "Edit",
+      "createFocus": "Create Focus",
+      "delete": "Delete",
+      "createOutcome": "Create Outcome",
+      "editOutcome": "Edit Outcome",
+      "deadline": "Deadline",
+      "cancel": "Cancel",
+      "save": "Save",
+      "create": "Create",
+      "area": "Area",
+      "year": "Year",
+      "quarter": "Quarter",
+      "areas": {
+        "mindset": "Mindset",
+        "finances": "Finances",
+        "career": "Career",
+        "health": "Health",
+        "relationships": "Relationships",
+        "lifestyle": "Lifestyle"
+      },
+      "messages": {
+        "created": "Goal created successfully",
+        "updated": "Goal updated successfully",
+        "deleted": "Goal deleted successfully"
+      },
+      "levels": {
+        "vision": "Vision (10 years)",
+        "pillar": "Pillar (3 years)",
+        "outcome": "Outcome (1 year)",
+        "focus": "Focus (Quarterly)"
+      }
+    },
+    "tasks": {
+      "title": "Tasks",
+      "description": "Manage your tasks and stay organized",
+      "newTask": "New Task",
+      "editTask": "Edit Task",
+      "views": {
+        "list": "List",
+        "board": "Board",
+        "calendar": "Calendar",
+        "planner": "Planner",
+        "week": "Week"
+      },
+      "status": {
+        "open": "Open",
+        "completed": "Completed",
+        "done": "Done"
+      },
+      "priority": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High",
+        "med": "Med"
+      },
+      "createTask": "Create Task",
+      "taskTitleRequired": "Title is required",
+      "taskTitleMaxLength": "Title is too long",
+      "taskDescriptionMaxLength": "Description is too long",
+      "dueDateInvalid": "Invalid date",
+      "workDurationMin": "Duration must be at least 1 minute",
+      "workDurationMax": "Duration must be less than 8 hours",
+      "invalidTags": "Invalid tags",
+      "labels": {
+        "title": "Title",
+        "description": "Description",
+        "priority": "Priority",
+        "status": "Status",
+        "estimatedTime": "Estimated time",
+        "tags": "Tags",
+        "dueDate": "Due Date",
+        "estimatedDuration": "Estimated Duration (minutes)"
+      },
+      "dateLabels": {
+        "today": "Today",
+        "tomorrow": "Tomorrow",
+        "daysLeft": "days left",
+        "daysOverdue": "days overdue",
+        "overdue": "Overdue"
+      },
+      "allTasksMessages": {
+        "today": "Today",
+        "tomorrow": "Tomorrow",
+        "yesterday": "Yesterday"
+      },
+      "actions": {
+        "start": "Start",
+        "edit": "Edit",
+        "delete": "Delete",
+        "create": "Create",
+        "deleteConfirm": "Delete Task?"
+      },
+      "weeklyPlanning": {
+        "taskMoved": "Task moved",
+        "movedToDate": "Task moved to {date}",
+        "movedToBacklog": "Task moved to backlog"
+      },
+      "todayTasks": "Today's Tasks",
+      "loading": "Loading...",
+      "noTasksForToday": "No tasks for today",
+      "understood": "Understood",
+      "messages": {
+        "created": "Task created successfully",
+        "updated": "Task updated successfully",
+        "deleted": "Task deleted successfully",
+        "completed": "Task marked as completed",
+        "taskCreated": "Task created successfully",
+        "taskUpdated": "Task updated successfully",
+        "taskDeleted": "Task deleted successfully",
+        "taskDeletedDesc": "This action cannot be undone.",
+        "taskRescheduled": "Task rescheduled",
+        "taskScheduled": "Task scheduled",
+        "taskScheduledDescription": "Task has been scheduled successfully",
+        "taskUnschedulled": "Task unscheduled",
+        "taskUnschedulledDescription": "Task removed from schedule",
+        "taskUpdateFailed": "Failed to update task",
+        "taskDeleteFailed": "Failed to delete task",
+        "taskScheduledTomorrow": "Task scheduled for tomorrow",
+        "taskScheduledTomorrowDescription": "No space available today. Task scheduled for tomorrow.",
+        "error": "An error occurred"
+      },
+      "backlog": "Backlog",
+      "backlogEmpty": "No tasks in backlog",
+      "reschedule": "Reschedule",
+      "noDate": "No date",
+      "allTasks": "All Tasks",
+      "noTasksFound": "No tasks found.",
+      "archive": "Archive",
+      "quickAddPlaceholder": "Add task...",
+      "focus": {
+        "actual": "Actual",
+        "planned": "Planned",
+        "startLabel": "Start:",
+        "dueLabel": "Due",
+        "stop": "Stop",
+        "start": "Start"
+      },
+      "addTaskDescription": "Add a task to get started with your day",
+      "loadingFocus": "Loading focus tasks...",
+      "focusHeader": "{{count}} high priority task to focus on",
+      "focusHeaderPlural": "{{count}} high priority tasks to focus on",
+      "allClear": "All clear!",
+      "allClearDescription": "No high priority tasks right now. Great job staying on top of things.",
+      "searchPlaceholder": "Search tasks...",
+      "clearFilters": "Clear filters",
+      "taskCount": "{{count}} task",
+      "taskCountPlural": "{{count}} tasks",
+      "noMatchingTasks": "No matching tasks",
+      "noTasksYet": "No tasks yet",
+      "noMatchingTasksDescription": "Try a different search term or clear filters",
+      "noTasksYetDescription": "Create your first task to start organizing",
+      "loadingWeekly": "Loading weekly view...",
+      "allWeek": "All week",
+      "noTasksThisWeek": "No tasks this week",
+      "noTasksThisWeekDescription": "Schedule tasks to see them in the weekly view",
+      "swipe": {
+        "done": "Done",
+        "undo": "Undo",
+        "delete": "Delete"
+      },
+      "placeholders": {
+        "taskTitle": "What needs to be done?",
+        "taskDescription": "Add more details...",
+        "tagInput": "Add tag and press enter"
+      },
+      "completedCount": "{{completed}}/{{total}} completed",
+      "filterAll": "All",
+      "errorLoadingTitle": "Could not load tasks",
+      "errorLoadingDescription": "Check your connection and try again"
+    },
+    "habits": {
+      "title": "Habits",
+      "description": "Build positive routines",
+      "newHabit": "New Habit",
+      "streak": "{{days}} day streak",
+      "habitTracker": "Habit Tracker",
+      "habit": "Habit",
+      "habitStats": "Habit Statistics",
+      "habitTitle": "Habit Name",
+      "habitTitlePlaceholder": "e.g., Read 30 minutes",
+      "habitDescription": "Description",
+      "habitDescriptionPlaceholder": "Why is this habit important?",
+      "habitCategory": "Category",
+      "customCategory": "Custom Category",
+      "habitColor": "Color",
+      "habitTitleRequired": "Habit name is required",
+      "habitTitleMaxLength": "Habit name is too long",
+      "habitDescriptionMaxLength": "Description is too long",
+      "createNewHabitToTrack": "Create a new habit to track",
+      "updateHabitDetails": "Update habit details",
+      "actions": {
+        "create": "Create Habit",
+        "update": "Update Habit",
+        "edit": "Edit Habit",
+        "delete": "Delete Habit"
+      },
+      "completionRate": "Completion Rate",
+      "longestStreaks": "Longest Streaks",
+      "streakRanking": "Streak Ranking",
+      "errorLoadingHabits": "Error loading habits",
+      "days": {
+        "sun": "Sun",
+        "mon": "Mon",
+        "tue": "Tue",
+        "wed": "Wed",
+        "thu": "Thu",
+        "fri": "Fri",
+        "sat": "Sat"
+      },
+      "frequency": {
+        "label": "Frequency",
+        "weekDaysLabel": "Specific Days",
+        "dailyLabel": "Daily",
+        "selectDays": "Select Days",
+        "daily": "Daily",
+        "weekly": "Weekly",
+        "monthly": "Monthly",
+        "custom": "Custom",
+        "timesPerWeek": "Times/Week",
+        "timesPerWeekLabel": "times per week",
+        "timesPerDayLabel": "times per day"
+      },
+      "target": "Target ({unit})",
+      "categories": {
+        "healthFitness": "Health & Fitness",
+        "learningDevelopment": "Learning & Development",
+        "workProductivity": "Work & Productivity",
+        "mindfulnessWellbeing": "Mindfulness & Wellbeing",
+        "socialRelationships": "Social & Relationships",
+        "creativeHobbies": "Creative & Hobbies",
+        "financeMoney": "Finance & Money",
+        "homeEnvironment": "Home & Environment",
+        "health": "Health",
+        "fitness": "Fitness",
+        "mindset": "Mindset",
+        "learning": "Learning",
+        "productivity": "Productivity",
+        "finance": "Finance",
+        "social": "Social",
+        "other": "Other"
+      },
+      "habitDescriptionOptional": "Description (optional)",
+      "habitNamePlaceholder": "e.g. Morning Meditation",
+      "habitDescriptionFormPlaceholder": "What does this habit involve?",
+      "stats": {
+        "today": "Today",
+        "rate": "Rate",
+        "completionRate": "Completion rate",
+        "bestStreak": "Best Streak"
+      },
+      "noHabitsYet": "No habits yet",
+      "noHabitsDescription": "Start building better habits by creating your first one.",
+      "loadingHabits": "Loading habits...",
+      "messages": {
+        "created": "Habit created",
+        "updated": "Habit updated",
+        "deleted": "Habit deleted",
+        "completed": "Well done!",
+        "uncompleted": "Habit unchecked",
+        "futureNotAllowed": "You cannot mark future habits"
+      },
+      "deleteTitle": "Delete habit?",
+      "deleteConfirmation": "Are you sure you want to delete this habit? This action cannot be undone."
+    },
+    "finances": {
+      "title": "Finances",
+      "description": "Track your income and expenses",
+      "unbudgeted": "Unbudgeted",
+      "nav": {
+        "today": "Today",
+        "monthly": "Monthly System",
+        "history": "History",
+        "overview": "Overview",
+        "transactions": "Transactions",
+        "budgets": "Budgets",
+        "accounts": "Accounts",
+        "goals": "Savings Goals",
+        "debts": "Debts",
+        "planning": "Planning"
+      },
+      "today": {
+        "narrativePositive": "This month you are up",
+        "narrativeGood": "You are doing well.",
+        "narrativeNegative": "This month you are down",
+        "narrativeCaution": "Be careful.",
+        "availableToday": "Available Today",
+        "basedOnBudgets": "Based on your remaining monthly budget",
+        "addExpense": "Add Expense",
+        "addIncome": "Add Income",
+        "budgetAlert": "{{category}} is at {{percentage}}% usage",
+        "netWorthTrend": "Net Worth Trend"
+      },
+      "monthly": {
+        "title": "Monthly System",
+        "budgets": {
+          "title": "Budgets",
+          "manage": "Manage",
+          "empty": "No budgets defined",
+          "create": "Create Budget",
+          "spent": "Spent",
+          "remaining": "Left"
+        },
+        "flow": {
+          "title": "Cash Flow",
+          "income": "In",
+          "expense": "Out",
+          "net": "Net"
+        },
+        "debts": {
+          "title": "Debts",
+          "manage": "Manage",
+          "empty": "No debts tracked",
+          "add": "Add Debt",
+          "minPayment": "Min"
+        },
+        "accounts": {
+          "title": "Accounts",
+          "add": "Add",
+          "manage": "Manage",
+          "empty": "No accounts connected",
+          "connect": "Connect Account"
+        },
+        "goals": {
+          "title": "Savings Goals",
+          "add": "Add",
+          "manage": "Manage",
+          "empty": "No active savings goals",
+          "create": "Create Goal",
+          "monthlyContribution": "Save"
+        },
+        "income": {
+          "title": "Income Planning",
+          "add": "Add Source",
+          "manage": "Manage",
+          "empty": "No income sources planned",
+          "create": "Plan Income"
+        }
+      },
+      "steps": {
+        "essentials": "Essentials",
+        "amountCurrency": "Amount & Currency",
+        "advanced": "Advanced",
+        "details": "Details",
+        "goalDetails": "Goal Details",
+        "targets": "Targets",
+        "timeline": "Timeline",
+        "identity": "Identity",
+        "configuration": "Configuration",
+        "allocation": "Allocation"
+      },
+      "createBudget": "Create Budget",
+      "editBudget": "Edit Budget",
+      "createBudgetDescription": "Create a new budget to track your spending",
+      "editBudgetDescription": "Update your budget details",
+      "budgetName": "Budget Name",
+      "enterBudgetName": "Enter budget name",
+      "descriptionField": "Description",
+      "enterDescription": "Enter description",
+      "optional": "Optional",
+      "period": "Period",
+      "selectPeriod": "Select Period",
+      "quarterly": "Quarterly",
+      "budgetType": "Budget Type",
+      "income": "Income",
+      "expense": "Expense",
+      "variability": "Variability",
+      "selectVariability": "Select Variability",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "totalAmount": "Total Amount",
+      "addSource": "Add Source",
+      "editSource": "Edit Source",
+      "incomeSourceFormDescription": "Add a new income source to your financial plan.",
+      "notApplicableForFixed": "Advanced settings are not applicable for fixed income sources.",
+      "createFinancialGoal": "Create Financial Goal",
+      "editGoal": "Edit Goal",
+      "updateGoalDetails": "Update your goal details",
+      "setSavingsTarget": "Set a savings target",
+      "goalTitle": "Goal Title",
+      "emergencyFund": "Emergency Fund",
+      "priority": "Priority",
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "targetAmount": "Target Amount",
+      "currentAmountOptional": "Current Amount (Optional)",
+      "deadline": "Deadline",
+      "selectDate": "Select Date",
+      "name": "Name",
+      "namePlaceholder": "e.g. Salary, Freelance",
+      "type": "Type",
+      "selectType": "Select Type",
+      "fixed": "Fixed",
+      "variable": "Variable",
+      "frequency": "Frequency",
+      "selectFrequency": "Select Frequency",
+      "frequencies": {
+        "daily": "Daily",
+        "weekly": "Weekly",
+        "monthly": "Monthly",
+        "yearly": "Yearly"
+      },
+      "currency": "Currency",
+      "baseAmount": "Base Amount",
+      "estimatedAmount": "Estimated Amount",
+      "fixedAmount": "Fixed Amount",
+      "probability": "Probability",
+      "estimationStrategy": "Estimation Strategy",
+      "average": "Average",
+      "moving_average": "Moving Average",
+      "median": "Median",
+      "historicalWindowDays": "Historical Window (Days)",
+      "category": "Category",
+      "salary": "Salary",
+      "rent": "Rent",
+      "pension": "Pension",
+      "sales": "Sales",
+      "commissions": "Commissions",
+      "projects": "Projects",
+      "other": "Other",
+      "active": "Active",
+      "isActiveDesc": "Is this income source currently active?",
+      "notes": "Notes",
+      "additionalNotes": "Additional Notes",
+      "history": {
+        "title": "History",
+        "views": {
+          "feed": "Feed",
+          "table": "Table"
+        },
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "noTransactions": "No transactions found"
+      },
+      "planning": {
+        "expectedIncome": "Expected Income",
+        "plannedExpenses": "Planned Expenses",
+        "savingsTarget": "Savings Target",
+        "freeCashFlow": "Free Cash Flow"
+      },
+      "health_good": "Healthy",
+      "health_warning": "Needs Attention",
+      "health_critical": "Critical",
+      "incomeSources": {
+        "title": "Income Sources",
+        "noIncomeSources": "No income sources",
+        "addSource": "Add Source",
+        "source": "Source",
+        "selectSource": "Select source"
+      },
+      "overview": "Financial Overview",
+      "financialOverview": {
+        "title": "Financial Overview",
+        "monthlyTrend": "Monthly Trend",
+        "noTrendData": "No trend data available",
+        "expenses": "Expenses",
+        "cashFlowAnalysis": "Cash Flow Analysis",
+        "averageMonthlyIncome": "Average Monthly Income",
+        "averageMonthlyExpenses": "Average Monthly Expenses",
+        "averageNetIncome": "Average Net Income"
+      },
+      "transactions": {
+        "title": "Transactions",
+        "add": "Add Transaction",
+        "income": "Income",
+        "expense": "Expense",
+        "transfer": "Transfer",
+        "searchTransactions": "Search transactions...",
+        "recent": "Recent Transactions",
+        "latestActivity": "Latest financial activity",
+        "noTransactions": "No transactions found",
+        "allCount": "{{count}} transactions",
+        "unbudgeted": "Unbudgeted",
+        "status": {
+          "pending": "Pending",
+          "cleared": "Cleared",
+          "reconciled": "Reconciled",
+          "excluded": "Excluded",
+          "included": "Included"
+        },
+        "filters": {
+          "allAccounts": "All Accounts",
+          "allTypes": "All Types",
+          "type": "Type",
+          "account": "Account"
+        },
+        "columns": {
+          "description": "Description",
+          "budget": "Budget",
+          "date": "Date",
+          "status": "Status",
+          "amount": "Amount",
+          "actions": "Actions"
+        },
+        "form": {
+          "title": "Transaction Details",
+          "additional": "Additional",
+          "details": "Details",
+          "description": "Description",
+          "date": "Date",
+          "amount": "Amount",
+          "type": "Type",
+          "account": "Account",
+          "fromAccount": "From Account",
+          "toAccount": "To Account",
+          "budget": "Budget",
+          "tags": "Tags",
+          "notes": "Notes",
+          "debt": {
+            "markAsPayment": "Mark as Debt Payment",
+            "select": "Select Debt"
+          },
+          "placeholders": {
+            "description": "Enter description",
+            "notes": "Enter notes",
+            "tags": "Enter tags",
+            "selectAccount": "Select account",
+            "selectTargetAccount": "Select target account",
+            "selectBudget": "Select budget"
+          }
+        }
+      },
+      "budgets": {
+        "title": "Budgets",
+        "create": "Create Budget",
+        "spent": "Spent",
+        "remaining": "Remaining",
+        "noBudgets": "No budgets set",
+        "addBudget": "Add Budget"
+      },
+      "addTransactionDialog": "Add Transaction",
+      "goals": {
+        "title": "Savings Goals",
+        "noGoals": "No savings goals",
+        "addGoal": "Add Goal"
+      },
+      "debts": {
+        "title": "Debts",
+        "actions": {
+          "add": "Add Debt",
+          "edit": "Edit Debt",
+          "delete": "Delete Debt",
+          "makePayment": "Make Payment",
+          "viewMore": "View More",
+          "viewLess": "View Less",
+          "cancel": "Cancel",
+          "search": "Search..."
+        },
+        "fields": {
+          "name": "Debt Name",
+          "namePlaceholder": "e.g., Credit Card",
+          "creditor": "Creditor",
+          "creditorPlaceholder": "Bank Name",
+          "category": "Category",
+          "categoryPlaceholder": "Select category",
+          "description": "Description",
+          "descriptionPlaceholder": "Why is this debt important?",
+          "totalAmount": "Total Amount",
+          "totalAmountPlaceholder": "0.00",
+          "paidAmount": "Paid Amount",
+          "paidAmountPlaceholder": "0.00",
+          "currency": "Currency",
+          "interestRate": "Interest Rate (%)",
+          "interestRatePlaceholder": "0.00",
+          "dueDate": "Due Date (Optional)",
+          "paymentDay": "Payment Day",
+          "paymentDayPlaceholder": "1-31",
+          "installmentCount": "Number of Installments",
+          "installmentCountPlaceholder": "12",
+          "installmentAmount": "Installment Amount",
+          "remaining": "Remaining",
+          "progress": "Progress"
+        },
+        "status": {
+          "paid": "Paid",
+          "overdue": "Overdue",
+          "dueIn": "Due in",
+          "active": "Active",
+          "inactive": "Inactive"
+        },
+        "categories": {
+          "creditCard": "Credit Card",
+          "personalLoan": "Personal Loan",
+          "mortgage": "Mortgage",
+          "studentLoan": "Student Loan",
+          "autoLoan": "Auto Loan",
+          "medical": "Medical",
+          "business": "Business",
+          "other": "Other"
+        },
+        "installments": {
+          "title": "Installments",
+          "overdueByDays": "Overdue by {days} days",
+          "dueToday": "Due today",
+          "dueTomorrow": "Due tomorrow",
+          "dueInDays": "Due in {days} days",
+          "nextPaymentDate": "Next Payment",
+          "count": "Installments",
+          "interest": "Interest",
+          "totalWithInterest": "Total with Interest",
+          "totalInterest": "Total Interest",
+          "calculate": "Calculate"
+        },
+        "steps": {
+          "basicInfo": "Basic Info",
+          "financialDetails": "Financial Details",
+          "installments": "Installments"
+        },
+        "filters": {
+          "allCategories": "All Categories"
+        },
+        "messages": {
+          "loading": "Loading debts...",
+          "noDebtsFound": "No debts found matching your criteria",
+          "noDebtsYet": "No debts yet",
+          "addFirst": "Add your first debt to start tracking",
+          "deleteConfirmTitle": "Delete Debt?",
+          "deleteConfirmDescription": "Are you sure you want to delete this debt? This action cannot be undone.",
+          "saveFailed": "Save failed",
+          "saveFailedDescription": "Failed to save debt details. Please try again.",
+          "createTitle": "Create New Debt",
+          "createDescription": "Add a new debt to track",
+          "updateTitle": "Edit Debt",
+          "updateDescription": "Update debt details"
+        }
+      },
+      "totalBalance": "Total Balance",
+      "monthlyIncome": "Monthly Income",
+      "monthlyExpenses": "Monthly Expenses",
+      "savingsRate": "Savings Rate",
+      "positiveCashFlow": "Positive cash flow",
+      "negativeCashFlow": "Negative cash flow",
+      "thisMonth": "This month",
+      "ofMonthlyIncome": "of monthly income",
+      "noBudget": "No budget",
+      "actions": {
+        "edit": "Edit",
+        "saving": "Saving...",
+        "deactivate": "Deactivate",
+        "activate": "Activate"
+      },
+      "accounts": {
+        "title": "Accounts",
+        "add": "Add Account",
+        "edit": "Edit Account",
+        "delete": "Delete",
+        "noAccountsFound": "No accounts found",
+        "noAccountsDescription": "Get started by creating your first bank account or financial account.",
+        "copied": "Account number copied",
+        "confirmDelete": "Are you sure you want to delete this account? This action cannot be undone.",
+        "currentBalance": "Current Balance",
+        "creditLimit": "Credit Limit",
+        "types": {
+          "checking": "Checking Account",
+          "savings": "Savings Account",
+          "credit_card": "Credit Card",
+          "investment": "Investment Account",
+          "cash": "Cash",
+          "loan": "Loan Account"
+        },
+        "form": {
+          "descriptions": {
+            "edit": "Update allowed details of your account.",
+            "editLocked": "Fields like account type, currency and initial balance cannot be changed after creation because they impact financial calculations.",
+            "create": "Create a new bank account or financial account"
+          },
+          "name": "Account Name",
+          "type": "Account Type",
+          "currency": "Currency",
+          "initialBalance": "Initial Balance",
+          "creditLimit": "Credit Limit",
+          "bankName": "Bank Name",
+          "accountNumber": "Account Number",
+          "isActive": "Active Account",
+          "isActiveDesc": "Enable this account for transactions",
+          "placeholders": {
+            "name": "Enter account name",
+            "selectCurrency": "Select currency",
+            "bankName": "Enter bank name",
+            "accountNumber": "Enter account number"
+          },
+          "saveChanges": "Save Changes"
+        }
+      },
+      "planningDescription": "Plan your financial future",
+      "net": "Net",
+      "expensesShort": "Expenses",
+      "incomeShort": "Income",
+      "activeBudgets": "Active Budgets",
+      "savingsShort": "Savings",
+      "recentTransactions": "Recent Transactions",
+      "noTransactionsYet": "No transactions yet",
+      "perMonth": "/mo",
+      "targetLabel": "Target",
+      "ofAmount": "of {amount}",
+      "transactionForm": {
+        "title": "New Transaction",
+        "type": "Type",
+        "income": "Income",
+        "expense": "Expense",
+        "transfer": "Transfer",
+        "amount": "Amount",
+        "description": "Description",
+        "descriptionPlaceholder": "What was this for?",
+        "account": "Account",
+        "notes": "Notes (optional)",
+        "notesPlaceholder": "Additional details...",
+        "saving": "Saving...",
+        "addTransaction": "Add Transaction"
+      },
+      "quickAdd": "Quick add",
+      "savingsOverview": "Savings Overview",
+      "recurringExpenses": {
+        "title": "Recurring",
+        "autoPay": "Auto",
+        "inactive": "Inactive",
+        "amount": "Amount",
+        "paymentDay": "Day",
+        "totalMonthly": "Total Monthly",
+        "activeExpenses": "active expenses",
+        "messages": {
+          "noExpensesYet": "No recurring expenses yet",
+          "addFirst": "Add your first recurring expense to start tracking"
+        }
+      },
+      "incomeSection": {
+        "title": "Income",
+        "active": "Active",
+        "inactive": "Inactive",
+        "amountPerFrequency": "Per period",
+        "monthlyEquivalent": "Monthly",
+        "totalMonthly": "Total Monthly Income",
+        "activeSources": "active sources",
+        "messages": {
+          "noSourcesYet": "No income sources yet",
+          "addFirst": "Add your first income source to start tracking"
+        }
+      },
+      "pending": {
+        "title": "Pending",
+        "approve": "Approve",
+        "exclude": "Exclude",
+        "awaiting": "Awaiting review",
+        "transactions": "transactions",
+        "messages": {
+          "noPending": "No pending transactions",
+          "allReviewed": "All transactions have been reviewed"
+        }
+      },
+      "investmentForm": {
+        "title": "New Investment",
+        "name": "Investment Name",
+        "namePlaceholder": "e.g. Apple Stock, Bitcoin",
+        "ticker": "Ticker Symbol",
+        "tickerPlaceholder": "e.g. AAPL, BTC",
+        "type": "Investment Type",
+        "platform": "Platform",
+        "platformPlaceholder": "e.g. Robinhood, Coinbase",
+        "totalInvested": "Amount Invested",
+        "currentValue": "Current Value",
+        "purchaseDate": "Purchase Date",
+        "notes": "Notes (optional)",
+        "notesPlaceholder": "Additional details...",
+        "saving": "Saving...",
+        "addInvestment": "Add Investment",
+        "types": {
+          "stocks": "Stocks",
+          "bonds": "Bonds",
+          "etf": "ETF",
+          "crypto": "Crypto",
+          "real_estate": "Real Estate",
+          "mutual_fund": "Mutual Fund",
+          "other": "Other"
+        }
+      },
+      "accountForm": {
+        "title": "New Account",
+        "editTitle": "Edit Account",
+        "name": "Account Name",
+        "namePlaceholder": "e.g. Main Checking",
+        "type": "Account Type",
+        "bankName": "Bank Name",
+        "bankNamePlaceholder": "e.g. Chase, Wells Fargo",
+        "currency": "Currency",
+        "initialBalance": "Initial Balance",
+        "creditLimit": "Credit Limit (optional)",
+        "saving": "Saving...",
+        "addAccount": "Add Account",
+        "saveChanges": "Save Changes",
+        "types": {
+          "checking": "Checking",
+          "savings": "Savings",
+          "credit": "Credit Card",
+          "investment": "Investment",
+          "cash": "Cash",
+          "other": "Other"
+        }
+      },
+      "investments": {
+        "title": "Investments",
+        "invested": "Invested",
+        "current": "Current",
+        "gain": "Gain",
+        "portfolioValue": "Portfolio Value",
+        "position": "position",
+        "positions": "positions",
+        "since": "Since",
+        "noInvestmentsYet": "No investments yet",
+        "noInvestmentsDescription": "Add your first investment to start tracking your portfolio"
+      }
+    },
+    "ai": {
+      "title": "AI Assistant",
+      "description": "Your personal productivity assistant",
+      "inputPlaceholder": "Ask me anything...",
+      "welcome": "Hi, how can I help you today?",
+      "disclaimer": "AI can make mistakes. Please verify important information.",
+      "openButton": "Open AI Assistant",
+      "examples": {
+        "title": "Try asking about:",
+        "tasks": "How can I improve my task management?",
+        "finance": "How do I save more money?",
+        "goals": "Help me set realistic goals"
+      },
+      "chat": {
+        "emptyTitle": "Vision Assistant",
+        "emptyDescription": "Your companion to reach your Prime State. Ask me about your vision, finances, tasks, or productivity.",
+        "placeholder": "Type a message...",
+        "microphone": "Microphone",
+        "searchModel": "Search model...",
+        "noModels": "No models found.",
+        "chatError": "Chat error: ",
+        "saveError": "Error saving",
+        "connectionError": "Connection error",
+        "saved": "Saved",
+        "proposalConfirmed": "Proposal confirmed and saved successfully.",
+        "proposalCancelled": "Proposal cancelled",
+        "proposalRejectedSystem": "User rejected the proposal. Ask if they want to modify something."
+      },
+      "comingSoon": "AI chat coming soon! Connect your backend to enable this feature.",
+      "primeAI": "Prime AI",
+      "askAnything": "Ask anything...",
+      "suggestions": {
+        "vision": "I want to create my personal vision",
+        "finances": "Help me organize my finances",
+        "quarterGoals": "Plan my quarterly goals",
+        "productivity": "Analyze my productivity",
+        "todayTasks": "What are my tasks for today?",
+        "analyzeFinances": "Analyze my finances",
+        "reviewGoals": "Review my goals",
+        "planWeek": "Plan my week",
+        "productivityTips": "Productivity tips",
+        "monthlyReport": "Monthly report"
+      },
+      "tools": {
+        "getPrimeVisions": {
+          "label": "Personal Vision",
+          "loadingLabel": "Querying personal vision..."
+        },
+        "getPrimePillars": {
+          "label": "Strategic Pillars",
+          "loadingLabel": "Querying pillars..."
+        },
+        "getPrimeOutcomes": {
+          "label": "Expected Outcomes",
+          "loadingLabel": "Querying goals..."
+        },
+        "getPrimeQuarterFocuses": {
+          "label": "Quarterly Focuses",
+          "loadingLabel": "Querying focuses..."
+        },
+        "getUserTasks": {
+          "label": "Tasks",
+          "loadingLabel": "Querying tasks..."
+        },
+        "getTasks": {
+          "label": "Tasks",
+          "loadingLabel": "Querying tasks..."
+        },
+        "getFinancialSummary": {
+          "label": "Financial Summary",
+          "loadingLabel": "Analyzing finances..."
+        },
+        "getBudgets": {
+          "label": "Budgets",
+          "loadingLabel": "Querying budgets..."
+        },
+        "getDebts": {
+          "label": "Debts",
+          "loadingLabel": "Querying debts..."
+        },
+        "getSavingsGoals": {
+          "label": "Savings Goals",
+          "loadingLabel": "Querying savings..."
+        },
+        "getGoals": {
+          "label": "Goals",
+          "loadingLabel": "Querying goals..."
+        },
+        "createPrimeVision": {
+          "label": "Create / update personal vision",
+          "loadingLabel": "Preparing proposal...",
+          "writeLabel": "Save Vision"
+        },
+        "createPrimePillar": {
+          "label": "Create strategic pillar",
+          "loadingLabel": "Preparing pillar...",
+          "writeLabel": "Save Pillar"
+        },
+        "createPrimeOutcome": {
+          "label": "Create expected outcome",
+          "loadingLabel": "Preparing goal...",
+          "writeLabel": "Save Goal"
+        },
+        "createPrimeQuarterFocus": {
+          "label": "Create quarterly focus",
+          "loadingLabel": "Preparing focus...",
+          "writeLabel": "Save Focus"
+        },
+        "executingFallback": "Executing",
+        "deletePrimeVision": {
+          "label": "Delete personal vision",
+          "loadingLabel": "Preparing deletion...",
+          "writeLabel": "Delete permanently"
+        }
+      },
+      "areas": {
+        "finances": "Finances",
+        "career": "Career",
+        "health": "Health",
+        "relationships": "Relationships",
+        "mindset": "Mindset",
+        "lifestyle": "Lifestyle"
+      },
+      "proposal": {
+        "pending": "Pending confirmation",
+        "warning": "This action will modify your data. Review the details before confirming.",
+        "cancel": "Cancel",
+        "saving": "Saving...",
+        "fields": {
+          "title": "Title",
+          "narrative": "Narrative",
+          "area": "Area",
+          "description": "Description",
+          "targetDate": "Target date",
+          "period": "Period"
+        },
+        "deleteWarning": "This will permanently delete the vision and ALL its pillars, outcomes, and quarterly focuses. This action cannot be undone.",
+        "deleting": "Deleting..."
+      }
+    },
+    "settings": {
+      "title": "Settings",
+      "dangerous": "Danger Zone",
+      "preferences": {
+        "title": "Preferences",
+        "description": "Manage your language, region, and currency"
+      },
+      "currency": {
+        "title": "Currency",
+        "description": "Configure your currency preferences"
+      },
+      "theme": {
+        "title": "Theme",
+        "light": "Light",
+        "dark": "Dark",
+        "system": "System",
+        "description": "Choose your preferred theme"
+      },
+      "language": {
+        "title": "Language",
+        "select": "Select language",
+        "description": "Choose your preferred language"
+      },
+      "languageLabel": "Language",
+      "selectLanguage": "Select language",
+      "languageUpdateSuccess": "Language updated successfully",
+      "languageUpdateError": "Failed to update language",
+      "workingHours": {
+        "title": "Working Hours",
+        "description": "Configure your working hours",
+        "startLabel": "Start Time",
+        "endLabel": "End Time",
+        "defaultTaskDuration": "Default task duration (minutes)",
+        "maxTasksPerDay": "Max tasks per day",
+        "workDays": "Work Days",
+        "overflowStrategy": {
+          "label": "Overflow Strategy",
+          "backlog": "Move to Backlog",
+          "overtime": "Schedule anyway (Overtime)"
+        },
+        "days": {
+          "mon": "Mon",
+          "tue": "Tue",
+          "wed": "Wed",
+          "thu": "Thu",
+          "fri": "Fri",
+          "sat": "Sat",
+          "sun": "Sun"
+        }
+      },
+      "timezone": {
+        "title": "Timezone",
+        "description": "Set your local timezone",
+        "label": "Timezone"
+      },
+      "calendars": {
+        "title": "Calendars",
+        "description": "Manage connected calendars",
+        "connectGoogle": "Connect Google Calendar",
+        "noCalendars": "No connected calendars",
+        "primary": "Primary",
+        "secondary": "Secondary",
+        "useForSync": "Sync"
+      },
+      "notifications": {
+        "title": "Notifications",
+        "description": "Manage notification preferences",
+        "enableTitle": "Enable Notifications",
+        "enableDescription": "Enable notifications to stay updated.",
+        "enableButton": "Enable",
+        "permissionDenied": "Permission denied. Please enable in device settings.",
+        "notSupported": "Notifications not supported on this device.",
+        "types": {
+          "habitReminders": {
+            "title": "Habit Reminders",
+            "description": "Get reminded to complete your habits"
+          },
+          "pomodoroAlerts": {
+            "title": "Pomodoro Alerts",
+            "description": "Notifications for focus sessions and breaks"
+          },
+          "taskReminders": {
+            "title": "Task Reminders",
+            "description": "Reminders for due tasks"
+          },
+          "dailyMotivation": {
+            "title": "Daily Motivation",
+            "description": "Morning motivation to start your day"
+          },
+          "marketingMessages": {
+            "title": "Updates & Tips",
+            "description": "News and productivity tips"
+          }
+        }
+      },
+      "dangerZone": {
+        "title": "Danger Zone",
+        "description": "Irreversible actions like account deletion"
+      },
+      "deleteAccount": {
+        "title": "Delete Account",
+        "description": "Permanently delete your account and data",
+        "dialogTitle": "Delete Account",
+        "warning": "This action cannot be undone. This will permanently delete your account and remove your data from our servers.",
+        "consequencesTitle": "Consequences:",
+        "consequence1": "All your tasks, habits, and goals will be lost.",
+        "consequence2": "Your profile information will be deleted.",
+        "consequence3": "You will lose access to all premium features.",
+        "consequence4": "Subscription will be cancelled (if applicable).",
+        "understand": "I understand, delete my account",
+        "finalConfirmationTitle": "Are you absolutely sure?",
+        "finalConfirmationDescription": "Please type DELETE to confirm.",
+        "typeDelete": "Type DELETE",
+        "cancel": "Cancel",
+        "deleteForever": "Delete forever",
+        "deleting": "Deleting...",
+        "confirmationError": "Incorrect confirmation",
+        "confirmationErrorDescription": "Please type DELETE to confirm.",
+        "successTitle": "Account deleted",
+        "successDescription": "Your account has been successfully deleted.",
+        "errorTitle": "Error",
+        "errorDescription": "Failed to delete account. Please try again."
+      },
+      "about": {
+        "title": "About",
+        "version": "Version",
+        "buildNumber": "Build Number",
+        "rateApp": "Rate this App",
+        "contactSupport": "Contact Support",
+        "privacyPolicy": "Privacy Policy",
+        "termsOfService": "Terms of Service",
+        "licenses": "Open Source Licenses"
+      }
+    },
+    "pomodoro": {
+      "title": "Pomodoro",
+      "modes": {
+        "work": "Focus",
+        "shortBreak": "Short Break",
+        "longBreak": "Long Break"
+      },
+      "actions": {
+        "start": "Start",
+        "pause": "Pause",
+        "reset": "Reset"
+      },
+      "statistics": {
+        "title": "Statistics",
+        "todayFocus": "Today's Focus",
+        "weeklyFocus": "Weekly Focus",
+        "monthlyFocus": "Monthly Focus",
+        "dailyAverage": "Daily Average",
+        "sessionsPerDay": "Sessions/Day",
+        "summary": "Summary",
+        "todayProductivity": "Today's Productivity",
+        "completedSessions": "Completed Sessions",
+        "focusTime": "Focus Time",
+        "breakTime": "Break Time",
+        "totalTime": "Total Time",
+        "shortBreaks": "Short Breaks",
+        "longBreaks": "Long Breaks",
+        "dailyProductivity": "Daily Productivity",
+        "focusTimeOverTime": "Focus Time Over Time",
+        "noDataAvailable": "No data available",
+        "startPomodoroToSeeStats": "Start a Pomodoro to see stats",
+        "hours": "Hours",
+        "sessions": "Sessions"
+      },
+      "settings": {
+        "title": "Timer Settings",
+        "description": "Customize your focus sessions and breaks",
+        "workDuration": "Focus Duration",
+        "shortBreakDuration": "Short Break",
+        "longBreakDuration": "Long Break",
+        "longBreakInterval": "Long Break Interval",
+        "sound": "Sound",
+        "soundEnabled": "Enable Sound",
+        "soundVolume": "Volume",
+        "notificationSound": "Notification Sound",
+        "vibration": "Vibration",
+        "vibrationEnabled": "Enable Vibration",
+        "keepScreenOn": "Keep Screen On",
+        "reset": "Reset",
+        "cancel": "Cancel",
+        "save": "Save",
+        "workDurationHelp": "Time dedicated to work",
+        "shortBreakDurationHelp": "Short break time",
+        "longBreakDurationHelp": "Long break time",
+        "longBreakIntervalHelp": "How many sessions before a long break",
+        "sounds": {
+          "newNotification1": "Notification 1",
+          "newNotification2": "Notification 2",
+          "newNotification3": "Notification 3",
+          "newNotification4": "Notification 4",
+          "notificationEffect": "Effect",
+          "none": "None"
+        },
+        "messages": {
+          "saved": "Settings saved"
+        }
+      },
+      "backgroundTimer": {
+        "title": "Timer Running",
+        "body": "Focus session in progress"
+      }
+    },
+    "notes": {
+      "title": "Notes",
+      "newNote": "New Note",
+      "sidebar": {
+        "allNotes": "All Notes",
+        "categories": "Categories",
+        "pinned": "Pinned",
+        "archived": "Archived"
+      },
+      "categories": {
+        "createCategory": "Create Category",
+        "createCategoryDescription": "Create a new category for your notes",
+        "editCategory": "Edit Category",
+        "editCategoryDescription": "Edit category details",
+        "categoryName": "Category Name",
+        "categoryNamePlaceholder": "e.g., Work",
+        "categoryColor": "Color",
+        "categoryIcon": "Icon",
+        "optional": "(Optional)",
+        "iconHint": "Pick an icon",
+        "deleteCategory": "Delete Category",
+        "deleteCategoryConfirm": "Are you sure you want to delete category \"{{categoryName}}\"?",
+        "deleteCategoryWarning": "All notes in this category will be uncategorized.",
+        "deletingCategory": "Deleting...",
+        "updateCategory": "Update Category",
+        "messages": {
+          "categoryCreated": "Category created",
+          "categoryCreatedDescription": "Category created successfully",
+          "categoryUpdated": "Category updated",
+          "categoryUpdatedDescription": "Category updated successfully",
+          "categoryDeleted": "Category deleted",
+          "categoryDeletedDescription": "Category deleted successfully"
+        },
+        "searchIcons": "Search icons",
+        "icons": "Icons",
+        "emojis": "Emojis",
+        "preview": "Preview"
+      },
+      "actions": {
+        "cancel": "Cancel",
+        "save": "Save",
+        "saving": "Saving...",
+        "expand": "Expand",
+        "edit": "Edit",
+        "delete": "Delete",
+        "archive": "Archive",
+        "unarchive": "Unarchive",
+        "back": "Back",
+        "more": "More options",
+        "pin": "Pin",
+        "unpin": "Unpin",
+        "share": "Share"
+      },
+      "bulkActions": {
+        "selectedCount": "{{count}} selected",
+        "selectAll": "Select all",
+        "clearSelection": "Clear selection",
+        "changeCategory": "Change category",
+        "deleteSelected": "Delete selected"
+      },
+      "messages": {
+        "error": "Error",
+        "errorDescription": "Something went wrong. Please try again.",
+        "noteCreated": "Note created successfully",
+        "noteUpdated": "Note updated successfully",
+        "noteDeleted": "Note deleted successfully",
+        "errorCreatingNote": "Failed to create note",
+        "errorUpdatingNote": "Failed to update note",
+        "errorDeletingNote": "Failed to delete note",
+        "success": "Success"
+      },
+      "filterByTags": "Filter by Tags",
+      "filterByTagsDescription": "Select tags to filter notes",
+      "searchTags": "Search tags...",
+      "availableTags": "Available Tags",
+      "selectedTags": "Selected Tags",
+      "noTagsAvailable": "No tags available",
+      "noTagsFound": "No tags found matching your search",
+      "clearAll": "Clear all",
+      "selectAll": "Select all",
+      "noNotesDescription": "Create a note to get started.",
+      "close": "Close",
+      "search": "Search notes...",
+      "noNotes": "No notes found",
+      "pinned": "Pinned",
+      "errorLoadingTitle": "Could not load notes",
+      "errorLoadingDescription": "Check your connection and try again",
+      "editor": {
+        "placeholder": "Start typing...",
+        "titlePlaceholder": "Note title",
+        "contentPlaceholder": "Start writing... supports **bold**, *italic*, # headings, - lists, > quotes",
+        "tapToWrite": "Tap to start writing..."
+      },
+      "tags": "Tags",
+      "editDescription": "Edit your note details",
+      "createDescription": "Create a new note",
+      "noteTitle": "Note Title",
+      "noteContent": "Content",
+      "tagsPlaceholder": "Add tags...",
+      "selectCategory": "Select category",
+      "noCategory": "No category",
+      "deleteConfirm": "Are you sure you want to delete this note?"
+    },
+    "calendar": {
+      "title": "Calendar",
+      "description": "View your schedule at a glance",
+      "views": {
+        "month": "Month",
+        "week": "Week",
+        "day": "Day",
+        "agenda": "Agenda"
+      },
+      "events": {
+        "title": "Events",
+        "noEvents": "No events",
+        "upcoming": "Upcoming Events",
+        "allDay": "All day",
+        "joinMeeting": "Join",
+        "meetingCode": "Meeting code"
+      },
+      "sync": {
+        "connected": "Calendar connected",
+        "disconnected": "Calendar disconnected",
+        "syncNow": "Sync now",
+        "lastSync": "Last synced: {time}"
+      }
+    },
+    "subscription": {
+      "title": "Unlock Your Potential",
+      "description": "Choose the plan that fits your productivity journey.",
+      "plans": {
+        "free": {
+          "title": "Free",
+          "description": "Basic features to get started"
+        },
+        "pro": {
+          "title": "Pro",
+          "description": "Full access to all features"
+        }
+      },
+      "currentPlan": "Current Plan",
+      "upgrade": "Upgrade",
+      "restore": "Restore Purchases",
+      "managePlan": "Manage Subscription",
+      "features": {
+        "unlimitedTasks": "Unlimited tasks",
+        "unlimitedHabits": "Unlimited habits",
+        "aiAssistant": "AI Assistant",
+        "advancedFinances": "Advanced finances",
+        "prioritySupport": "Priority support",
+        "calendarSync": "Calendar sync"
+      },
+      "billing": {
+        "monthly": "Monthly",
+        "yearly": "Yearly",
+        "savePercent": "Save {percent}%",
+        "perMonth": "/month",
+        "perYear": "/year"
+      },
+      "currentPlanBadge": "Current Plan",
+      "popular": "POPULAR",
+      "freeTrial": "Start 14-Day Free Trial",
+      "secure": "Secure",
+      "cancelAnytime": "Cancel Anytime",
+      "messages": {
+        "upgradeSuccess": "Welcome to Pro!",
+        "restoreSuccess": "Purchases restored",
+        "restoreNone": "No purchases to restore",
+        "error": "Something went wrong. Please try again."
+      }
+    },
+    "kyc": {
+      "title": "Identity Verification",
+      "description": "Verify your identity to unlock all features.",
+      "steps": {
+        "personalInfo": "Personal Information",
+        "documentUpload": "Document Upload",
+        "selfie": "Selfie Verification",
+        "review": "Review"
+      },
+      "fields": {
+        "fullName": "Full Name",
+        "dateOfBirth": "Date of Birth",
+        "nationality": "Nationality",
+        "documentType": "Document Type",
+        "documentNumber": "Document Number"
+      },
+      "documents": {
+        "passport": "Passport",
+        "nationalId": "National ID",
+        "driversLicense": "Driver's License"
+      },
+      "upload": {
+        "front": "Front of document",
+        "back": "Back of document",
+        "selfie": "Take a selfie",
+        "instructions": "Make sure the document is clearly visible and well-lit",
+        "takePhoto": "Take Photo",
+        "chooseFromLibrary": "Choose from Library",
+        "retake": "Retake"
+      },
+      "status": {
+        "pending": "Under Review",
+        "approved": "Verified",
+        "rejected": "Rejected",
+        "pendingDescription": "Your documents are being reviewed. This may take up to 24 hours.",
+        "rejectedDescription": "Your verification was rejected. Please try again."
+      },
+      "messages": {
+        "submitted": "Documents submitted successfully",
+        "error": "Error submitting documents"
+      }
+    },
+    "notifications": {
+      "title": "Notifications",
+      "empty": "No notifications yet",
+      "markAllRead": "Mark all as read",
+      "markRead": "Mark as read",
+      "clearAll": "Clear all",
+      "types": {
+        "taskDue": "Task due",
+        "habitReminder": "Habit reminder",
+        "goalProgress": "Goal progress",
+        "pomodoroComplete": "Pomodoro complete",
+        "dailyMotivation": "Daily motivation",
+        "system": "System"
+      },
+      "permissions": {
+        "title": "Enable Notifications",
+        "description": "Stay on track with timely reminders for your tasks, habits, and focus sessions.",
+        "enable": "Enable Notifications",
+        "later": "Maybe Later",
+        "goToSettings": "Go to Settings"
+      },
+      "reminders": {
+        "habitReminder": "Daily Reminder",
+        "habitReminderDescription": "Get reminded to complete this habit",
+        "taskReminder": "Task Reminder",
+        "taskReminderDescription": "Get notified before your task is due",
+        "setTime": "Set reminder time",
+        "enabled": "Reminder enabled",
+        "disabled": "Reminder disabled",
+        "at": "at"
+      }
+    },
+    "onboarding": {
+      "buttons": {
+        "done": "Finish",
+        "next": "Next",
+        "back": "Back",
+        "getStarted": "Get Started",
+        "skip": "Skip"
+      },
+      "skipConfirmDescription": "Are you sure you want to skip the onboarding?",
+      "tooltips": {
+        "goals": "Choose the life areas that matter most to you. These become your Pillars — the foundation for all your goals and habits.",
+        "habits": "Habits are daily or weekly actions that compound over time. Start with one small habit and build from there.",
+        "tasks": "Tasks are one-time actions with deadlines. Capture what you need to do so nothing falls through the cracks.",
+        "finances": "Track your money across accounts, budgets, and savings goals. Start by setting your currency and first account."
+      },
+      "steps": {
+        "welcome": {
+          "title": "Welcome to The Prime Way",
+          "description": "Your all-in-one productivity companion"
+        },
+        "goals": {
+          "title": "Set your Goals",
+          "description": "Start by defining what you want to achieve."
+        },
+        "habits": {
+          "title": "Build Habits",
+          "description": "Create habits to reach your goals."
+        },
+        "tasks": {
+          "title": "Manage Tasks",
+          "description": "Organize your daily to-dos."
+        },
+        "financeaccounts": {
+          "title": "Connect Accounts",
+          "description": "Link your financial accounts."
+        },
+        "financetransactions": {
+          "title": "Track Transactions",
+          "description": "Monitor your income and expenses."
+        },
+        "notes": {
+          "title": "Take Notes",
+          "description": "Capture your ideas and thoughts."
+        },
+        "notifications": {
+          "title": "Stay on Track",
+          "description": "Enable notifications to never miss a task or habit."
+        }
+      },
+      "habitsSetup": {
+        "step": "Step 2 of 5",
+        "title": "Create your first habit",
+        "description": "Start building consistency with a simple daily habit.",
+        "habitName": "Habit name",
+        "habitPlaceholder": "e.g., Read for 30 minutes",
+        "orPickSuggestion": "Or pick a suggestion",
+        "suggestions": {
+          "read": "Read for 30 minutes",
+          "exercise": "Exercise",
+          "meditate": "Meditate",
+          "water": "Drink 8 glasses of water",
+          "journal": "Journal",
+          "noSocial": "No social media before noon"
+        }
+      },
+      "tasksSetup": {
+        "step": "Step 3 of 5",
+        "title": "Create your first task",
+        "description": "What is the most important thing you need to do today?",
+        "taskName": "Task name",
+        "taskPlaceholder": "e.g., Plan my week ahead",
+        "orPickSuggestion": "Or pick a suggestion",
+        "suggestions": {
+          "planWeek": "Plan my week ahead",
+          "setupBudget": "Set up my budget",
+          "defineGoals": "Define 3 monthly goals",
+          "organizeWorkspace": "Organize my workspace",
+          "reviewPriorities": "Review my priorities",
+          "scheduleWorkout": "Schedule a workout"
+        }
+      },
+      "financesSetup": {
+        "step": "Step 4 of 5",
+        "title": "Set up your finances",
+        "description": "Choose your currency and create your first financial account.",
+        "baseCurrency": "Base currency",
+        "accountName": "Account name",
+        "accountNamePlaceholder": "e.g., My Main Account",
+        "accountType": "Account type",
+        "accountTypes": {
+          "checking": "Checking Account",
+          "savings": "Savings Account",
+          "creditCard": "Credit Card",
+          "cash": "Cash",
+          "investment": "Investment"
+        }
+      },
+      "goalsSetup": {
+        "step": "Step 1 of 5",
+        "title": "What are your goals?",
+        "description": "Select the areas you want to focus on. You can always change this later.",
+        "pillars": {
+          "finances": "Finances",
+          "financesDescription": "Budget, save, and invest wisely",
+          "career": "Career",
+          "careerDescription": "Grow professionally and excel",
+          "health": "Health",
+          "healthDescription": "Exercise, nutrition, and wellness",
+          "relationships": "Relationships",
+          "relationshipsDescription": "Strengthen personal connections",
+          "mindset": "Mindset",
+          "mindsetDescription": "Mental clarity and personal growth",
+          "lifestyle": "Lifestyle",
+          "lifestyleDescription": "Design the life you want to live"
+        }
+      },
+      "welcome": {
+        "tagline": "Your all-in-one life operating system",
+        "subtitle": "Tasks, habits, goals, finances, and more\nall in one place.",
+        "minuteText": "This will only take a minute"
+      },
+      "completion": {
+        "title": "You're all set!",
+        "description": "Your workspace is ready. Here's everything\nyou can do with The Prime Way:",
+        "button": "Start Using The Prime Way",
+        "settingsHint": "You can customize everything in Settings",
+        "features": {
+          "tasks": "Tasks",
+          "habits": "Habits",
+          "goals": "Goals",
+          "finances": "Finances",
+          "notes": "Notes",
+          "calendar": "Calendar"
+        }
+      }
+    },
+    "profile": {
+      "title": "Profile",
+      "editProfile": "Edit Profile",
+      "personalInfo": "Personal Information",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "displayName": "Display Name",
+      "email": "Email",
+      "bio": "Bio",
+      "primaryGoal": "Primary Goal",
+      "save": "Save Changes",
+      "saving": "Saving...",
+      "success": "Profile updated successfully",
+      "error": "Error updating profile",
+      "imageUploadSuccess": "Profile picture updated",
+      "imageUploadError": "Error uploading picture",
+      "changePhoto": "Change photo",
+      "takePhoto": "Take photo",
+      "chooseFromLibrary": "Choose from library",
+      "uploadPhotoHelper": "Upload a photo (JPG, PNG). Max 5MB.",
+      "stats": {
+        "tasksCompleted": "Tasks Completed",
+        "habitsStreak": "Best Streak",
+        "goalsAchieved": "Goals Achieved",
+        "focusHours": "Focus Hours"
+      },
+      "placeholders": {
+        "firstName": "Your first name",
+        "lastName": "Your last name",
+        "displayName": "How should we call you",
+        "bio": "Tell us about yourself...",
+        "primaryGoal": "What is your main goal?"
+      },
+      "logout": "Sign Out",
+      "logoutConfirm": "Are you sure you want to sign out?",
+      "logoutSuccess": "Successfully signed out",
+      "logoutError": "Error signing out",
+      "version": "Version {version}"
+    },
+    "reading": {
+      "title": "Reading",
+      "tabs": {
+        "library": "Library",
+        "explore": "Explore",
+        "plan": "Plan",
+        "goals": "Goals"
+      },
+      "searchPlaceholder": "Search books...",
+      "stats": {
+        "toRead": "To Read",
+        "reading": "Reading",
+        "done": "Done",
+        "favorites": "Favorites"
+      },
+      "emptyLibrary": "Your library is empty",
+      "emptyLibraryDescription": "Search for books to add to your reading list",
+      "searchBooks": "Search Books"
+    },
+    "more": {
+      "title": "More",
+      "version": "The Prime Way v{version}"
+    },
+    "health": {
+      "title": "Health",
+      "metrics": {
+        "weight": "Weight",
+        "sleep": "Sleep",
+        "water": "Water"
+      }
+    }
+  }
+}

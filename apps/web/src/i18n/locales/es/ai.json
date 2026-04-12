@@ -1,0 +1,18 @@
+{
+  "title": "Asistente IA",
+  "subtitle": "Pregunta sobre tus tareas, hábitos, metas y más",
+  "placeholder": "Pregúntame lo que quieras...",
+  "emptyState": "Inicia una conversaci��n con tu asistente IA",
+  "suggestion1": "¿En qué debería enfocarme hoy?",
+  "suggestion2": "¿Cómo van mis hábitos?",
+  "suggestion3": "Resume mi semana",
+  "noResponse": "No se recibió respuesta",
+  "aiDisabled": "La IA está desactivada. Activa el uso compartido de datos en Configuración.",
+  "rateLimited": "Demasiadas solicitudes. Espera un momento.",
+  "failedToSend": "Error al enviar mensaje",
+  "dailyBriefing": "Resumen del Día",
+  "tasksStatus": "{{done}}/{{total}} tareas",
+  "habitsStatus": "{{done}}/{{total}} hábitos",
+  "eventsCount": "{{count}} eventos",
+  "streakBadge": "{{count}} días de racha"
+}

@@ -1,0 +1,46 @@
+export const CURRENCY_OPTIONS = [
+  { value: 'USD', label: 'USD — US Dollar' },
+  { value: 'EUR', label: 'EUR — Euro' },
+  { value: 'GBP', label: 'GBP — British Pound' },
+  { value: 'MXN', label: 'MXN — Mexican Peso' },
+  { value: 'CAD', label: 'CAD — Canadian Dollar' },
+  { value: 'AUD', label: 'AUD — Australian Dollar' },
+  { value: 'JPY', label: 'JPY — Japanese Yen' },
+  { value: 'CHF', label: 'CHF — Swiss Franc' },
+  { value: 'CNY', label: 'CNY — Chinese Yuan' },
+  { value: 'INR', label: 'INR — Indian Rupee' },
+  { value: 'BRL', label: 'BRL — Brazilian Real' },
+  { value: 'COP', label: 'COP — Colombian Peso' },
+  { value: 'ARS', label: 'ARS — Argentine Peso' },
+  { value: 'CLP', label: 'CLP — Chilean Peso' },
+  { value: 'PEN', label: 'PEN — Peruvian Sol' },
+  { value: 'SGD', label: 'SGD — Singapore Dollar' },
+  { value: 'AED', label: 'AED — UAE Dirham' },
+  { value: 'KRW', label: 'KRW — South Korean Won' },
+] as const
+
+export const EXPENSE_CATEGORY_OPTIONS = [
+  { value: 'housing', labelKey: 'catHousing' },
+  { value: 'utilities', labelKey: 'catUtilities' },
+  { value: 'food', labelKey: 'catFood' },
+  { value: 'transport', labelKey: 'catTransport' },
+  { value: 'health', labelKey: 'catHealth' },
+  { value: 'entertainment', labelKey: 'catEntertainment' },
+  { value: 'shopping', labelKey: 'catShopping' },
+  { value: 'education', labelKey: 'catEducation' },
+  { value: 'subscriptions', labelKey: 'catSubscriptions' },
+  { value: 'insurance', labelKey: 'catInsurance' },
+  { value: 'fitness', labelKey: 'catFitness' },
+  { value: 'travel', labelKey: 'catTravel' },
+  { value: 'savings', labelKey: 'catSavings' },
+  { value: 'other', labelKey: 'catOther' },
+] as const
+
+export const INCOME_CATEGORY_OPTIONS = [
+  { value: 'salary', labelKey: 'catSalary' },
+  { value: 'freelance', labelKey: 'catFreelance' },
+  { value: 'investment', labelKey: 'catInvestmentIncome' },
+  { value: 'rental', labelKey: 'catRental' },
+  { value: 'business', labelKey: 'catBusiness' },
+  { value: 'other', labelKey: 'catOther' },
+] as const

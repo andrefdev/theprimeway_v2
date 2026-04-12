@@ -1,0 +1,8 @@
+dist-overlay/
+src-tauri/target/
+node_modules/
+.DS_Store
+*.pdb
+.vscode
+.idea
+*.log

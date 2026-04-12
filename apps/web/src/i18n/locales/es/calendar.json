@@ -1,0 +1,23 @@
+{
+  "title": "Calendario",
+  "dayMon": "Lun",
+  "dayTue": "Mar",
+  "dayWed": "Mié",
+  "dayThu": "Jue",
+  "dayFri": "Vie",
+  "daySat": "Sáb",
+  "daySun": "Dom",
+  "viewMonth": "Mes",
+  "viewWeek": "Semana",
+  "today": "Hoy",
+  "tomorrow": "Mañana",
+  "item": "elemento",
+  "items": "elementos",
+  "allDay": "Todo el día",
+  "scheduled": "Programado",
+  "nothingScheduled": "Nada programado",
+  "nothingScheduledDescription": "No hay tareas ni eventos para este día.",
+  "integrationTitle": "Integración con Google Calendar",
+  "integrationDescription": "Conecta tu Google Calendar para ver eventos aquí. Ve a Configuración para establecer la conexión.",
+  "comingSoon": "Integración con calendario próximamente"
+}
