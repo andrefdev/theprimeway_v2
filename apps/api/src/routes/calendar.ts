@@ -218,3 +218,59 @@ calendarRoutes.openapi(syncRoute, async (c) => {
   const result = await calendarService.syncCalendars(userId, calendarId)
   return c.json(result, 200)
 })
+
+// ---------------------------------------------------------------------------
+// GET /free-slots
+// ---------------------------------------------------------------------------
+const freeSlotsRoute = createRoute({
+  method: 'get',
+  path: '/free-slots',
+  tags: ['Calendar'],
+  summary: 'Get free calendar slots for scheduling',
+  security: [{ Bearer: [] }],
+  request: {
+    query: z.object({
+      date: z.string().describe('Date in YYYY-MM-DD format'),
+      duration: z.coerce.number().int().positive().describe('Duration in minutes'),
+    }),
+  },
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            freeSlots: z.array(
+              z.object({
+                start: z.string().describe('ISO 8601 timestamp'),
+                end: z.string().describe('ISO 8601 timestamp'),
+                durationMinutes: z.number(),
+              }),
+            ),
+          }),
+        },
+      },
+      description: 'Free time slots',
+    },
+    400: { content: { 'application/json': { schema: errorResponse } }, description: 'Missing params or invalid date' },
+  },
+})
+
+calendarRoutes.openapi(freeSlotsRoute, async (c) => {
+  const userId = c.get('user').userId
+  const { date, duration } = c.req.valid('query')
+
+  // Validate date format
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return c.json({ error: 'Invalid date format. Use YYYY-MM-DD' }, 400)
+  }
+
+  const result = await calendarService.getFreeSlots(userId, date, duration)
+
+  if ('error' in result) {
+    if (result.error === 'no_work_preferences') {
+      return c.json({ error: 'User has not set up work preferences' }, 400)
+    }
+  }
+
+  return c.json(result, 200)
+})

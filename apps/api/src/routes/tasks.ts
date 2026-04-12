@@ -266,3 +266,140 @@ taskRoutes.openapi(deleteRoute, async (c) => {
   if (!deleted) return c.json({ error: 'Task not found' }, 404)
   return c.json({ success: true }, 200)
 })
+
+// ---------------------------------------------------------------------------
+// POST /api/tasks/ai/timebox
+// ---------------------------------------------------------------------------
+const timeboxRoute = createRoute({
+  method: 'post',
+  path: '/ai/timebox',
+  tags: ['Tasks', 'AI'],
+  summary: 'Estimate task duration using AI',
+  security: [{ Bearer: [] }],
+  request: {
+    body: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            title: z.string(),
+            description: z.string().optional(),
+            taskId: z.string().optional(),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            minutes: z.number(),
+            rationale: z.string(),
+          }),
+        },
+      },
+      description: 'Timebox estimate',
+    },
+  },
+})
+
+taskRoutes.openapi(timeboxRoute, async (c) => {
+  const { userId } = c.get('user')
+  const { title, description, taskId } = c.req.valid('json')
+
+  try {
+    const result = await tasksService.estimateTimebox(userId, title, description, taskId)
+    return c.json(result, 200)
+  } catch (err) {
+    return c.json({ error: 'Failed to estimate timebox' }, 400)
+  }
+})
+
+// ---------------------------------------------------------------------------
+// POST /api/tasks/ai/schedule
+// ---------------------------------------------------------------------------
+const aiScheduleRoute = createRoute({
+  method: 'post',
+  path: '/ai/schedule',
+  tags: ['Tasks', 'AI'],
+  summary: 'Find optimal time slot for task',
+  security: [{ Bearer: [] }],
+  request: {
+    body: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            taskId: z.string(),
+            duration: z.number().optional(),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            slot: z
+              .object({
+                start: z.string(),
+                end: z.string(),
+              })
+              .nullable(),
+            confidence: z.number(),
+          }),
+        },
+      },
+      description: 'Scheduling suggestion',
+    },
+    404: { content: { 'application/json': { schema: errorResponse } }, description: 'Task not found' },
+  },
+})
+
+taskRoutes.openapi(aiScheduleRoute, async (c) => {
+  const { userId } = c.get('user')
+  const { taskId, duration } = c.req.valid('json')
+
+  const result = await tasksService.scheduleTask(userId, taskId, duration)
+  return c.json(result, 200)
+})
+
+// ---------------------------------------------------------------------------
+// GET /api/tasks/ai/insight/:taskId
+// ---------------------------------------------------------------------------
+const insightRoute = createRoute({
+  method: 'get',
+  path: '/ai/insight/:taskId',
+  tags: ['Tasks', 'AI'],
+  summary: 'Get AI insights for a task',
+  security: [{ Bearer: [] }],
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            contextBrief: z.string(),
+            suggestedSubtasks: z.array(z.string()),
+            tips: z.array(z.string()),
+          }),
+        },
+      },
+      description: 'Task insights',
+    },
+    404: { content: { 'application/json': { schema: errorResponse } }, description: 'Task not found' },
+  },
+})
+
+taskRoutes.openapi(insightRoute, async (c) => {
+  const { userId } = c.get('user')
+  const taskId = c.req.param('taskId')
+
+  try {
+    const result = await tasksService.getTaskInsight(userId, taskId)
+    return c.json(result, 200)
+  } catch (err) {
+    return c.json({ error: 'Failed to generate insights' }, 400)
+  }
+})

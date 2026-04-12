@@ -53,6 +53,13 @@ export const tasksQueries = {
       staleTime: 0, // Always fetch fresh for schedule suggestions
       enabled: !!targetDate && estimatedDuration > 0,
     }),
+
+  insight: (taskId: string) =>
+    queryOptions({
+      queryKey: [...tasksQueries.all(), 'insight', taskId],
+      queryFn: () => tasksApi.getTaskInsight(taskId),
+      staleTime: CACHE_TIMES.long,
+    }),
 }
 
 export function useCreateTask() {
@@ -86,5 +93,19 @@ export function useDeleteTask() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: tasksQueries.all() })
     },
+  })
+}
+
+export function useEstimateTimebox() {
+  return useMutation({
+    mutationFn: ({ title, description, taskId }: { title: string; description?: string; taskId?: string }) =>
+      tasksApi.estimateTimebox(title, description, taskId),
+  })
+}
+
+export function useScheduleTask() {
+  return useMutation({
+    mutationFn: ({ taskId, duration }: { taskId: string; duration?: number }) =>
+      tasksApi.scheduleTask(taskId, duration),
   })
 }

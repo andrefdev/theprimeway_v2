@@ -10,6 +10,9 @@ import { goalsRepository } from '../repositories/goals.repo'
 import { prisma } from '../lib/prisma'
 import { validateLimit } from '../lib/limits'
 import { FEATURES } from '@repo/shared/constants'
+import { generateObject } from 'ai'
+import { anthropic } from '@ai-sdk/anthropic'
+import { z } from 'zod'
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // SERVICE
@@ -256,6 +259,138 @@ class GoalsService {
 
   async deleteFocusFinanceLink(userId: string, id: string) {
     return goalsRepository.deleteFocusFinanceLink(userId, id)
+  }
+
+  // ─── AI Methods ──────────────────────────────────────────────────────────────
+
+  async suggestSubGoals(
+    userId: string,
+    goalId: string,
+    type: 'three-year' | 'annual' | 'quarterly' | 'weekly',
+  ): Promise<{ suggestions: Array<{ title: string; description: string }> }> {
+    // Get the parent goal
+    let parentGoal: any = null
+    if (type === 'three-year') {
+      parentGoal = await prisma.vision.findUnique({ where: { id: goalId } })
+    } else if (type === 'annual') {
+      parentGoal = await prisma.threeYearGoal.findUnique({ where: { id: goalId } })
+    } else if (type === 'quarterly') {
+      parentGoal = await prisma.annualGoal.findUnique({ where: { id: goalId } })
+    } else {
+      parentGoal = await prisma.quarterlyGoal.findUnique({ where: { id: goalId } })
+    }
+
+    if (!parentGoal || parentGoal.userId !== userId) {
+      return { suggestions: [] }
+    }
+
+    // Get existing children to avoid duplicates
+    let existingChildren: string[] = []
+    if (type === 'three-year') {
+      const threeYears = await prisma.threeYearGoal.findMany({
+        where: { visionId: goalId },
+        select: { title: true },
+      })
+      existingChildren = threeYears.map((g) => g.title)
+    } else if (type === 'annual') {
+      const annuals = await prisma.annualGoal.findMany({
+        where: { threeYearGoalId: goalId },
+        select: { title: true },
+      })
+      existingChildren = annuals.map((g) => g.title)
+    } else if (type === 'quarterly') {
+      const quarterlies = await prisma.quarterlyGoal.findMany({
+        where: { annualGoalId: goalId },
+        select: { title: true },
+      })
+      existingChildren = quarterlies.map((g) => g.title)
+    } else {
+      const weeklies = await prisma.weeklyGoal.findMany({
+        where: { quarterlyGoalId: goalId },
+        select: { title: true },
+      })
+      existingChildren = weeklies.map((g) => g.title)
+    }
+
+    const result = await generateObject({
+      model: anthropic('claude-3-5-sonnet-20241022'),
+      schema: z.object({
+        suggestions: z.array(
+          z.object({
+            title: z.string(),
+            description: z.string(),
+          }),
+        ),
+      }),
+      prompt: `
+Generate 3 coherent ${type.replace('-', ' ')} goals for this parent goal:
+Title: ${parentGoal.title}
+${parentGoal.description ? `Description: ${parentGoal.description}` : ''}
+
+Avoid these existing sub-goals: ${existingChildren.join(', ') || 'none'}
+
+Make them specific, actionable, and aligned with the parent goal.
+      `,
+    })
+
+    return result
+  }
+
+  async getQuarterlyReview(
+    userId: string,
+    quarter: 1 | 2 | 3 | 4,
+    year: number,
+  ): Promise<{
+    summary: string
+    topAchievements: string[]
+    stuckAreas: string[]
+    proposedFocuses: string[]
+  }> {
+    // Get all quarterly goals for the period
+    const quarterlyGoals = await prisma.quarterlyGoal.findMany({
+      where: {
+        userId,
+        // Estimate quarter dates (simplified - in production would use proper date logic)
+      },
+      include: {
+        weeklyGoals: {
+          select: {
+            status: true,
+            progress: true,
+          },
+        },
+      },
+    })
+
+    const goalSummaries = quarterlyGoals
+      .map(
+        (g) =>
+          `- ${g.title}: ${g.progress || 0}% complete (${g.weeklyGoals.filter((w: any) => w.status === 'completed').length}/${g.weeklyGoals.length} weeks done)`,
+      )
+      .join('\n')
+
+    const result = await generateObject({
+      model: anthropic('claude-3-5-sonnet-20241022'),
+      schema: z.object({
+        summary: z.string().describe('Overall quarterly performance summary'),
+        topAchievements: z.array(z.string()).describe('3-5 top achievements'),
+        stuckAreas: z.array(z.string()).describe('2-3 areas needing attention'),
+        proposedFocuses: z.array(z.string()).describe('3-4 recommended focus areas for next quarter'),
+      }),
+      prompt: `
+Analyze this quarter's performance (Q${quarter} ${year}):
+
+${goalSummaries || 'No goals tracked'}
+
+Provide:
+1. Overall summary
+2. Top 3-5 achievements
+3. 2-3 areas that need work
+4. 3-4 recommended focus areas for next quarter
+      `,
+    })
+
+    return result
   }
 }
 

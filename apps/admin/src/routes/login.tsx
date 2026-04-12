@@ -57,7 +57,7 @@ function LoginPage() {
       })
 
       toast.success('Logged in successfully')
-      navigate({ to: '/_admin/users' })
+      navigate({ to: '/_admin/users' as any })
     } catch (error) {
       toast.error('Invalid credentials')
       console.error(error)

@@ -53,6 +53,13 @@ class ChatRepository {
       where: { userId, status: 'active' },
     })
   }
+
+  async findActiveGoalsByUser(userId: string) {
+    return prisma.quarterlyGoal.findMany({
+      where: { userId, status: { not: 'completed' } },
+      orderBy: { createdAt: 'desc' },
+    })
+  }
 }
 
 export const chatRepo = new ChatRepository()

@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import type { FeatureKey, FeatureOverride } from '@/features/users/api'
 import { useSetFeatureOverride, useDeleteFeatureOverride } from '@/features/users/queries'
-import { FEATURES } from '@repo/shared/constants'
 import { Badge, Checkbox, Button, Input } from '@repo/ui'
 import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -10,7 +9,7 @@ interface FeatureOverrideRowProps {
   userId: string
   featureKey: FeatureKey
   planValue: number | boolean
-  override?: FeatureOverride
+  override?: Partial<FeatureOverride>
 }
 
 // Friendly names for features
@@ -50,8 +49,8 @@ export function FeatureOverrideRow({
       setOverrideReason('')
       toast.success('Override removed')
     } else {
-      // When creating new override, match the plan value but allow toggling
-      const newValue = isNumeric ? planValue : !planValue
+      // When creating new override, enable it (disable if it was disabled)
+      const newValue = typeof planValue === 'boolean' ? !planValue : true
       await setOverride.mutateAsync({
         userId,
         featureKey,
@@ -63,11 +62,11 @@ export function FeatureOverrideRow({
   }
 
   async function handleReasonChange() {
-    if (override) {
+    if (override && override.enabled !== undefined) {
       await setOverride.mutateAsync({
         userId,
         featureKey,
-        enabled: override.enabled,
+        enabled: override.enabled as boolean,
         reason: overrideReason || undefined,
       })
       toast.success('Reason updated')
@@ -86,7 +85,7 @@ export function FeatureOverrideRow({
               Plan default:
               {isNumeric ? ` ${planValue === -1 ? '∞' : planValue}` : ` ${planValue ? 'Enabled' : 'Disabled'}`}
             </span>
-            {hasOverride && <Badge variant="secondary">Override</Badge>}
+            {hasOverride && <Badge variant="primary">Override</Badge>}
           </div>
         </div>
 

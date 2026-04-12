@@ -18,6 +18,31 @@ interface ScheduleSuggestionResponse {
   } | null
 }
 
+interface TimeboxEstimateResponse {
+  data: {
+    minutes: number
+    rationale: string
+  }
+}
+
+interface TaskInsightResponse {
+  data: {
+    contextBrief: string
+    suggestedSubtasks: string[]
+    tips: string[]
+  }
+}
+
+interface TaskScheduleResponse {
+  data: {
+    slot: {
+      start: string
+      end: string
+    } | null
+    confidence: number
+  }
+}
+
 export const tasksApi = {
   list: (params?: Record<string, string>) =>
     api.get<TasksResponse>('/tasks', { params }).then((r) => r.data),
@@ -65,4 +90,26 @@ export const tasksApi = {
       .get<ScheduleSuggestionResponse>('/tasks/schedule/suggest', { params })
       .then((r) => r.data.data)
   },
+
+  estimateTimebox: (title: string, description?: string, taskId?: string) =>
+    api
+      .post<TimeboxEstimateResponse>('/tasks/ai/timebox', {
+        title,
+        description,
+        taskId,
+      })
+      .then((r) => r.data.data),
+
+  getTaskInsight: (taskId: string) =>
+    api
+      .get<TaskInsightResponse>(`/tasks/ai/insight/${taskId}`)
+      .then((r) => r.data.data),
+
+  scheduleTask: (taskId: string, duration?: number) =>
+    api
+      .post<TaskScheduleResponse>('/tasks/ai/schedule', {
+        taskId,
+        duration,
+      })
+      .then((r) => r.data.data),
 }

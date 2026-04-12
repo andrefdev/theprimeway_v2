@@ -1287,3 +1287,100 @@ goalsRoutes.openapi(deleteFocusFinanceLinkRoute, async (c) => {
     return c.json({ error: 'Internal server error' }, 500)
   }
 })
+
+// ---------------------------------------------------------------------------
+// POST /api/goals/ai/suggest
+// ---------------------------------------------------------------------------
+const suggestSubGoalsRoute = createRoute({
+  method: 'post',
+  path: '/ai/suggest',
+  tags: ['Goals', 'AI'],
+  summary: 'Generate sub-goal suggestions using AI',
+  security: [{ Bearer: [] }],
+  request: {
+    body: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            goalId: z.string(),
+            type: z.enum(['three-year', 'annual', 'quarterly', 'weekly']),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            suggestions: z.array(
+              z.object({
+                title: z.string(),
+                description: z.string(),
+              }),
+            ),
+          }),
+        },
+      },
+      description: 'Sub-goal suggestions',
+    },
+    404: { content: { 'application/json': { schema: z.object({ error: z.string() }) } }, description: 'Goal not found' },
+  },
+})
+
+goalsRoutes.openapi(suggestSubGoalsRoute, async (c) => {
+  const userId = c.get('user').userId
+  const { goalId, type } = c.req.valid('json')
+
+  try {
+    const result = await goalsService.suggestSubGoals(userId, goalId, type)
+    return c.json(result, 200)
+  } catch (err) {
+    return c.json({ error: 'Failed to generate suggestions' }, 400)
+  }
+})
+
+// ---------------------------------------------------------------------------
+// GET /api/goals/ai/quarterly-review
+// ---------------------------------------------------------------------------
+const quarterlyReviewRoute = createRoute({
+  method: 'get',
+  path: '/ai/quarterly-review',
+  tags: ['Goals', 'AI'],
+  summary: 'Get AI-generated quarterly review',
+  security: [{ Bearer: [] }],
+  request: {
+    query: z.object({
+      quarter: z.coerce.number().int().min(1).max(4),
+      year: z.coerce.number().int(),
+    }),
+  },
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            summary: z.string(),
+            topAchievements: z.array(z.string()),
+            stuckAreas: z.array(z.string()),
+            proposedFocuses: z.array(z.string()),
+          }),
+        },
+      },
+      description: 'Quarterly review',
+    },
+  },
+})
+
+goalsRoutes.openapi(quarterlyReviewRoute, async (c) => {
+  const userId = c.get('user').userId
+  const { quarter, year } = c.req.valid('query')
+
+  try {
+    const result = await goalsService.getQuarterlyReview(userId, quarter as 1 | 2 | 3 | 4, year)
+    return c.json(result, 200)
+  } catch (err) {
+    return c.json({ error: 'Failed to generate review' }, 400)
+  }
+})

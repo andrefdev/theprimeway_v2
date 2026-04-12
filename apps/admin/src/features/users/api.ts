@@ -1,6 +1,8 @@
 import axios from 'axios'
-import type { FEATURES, FeatureKey, PlanTier } from '@repo/shared/constants'
+import type { FeatureKey, PlanTier } from '@repo/shared/constants'
 import { useAuthStore } from '@/features/auth/store'
+
+export type { FeatureKey }
 
 const api = axios.create({
   baseURL: '/api',

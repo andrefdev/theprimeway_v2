@@ -4,6 +4,7 @@ import { createTaskSchema, type CreateTaskInput } from '@repo/shared/validators'
 import type { Task } from '@repo/shared/types'
 import { useCreateTask, useUpdateTask } from '../queries'
 import { useScheduleSuggestion } from '../hooks/use-schedule-suggestion'
+import { useEstimateTimebox } from '../hooks/use-estimate-timebox'
 import {
   Dialog,
   DialogContent,
@@ -25,8 +26,11 @@ import {
 } from '@/components/ui/select'
 import { DatePicker } from '@/components/ui/date-picker'
 import { toast } from 'sonner'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useQuery } from '@tanstack/react-query'
+import { tasksQueries } from '../queries'
+import { ChevronRightIcon } from '@/components/icons'
 
 interface TaskDialogProps {
   open: boolean
@@ -47,7 +51,14 @@ export function TaskDialog({ open, onClose, task, defaultDate }: TaskDialogProps
   const { t } = useTranslation('tasks')
   const createTask = useCreateTask()
   const updateTask = useUpdateTask()
+  const estimateTimebox = useEstimateTimebox()
+  const [showInsights, setShowInsights] = useState(false)
   const isEdit = !!task
+
+  const { data: insight, isLoading: isInsightLoading } = useQuery({
+    ...tasksQueries.insight(task?.id || ''),
+    enabled: isEdit && showInsights && !!task,
+  })
 
   const form = useForm<CreateTaskInput>({
     resolver: zodResolver(createTaskSchema),
@@ -180,7 +191,33 @@ export function TaskDialog({ open, onClose, task, defaultDate }: TaskDialogProps
               </div>
 
               <div className="space-y-1.5">
-                <Label>{t('estimatedDuration')}</Label>
+                <div className="flex items-center justify-between">
+                  <Label>{t('estimatedDuration')}</Label>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={async () => {
+                      const title = form.watch('title')
+                      const description = form.watch('description')
+                      if (!title) {
+                        toast.error('Please enter a task title first')
+                        return
+                      }
+                      try {
+                        const result = await estimateTimebox.mutateAsync({ title, description })
+                        form.setValue('estimatedDuration', result.minutes)
+                        toast.success(`Estimated: ${result.minutes} min - ${result.rationale}`)
+                      } catch {
+                        toast.error('Failed to estimate duration')
+                      }
+                    }}
+                    disabled={estimateTimebox.isPending}
+                    className="text-xs"
+                  >
+                    {estimateTimebox.isPending ? t('common:loading', { defaultValue: 'Loading...' }) : 'Suggest'}
+                  </Button>
+                </div>
                 <Select
                   value={form.watch('estimatedDuration') ? String(form.watch('estimatedDuration')) : 'none'}
                   onValueChange={(v) => form.setValue('estimatedDuration', v !== 'none' ? Number(v) : undefined)}
@@ -274,6 +311,70 @@ export function TaskDialog({ open, onClose, task, defaultDate }: TaskDialogProps
                 }}
               />
             </div>
+
+            {/* AI Insights (for edit only) */}
+            {isEdit && (
+              <div className="space-y-1.5 border-t pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowInsights(!showInsights)}
+                  className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary w-full"
+                >
+                  <ChevronRightIcon
+                    size={16}
+                    className={`transition-transform ${showInsights ? 'rotate-90' : ''}`}
+                  />
+                  AI Insights
+                </button>
+                {showInsights && (
+                  <div className="space-y-2 p-3 rounded-lg bg-secondary/50 border border-border/30 text-sm">
+                    {isInsightLoading ? (
+                      <p className="text-xs text-muted-foreground">{t('common:loading', { defaultValue: 'Loading...' })}</p>
+                    ) : insight ? (
+                      <div className="space-y-3">
+                        <div>
+                          <p className="text-xs font-semibold text-muted-foreground mb-1">Context</p>
+                          <p className="text-xs">{insight.contextBrief}</p>
+                        </div>
+                        {insight.suggestedSubtasks.length > 0 && (
+                          <div>
+                            <p className="text-xs font-semibold text-muted-foreground mb-1">Suggested Subtasks</p>
+                            <ul className="space-y-1">
+                              {insight.suggestedSubtasks.map((subtask, i) => (
+                                <li key={i} className="text-xs flex items-start gap-2">
+                                  <input
+                                    type="checkbox"
+                                    className="mt-0.5"
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        addTag(subtask)
+                                      }
+                                    }}
+                                  />
+                                  <span>{subtask}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {insight.tips.length > 0 && (
+                          <div>
+                            <p className="text-xs font-semibold text-muted-foreground mb-1">Tips</p>
+                            <ul className="space-y-1">
+                              {insight.tips.map((tip, i) => (
+                                <li key={i} className="text-xs">• {tip}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">No insights available</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <DialogFooter>

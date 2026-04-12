@@ -1,0 +1,316 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  # ─── Change Detection ────────────────────────────────────────────────────────
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      api: ${{ steps.filter.outputs.api }}
+      web: ${{ steps.filter.outputs.web }}
+      admin: ${{ steps.filter.outputs.admin }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            api:
+              - 'apps/api/**'
+              - 'packages/shared/**'
+              - 'packages/config-ts/**'
+            web:
+              - 'apps/web/**'
+              - 'packages/shared/**'
+              - 'packages/ui/**'
+            admin:
+              - 'apps/admin/**'
+              - 'packages/shared/**'
+              - 'packages/ui/**'
+
+  # ─── Deploy API ──────────────────────────────────────────────────────────────
+  deploy-api:
+    name: Deploy API
+    needs: changes
+    if: needs.changes.outputs.api == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build API
+        run: pnpm --filter @repo/api build
+
+      # pnpm deploy creates a self-contained dir with prod node_modules + dist/
+      # Workspace package sources (@repo/shared) are inlined automatically.
+      - name: Create production deployment bundle
+        run: pnpm deploy --filter @repo/api --prod /tmp/api-build
+
+      # The prisma/ directory (schema + migrations) must travel with the bundle
+      # because `prisma migrate deploy` reads schema.prisma at runtime.
+      - name: Copy Prisma artifacts into bundle
+        run: cp -r apps/api/prisma /tmp/api-build/prisma
+
+      # Write the .env file from GitHub Secrets.
+      # FIREBASE_PRIVATE_KEY contains literal \n sequences that must become
+      # real newlines inside the file — printf handles that correctly.
+      - name: Write .env for production
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          JWT_ACCESS_EXPIRY: ${{ secrets.JWT_ACCESS_EXPIRY }}
+          JWT_REFRESH_EXPIRY: ${{ secrets.JWT_REFRESH_EXPIRY }}
+          AUTH_GOOGLE_ID: ${{ secrets.AUTH_GOOGLE_ID }}
+          AUTH_GOOGLE_SECRET: ${{ secrets.AUTH_GOOGLE_SECRET }}
+          AUTH_APPLE_ID: ${{ secrets.AUTH_APPLE_ID }}
+          AUTH_APPLE_SECRET: ${{ secrets.AUTH_APPLE_SECRET }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          SMTP_FROM: ${{ secrets.SMTP_FROM }}
+          LEMON_SQUEEZY_API_KEY: ${{ secrets.LEMON_SQUEEZY_API_KEY }}
+          LEMON_SQUEEZY_STORE_ID: ${{ secrets.LEMON_SQUEEZY_STORE_ID }}
+          LEMON_SQUEEZY_WEBHOOK_SECRET: ${{ secrets.LEMON_SQUEEZY_WEBHOOK_SECRET }}
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          FIREBASE_CLIENT_EMAIL: ${{ secrets.FIREBASE_CLIENT_EMAIL }}
+          # Store the raw secret (with literal \n) then expand via printf
+          FIREBASE_PRIVATE_KEY_RAW: ${{ secrets.FIREBASE_PRIVATE_KEY }}
+          CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
+          CLOUDINARY_UPLOAD_PRESET: ${{ secrets.CLOUDINARY_UPLOAD_PRESET }}
+          RAPIDAPI_KEY: ${{ secrets.RAPIDAPI_KEY }}
+        run: |
+          # Expand \n escape sequences in FIREBASE_PRIVATE_KEY before writing
+          FIREBASE_PRIVATE_KEY_EXPANDED=$(printf '%b' "$FIREBASE_PRIVATE_KEY_RAW")
+
+          cat > /tmp/api-build/.env <<EOF
+          NODE_ENV=production
+          PORT=3001
+          DATABASE_URL=${DATABASE_URL}
+          JWT_SECRET=${JWT_SECRET}
+          JWT_ACCESS_EXPIRY=${JWT_ACCESS_EXPIRY}
+          JWT_REFRESH_EXPIRY=${JWT_REFRESH_EXPIRY}
+          AUTH_GOOGLE_ID=${AUTH_GOOGLE_ID}
+          AUTH_GOOGLE_SECRET=${AUTH_GOOGLE_SECRET}
+          AUTH_APPLE_ID=${AUTH_APPLE_ID}
+          AUTH_APPLE_SECRET=${AUTH_APPLE_SECRET}
+          OPENAI_API_KEY=${OPENAI_API_KEY}
+          SMTP_HOST=${SMTP_HOST}
+          SMTP_PORT=${SMTP_PORT}
+          SMTP_USER=${SMTP_USER}
+          SMTP_PASS=${SMTP_PASS}
+          SMTP_FROM=${SMTP_FROM}
+          LEMON_SQUEEZY_API_KEY=${LEMON_SQUEEZY_API_KEY}
+          LEMON_SQUEEZY_STORE_ID=${LEMON_SQUEEZY_STORE_ID}
+          LEMON_SQUEEZY_WEBHOOK_SECRET=${LEMON_SQUEEZY_WEBHOOK_SECRET}
+          FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID}
+          FIREBASE_CLIENT_EMAIL=${FIREBASE_CLIENT_EMAIL}
+          CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
+          CLOUDINARY_UPLOAD_PRESET=${CLOUDINARY_UPLOAD_PRESET}
+          RAPIDAPI_KEY=${RAPIDAPI_KEY}
+          EOF
+
+          # Append FIREBASE_PRIVATE_KEY separately using printf to preserve
+          # real newlines (the PEM block requires them)
+          printf 'FIREBASE_PRIVATE_KEY="%s"\n' "$FIREBASE_PRIVATE_KEY_EXPANDED" \
+            >> /tmp/api-build/.env
+
+      - name: Set up SSH key
+        run: |
+          install -m 600 -D /dev/null ~/.ssh/id_rsa
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          ssh-keyscan -p ${{ secrets.SSH_PORT }} -H ${{ secrets.SSH_HOST }} \
+            >> ~/.ssh/known_hosts
+
+      # rsync the flat bundle to a staging dir on the server first so the
+      # live directory is replaced atomically by the SSH step below.
+      - name: Rsync bundle to server (staging)
+        run: |
+          rsync -azP --delete \
+            -e "ssh -p ${{ secrets.SSH_PORT }}" \
+            /tmp/api-build/ \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/theprimeway/api-next/
+
+      # Single SSH session: run migrations then atomically swap dirs and reload PM2.
+      # Using --prefix ensures prisma uses the bundled node_modules, not a global install.
+      - name: Run migrations and restart PM2
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            set -e
+
+            # Run Prisma migrations from the staged bundle
+            cd /var/www/theprimeway/api-next
+            node_modules/.bin/prisma migrate deploy
+
+            # Atomic swap: replace live dir with newly synced bundle
+            rm -rf /var/www/theprimeway/api-old
+            if [ -d /var/www/theprimeway/api ]; then
+              mv /var/www/theprimeway/api /var/www/theprimeway/api-old
+            fi
+            mv /var/www/theprimeway/api-next /var/www/theprimeway/api
+
+            # Reload (zero-downtime) or start fresh
+            if pm2 describe theprimeway-api > /dev/null 2>&1; then
+              pm2 reload theprimeway-api --update-env
+            else
+              cd /var/www/theprimeway/api
+              pm2 start ecosystem.config.cjs --env production
+            fi
+
+            pm2 save
+
+      - name: Health check
+        run: |
+          sleep 5
+          curl --fail --retry 5 --retry-delay 3 \
+            https://api.theprimeway.app/api/health
+
+  # ─── Deploy Web ──────────────────────────────────────────────────────────────
+  deploy-web:
+    name: Deploy Web
+    needs: changes
+    if: needs.changes.outputs.web == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Write .env.local for Vite build
+        run: |
+          cat > apps/web/.env.local <<EOF
+          VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+          VITE_APPLE_CLIENT_ID=${{ secrets.VITE_APPLE_CLIENT_ID }}
+          VITE_APPLE_REDIRECT_URI=${{ secrets.VITE_APPLE_REDIRECT_URI }}
+          EOF
+
+      - name: Build web
+        run: pnpm --filter @repo/web build
+
+      - name: Set up SSH key
+        run: |
+          install -m 600 -D /dev/null ~/.ssh/id_rsa
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          ssh-keyscan -p ${{ secrets.SSH_PORT }} -H ${{ secrets.SSH_HOST }} \
+            >> ~/.ssh/known_hosts
+
+      - name: Rsync dist to server
+        run: |
+          rsync -azP --delete \
+            -e "ssh -p ${{ secrets.SSH_PORT }}" \
+            apps/web/dist/ \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/theprimeway/web/
+
+      - name: Verify nginx config and reload
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            nginx -t
+            sudo systemctl reload nginx
+
+      - name: Health check
+        run: |
+          curl --fail --retry 5 --retry-delay 3 \
+            https://app.theprimeway.app
+
+  # ─── Deploy Admin ─────────────────────────────────────────────────────────────
+  deploy-admin:
+    name: Deploy Admin
+    needs: changes
+    if: needs.changes.outputs.admin == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Write .env.local for Vite build
+        run: |
+          cat > apps/admin/.env.local <<EOF
+          VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+          VITE_APPLE_CLIENT_ID=${{ secrets.VITE_APPLE_CLIENT_ID }}
+          VITE_APPLE_REDIRECT_URI=${{ secrets.VITE_APPLE_REDIRECT_URI }}
+          EOF
+
+      - name: Build admin
+        run: pnpm --filter @repo/admin build
+
+      - name: Set up SSH key
+        run: |
+          install -m 600 -D /dev/null ~/.ssh/id_rsa
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          ssh-keyscan -p ${{ secrets.SSH_PORT }} -H ${{ secrets.SSH_HOST }} \
+            >> ~/.ssh/known_hosts
+
+      - name: Rsync dist to server
+        run: |
+          rsync -azP --delete \
+            -e "ssh -p ${{ secrets.SSH_PORT }}" \
+            apps/admin/dist/ \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/theprimeway/admin/
+
+      - name: Verify nginx config and reload
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            nginx -t
+            sudo systemctl reload nginx
+
+      - name: Health check
+        run: |
+          curl --fail --retry 5 --retry-delay 3 \
+            https://admin.theprimeway.app

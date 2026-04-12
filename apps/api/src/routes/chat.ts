@@ -98,3 +98,35 @@ chatRoutes.openapi(financeInsightRoute, async (c) => {
   const data = await chatService.getFinanceInsight(userId)
   return c.json({ data }, 200)
 })
+
+// ---------------------------------------------------------------------------
+// POST /weekly-plan
+// ---------------------------------------------------------------------------
+const weeklyPlanRoute = createRoute({
+  method: 'post',
+  path: '/weekly-plan',
+  tags: ['Chat', 'Planning'],
+  summary: 'Generate weekly plan using AI',
+  security: [{ Bearer: [] }],
+  request: { body: { content: { 'application/json': { schema: z.object({ weekStartDate: z.string() }) } } } },
+  responses: {
+    200: { content: { 'application/json': { schema: z.object({ data: z.any() }) } }, description: 'Weekly plan' },
+    400: { content: { 'application/json': { schema: errorResponse } }, description: 'Invalid request' },
+  },
+})
+
+chatRoutes.openapi(weeklyPlanRoute, async (c) => {
+  const userId = c.get('user').userId
+  const { weekStartDate } = c.req.valid('json')
+
+  if (!weekStartDate || !/^\d{4}-\d{2}-\d{2}$/.test(weekStartDate)) {
+    return c.json({ error: 'weekStartDate must be in YYYY-MM-DD format' }, 400)
+  }
+
+  try {
+    const data = await chatService.weeklyPlanning(userId, weekStartDate)
+    return c.json({ data }, 200)
+  } catch (err: any) {
+    return c.json({ error: err.message || 'Failed to generate weekly plan' }, 500)
+  }
+})

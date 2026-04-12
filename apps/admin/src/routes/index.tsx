@@ -1,7 +1,14 @@
-import { createFileRoute, Navigate } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { useEffect } from 'react'
 
 function IndexPage() {
-  return <Navigate to="/_admin/users" />
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    navigate({ to: '/_admin/users' as any })
+  }, [navigate])
+
+  return null
 }
 
 export const Route = createFileRoute('/')({

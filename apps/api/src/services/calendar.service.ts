@@ -1,4 +1,5 @@
 import { calendarRepo } from '../repositories/calendar.repo'
+import { prisma } from '../lib/prisma'
 
 class CalendarService {
   async listAccounts(userId: string) {
@@ -216,6 +217,84 @@ class CalendarService {
       return { success: true, count: totalSynced }
     }
     return { success: true, syncedCount: 0 }
+  }
+
+  async getFreeSlots(userId: string, date: string, duration: number) {
+    // Get user's work preferences
+    const workPrefs = await prisma.userWorkPreferences.findUnique({
+      where: { userId },
+    })
+
+    if (!workPrefs) {
+      return { error: 'no_work_preferences' as const }
+    }
+
+    // Parse date and create time bounds
+    const dateObj = new Date(date)
+    const dayOfWeek = dateObj.getDay()
+    const timeZone = workPrefs.timeZone || 'UTC'
+
+    // Check if this is a work day
+    const workDays = (workPrefs.workDays as number[] | null) || [1, 2, 3, 4, 5] // Default: Mon-Fri
+    if (!workDays.includes(dayOfWeek)) {
+      return { freeSlots: [] }
+    }
+
+    // Create time range for the day in ISO format
+    const dayStart = new Date(dateObj)
+    dayStart.setUTCHours(0, 0, 0, 0)
+    const dayEnd = new Date(dateObj)
+    dayEnd.setUTCHours(23, 59, 59, 999)
+
+    // Get all events for this day
+    const events = await this.getGoogleEvents(userId, dayStart.toISOString(), dayEnd.toISOString())
+
+    // Convert events to have start/end as Date objects
+    const occupiedSlots = (events as any[])
+      .filter((e) => e.start && e.end)
+      .map((e) => ({
+        start: new Date(typeof e.start === 'string' ? e.start : e.start.dateTime),
+        end: new Date(typeof e.end === 'string' ? e.end : e.end.dateTime),
+      }))
+      .sort((a, b) => a.start.getTime() - b.start.getTime())
+
+    // Generate free slots within work hours
+    const workStartDate = new Date(dateObj)
+    workStartDate.setUTCHours(workPrefs.workStartHour, 0, 0, 0)
+    const workEndDate = new Date(dateObj)
+    workEndDate.setUTCHours(workPrefs.workEndHour, 0, 0, 0)
+
+    const freeSlots: Array<{ start: string; end: string; durationMinutes: number }> = []
+    let currentTime = workStartDate
+
+    for (const occupied of occupiedSlots) {
+      // If there's a gap before this event
+      if (currentTime < occupied.start) {
+        const gapDuration = (occupied.start.getTime() - currentTime.getTime()) / (1000 * 60)
+        if (gapDuration >= duration) {
+          freeSlots.push({
+            start: currentTime.toISOString(),
+            end: occupied.start.toISOString(),
+            durationMinutes: Math.floor(gapDuration),
+          })
+        }
+      }
+      currentTime = new Date(Math.max(currentTime.getTime(), occupied.end.getTime()))
+    }
+
+    // Check if there's free time after last event until work end
+    if (currentTime < workEndDate) {
+      const gapDuration = (workEndDate.getTime() - currentTime.getTime()) / (1000 * 60)
+      if (gapDuration >= duration) {
+        freeSlots.push({
+          start: currentTime.toISOString(),
+          end: workEndDate.toISOString(),
+          durationMinutes: Math.floor(gapDuration),
+        })
+      }
+    }
+
+    return { freeSlots }
   }
 
   private async refreshGoogleToken(
