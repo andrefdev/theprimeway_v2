@@ -96,5 +96,13 @@
   "failedToUpdate": "Failed to update goal",
   "failedToDelete": "Failed to delete goal",
   "failedToCreateVision": "Failed to create vision",
-  "failedToLoad": "Failed to load roadmap"
+  "failedToLoad": "Failed to load roadmap",
+  "suggestSubGoals": "Get AI Suggestions",
+  "generateSubGoalSuggestions": "Generate AI-suggested sub-goals to help break down your goal.",
+  "suggestGoals": "Generate Suggestions",
+  "regenerate": "Generate New Suggestions",
+  "failedToLoadSuggestions": "Failed to load suggestions",
+  "goalTitlePlaceholder": "What do you want to achieve?",
+  "addGoal": "Add Goal",
+  "noGoals": "No goals"
 }

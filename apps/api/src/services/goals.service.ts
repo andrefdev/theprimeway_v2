@@ -271,7 +271,7 @@ class GoalsService {
     // Get the parent goal
     let parentGoal: any = null
     if (type === 'three-year') {
-      parentGoal = await prisma.vision.findUnique({ where: { id: goalId } })
+      parentGoal = await prisma.primeVision.findUnique({ where: { id: goalId } })
     } else if (type === 'annual') {
       parentGoal = await prisma.threeYearGoal.findUnique({ where: { id: goalId } })
     } else if (type === 'quarterly') {
@@ -333,7 +333,7 @@ Make them specific, actionable, and aligned with the parent goal.
       `,
     })
 
-    return result
+    return result.object
   }
 
   async getQuarterlyReview(
@@ -352,20 +352,12 @@ Make them specific, actionable, and aligned with the parent goal.
         userId,
         // Estimate quarter dates (simplified - in production would use proper date logic)
       },
-      include: {
-        weeklyGoals: {
-          select: {
-            status: true,
-            progress: true,
-          },
-        },
-      },
     })
 
     const goalSummaries = quarterlyGoals
       .map(
         (g) =>
-          `- ${g.title}: ${g.progress || 0}% complete (${g.weeklyGoals.filter((w: any) => w.status === 'completed').length}/${g.weeklyGoals.length} weeks done)`,
+          `- ${g.title}: ${g.progress || 0}% complete`,
       )
       .join('\n')
 
@@ -390,7 +382,7 @@ Provide:
       `,
     })
 
-    return result
+    return result.object
   }
 }
 

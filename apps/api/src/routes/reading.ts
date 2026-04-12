@@ -9,14 +9,17 @@
  */
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi'
 import type { AppEnv } from '../types/env'
+import { FEATURES } from '@repo/shared/constants'
 import { addBookSchema, updateBookSchema, createReadingGoalSchema, updateReadingGoalSchema } from '@repo/shared/validators'
 import { authMiddleware } from '../middleware/auth'
+import { requireFeature } from '../middleware/feature-gate'
 import { parsePaginationLimit, parsePaginationOffset } from '../lib/utils'
 import { readingService } from '../services/reading.service'
 
 export const readingRoutes = new OpenAPIHono<AppEnv>()
 
 readingRoutes.use('*', authMiddleware)
+readingRoutes.use('*', requireFeature(FEATURES.READING_MODULE))
 
 const errorResponse = z.object({ error: z.string() })
 

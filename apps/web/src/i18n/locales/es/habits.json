@@ -44,5 +44,14 @@
   "tabTracker": "Seguimiento",
   "tabList": "Lista",
   "tabStats": "Estadísticas",
-  "habitCompletedToast": "¡{{name}} completado!"
+  "habitCompletedToast": "¡{{name}} completado!",
+  "aiInsights": "Información de IA",
+  "failedToLoadInsights": "Error al cargar información",
+  "applyReminder": "Aplicar recordatorio",
+  "goalLinked": "Objetivo vinculado correctamente",
+  "goalUnlinked": "Objetivo desvinculado",
+  "failedToLinkGoal": "Error al vincular objetivo",
+  "suggestedGoals": "Objetivos sugeridos",
+  "noGoalSuggestions": "Sin sugerencias de objetivos disponibles",
+  "unlink": "Desvincular"
 }

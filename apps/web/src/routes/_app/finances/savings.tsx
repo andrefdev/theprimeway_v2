@@ -8,7 +8,7 @@ import {
 } from '../../../features/finances/queries'
 import type { SavingsGoal } from '../../../features/finances/api'
 import { QueryError } from '../../../components/query-error'
-import { PlusIcon } from '../../../components/icons'
+import { PlusIcon } from '../../../components/Icons'
 import { DeleteButton } from '../../../components/action-buttons'
 import { FinancesNav } from '@/features/finances/components/finances-nav'
 import { CURRENCY_OPTIONS } from '../../../features/finances/constants'
@@ -58,6 +58,10 @@ function SavingsPage() {
   }
 
   return (
+    <FeatureGate
+      feature={FEATURES.FINANCES_MODULE}
+      fallback={<UpgradePrompt featureKey={FEATURES.FINANCES_MODULE} />}
+    >
     <div className="flex h-full flex-col">
       <FinancesNav />
       <div className="flex-1 overflow-y-auto">
@@ -182,6 +186,7 @@ function SavingsPage() {
 
       <SavingsDialog open={dialogOpen} onClose={() => setDialogOpen(false)} />
     </div>
+    </FeatureGate>
   )
 }
 

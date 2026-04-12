@@ -5,7 +5,7 @@ import { readingQueries, useAddBook } from '../../../features/reading/queries'
 import { BookCard } from '../../../features/reading/components/book-card'
 import { BookDetailDialog } from '../../../features/reading/components/book-detail-dialog'
 import { QueryError } from '../../../components/query-error'
-import { PlusIcon } from '../../../components/icons'
+import { PlusIcon } from '../../../components/Icons'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -14,6 +14,9 @@ import { SkeletonList } from '@/components/ui/skeleton-list'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from '@/components/ui/dialog'
 import { ReadingNav } from '../../../features/reading/components/reading-nav'
+import { FeatureGate } from '../../../features/feature-flags/FeatureGate'
+import { UpgradePrompt } from '../../../features/subscriptions/components/upgrade-prompt'
+import { FEATURES } from '@repo/shared/constants'
 import { toast } from 'sonner'
 import { useState } from 'react'
 import type { Book } from '@repo/shared/types'
@@ -45,58 +48,63 @@ function LibraryPage() {
   const books = (booksQuery.data?.data ?? []) as Book[]
 
   return (
-    <div>
-      <ReadingNav />
-      <div className="mx-auto max-w-5xl px-6 py-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-foreground">{t('myLibrary')}</h2>
-          <Button onClick={() => setDialogOpen(true)}>
-            <PlusIcon /> {t('addBook')}
-          </Button>
-        </div>
-
-        {/* Filters */}
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <Input
-            placeholder={t('searchPlaceholder')}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="sm:max-w-xs"
-          />
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="max-w-[160px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {STATUS_OPTIONS.map(opt => (
-                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {booksQuery.isLoading && <SkeletonList lines={6} />}
-        {booksQuery.isError && <QueryError message={t('failedToLoad')} onRetry={() => booksQuery.refetch()} />}
-
-        {!booksQuery.isLoading && !booksQuery.isError && books.length > 0 && (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {books.map((book) => (
-              <BookCard key={book.id} book={book} onClick={() => setSelectedBook(book)} />
-            ))}
+    <FeatureGate
+      feature={FEATURES.READING_MODULE}
+      fallback={<UpgradePrompt featureKey={FEATURES.READING_MODULE} />}
+    >
+      <div>
+        <ReadingNav />
+        <div className="mx-auto max-w-5xl px-6 py-6 space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold text-foreground">{t('myLibrary')}</h2>
+            <Button onClick={() => setDialogOpen(true)}>
+              <PlusIcon /> {t('addBook')}
+            </Button>
           </div>
-        )}
 
-        {!booksQuery.isLoading && !booksQuery.isError && books.length === 0 && (
-          <EmptyState
-            title={search || statusFilter !== 'all' ? t('noMatchingBooks') : t('libraryEmpty')}
-            description={search || statusFilter !== 'all' ? t('tryFilters') : t('addFirst')}
-          />
-        )}
+          {/* Filters */}
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Input
+              placeholder={t('searchPlaceholder')}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="sm:max-w-xs"
+            />
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="max-w-[160px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {STATUS_OPTIONS.map(opt => (
+                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {booksQuery.isLoading && <SkeletonList lines={6} />}
+          {booksQuery.isError && <QueryError message={t('failedToLoad')} onRetry={() => booksQuery.refetch()} />}
+
+          {!booksQuery.isLoading && !booksQuery.isError && books.length > 0 && (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {books.map((book) => (
+                <BookCard key={book.id} book={book} onClick={() => setSelectedBook(book)} />
+              ))}
+            </div>
+          )}
+
+          {!booksQuery.isLoading && !booksQuery.isError && books.length === 0 && (
+            <EmptyState
+              title={search || statusFilter !== 'all' ? t('noMatchingBooks') : t('libraryEmpty')}
+              description={search || statusFilter !== 'all' ? t('tryFilters') : t('addFirst')}
+            />
+          )}
+        </div>
+
+        <AddBookDialog open={dialogOpen} onClose={() => setDialogOpen(false)} />
+        <BookDetailDialog book={selectedBook} open={!!selectedBook} onClose={() => setSelectedBook(null)} />
       </div>
-
-      <AddBookDialog open={dialogOpen} onClose={() => setDialogOpen(false)} />
-      <BookDetailDialog book={selectedBook} open={!!selectedBook} onClose={() => setSelectedBook(null)} />
-    </div>
+    </FeatureGate>
   )
 }
 

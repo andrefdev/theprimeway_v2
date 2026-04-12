@@ -5,6 +5,9 @@ on:
     branches:
       - main
 
+env:
+  REGISTRY: ghcr.io
+
 jobs:
   # ─── Change Detection ────────────────────────────────────────────────────────
   changes:
@@ -34,45 +37,134 @@ jobs:
               - 'packages/shared/**'
               - 'packages/ui/**'
 
-  # ─── Deploy API ──────────────────────────────────────────────────────────────
-  deploy-api:
-    name: Deploy API
+  # ─── Build & Push API Docker Image ──────────────────────────────────────────
+  build-api:
+    name: Build API
     needs: changes
     if: needs.changes.outputs.api == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./apps/api/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/theprimeway-api:latest
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/theprimeway-api:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+  # ─── Build & Push Web Docker Image ──────────────────────────────────────────
+  build-web:
+    name: Build Web
+    needs: changes
+    if: needs.changes.outputs.web == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./apps/web/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/theprimeway-web:latest
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/theprimeway-web:${{ github.sha }}
+          build-args: |
+            VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+            VITE_APPLE_CLIENT_ID=${{ secrets.VITE_APPLE_CLIENT_ID }}
+            VITE_APPLE_REDIRECT_URI=${{ secrets.VITE_APPLE_REDIRECT_URI }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+  # ─── Build & Push Admin Docker Image ────────────────────────────────────────
+  build-admin:
+    name: Build Admin
+    needs: changes
+    if: needs.changes.outputs.admin == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./apps/admin/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/theprimeway-admin:latest
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/theprimeway-admin:${{ github.sha }}
+          build-args: |
+            VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+            VITE_APPLE_CLIENT_ID=${{ secrets.VITE_APPLE_CLIENT_ID }}
+            VITE_APPLE_REDIRECT_URI=${{ secrets.VITE_APPLE_REDIRECT_URI }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+  # ─── Deploy to Server via Docker Compose ────────────────────────────────────
+  deploy:
+    name: Deploy
+    needs: [changes, build-api, build-web, build-admin]
+    # Run if: always() means run regardless of job statuses
+    # !cancelled() means don't run if cancelled
+    # !contains(needs.*.result, 'failure') means don't run if any job failed
+    # At least one build job must have run and not been skipped
+    if: |
+      always() && !cancelled() && !contains(needs.*.result, 'failure') &&
+      (needs.changes.outputs.api == 'true' ||
+       needs.changes.outputs.web == 'true' ||
+       needs.changes.outputs.admin == 'true')
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 9.12.2
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build API
-        run: pnpm --filter @repo/api build
-
-      # pnpm deploy creates a self-contained dir with prod node_modules + dist/
-      # Workspace package sources (@repo/shared) are inlined automatically.
-      - name: Create production deployment bundle
-        run: pnpm deploy --filter @repo/api --prod /tmp/api-build
-
-      # The prisma/ directory (schema + migrations) must travel with the bundle
-      # because `prisma migrate deploy` reads schema.prisma at runtime.
-      - name: Copy Prisma artifacts into bundle
-        run: cp -r apps/api/prisma /tmp/api-build/prisma
-
-      # Write the .env file from GitHub Secrets.
-      # FIREBASE_PRIVATE_KEY contains literal \n sequences that must become
-      # real newlines inside the file — printf handles that correctly.
-      - name: Write .env for production
+      # Generate .env for the API container from GitHub Secrets
+      # These are injected into the api container via docker-compose env_file directive
+      - name: Generate .env for docker-compose
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
@@ -93,16 +185,15 @@ jobs:
           LEMON_SQUEEZY_WEBHOOK_SECRET: ${{ secrets.LEMON_SQUEEZY_WEBHOOK_SECRET }}
           FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
           FIREBASE_CLIENT_EMAIL: ${{ secrets.FIREBASE_CLIENT_EMAIL }}
-          # Store the raw secret (with literal \n) then expand via printf
           FIREBASE_PRIVATE_KEY_RAW: ${{ secrets.FIREBASE_PRIVATE_KEY }}
           CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
           CLOUDINARY_UPLOAD_PRESET: ${{ secrets.CLOUDINARY_UPLOAD_PRESET }}
           RAPIDAPI_KEY: ${{ secrets.RAPIDAPI_KEY }}
         run: |
-          # Expand \n escape sequences in FIREBASE_PRIVATE_KEY before writing
+          # Expand \n escape sequences in FIREBASE_PRIVATE_KEY
           FIREBASE_PRIVATE_KEY_EXPANDED=$(printf '%b' "$FIREBASE_PRIVATE_KEY_RAW")
 
-          cat > /tmp/api-build/.env <<EOF
+          cat > .env <<EOF
           NODE_ENV=production
           PORT=3001
           DATABASE_URL=${DATABASE_URL}
@@ -129,10 +220,8 @@ jobs:
           RAPIDAPI_KEY=${RAPIDAPI_KEY}
           EOF
 
-          # Append FIREBASE_PRIVATE_KEY separately using printf to preserve
-          # real newlines (the PEM block requires them)
-          printf 'FIREBASE_PRIVATE_KEY="%s"\n' "$FIREBASE_PRIVATE_KEY_EXPANDED" \
-            >> /tmp/api-build/.env
+          # Append FIREBASE_PRIVATE_KEY separately to preserve real newlines
+          printf 'FIREBASE_PRIVATE_KEY="%s"\n' "$FIREBASE_PRIVATE_KEY_EXPANDED" >> .env
 
       - name: Set up SSH key
         run: |
@@ -141,18 +230,15 @@ jobs:
           ssh-keyscan -p ${{ secrets.SSH_PORT }} -H ${{ secrets.SSH_HOST }} \
             >> ~/.ssh/known_hosts
 
-      # rsync the flat bundle to a staging dir on the server first so the
-      # live directory is replaced atomically by the SSH step below.
-      - name: Rsync bundle to server (staging)
+      - name: Copy .env and docker-compose to server
         run: |
-          rsync -azP --delete \
-            -e "ssh -p ${{ secrets.SSH_PORT }}" \
-            /tmp/api-build/ \
-            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/theprimeway/api-next/
+          scp -P ${{ secrets.SSH_PORT }} .env \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/theprimeway/.env
 
-      # Single SSH session: run migrations then atomically swap dirs and reload PM2.
-      # Using --prefix ensures prisma uses the bundled node_modules, not a global install.
-      - name: Run migrations and restart PM2
+          scp -P ${{ secrets.SSH_PORT }} docker-compose.prod.yml \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/theprimeway/docker-compose.prod.yml
+
+      - name: Pull latest images and start containers
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -162,155 +248,29 @@ jobs:
           script: |
             set -e
 
-            # Run Prisma migrations from the staged bundle
-            cd /var/www/theprimeway/api-next
-            node_modules/.bin/prisma migrate deploy
+            cd /var/www/theprimeway
 
-            # Atomic swap: replace live dir with newly synced bundle
-            rm -rf /var/www/theprimeway/api-old
-            if [ -d /var/www/theprimeway/api ]; then
-              mv /var/www/theprimeway/api /var/www/theprimeway/api-old
-            fi
-            mv /var/www/theprimeway/api-next /var/www/theprimeway/api
+            # Set DOCKER_REGISTRY for docker-compose variable substitution
+            export DOCKER_REGISTRY=${{ github.repository_owner }}
 
-            # Reload (zero-downtime) or start fresh
-            if pm2 describe theprimeway-api > /dev/null 2>&1; then
-              pm2 reload theprimeway-api --update-env
-            else
-              cd /var/www/theprimeway/api
-              pm2 start ecosystem.config.cjs --env production
-            fi
+            # Pull latest images from GHCR
+            docker compose -f docker-compose.prod.yml pull
 
-            pm2 save
+            # Start containers (runs migrations automatically, creates volumes, etc.)
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans
 
-      - name: Health check
+      - name: Health check - API
         run: |
-          sleep 5
-          curl --fail --retry 5 --retry-delay 3 \
+          sleep 10
+          curl --fail --retry 10 --retry-delay 3 --retry-max-time 60 \
             https://api.theprimeway.app/api/health
 
-  # ─── Deploy Web ──────────────────────────────────────────────────────────────
-  deploy-web:
-    name: Deploy Web
-    needs: changes
-    if: needs.changes.outputs.web == 'true'
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 9.12.2
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Write .env.local for Vite build
-        run: |
-          cat > apps/web/.env.local <<EOF
-          VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}
-          VITE_APPLE_CLIENT_ID=${{ secrets.VITE_APPLE_CLIENT_ID }}
-          VITE_APPLE_REDIRECT_URI=${{ secrets.VITE_APPLE_REDIRECT_URI }}
-          EOF
-
-      - name: Build web
-        run: pnpm --filter @repo/web build
-
-      - name: Set up SSH key
-        run: |
-          install -m 600 -D /dev/null ~/.ssh/id_rsa
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          ssh-keyscan -p ${{ secrets.SSH_PORT }} -H ${{ secrets.SSH_HOST }} \
-            >> ~/.ssh/known_hosts
-
-      - name: Rsync dist to server
-        run: |
-          rsync -azP --delete \
-            -e "ssh -p ${{ secrets.SSH_PORT }}" \
-            apps/web/dist/ \
-            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/theprimeway/web/
-
-      - name: Verify nginx config and reload
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SSH_PORT }}
-          script: |
-            nginx -t
-            sudo systemctl reload nginx
-
-      - name: Health check
+      - name: Health check - Web
         run: |
           curl --fail --retry 5 --retry-delay 3 \
             https://app.theprimeway.app
 
-  # ─── Deploy Admin ─────────────────────────────────────────────────────────────
-  deploy-admin:
-    name: Deploy Admin
-    needs: changes
-    if: needs.changes.outputs.admin == 'true'
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 9.12.2
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Write .env.local for Vite build
-        run: |
-          cat > apps/admin/.env.local <<EOF
-          VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}
-          VITE_APPLE_CLIENT_ID=${{ secrets.VITE_APPLE_CLIENT_ID }}
-          VITE_APPLE_REDIRECT_URI=${{ secrets.VITE_APPLE_REDIRECT_URI }}
-          EOF
-
-      - name: Build admin
-        run: pnpm --filter @repo/admin build
-
-      - name: Set up SSH key
-        run: |
-          install -m 600 -D /dev/null ~/.ssh/id_rsa
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          ssh-keyscan -p ${{ secrets.SSH_PORT }} -H ${{ secrets.SSH_HOST }} \
-            >> ~/.ssh/known_hosts
-
-      - name: Rsync dist to server
-        run: |
-          rsync -azP --delete \
-            -e "ssh -p ${{ secrets.SSH_PORT }}" \
-            apps/admin/dist/ \
-            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/theprimeway/admin/
-
-      - name: Verify nginx config and reload
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SSH_PORT }}
-          script: |
-            nginx -t
-            sudo systemctl reload nginx
-
-      - name: Health check
+      - name: Health check - Admin
         run: |
           curl --fail --retry 5 --retry-delay 3 \
             https://admin.theprimeway.app

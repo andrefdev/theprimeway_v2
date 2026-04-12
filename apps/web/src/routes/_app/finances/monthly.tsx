@@ -45,6 +45,9 @@ import { EXPENSE_CATEGORY_OPTIONS } from '../../../features/finances/constants'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import type { Budget } from '@repo/shared/types'
+import { FeatureGate } from '@/features/feature-flags/FeatureGate'
+import { UpgradePrompt } from '@/features/subscriptions/components/upgrade-prompt'
+import { FEATURES } from '@repo/shared/constants'
 
 export const Route = createFileRoute('/_app/finances/monthly')({
   component: MonthlyBudgetPage,
@@ -91,6 +94,10 @@ function MonthlyBudgetPage() {
   )
 
   return (
+    <FeatureGate
+      feature={FEATURES.FINANCES_MODULE}
+      fallback={<UpgradePrompt featureKey={FEATURES.FINANCES_MODULE} />}
+    >
     <div className="flex h-full flex-col">
       <FinancesNav />
 
@@ -316,6 +323,7 @@ function MonthlyBudgetPage() {
 
       <BudgetDialog open={dialogOpen} onClose={() => setDialogOpen(false)} />
     </div>
+    </FeatureGate>
   )
 }
 

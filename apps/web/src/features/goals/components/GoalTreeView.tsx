@@ -5,7 +5,7 @@ import { GoalNode } from './GoalNode'
 import { GoalDetailPanel } from './GoalDetailPanel'
 import { SkeletonList } from '@/components/ui/skeleton-list'
 import { EmptyState } from '@/components/ui/empty-state'
-import { QueryError } from '@/components/query-error'
+import { QueryError } from '@/components/QueryError'
 import { useTranslation } from 'react-i18next'
 import type { PrimeVision, ThreeYearGoal, AnnualGoal, QuarterlyGoal, WeeklyGoal } from '@repo/shared/types'
 

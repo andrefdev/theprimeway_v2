@@ -71,10 +71,11 @@ const createSessionRoute = createRoute({
   request: { body: { content: { 'application/json': { schema: createPomodoroSessionSchema } } } },
   responses: {
     201: { content: { 'application/json': { schema: z.object({ data: z.any() }) } }, description: 'Session created' },
+    409: { content: { 'application/json': { schema: z.object({ error: z.string(), limitType: z.string() }) } }, description: 'Limit exceeded' },
   },
 })
 
-pomodoroRoutes.openapi(createSessionRoute, async (c) => {
+pomodoroRoutes.openapi(createSessionRoute, (async (c: any) => {
   const userId = c.get('user').userId
   const body = c.req.valid('json')
   try {
@@ -86,7 +87,7 @@ pomodoroRoutes.openapi(createSessionRoute, async (c) => {
     }
     throw error
   }
-})
+}) as any)
 
 // ---------------------------------------------------------------------------
 // GET /sessions/:id

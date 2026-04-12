@@ -1,9 +1,10 @@
-# Goal Hierarchy Restructuring & Tree Visualization — Completion Tracker
+# Goal Hierarchy Restructuring, Tree Visualization & AI Integration — Completion Tracker
 
 ## Overall Status: 100% Complete ✅
 
 **Phase 1:** Goal Hierarchy Restructuring (100% complete)
 **Phase 2:** Goal Tree Visualization (100% complete)
+**Phase 3:** AI Integration & Admin Panel (100% complete)
 
 ---
 
@@ -255,8 +256,147 @@
 
 ---
 
-## Future Enhancement Candidates (Phase 3+)
+## Phase 3: AI Integration & Admin Panel — COMPLETED ✅
 
+### Part A: Admin Panel — User Detail Page ✅
+
+- [x] User detail page created at `apps/admin/src/routes/_admin/users/$userId.tsx`
+- [x] Fetches user info via `useUser(userId)` hook
+- [x] Fetches subscription via `useUserSubscription(userId)` hook
+- [x] Fetches feature overrides via `useUserFeatures(userId)` hook
+- [x] Displays subscription card with plan tier, status, and billing period
+- [x] Renders `FeatureOverrideRow` for all features in `PLAN_LIMITS`
+- [x] Full styling with back button, headers, and responsive layout
+
+### Part B: AI Integration Endpoints — COMPLETED ✅
+
+#### Step 1: Calendar Free Slots API ✅
+- [x] `GET /api/calendar/free-slots?date=YYYY-MM-DD&duration=N` endpoint implemented
+- [x] Fetches Google Calendar events and filters to work hours
+- [x] Returns array of free time slots: `[{ start, end, durationMinutes }]`
+- [x] Respects `UserWorkPreferences` for work hour boundaries
+
+#### Step 2: Task AI Endpoints ✅
+- [x] `POST /api/tasks/ai/timebox` — Estimates task duration using Claude AI
+  - Input: `{ title, description?, taskId? }`
+  - Output: `{ minutes, rationale }`
+  - Stores result in `task.aiTimebox` when taskId provided
+- [x] `POST /api/tasks/ai/schedule` — Suggests optimal time slot for task
+  - Input: `{ taskId, duration? }`
+  - Output: `{ slot: { start, end }, confidence }`
+  - Uses calendar free slots API internally
+- [x] `GET /api/tasks/ai/insight/:taskId` — Generates task context and suggestions
+  - Output: `{ contextBrief, suggestedSubtasks[], tips[] }`
+  - Cached in `task.aiInsightJson`
+
+#### Step 3: Goal AI Endpoints ✅
+- [x] `POST /api/goals/ai/suggest` — Generates sub-goal suggestions
+  - Input: `{ goalId, type: 'three-year' | 'annual' | 'quarterly' | 'weekly' }`
+  - Output: `{ suggestions: [{ title, description }] }`
+  - Uses goal context and existing children for coherence
+- [x] `GET /api/goals/ai/quarterly-review` — Quarterly progress review
+  - Input: `{ quarter: 1-4, year }`
+  - Output: `{ summary, topAchievements[], stuckAreas[], proposedFocuses[] }`
+
+#### Step 4: Weekly Planning AI ✅
+- [x] `POST /api/chat/weekly-plan` — Weekly schedule planning endpoint
+  - Input: `{ weekStartDate }`
+  - Output: `{ plan: { Monday: Task[], Tuesday: Task[], ... }, rationale }`
+  - Integrates quarterly goals, habits, and calendar availability
+
+### Part B: Web UI Integration — COMPLETED ✅
+
+#### Step 5a: Task Form — Timebox Suggestion ✅
+- [x] "Suggest" button added to task dialog
+- [x] Calls `useEstimateTimebox` hook
+- [x] Populates duration field with AI estimate
+- [x] Shows rationale as loading state feedback
+- [x] Proper error handling and loading states
+
+#### Step 5b: Task Detail — AI Insight Panel ✅
+- [x] Expandable "AI Insights" section in task detail
+- [x] Lazy-fetches insights via `tasksQueries.insight(taskId)`
+- [x] Displays context brief summary
+- [x] Shows suggested subtasks as interactive checkboxes
+- [x] Lists actionable tips for task completion
+- [x] Proper loading and error states
+
+#### Step 5c: Goal Form — AI Sub-Goal Suggestions ✅
+- [x] "Get AI Suggestions" dialog after goal creation
+- [x] "Generate Suggestions" button calls `useSuggestSubGoals`
+- [x] Displays suggestions as clickable cards
+- [x] Shows suggestion title and description
+- [x] "Regenerate" button for new suggestions
+- [x] Added `LoadingIcon` component for UI feedback
+- [x] Translation keys added (en/es):
+  - `suggestSubGoals`, `generateSubGoalSuggestions`, `suggestGoals`
+  - `regenerate`, `failedToLoadSuggestions`
+
+#### Step 5d: Task Scheduling — Smart Schedule Button ✅
+- [x] "Find best time" button in task detail
+- [x] Calls `useScheduleTask` hook
+- [x] Displays suggested time slot with confidence level
+- [x] Integrates with Google Calendar API for event creation
+- [x] Proper error handling for scheduling conflicts
+
+---
+
+## Summary of Phase 3 Changes
+
+### Backend (AI Integration)
+- **Calendar Service**: Free slots calculation with work hour filtering
+- **Task Service**: AI endpoints for timebox, schedule, and insight
+- **Goal Service**: AI endpoints for sub-goal suggestions and quarterly review
+- **Chat Service**: Weekly planning endpoint with multi-dimensional AI planning
+
+### Web Frontend (UI Integration)
+- **Task Form**: AI timebox suggestions integrated
+- **Task Detail**: AI insights panel with subtask suggestions
+- **Goal Form**: AI sub-goal suggestions after creation
+- **Icons**: Added LoadingIcon component for async operations
+- **Translations**: Added 12+ keys for AI feature labels (en/es)
+
+---
+
+## Verification Checklist — Phase 3
+
+### Admin Panel ✅
+- [x] User detail page renders correctly
+- [x] Subscription card displays plan and status
+- [x] Feature override rows show all plan features
+- [x] Back navigation works
+- [x] Responsive layout on mobile/desktop
+
+### AI Endpoints ✅
+- [x] Calendar free slots endpoint returns valid time ranges
+- [x] Task timebox estimates complete within timeout
+- [x] Task schedule suggestions use available slots
+- [x] Task insights include context and actionable suggestions
+- [x] Goal suggestions are coherent with parent goal
+- [x] Quarterly review aggregates progress correctly
+- [x] Weekly planning considers all three dimensions (goals, habits, calendar)
+
+### Web UI Integration ✅
+- [x] Task timebox button populates duration field
+- [x] Task insight panel loads and renders correctly
+- [x] Goal suggestions display after creation
+- [x] Smart schedule button finds available slots
+- [x] All loading states display properly
+- [x] Error messages are user-friendly
+- [x] Translations work in English and Spanish
+
+---
+
+## Future Enhancement Candidates (Phase 4+)
+
+### High Priority (Phase 4)
+1. AI habit insights and suggestions
+2. Habit-to-goal linking with AI recommendations
+3. Task dependency management with AI scheduling
+4. Smart habit reminders based on task schedule
+5. Mobile UI for AI features (task insights, smart scheduling)
+
+### Medium Priority (Phase 5+)
 1. Goal creation from tree view nodes
 2. Goal filtering capabilities (by area, status, progress)
 3. Goal context in dashboard/overview screens
@@ -264,4 +404,14 @@
 5. Goal drill-down navigation improvements
 6. Mobile tree view visualization
 7. Goal templates and quick creation
+8. AI-powered habit pattern analysis
+9. Productivity insights dashboard
+
+### Low Priority (Phase 6+)
+1. Natural language goal parsing ("Add a goal to read 5 books")
+2. AI-powered goal recommendations based on user history
+3. Team goals and collaborative planning
+4. Predictive analytics (time estimates, success probability)
+5. Voice-based goal and task input
+6. Automatic habit optimization suggestions
 

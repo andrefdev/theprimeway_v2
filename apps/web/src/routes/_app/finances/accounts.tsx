@@ -46,6 +46,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import type { FinanceAccount } from '@repo/shared/types'
+import { FeatureGate } from '@/features/feature-flags/FeatureGate'
+import { UpgradePrompt } from '@/features/subscriptions/components/upgrade-prompt'
+import { FEATURES } from '@repo/shared/constants'
 
 export const Route = createFileRoute('/_app/finances/accounts')({
   component: AccountsPage,
@@ -89,6 +92,10 @@ function AccountsPage() {
   }
 
   return (
+    <FeatureGate
+      feature={FEATURES.FINANCES_MODULE}
+      fallback={<UpgradePrompt featureKey={FEATURES.FINANCES_MODULE} />}
+    >
     <div className="flex h-full flex-col">
       <FinancesNav />
 
@@ -232,6 +239,7 @@ function AccountsPage() {
 
       <AccountDialog open={dialogOpen} onClose={() => setDialogOpen(false)} />
     </div>
+    </FeatureGate>
   )
 }
 

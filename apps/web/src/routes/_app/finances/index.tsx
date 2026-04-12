@@ -9,7 +9,7 @@ import {
   Plus,
   AlertCircle,
 } from 'lucide-react'
-import { SectionHeader } from '@/components/section-header'
+import { SectionHeader } from '@/components/SectionHeader'
 import { financesQueries } from '@/features/finances/queries'
 import { FinancesNav } from '@/features/finances/components/finances-nav'
 import { FinancialSummaryCards } from '@/features/finances/components/overview/financial-summary-cards'
@@ -20,6 +20,9 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { SkeletonList } from '@/components/ui/skeleton-list'
+import { FeatureGate } from '@/features/feature-flags/FeatureGate'
+import { UpgradePrompt } from '@/features/subscriptions/components/upgrade-prompt'
+import { FEATURES } from '@repo/shared/constants'
 import type { FinanceAccount, Transaction } from '@repo/shared/types'
 
 export const Route = createFileRoute('/_app/finances/')({
@@ -63,12 +66,16 @@ function FinancesPage() {
   const recentTransactions = transactions.slice(0, 5)
 
   return (
-    <div className="flex h-full flex-col">
-      <FinancesNav />
+    <FeatureGate
+      feature={FEATURES.FINANCES_MODULE}
+      fallback={<UpgradePrompt featureKey={FEATURES.FINANCES_MODULE} />}
+    >
+      <div className="flex h-full flex-col">
+        <FinancesNav />
 
-      <div className="flex-1 overflow-y-auto">
-        <SectionHeader sectionId="finances" title={t('title')} />
-        <div className="mx-auto max-w-4xl space-y-8 px-4 pb-8">
+        <div className="flex-1 overflow-y-auto">
+          <SectionHeader sectionId="finances" title={t('title')} />
+          <div className="mx-auto max-w-4xl space-y-8 px-4 pb-8">
           {isLoading ? (
             <SkeletonList lines={8} />
           ) : (
@@ -306,9 +313,10 @@ function FinancesPage() {
               )}
             </>
           )}
+          </div>
         </div>
       </div>
-    </div>
+    </FeatureGate>
   )
 }
 

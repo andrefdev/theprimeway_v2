@@ -88,11 +88,12 @@ const createGoalRoute = createRoute({
   responses: {
     200: { content: { 'application/json': { schema: genericData } }, description: 'Goal created' },
     400: { content: { 'application/json': { schema: errorResponse } }, description: 'Validation error' },
+    409: { content: { 'application/json': { schema: z.object({ error: z.string(), limitType: z.string() }) } }, description: 'Limit exceeded' },
     500: { content: { 'application/json': { schema: errorResponse } }, description: 'Server error' },
   },
 })
 
-goalsRoutes.openapi(createGoalRoute, async (c) => {
+goalsRoutes.openapi(createGoalRoute, (async (c: any) => {
   const { userId } = c.get('user')
   const body = c.req.valid('json')
 
@@ -106,7 +107,7 @@ goalsRoutes.openapi(createGoalRoute, async (c) => {
     console.error('[GOALS_POST]', error)
     return c.json({ error: 'Internal server error' }, 500)
   }
-})
+}) as any)
 
 // GET /goals/:id
 const getGoalRoute = createRoute({
@@ -1326,10 +1327,11 @@ const suggestSubGoalsRoute = createRoute({
       description: 'Sub-goal suggestions',
     },
     404: { content: { 'application/json': { schema: z.object({ error: z.string() }) } }, description: 'Goal not found' },
+    400: { content: { 'application/json': { schema: z.object({ error: z.string() }) } }, description: 'Failed to generate suggestions' },
   },
 })
 
-goalsRoutes.openapi(suggestSubGoalsRoute, async (c) => {
+goalsRoutes.openapi(suggestSubGoalsRoute, (async (c: any) => {
   const userId = c.get('user').userId
   const { goalId, type } = c.req.valid('json')
 
@@ -1339,7 +1341,7 @@ goalsRoutes.openapi(suggestSubGoalsRoute, async (c) => {
   } catch (err) {
     return c.json({ error: 'Failed to generate suggestions' }, 400)
   }
-})
+}) as any)
 
 // ---------------------------------------------------------------------------
 // GET /api/goals/ai/quarterly-review
@@ -1370,10 +1372,11 @@ const quarterlyReviewRoute = createRoute({
       },
       description: 'Quarterly review',
     },
+    400: { content: { 'application/json': { schema: z.object({ error: z.string() }) } }, description: 'Failed to generate review' },
   },
 })
 
-goalsRoutes.openapi(quarterlyReviewRoute, async (c) => {
+goalsRoutes.openapi(quarterlyReviewRoute, (async (c: any) => {
   const userId = c.get('user').userId
   const { quarter, year } = c.req.valid('query')
 
@@ -1383,4 +1386,4 @@ goalsRoutes.openapi(quarterlyReviewRoute, async (c) => {
   } catch (err) {
     return c.json({ error: 'Failed to generate review' }, 400)
   }
-})
+}) as any)

@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
-import { SectionHeader } from '@/components/section-header'
+import { SectionHeader } from '@/components/SectionHeader'
 import { useState, useRef, useEffect } from 'react'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { toast } from 'sonner'

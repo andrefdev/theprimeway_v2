@@ -5,12 +5,12 @@ import { WeekPlanner } from '../../../features/tasks/components/week-planner'
 import { TaskDialog } from '../../../features/tasks/components/task-dialog'
 import { QueryError } from '../../../components/query-error'
 import { Button } from '@/components/ui/button'
-import { SectionHeader } from '@/components/section-header'
+import { SectionHeader } from '@/components/SectionHeader'
 import { TasksNav } from '../../../features/tasks/components/tasks-nav'
 import { SkeletonList } from '@/components/ui/skeleton-list'
-import { ChevronLeftIcon, ChevronRightIcon, PlusIcon } from '../../../components/icons'
+import { ChevronLeftIcon, ChevronRightIcon, PlusIcon } from '../../../components/Icons'
 import { toast } from 'sonner'
-import { format, startOfWeek, addWeeks } from 'date-fns'
+import { format, addWeeks, addDays } from 'date-fns'
 import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLocale } from '../../../i18n/useLocale'
@@ -26,8 +26,8 @@ function TasksWeeklyPage() {
   const [weekOffset, setWeekOffset] = useState(0)
 
   const weekStart = useMemo(() => {
-    const base = startOfWeek(new Date(), { weekStartsOn: 1 })
-    return weekOffset === 0 ? base : addWeeks(base, weekOffset)
+    const today = new Date()
+    return weekOffset === 0 ? today : addWeeks(today, weekOffset)
   }, [weekOffset])
 
   const referenceDate = format(weekStart, 'yyyy-MM-dd')
@@ -80,7 +80,7 @@ function TasksWeeklyPage() {
     }
   }
 
-  const weekEnd = addWeeks(weekStart, 1)
+  const weekEnd = addDays(weekStart, 6)
   const weekLabel = `${format(weekStart, 'MMM d', { locale: dateFnsLocale })} - ${format(weekEnd, 'MMM d, yyyy', { locale: dateFnsLocale })}`
 
   return (

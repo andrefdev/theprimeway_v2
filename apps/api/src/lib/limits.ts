@@ -7,14 +7,7 @@ export interface LimitConfig {
 }
 
 /** Maps limit-type features to their SubscriptionPlan field names and usage stat fields */
-const LIMIT_MAPPING: Record<
-  FeatureKey,
-  {
-    planField: keyof SubscriptionPlan;
-    usageField: string;
-    errorMessage: string;
-  }
-> = {
+const LIMIT_MAPPING = {
   [FEATURES.HABITS_LIMIT]: {
     planField: 'maxHabits',
     usageField: 'currentHabits',
@@ -36,7 +29,7 @@ const LIMIT_MAPPING: Record<
     errorMessage: 'You have reached your task limit for this plan.',
   },
   [FEATURES.POMODORO_DAILY_LIMIT]: {
-    planField: 'maxDailyPomodoroSessions',
+    planField: 'maxPomodoroSessionsDaily',
     usageField: 'dailyPomodoroSessions',
     errorMessage: 'You have reached your daily pomodoro limit for this plan.',
   },
@@ -78,7 +71,7 @@ export function validateLimit(
     return;
   }
 
-  const limit = (plan[mapping.planField] as number | null) ?? null;
+  const limit = (plan[mapping.planField as keyof SubscriptionPlan] as number | null) ?? null;
 
   if (isLimitExceeded(limit, currentUsage)) {
     throw new LimitExceededError(mapping.errorMessage, featureKey);

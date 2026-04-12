@@ -31,4 +31,52 @@ export const habitsApi = {
 
   getStats: (params?: Record<string, string>) =>
     api.get<HabitStats>('/habits/stats', { params }).then((r) => r.data),
+
+  // AI Methods
+  analyzeHabit: (habitId: string) =>
+    api
+      .get<{
+        data: {
+          habit: { id: string; name: string }
+          metrics: {
+            completionRate: number
+            currentStreak: number
+            longestStreak: number
+            totalCompletions: number
+            daysTracked: number
+          }
+          patterns: {
+            bestDaysOfWeek: number[]
+            consistencyLevel: 'excellent' | 'good' | 'fair' | 'poor'
+          }
+          insights: string[]
+        }
+      }>(`/habits/${habitId}/ai/analyze`)
+      .then((r) => r.data.data),
+
+  getOptimalReminderTime: (habitId: string) =>
+    api
+      .get<{
+        data: {
+          habitId: string
+          suggestedTime: string
+          confidence: number
+          reason: string
+        }
+      }>(`/habits/${habitId}/ai/optimal-time`)
+      .then((r) => r.data.data),
+
+  suggestGoalsForHabit: (habitId: string) =>
+    api
+      .post<{
+        data: {
+          linkedGoal: { id: string; title: string } | null
+          suggestions: {
+            weeklyGoals: Array<{ id: string; title: string; type: string }>
+            quarterlyGoals: Array<{ id: string; title: string; type: string }>
+            annualGoals: Array<{ id: string; title: string; type: string }>
+          }
+        }
+      }>(`/habits/${habitId}/ai/suggest-goals`, {})
+      .then((r) => r.data.data),
 }

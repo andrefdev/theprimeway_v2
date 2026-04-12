@@ -445,3 +445,148 @@ habitRoutes.openapi(postHabitLogRoute, async (c) => {
     return c.json({ error: 'Internal Error' }, 500)
   }
 })
+
+// ---------------------------------------------------------------------------
+// AI Endpoints
+// ---------------------------------------------------------------------------
+
+const analyzeHabitRoute = createRoute({
+  method: 'get',
+  path: '/:id/ai/analyze',
+  tags: ['Habits - AI'],
+  summary: 'Analyze habit patterns and get AI insights',
+  security: [{ Bearer: [] }],
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            data: z.object({
+              habit: z.object({ id: z.string(), name: z.string() }),
+              metrics: z.object({
+                completionRate: z.number(),
+                currentStreak: z.number(),
+                longestStreak: z.number(),
+                totalCompletions: z.number(),
+                daysTracked: z.number(),
+              }),
+              patterns: z.object({
+                bestDaysOfWeek: z.array(z.number()),
+                consistencyLevel: z.enum(['excellent', 'good', 'fair', 'poor']),
+              }),
+              insights: z.array(z.string()),
+            }),
+          }),
+        },
+      },
+      description: 'Habit analysis with insights',
+    },
+    404: { content: { 'application/json': { schema: errorResponse } }, description: 'Habit not found' },
+  },
+})
+
+habitRoutes.openapi(analyzeHabitRoute, async (c) => {
+  const { userId } = c.get('user')
+  const { id: habitId } = c.req.valid('param')
+
+  try {
+    const analysis = await habitsService.analyzeHabit(userId, habitId)
+    if (!analysis) return c.json({ error: 'Habit not found' }, 404)
+    return c.json({ data: analysis }, 200)
+  } catch (error) {
+    console.error('[HABIT_ANALYZE]', error)
+    return c.json({ error: 'Internal Error' }, 500)
+  }
+})
+
+// ---------------------------------------------------------------------------
+// GET /habits/:id/ai/optimal-time
+// ---------------------------------------------------------------------------
+
+const optimalReminderTimeRoute = createRoute({
+  method: 'get',
+  path: '/:id/ai/optimal-time',
+  tags: ['Habits - AI'],
+  summary: 'Get optimal reminder time for habit',
+  security: [{ Bearer: [] }],
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            data: z.object({
+              habitId: z.string(),
+              suggestedTime: z.string(),
+              confidence: z.number(),
+              reason: z.string(),
+            }),
+          }),
+        },
+      },
+      description: 'Optimal reminder time',
+    },
+    404: { content: { 'application/json': { schema: errorResponse } }, description: 'Habit not found' },
+  },
+})
+
+habitRoutes.openapi(optimalReminderTimeRoute, async (c) => {
+  const { userId } = c.get('user')
+  const { id: habitId } = c.req.valid('param')
+
+  try {
+    const result = await habitsService.getOptimalReminderTime(userId, habitId)
+    if (!result) return c.json({ error: 'Habit not found' }, 404)
+    return c.json({ data: result }, 200)
+  } catch (error) {
+    console.error('[HABIT_OPTIMAL_TIME]', error)
+    return c.json({ error: 'Internal Error' }, 500)
+  }
+})
+
+// ---------------------------------------------------------------------------
+// POST /habits/:id/ai/suggest-goals
+// ---------------------------------------------------------------------------
+
+const suggestGoalsRoute = createRoute({
+  method: 'post',
+  path: '/:id/ai/suggest-goals',
+  tags: ['Habits - AI'],
+  summary: 'Get goal suggestions for this habit',
+  security: [{ Bearer: [] }],
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            data: z.object({
+              linkedGoal: z
+                .object({ id: z.string(), title: z.string() })
+                .nullable(),
+              suggestions: z.object({
+                weeklyGoals: z.array(z.object({ id: z.string(), title: z.string(), type: z.string() })),
+                quarterlyGoals: z.array(z.object({ id: z.string(), title: z.string(), type: z.string() })),
+                annualGoals: z.array(z.object({ id: z.string(), title: z.string(), type: z.string() })),
+              }),
+            }),
+          }),
+        },
+      },
+      description: 'Goal suggestions for habit',
+    },
+    404: { content: { 'application/json': { schema: errorResponse } }, description: 'Habit not found' },
+  },
+})
+
+habitRoutes.openapi(suggestGoalsRoute, async (c) => {
+  const { userId } = c.get('user')
+  const { id: habitId } = c.req.valid('param')
+
+  try {
+    const result = await habitsService.suggestGoalsForHabit(userId, habitId)
+    if (!result) return c.json({ error: 'Habit not found' }, 404)
+    return c.json({ data: result }, 200)
+  } catch (error) {
+    console.error('[HABIT_SUGGEST_GOALS]', error)
+    return c.json({ error: 'Internal Error' }, 500)
+  }
+})

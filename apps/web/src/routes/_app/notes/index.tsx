@@ -8,12 +8,12 @@ import {
   useUpdateNote,
 } from '../../../features/notes/queries'
 import { notesApi } from '../../../features/notes/api'
-import { SectionHeader } from '@/components/section-header'
+import { SectionHeader } from '@/components/SectionHeader'
 import { NotesNav } from '../../../features/notes/components/notes-nav'
 import { NoteCard } from '../../../features/notes/components/note-card'
 import { TagsFilter } from '../../../features/notes/components/tags-filter'
 import { QueryError } from '../../../components/query-error'
-import { PlusIcon, TrashIcon, EditIcon, TagIcon } from '../../../components/icons'
+import { PlusIcon, TrashIcon, EditIcon, TagIcon } from '../../../components/Icons'
 import { useLocale } from '../../../i18n/useLocale'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -21,6 +21,9 @@ import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { SkeletonList } from '@/components/ui/skeleton-list'
 import { EmptyState } from '@/components/ui/empty-state'
+import { FeatureGate } from '@/features/feature-flags/FeatureGate'
+import { UpgradePrompt } from '@/features/subscriptions/components/upgrade-prompt'
+import { FEATURES } from '@repo/shared/constants'
 import { toast } from 'sonner'
 import { useState } from 'react'
 import type { NoteCategory } from '@repo/shared/types'
@@ -124,8 +127,12 @@ function NotesPage() {
   const hasTags = allNotes.some((n) => n.tags && n.tags.length > 0)
 
   return (
-    <div>
-      <NotesNav />
+    <FeatureGate
+      feature={FEATURES.NOTES_MODULE}
+      fallback={<UpgradePrompt featureKey={FEATURES.NOTES_MODULE} />}
+    >
+      <div>
+        <NotesNav />
       <SectionHeader
         sectionId="notes"
         title={t('myNotes')}
@@ -339,6 +346,7 @@ function NotesPage() {
           onOpenChange={setShowTagsFilter}
         />
       </div>
-    </div>
+      </div>
+    </FeatureGate>
   )
 }

@@ -9,13 +9,16 @@
  */
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi'
 import type { AppEnv } from '../types/env'
+import { FEATURES } from '@repo/shared/constants'
 import { authMiddleware } from '../middleware/auth'
+import { requireFeature } from '../middleware/feature-gate'
 import { notesService } from '../services/notes.service'
 import { LimitExceededError } from '../lib/limits'
 import { parsePaginationLimit, parsePaginationOffset } from '../lib/utils'
 
 export const notesRoutes = new OpenAPIHono<AppEnv>()
 notesRoutes.use('*', authMiddleware)
+notesRoutes.use('*', requireFeature(FEATURES.NOTES_MODULE))
 
 // ─── Shared schemas ──────────────────────────────────────────────────────────
 

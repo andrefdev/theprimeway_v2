@@ -26,5 +26,10 @@
   "faq2Q": "What happens after the free trial?",
   "faq2A": "After the trial ends, you'll be moved to the free plan. No automatic charges.",
   "faq3Q": "Is there a refund policy?",
-  "faq3A": "We offer a 30-day money-back guarantee for all paid plans."
+  "faq3A": "We offer a 30-day money-back guarantee for all paid plans.",
+  "upgradePromptReading": "The Reading Module is a premium feature. Upgrade your subscription to track and manage your reading goals.",
+  "upgradePromptFinances": "The Finances Module is a premium feature. Upgrade your subscription to manage your accounts, debts, income, and investments.",
+  "upgradePromptNotes": "The Notes Module is a premium feature. Upgrade your subscription to create and organize unlimited notes.",
+  "upgradePromptCustomTheme": "Custom theme creation is a premium feature. Upgrade your subscription to create personalized themes. Light and dark themes are available for free.",
+  "upgradePromptAdvancedAnalytics": "Advanced Analytics is a premium feature. Upgrade your subscription to access detailed insights and analytics across all modules."
 }

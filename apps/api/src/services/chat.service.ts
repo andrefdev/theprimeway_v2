@@ -129,7 +129,7 @@ class ChatService {
       chatRepo.findActiveGoalsByUser(userId),
       chatRepo.findActiveHabits(userId),
       chatRepo.findOpenTasks(userId, 100),
-      prisma.userWorkPreferences.findUnique({ where: { userId } }),
+      prisma.userWorkPreferences.findFirst({ where: { userId } }),
     ])
 
     // Get calendar availability for the week
@@ -139,8 +139,9 @@ class ChatService {
     for (let i = 0; i < 7; i++) {
       const dayDate = new Date(weekStart)
       dayDate.setDate(dayDate.getDate() + i)
-      const dateStr = dayDate.toISOString().split('T')[0]
-      freeSlots[dayNames[i]] = await calendarService.getFreeSlots(userId, dateStr, 60)
+      const dateStr = dayDate.toISOString().split('T')[0]!
+      const result = await calendarService.getFreeSlots(userId, dateStr, 60)
+      freeSlots[dayNames[i]!] = (result as any).freeSlots || []
     }
 
     // Prepare task context for AI
@@ -150,7 +151,7 @@ class ChatService {
       .join('\n')
 
     const habitContext = habits
-      .map((h) => `- ${h.name} (frequency: ${h.frequency})`)
+      .map((h: any) => `- ${h.name} (frequency: ${h.targetFrequency || h.frequencyType || 'daily'})`)
       .join('\n')
 
     const goalContext = quarterlyGoals
@@ -159,8 +160,8 @@ class ChatService {
       .join('\n')
 
     const workHours = workPreferences
-      ? `${workPreferences.workStartTime} - ${workPreferences.workEndTime}`
-      : '9:00 - 17:00'
+      ? `${String(workPreferences.workStartHour).padStart(2, '0')}:00 - ${String(workPreferences.workEndHour).padStart(2, '0')}:00`
+      : '09:00 - 17:00'
 
     const result = await generateObject({
       model: anthropic('claude-3-5-sonnet-20241022'),

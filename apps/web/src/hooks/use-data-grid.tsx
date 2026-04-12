@@ -12,7 +12,7 @@ import {
 import { useVirtualizer, type Virtualizer } from '@tanstack/react-virtual'
 import * as React from 'react'
 import { toast } from 'sonner'
-import { DataGridCell } from '@/components/data-grid/data-grid-cell'
+import { DataGridCell } from '@/components/data-grid/DataGridCell'
 import {
   getCellKey,
   getRowHeightValue,

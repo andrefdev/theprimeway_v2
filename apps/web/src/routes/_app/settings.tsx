@@ -17,7 +17,7 @@ function SettingsPage() {
   const { t } = useTranslation('settings')
   const [settings, setSettings] = useState<UserSettings | null>(null)
   const [saving, setSaving] = useState(false)
-  const customThemesFeature = useFeature(FEATURES.CUSTOM_THEMES)
+  const customThemeCreationFeature = useFeature(FEATURES.CUSTOM_THEME_CREATION)
   const exportDataFeature = useFeature(FEATURES.EXPORT_DATA)
 
   useEffect(() => {
@@ -36,14 +36,8 @@ function SettingsPage() {
       <div className="mx-auto max-w-2xl p-6 space-y-6">
         <h2 className="text-xl font-bold text-foreground">{t('title')}</h2>
 
-        {/* Only show preferences form if custom themes are available, else show limited version */}
-        {customThemesFeature.enabled ? (
-          <PreferencesForm settings={settings} saving={saving} onSettingsChange={update} />
-        ) : (
-          <div className="text-sm text-muted-foreground p-4 rounded-lg border">
-            {t('customThemesLocked')}
-          </div>
-        )}
+        {/* Preferences form: show limited version for all, full version if premium */}
+        <PreferencesForm settings={settings} saving={saving} onSettingsChange={update} isPremium={customThemeCreationFeature.enabled} />
 
         <NotificationsPreferences />
         <ChangePasswordForm />

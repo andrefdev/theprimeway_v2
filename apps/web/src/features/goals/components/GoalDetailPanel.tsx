@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useQuery } from '@tanstack/react-query'
 import {
-  goalsQueries,
   useUpdateGoal,
   useDeleteGoal,
   useUpdateThreeYearGoal,
@@ -21,7 +19,7 @@ import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { X, Trash2, Edit2, Save } from 'lucide-react'
 import { toast } from 'sonner'
-import { cn } from '@/shared/utils/cn'
+import { cn } from '@/lib/utils'
 
 interface GoalDetailPanelProps {
   goalId: string

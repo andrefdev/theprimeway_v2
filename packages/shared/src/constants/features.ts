@@ -3,11 +3,15 @@
  * Adding a new feature = add one entry here. Everything else is driven by this.
  */
 export const FEATURES = {
-  // Boolean module gates
+  // Module-specific gates (free users don't have access)
   AI_ASSISTANT: 'AI_ASSISTANT',
-  HEALTH_MODULE: 'HEALTH_MODULE',
+  READING_MODULE: 'READING_MODULE',
+  FINANCES_MODULE: 'FINANCES_MODULE',
+  NOTES_MODULE: 'NOTES_MODULE',
+
+  // Transversal features (applies to multiple modules)
   ADVANCED_ANALYTICS: 'ADVANCED_ANALYTICS',
-  CUSTOM_THEMES: 'CUSTOM_THEMES',
+  CUSTOM_THEME_CREATION: 'CUSTOM_THEME_CREATION',
   EXPORT_DATA: 'EXPORT_DATA',
   PRIORITY_SUPPORT: 'PRIORITY_SUPPORT',
 

@@ -7,7 +7,7 @@ import {
   useDeleteTransaction,
 } from '../../../features/finances/queries'
 import { QueryError } from '../../../components/query-error'
-import { PlusIcon } from '../../../components/icons'
+import { PlusIcon } from '../../../components/Icons'
 import { DeleteButton } from '../../../components/action-buttons'
 import { FinancesNav } from '@/features/finances/components/finances-nav'
 import { useCurrency } from '@/features/finances/hooks/use-currency'
@@ -48,6 +48,9 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Transaction, FinanceAccount } from '@repo/shared/types'
+import { FeatureGate } from '@/features/feature-flags/FeatureGate'
+import { UpgradePrompt } from '@/features/subscriptions/components/upgrade-prompt'
+import { FEATURES } from '@repo/shared/constants'
 
 export const Route = createFileRoute('/_app/finances/history')({
   component: TransactionHistoryPage,
@@ -65,9 +68,14 @@ function TransactionIcon({ type }: { type: string }) {
   const config = TX_TYPE_ICON[type as keyof typeof TX_TYPE_ICON] ?? TX_TYPE_ICON.expense
   const Icon = config.icon
   return (
+    <FeatureGate
+      feature={FEATURES.FINANCES_MODULE}
+      fallback={<UpgradePrompt featureKey={FEATURES.FINANCES_MODULE} />}
+    >
     <div className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-full', config.bg)}>
       <Icon className={cn('h-4 w-4', config.text)} />
     </div>
+    </FeatureGate>
   )
 }
 

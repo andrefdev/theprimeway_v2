@@ -6,10 +6,10 @@ import { ArchivePanel } from '../../../features/tasks/components/archive-panel'
 import { TaskDialog } from '../../../features/tasks/components/task-dialog'
 import { QueryError } from '../../../components/query-error'
 import { FilterBar } from '../../../components/filter-bar'
-import { PlusIcon } from '../../../components/icons'
+import { PlusIcon } from '../../../components/Icons'
 import { Button } from '@/components/ui/button'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
-import { SectionHeader } from '@/components/section-header'
+import { SectionHeader } from '@/components/SectionHeader'
 import { TasksNav } from '../../../features/tasks/components/tasks-nav'
 import { SkeletonList } from '@/components/ui/skeleton-list'
 import { EmptyState } from '@/components/ui/empty-state'
@@ -25,7 +25,9 @@ export const Route = createFileRoute('/_app/tasks/all')({
 
 function TasksAllPage() {
   const { t } = useTranslation('tasks')
-  const today = format(new Date(), 'yyyy-MM-dd')
+  // Get today's date in local timezone (not UTC)
+  const now = new Date()
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
   const groupedQuery = useQuery(tasksQueries.grouped(today))
   const updateTask = useUpdateTask()
   const deleteTask = useDeleteTask()

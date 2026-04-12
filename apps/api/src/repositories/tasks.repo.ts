@@ -25,10 +25,10 @@ export interface FindTasksOptions {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-/** Normalize a date string to noon UTC to prevent timezone day-boundary shifts */
+/** Normalize a date string to midnight UTC to prevent timezone day-boundary shifts */
 export function normalizeScheduledDate(dateStr: string): Date {
   const datePart = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr
-  return new Date(`${datePart}T12:00:00.000Z`)
+  return new Date(`${datePart}T00:00:00.000Z`)
 }
 
 const defaultInclude = { weeklyGoal: true }
@@ -60,11 +60,12 @@ class TasksRepository {
   }
 
   async findTodaysTasks(userId: string, todayISO: string) {
+    const dayStart = new Date(`${todayISO}T00:00:00.000Z`)
     const dayEnd = new Date(`${todayISO}T23:59:59.999Z`)
     return prisma.task.findMany({
       where: {
         userId,
-        scheduledDate: { lte: dayEnd },
+        scheduledDate: { gte: dayStart, lte: dayEnd },
         status: 'open',
         archivedAt: null,
       },

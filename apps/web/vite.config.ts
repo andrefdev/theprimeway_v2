@@ -6,11 +6,15 @@ import { TanStackRouterVite } from '@tanstack/router-plugin/vite'
 export default defineConfig({
   plugins: [
     TanStackRouterVite({ target: 'react', autoCodeSplitting: true }),
-    react(),
+    react({
+      jsxRuntime: 'automatic',
+    }),
     tailwindcss(),
   ],
   resolve: {
-    tsconfigPaths: true,
+    alias: {
+      '@': '/src',
+    },
   },
   server: {
     port: 5173,

@@ -1,5 +1,6 @@
 import { FEATURES, VERSION_GATES } from '@repo/shared/constants'
-import type { FeatureKey, ResolvedFeatureSet, FeatureValue } from '@repo/shared/types'
+import type { FeatureKey } from '@repo/shared/constants'
+import type { ResolvedFeatureSet, FeatureValue } from '@repo/shared/types'
 import { featuresRepo } from '../repositories/features.repo'
 import { compareVersions } from '../lib/version'
 
@@ -15,19 +16,6 @@ const CACHE_TTL_MS = 60 * 1000 // 60 seconds
 
 export function bustFeatureCache(userId: string) {
   cache.delete(userId)
-}
-
-// ---------------------------------------------------------------------------
-// Tier mapping — subscription status → tier
-// ---------------------------------------------------------------------------
-type Tier = 'free' | 'trial' | 'premium'
-
-function resolveTier(subscription: { status: string | null; plan: { name: string } | null } | null): Tier {
-  if (!subscription) return 'free'
-  const { status } = subscription
-  if (status === 'active') return 'premium'
-  if (status === 'trialing') return 'trial'
-  return 'free'
 }
 
 // ---------------------------------------------------------------------------
@@ -48,12 +36,17 @@ function planDefaults(plan: Record<string, unknown> | null | undefined): Resolve
   })
 
   return {
+    // Module-specific gates
     [FEATURES.AI_ASSISTANT]: bool('hasAiAssistant', false),
-    [FEATURES.HEALTH_MODULE]: bool('hasHealthModule', false),
+    [FEATURES.READING_MODULE]: bool('hasReadingModule', false),
+    [FEATURES.FINANCES_MODULE]: bool('hasFinancesModule', false),
+    [FEATURES.NOTES_MODULE]: bool('hasNotesModule', false),
+    // Transversal features
     [FEATURES.ADVANCED_ANALYTICS]: bool('hasAdvancedAnalytics', false),
-    [FEATURES.CUSTOM_THEMES]: bool('hasCustomThemes', false),
+    [FEATURES.CUSTOM_THEME_CREATION]: bool('hasCustomThemeCreation', false),
     [FEATURES.EXPORT_DATA]: bool('hasExportData', false),
     [FEATURES.PRIORITY_SUPPORT]: bool('hasPrioritySupport', false),
+    // Numeric limits
     [FEATURES.HABITS_LIMIT]: limit('maxHabits', 5),
     [FEATURES.GOALS_LIMIT]: limit('maxGoals', 3),
     [FEATURES.NOTES_LIMIT]: limit('maxNotes', 50),
@@ -93,8 +86,8 @@ class FeaturesService {
     for (const override of overrides) {
       const fk = override.featureKey as FeatureKey
       if (fk in resolved) {
-        resolved[fk] = {
-          ...resolved[fk],
+        (resolved as Record<FeatureKey, FeatureValue>)[fk] = {
+          ...(resolved as Record<FeatureKey, FeatureValue>)[fk],
           enabled: override.enabled,
           reason: 'override',
         }

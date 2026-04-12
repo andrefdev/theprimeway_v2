@@ -1,0 +1,141 @@
+version: '3.9'
+
+# Production Docker Compose for ThePrimeWay
+# Usage: docker compose -f docker-compose.prod.yml up -d
+# Or via deployment: docker compose -f docker-compose.prod.yml pull && docker compose -f docker-compose.prod.yml up -d
+
+services:
+  # Database migration service (runs once and exits)
+  # Depends on environment: DATABASE_URL must be set in .env
+  migrate:
+    image: ghcr.io/${{ DOCKER_REGISTRY }}/theprimeway-api:latest
+    command: sh -c "node_modules/.bin/prisma migrate deploy"
+    env_file: .env
+    environment:
+      NODE_ENV: production
+    restart: "no"
+    networks:
+      - theprimeway-net
+    depends_on: []
+
+  # API server (Hono on Node.js)
+  api:
+    image: ghcr.io/${{ DOCKER_REGISTRY }}/theprimeway-api:latest
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+    expose:
+      - "3001"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://localhost:3001/api/health').then(r=>r.ok?process.exit(0):process.exit(1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 10s
+      start_period: 15s
+      retries: 3
+    networks:
+      - theprimeway-net
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Web SPA (nginx serving Vite dist)
+  web:
+    image: ghcr.io/${{ DOCKER_REGISTRY }}/theprimeway-web:latest
+    restart: unless-stopped
+    expose:
+      - "80"
+    networks:
+      - theprimeway-net
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80/index.html"]
+      interval: 30s
+      timeout: 10s
+      start_period: 15s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Admin SPA (nginx serving Vite dist)
+  admin:
+    image: ghcr.io/${{ DOCKER_REGISTRY }}/theprimeway-admin:latest
+    restart: unless-stopped
+    expose:
+      - "80"
+    networks:
+      - theprimeway-net
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80/index.html"]
+      interval: 30s
+      timeout: 10s
+      start_period: 15s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Reverse proxy (nginx)
+  # Terminates SSL (certs from Let's Encrypt)
+  # Routes traffic to API, web, and admin containers
+  # Public ports: 80 (HTTP redirect), 443 (HTTPS)
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # Nginx configuration (reverse proxy + SPA routing)
+      - ./nginx/theprimeway.conf:/etc/nginx/conf.d/default.conf:ro
+
+      # SSL certificates from Let's Encrypt (managed by Certbot on host)
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+
+      # Certbot webroot for HTTP-01 challenge (for certificate renewal)
+      - certbot-webroot:/var/www/certbot:ro
+    networks:
+      - theprimeway-net
+    depends_on:
+      - api
+      - web
+      - admin
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80/"]
+      interval: 30s
+      timeout: 10s
+      start_period: 15s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  theprimeway-net:
+    driver: bridge
+
+volumes:
+  certbot-webroot:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /var/www/certbot

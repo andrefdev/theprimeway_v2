@@ -8,12 +8,12 @@ import {
   useCreateVision,
   useCreateThreeYearGoal,
 } from '../../features/goals/queries'
-import { QuarterlyGoals } from '../../features/goals/components/quarterly-focuses'
+import { QuarterlyGoals } from '../../features/goals/components/quarterly-goals'
 import { WeeklyGoalsList } from '../../features/goals/components/weekly-goals'
 import { JourneyView } from '../../features/goals/components/journey-view'
 import { GoalTreeView } from '../../features/goals/components/GoalTreeView'
 import { QueryError } from '../../components/query-error'
-import { PlusIcon, TargetIcon } from '../../components/icons'
+import { PlusIcon, TargetIcon } from '../../components/Icons'
 import { EditButton, DeleteButton } from '../../components/action-buttons'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -27,7 +27,7 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { Progress } from '@/components/ui/progress'
 import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from '@/components/ui/dialog'
 import { DatePicker } from '@/components/ui/date-picker'
-import { SectionHeader } from '@/components/section-header'
+import { SectionHeader } from '@/components/SectionHeader'
 import { toast } from 'sonner'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -166,7 +166,7 @@ function GoalsTab({
     <>
       <div className="flex items-center justify-between">
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="max-w-[180px]">
+          <SelectTrigger className="max-w-45">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -380,7 +380,7 @@ function RoadmapTab() {
                               <div key={annualGoal.id} className="flex items-center gap-2 text-xs">
                                 <span className="text-foreground font-medium">{annualGoal.title}</span>
                                 {annualGoal.progress !== undefined && (
-                                  <Progress value={annualGoal.progress} className="flex-1 h-1 max-w-[80px]" />
+                                  <Progress value={annualGoal.progress} className="flex-1 h-1 max-w-20" />
                                 )}
                                 {annualGoal.targetDate && (
                                   <span className="text-muted-foreground">

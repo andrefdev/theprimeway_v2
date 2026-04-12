@@ -9,12 +9,15 @@
  */
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi'
 import type { AppEnv } from '../types/env'
+import { FEATURES } from '@repo/shared/constants'
 import { authMiddleware } from '../middleware/auth'
+import { requireFeature } from '../middleware/feature-gate'
 import { financesService } from '../services/finances.service'
 import { parsePaginationLimit } from '../lib/utils'
 
 export const financesRoutes = new OpenAPIHono<AppEnv>()
 financesRoutes.use('*', authMiddleware)
+financesRoutes.use('*', requireFeature(FEATURES.FINANCES_MODULE))
 
 // ─── Shared ──────────────────────────────────────────────────────────────────
 

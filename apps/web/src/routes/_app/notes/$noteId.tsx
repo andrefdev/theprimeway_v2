@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { notesQueries, useUpdateNote, useDeleteNote } from '../../../features/notes/queries'
 import { QueryError } from '../../../components/query-error'
-import { ChevronLeftIcon, PinIcon, TrashIcon } from '../../../components/icons'
+import { ChevronLeftIcon, PinIcon, TrashIcon } from '../../../components/Icons'
 import { useLocale } from '../../../i18n/useLocale'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -14,6 +14,9 @@ import { TipTapEditor } from '../../../components/editor/tiptap-editor'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { formatDistanceToNow } from 'date-fns'
 import type { NoteCategory } from '@repo/shared/types'
+import { FeatureGate } from '@/features/feature-flags/FeatureGate'
+import { UpgradePrompt } from '@/features/subscriptions/components/upgrade-prompt'
+import { FEATURES } from '@repo/shared/constants'
 
 export const Route = createFileRoute('/_app/notes/$noteId')({
   component: NoteEditorPage,
@@ -118,6 +121,10 @@ function NoteEditorPage() {
   ]
 
   return (
+    <FeatureGate
+      feature={FEATURES.NOTES_MODULE}
+      fallback={<UpgradePrompt featureKey={FEATURES.NOTES_MODULE} />}
+    >
     <div>
       <div className="p-6">
         {/* Back + actions bar */}
@@ -188,5 +195,6 @@ function NoteEditorPage() {
         )}
       </div>
     </div>
+    </FeatureGate>
   )
 }

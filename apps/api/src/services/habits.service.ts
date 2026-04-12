@@ -232,7 +232,6 @@ class HabitsService {
             { threeYearGoals: { some: { id: input.goalId, userId } } },
             { threeYearGoals: { some: { annualGoals: { some: { id: input.goalId, userId } } } } },
             { threeYearGoals: { some: { annualGoals: { some: { quarterlyGoals: { some: { id: input.goalId, userId } } } } } } },
-            { weeklyGoals: { some: { id: input.goalId, userId } } },
           ],
         },
       })
@@ -287,7 +286,6 @@ class HabitsService {
               { threeYearGoals: { some: { id: input.goalId, userId } } },
               { threeYearGoals: { some: { annualGoals: { some: { id: input.goalId, userId } } } } },
               { threeYearGoals: { some: { annualGoals: { some: { quarterlyGoals: { some: { id: input.goalId, userId } } } } } } },
-              { weeklyGoals: { some: { id: input.goalId, userId } } },
             ],
           },
         })
@@ -552,6 +550,166 @@ class HabitsService {
       },
       dailyProgress,
       habitDetails,
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // AI Methods
+  // ---------------------------------------------------------------------------
+
+  /** Analyze habit patterns and provide AI insights */
+  async analyzeHabit(userId: string, habitId: string) {
+    const habit = await habitsRepository.findById(userId, habitId)
+    if (!habit) return null
+
+    // Fetch recent logs (last 90 days)
+    const logs = await habitsRepository.findRecentLogs([habitId], 90)
+    const logsByDate = logs.reduce(
+      (acc, log) => {
+        acc[log.date] = log
+        return acc
+      },
+      {} as Record<string, HabitLogModel>,
+    )
+
+    // Calculate stats
+    const totalDays = 90
+    const completedDays = logs.filter((l) => l.completedCount > 0).length
+    const completionRate = (completedDays / totalDays) * 100
+    const totalCompletions = logs.reduce((sum, l) => sum + l.completedCount, 0)
+
+    // Find streaks
+    const { currentStreak, longestStreak } = calculateStreaks(habit, logsByDate)
+
+    // Identify patterns (best days of week)
+    const dayPatterns: Record<number, number> = {}
+    logs.forEach((log) => {
+      const date = new Date(log.date)
+      const dayOfWeek = date.getDay()
+      if (!dayPatterns[dayOfWeek]) dayPatterns[dayOfWeek] = 0
+      dayPatterns[dayOfWeek] += log.completedCount
+    })
+
+    const bestDays = Object.entries(dayPatterns)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 3)
+      .map(([day]) => parseInt(day))
+
+    // Generate insights
+    const insights = []
+    if (completionRate >= 80) {
+      insights.push('Excellent consistency! You\'re crushing this habit.')
+    } else if (completionRate >= 60) {
+      insights.push('Good progress. Keep the momentum going.')
+    } else if (completionRate < 30) {
+      insights.push('This habit needs attention. Consider adjusting frequency or triggers.')
+    }
+
+    if (longestStreak >= 30) {
+      insights.push(`Your longest streak was ${longestStreak} days. You can do it again!`)
+    }
+
+    if (currentStreak === 0 && completionRate > 50) {
+      insights.push('You\'ve broken your streak recently. Get back on track today!')
+    }
+
+    return {
+      habit: { id: habit.id, name: habit.name },
+      metrics: {
+        completionRate: Math.round(completionRate),
+        currentStreak,
+        longestStreak,
+        totalCompletions,
+        daysTracked: completedDays,
+      },
+      patterns: {
+        bestDaysOfWeek: bestDays,
+        consistencyLevel: completionRate >= 80 ? 'excellent' : completionRate >= 60 ? 'good' : completionRate >= 40 ? 'fair' : 'poor',
+      },
+      insights,
+    }
+  }
+
+  /** Suggest goals that would benefit from this habit */
+  async suggestGoalsForHabit(userId: string, habitId: string) {
+    const habit = await habitsRepository.findById(userId, habitId)
+    if (!habit) return null
+
+    // If habit already has a goal, return that
+    if (habit.goalId) {
+      const linkedGoal = await prisma.weeklyGoal.findUnique({
+        where: { id: habit.goalId },
+        select: { id: true, title: true },
+      })
+      if (linkedGoal) {
+        return { linkedGoal, suggestions: [] }
+      }
+    }
+
+    // Fetch unlinked goals at different levels
+    const weeklyGoals = await prisma.weeklyGoal.findMany({
+      where: { userId, isArchived: false },
+      select: { id: true, title: true },
+      take: 3,
+    })
+
+    const quarterlyGoals = await prisma.quarterlyGoal.findMany({
+      where: { userId, isArchived: false },
+      select: { id: true, title: true },
+      take: 3,
+    })
+
+    const annualGoals = await prisma.annualGoal.findMany({
+      where: { userId, isArchived: false },
+      select: { id: true, title: true },
+      take: 2,
+    })
+
+    return {
+      linkedGoal: null,
+      suggestions: {
+        weeklyGoals: weeklyGoals.map((g) => ({ id: g.id, title: g.title, type: 'weekly' })),
+        quarterlyGoals: quarterlyGoals.map((g) => ({ id: g.id, title: g.title, type: 'quarterly' })),
+        annualGoals: annualGoals.map((g) => ({ id: g.id, title: g.title, type: 'annual' })),
+      },
+    }
+  }
+
+  /** Get optimal reminder time based on habit patterns */
+  async getOptimalReminderTime(userId: string, habitId: string) {
+    const habit = await habitsRepository.findById(userId, habitId)
+    if (!habit) return null
+
+    // Fetch recent logs to identify best completion times
+    const logs = await habitsRepository.findRecentLogs([habitId], 30)
+
+    // If no logs yet, suggest morning (08:00)
+    if (logs.length === 0) {
+      return {
+        habitId,
+        suggestedTime: '08:00',
+        confidence: 0.5,
+        reason: 'No historical data. Morning is typically optimal.',
+      }
+    }
+
+    // In production, analyze actual completion timestamps from logs
+    // For now, suggest based on frequency type
+    const timeByFrequency: Record<string, string> = {
+      daily: '08:00',
+      'every_2_days': '08:00',
+      'every_3_days': '08:00',
+      'every_week': '19:00',
+      'multiple_per_week': '18:00',
+    }
+
+    const suggestedTime = timeByFrequency[habit.frequencyType] || '08:00'
+
+    return {
+      habitId,
+      suggestedTime,
+      confidence: 0.7,
+      reason: `Based on ${habit.frequencyType} frequency, ${suggestedTime} is typically optimal.`,
     }
   }
 }

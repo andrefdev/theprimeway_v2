@@ -10,16 +10,20 @@ import { useAuthStore } from '@/stores/auth.store'
 
 // Try to import Tauri API, but don't fail if not available
 let invoke: ((command: string, args?: Record<string, unknown>) => Promise<unknown>) | null = null
-try {
-  // @ts-ignore - Tauri API is only available in Tauri context
-  import('@tauri-apps/api/core').then(m => {
+
+// Load Tauri dynamically - construct path to prevent Vite static analysis
+const initTauri = async () => {
+  try {
+    // Construct module name dynamically so Vite doesn't try to resolve it statically
+    const modulePath = '@tauri-apps' + '/' + 'api' + '/' + 'core'
+    const m = await import(/* @vite-ignore */ modulePath)
     invoke = m.invoke
-  }).catch(() => {
+  } catch {
     // Not in Tauri context, ignore
-  })
-} catch {
-  // Not in Tauri context, ignore
+  }
 }
+
+initTauri()
 
 interface RouterContext {
   queryClient: QueryClient

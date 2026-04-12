@@ -1,4 +1,4 @@
-import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
+import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { habitsApi } from './api'
 import { CACHE_TIMES } from '@repo/shared/constants'
 import type { CreateHabitInput, UpdateHabitInput, UpsertHabitLogInput } from '@repo/shared/validators'
@@ -31,6 +31,28 @@ export const habitsQueries = {
     queryOptions({
       queryKey: [...habitsQueries.all(), 'stats', period],
       queryFn: () => habitsApi.getStats(period ? { period } : undefined),
+      staleTime: CACHE_TIMES.standard,
+    }),
+
+  // AI Queries
+  analysis: (id: string) =>
+    queryOptions({
+      queryKey: [...habitsQueries.all(), 'analysis', id],
+      queryFn: () => habitsApi.analyzeHabit(id),
+      staleTime: CACHE_TIMES.long,
+    }),
+
+  optimalReminderTime: (id: string) =>
+    queryOptions({
+      queryKey: [...habitsQueries.all(), 'optimalTime', id],
+      queryFn: () => habitsApi.getOptimalReminderTime(id),
+      staleTime: CACHE_TIMES.long,
+    }),
+
+  goalSuggestions: (id: string) =>
+    queryOptions({
+      queryKey: [...habitsQueries.all(), 'goalSuggestions', id],
+      queryFn: () => habitsApi.suggestGoalsForHabit(id),
       staleTime: CACHE_TIMES.standard,
     }),
 }
@@ -75,6 +97,32 @@ export function useToggleHabitLog() {
   return useMutation({
     mutationFn: ({ habitId, data }: { habitId: string; data: UpsertHabitLogInput }) =>
       habitsApi.upsertLog(habitId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: habitsQueries.all() })
+    },
+  })
+}
+
+// AI Hooks
+
+export function useHabitAnalysis(habitId: string) {
+  return useQuery(habitsQueries.analysis(habitId))
+}
+
+export function useOptimalReminderTime(habitId: string) {
+  return useQuery(habitsQueries.optimalReminderTime(habitId))
+}
+
+export function useGoalSuggestions(habitId: string) {
+  return useQuery(habitsQueries.goalSuggestions(habitId))
+}
+
+export function useLinkHabitToGoal() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ habitId, goalId }: { habitId: string; goalId: string | null }) =>
+      habitsApi.update(habitId, { goalId: goalId ?? undefined }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: habitsQueries.all() })
     },

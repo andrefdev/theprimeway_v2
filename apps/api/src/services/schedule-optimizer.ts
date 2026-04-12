@@ -108,7 +108,7 @@ export class ScheduleOptimizer {
       taskDuration,
       preferredTime,
     )
-    return optimalSlots.length > 0 ? optimalSlots[0] : null
+    return optimalSlots.length > 0 ? optimalSlots[0]! : null
   }
 
   /**
@@ -134,9 +134,6 @@ export class ScheduleOptimizer {
     }
 
     // Convert to ISO datetime
-    const [startHours, startMinutes] = bestSlot.start.split(':').map(Number)
-    const [endHours, endMinutes] = bestSlot.end.split(':').map(Number)
-
     const startDt = new Date(`${targetDate}T${bestSlot.start}:00`)
     const endDt = new Date(`${targetDate}T${bestSlot.end}:00`)
 
@@ -150,7 +147,7 @@ export class ScheduleOptimizer {
    * Generate all possible time slots for a day
    */
   private generateTimeSlots(
-    date: string,
+    _date: string,
     occupiedSlots: Array<{ start: string; end: string }>,
   ): TimeSlot[] {
     const slots: TimeSlot[] = []
@@ -271,7 +268,9 @@ export class ScheduleOptimizer {
    * Convert time string (HH:MM) to minutes
    */
   private timeToMinutes(time: string): number {
-    const [hours, minutes] = time.split(':').map(Number)
+    const parts = time.split(':').map(Number)
+    const hours = parts[0] ?? 0
+    const minutes = parts[1] ?? 0
     return hours * 60 + minutes
   }
 

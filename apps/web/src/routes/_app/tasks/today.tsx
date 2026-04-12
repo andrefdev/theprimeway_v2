@@ -4,9 +4,9 @@ import { tasksQueries, useUpdateTask, useDeleteTask } from '../../../features/ta
 import { DayPlanner } from '../../../features/tasks/components/day-planner'
 import { TaskDialog } from '../../../features/tasks/components/task-dialog'
 import { QueryError } from '../../../components/query-error'
-import { PlusIcon } from '../../../components/icons'
+import { PlusIcon } from '../../../components/Icons'
 import { Button } from '@/components/ui/button'
-import { SectionHeader } from '@/components/section-header'
+import { SectionHeader } from '@/components/SectionHeader'
 import { TasksNav } from '../../../features/tasks/components/tasks-nav'
 import { SkeletonList } from '@/components/ui/skeleton-list'
 import { EmptyState } from '@/components/ui/empty-state'
@@ -24,22 +24,23 @@ export const Route = createFileRoute('/_app/tasks/today')({
 function TasksTodayPage() {
   const { t } = useTranslation('tasks')
   const { dateFnsLocale } = useLocale()
-  const today = format(new Date(), 'yyyy-MM-dd')
+  // Get today's date in local timezone (not UTC)
+  const now = new Date()
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+  console.log('📅 TasksTodayPage - today:', today, 'now:', now)
   const tasksQuery = useQuery(tasksQueries.today(today))
   const updateTask = useUpdateTask()
   const deleteTask = useDeleteTask()
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
-  const [defaultHour, setDefaultHour] = useState<number | undefined>()
 
   const tasks = tasksQuery.data?.data ?? []
   const openTasks = tasks.filter((task: Task) => task.status === 'open')
   const completedTasks = tasks.filter((task: Task) => task.status === 'completed')
 
-  function openCreate(hour?: number) {
+  function openCreate() {
     setEditingTask(null)
-    setDefaultHour(hour)
     setDialogOpen(true)
   }
 
@@ -78,11 +79,6 @@ function TasksTodayPage() {
     }
   }
 
-  // Build default date with hour for dialog
-  const defaultDate = defaultHour !== undefined
-    ? today
-    : today
-
   return (
     <div>
       <TasksNav />
@@ -108,7 +104,7 @@ function TasksTodayPage() {
             onEdit={openEdit}
             onDelete={handleDelete}
             onReorder={handleReorder}
-            onQuickAdd={(hour) => openCreate(hour)}
+            onQuickAdd={() => openCreate()}
           />
         )}
 
@@ -119,9 +115,9 @@ function TasksTodayPage() {
 
       <TaskDialog
         open={dialogOpen}
-        onClose={() => { setDialogOpen(false); setEditingTask(null); setDefaultHour(undefined) }}
+        onClose={() => { setDialogOpen(false); setEditingTask(null) }}
         task={editingTask}
-        defaultDate={defaultDate}
+        defaultDate={today}
       />
     </div>
   )

@@ -76,6 +76,10 @@ function DebtsPage() {
   }
 
   return (
+    <FeatureGate
+      feature={FEATURES.FINANCES_MODULE}
+      fallback={<UpgradePrompt featureKey={FEATURES.FINANCES_MODULE} />}
+    >
     <div className="flex h-full flex-col">
       <FinancesNav />
 
@@ -126,6 +130,7 @@ function DebtsPage() {
 
       <DebtDialog open={dialogOpen} onClose={() => setDialogOpen(false)} />
     </div>
+    </FeatureGate>
   )
 }
 

@@ -12,8 +12,6 @@ import type { AppEnv } from '../types/env'
 import { authMiddleware } from '../middleware/auth'
 import { tasksService } from '../services/tasks.service'
 import { parsePaginationLimit, parsePaginationOffset } from '../lib/utils'
-import { calendarService } from '../services/calendar.service'
-import { scheduleOptimizer } from '../services/schedule-optimizer'
 import { LimitExceededError } from '../lib/limits'
 
 export const taskRoutes = new OpenAPIHono<AppEnv>()
@@ -42,7 +40,7 @@ const createTaskSchema = z.object({
   scheduledStart: z.string().optional(),
   scheduledEnd: z.string().optional(),
   isAllDay: z.boolean().optional(),
-  estimatedDurationMinutes: z.number().optional(),
+  estimatedDuration: z.number().optional(),
   backlogState: z.string().optional(),
   source: z.string().optional(),
   tags: z.array(z.string()).optional(),
@@ -301,10 +299,18 @@ const timeboxRoute = createRoute({
       },
       description: 'Timebox estimate',
     },
+    400: {
+      content: {
+        'application/json': {
+          schema: errorResponse,
+        },
+      },
+      description: 'Failed to estimate timebox',
+    },
   },
 })
 
-taskRoutes.openapi(timeboxRoute, async (c) => {
+taskRoutes.openapi(timeboxRoute, (async (c: any) => {
   const { userId } = c.get('user')
   const { title, description, taskId } = c.req.valid('json')
 
@@ -314,7 +320,7 @@ taskRoutes.openapi(timeboxRoute, async (c) => {
   } catch (err) {
     return c.json({ error: 'Failed to estimate timebox' }, 400)
   }
-})
+}) as any)
 
 // ---------------------------------------------------------------------------
 // POST /api/tasks/ai/schedule
@@ -355,16 +361,17 @@ const aiScheduleRoute = createRoute({
       description: 'Scheduling suggestion',
     },
     404: { content: { 'application/json': { schema: errorResponse } }, description: 'Task not found' },
+    400: { content: { 'application/json': { schema: errorResponse } }, description: 'Failed to schedule task' },
   },
 })
 
-taskRoutes.openapi(aiScheduleRoute, async (c) => {
+taskRoutes.openapi(aiScheduleRoute, (async (c: any) => {
   const { userId } = c.get('user')
   const { taskId, duration } = c.req.valid('json')
 
   const result = await tasksService.scheduleTask(userId, taskId, duration)
   return c.json(result, 200)
-})
+}) as any)
 
 // ---------------------------------------------------------------------------
 // GET /api/tasks/ai/insight/:taskId
@@ -389,10 +396,11 @@ const insightRoute = createRoute({
       description: 'Task insights',
     },
     404: { content: { 'application/json': { schema: errorResponse } }, description: 'Task not found' },
+    400: { content: { 'application/json': { schema: errorResponse } }, description: 'Failed to generate insights' },
   },
 })
 
-taskRoutes.openapi(insightRoute, async (c) => {
+taskRoutes.openapi(insightRoute, (async (c: any) => {
   const { userId } = c.get('user')
   const taskId = c.req.param('taskId')
 
@@ -402,4 +410,4 @@ taskRoutes.openapi(insightRoute, async (c) => {
   } catch (err) {
     return c.json({ error: 'Failed to generate insights' }, 400)
   }
-})
+}) as any)

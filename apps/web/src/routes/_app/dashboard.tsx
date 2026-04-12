@@ -6,7 +6,7 @@ import { DashboardStats } from '../../features/dashboard/components/dashboard-st
 import { OverdueTasksBanner } from '../../features/dashboard/components/overdue-tasks-banner'
 import { DashboardQuickActions } from '../../features/dashboard/components/dashboard-quick-actions'
 import { TodayTasksList } from '../../features/dashboard/components/today-tasks-list'
-import { SectionHeader } from '../../components/section-header'
+import { SectionHeader } from '../../components/SectionHeader'
 import { BriefingCard } from '../../features/ai/components/briefing-card'
 import { GamificationWidget } from '../../features/gamification/components/gamification-widget'
 import { format } from 'date-fns'

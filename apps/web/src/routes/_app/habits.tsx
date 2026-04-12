@@ -11,8 +11,9 @@ import { goalsQueries } from '../../features/goals/queries'
 import { HabitTracker } from '../../features/habits/components/habit-tracker'
 import { HabitsStats } from '../../features/habits/components/habits-stats'
 import { HabitsFilters } from '../../features/habits/components/habits-filters'
+import { HabitDetailPanel } from '../../features/habits/components/HabitDetailPanel'
 import { QueryError } from '../../components/query-error'
-import { PlusIcon, CheckIcon } from '../../components/icons'
+import { PlusIcon, CheckIcon } from '../../components/Icons'
 import { EditButton, DeleteButton } from '../../components/action-buttons'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -24,8 +25,9 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@
 import { SkeletonList } from '@/components/ui/skeleton-list'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Progress } from '@/components/ui/progress'
-import { SectionHeader } from '@/components/section-header'
+import { SectionHeader } from '@/components/SectionHeader'
 import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from '@/components/ui/dialog'
+import { Sheet, SheetContent } from '@/components/ui/sheet'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
 import { useState, useMemo } from 'react'
@@ -63,6 +65,7 @@ function HabitsPage() {
   const [tab, setTab] = useState<Tab>('tracker')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null)
+  const [selectedHabit, setSelectedHabit] = useState<Habit | null>(null)
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
 
@@ -200,6 +203,7 @@ function HabitsPage() {
                         onToggle={() => handleToggle(habit)}
                         onEdit={() => openEdit(habit)}
                         onDelete={() => handleDelete(habit)}
+                        onView={() => setSelectedHabit(habit)}
                       />
                     ))}
                   </div>
@@ -213,6 +217,18 @@ function HabitsPage() {
           </>
         )}
       </div>
+
+      {/* Detail sheet */}
+      <Sheet open={!!selectedHabit} onOpenChange={(open) => { if (!open) setSelectedHabit(null) }}>
+        <SheetContent side="right" className="w-full sm:w-[400px] overflow-hidden flex flex-col">
+          {selectedHabit && (
+            <HabitDetailPanel
+              habit={selectedHabit}
+              onClose={() => setSelectedHabit(null)}
+            />
+          )}
+        </SheetContent>
+      </Sheet>
 
       {/* Create / Edit dialog */}
       <HabitDialog
@@ -233,12 +249,14 @@ function HabitCard({
   onToggle,
   onEdit,
   onDelete,
+  onView,
 }: {
   habit: Habit
   today: string
   onToggle: () => void
   onEdit: () => void
   onDelete: () => void
+  onView: () => void
 }) {
   const { t } = useTranslation('habits')
   const todayLog = habit.logs?.find((l) => l.date.startsWith(today))
@@ -247,13 +265,16 @@ function HabitCard({
   const progress = habit.targetFrequency > 0 ? Math.min(completedCount / habit.targetFrequency, 1) : 0
 
   return (
-    <Card className="group transition-colors hover:bg-muted/30">
+    <Card className="group transition-colors hover:bg-muted/30 cursor-pointer" onClick={onView}>
       <CardContent className="flex items-center gap-4 p-4">
         {/* Toggle button */}
         <button
           type="button"
-          onClick={onToggle}
-          className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border-2 transition-all ${
+          onClick={(e) => {
+            e.stopPropagation()
+            onToggle()
+          }}
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 transition-all ${
             isComplete
               ? 'border-primary bg-primary text-primary-foreground'
               : 'border-muted-foreground/40 hover:border-primary'
@@ -301,7 +322,10 @@ function HabitCard({
           {habit.frequencyType === 'times_per_week' && `${habit.targetFrequency}${t('displayPerWeek')}`}
         </span>
 
-        <div className="flex items-center gap-1">
+        <div
+          className="flex items-center gap-1"
+          onClick={(e) => e.stopPropagation()}
+        >
           <EditButton onClick={onEdit} />
           <DeleteButton onClick={onDelete} />
         </div>
@@ -550,12 +574,12 @@ function HabitDialog({
             {/* Goal linking */}
             <div className="space-y-1.5">
               <Label>{t('linkToGoal', { ns: 'common' })}</Label>
-              <Select value={linkedGoalId || ''} onValueChange={(v) => setLinkedGoalId(v || undefined)}>
+              <Select value={linkedGoalId || '__none__'} onValueChange={(v) => setLinkedGoalId(v === '__none__' ? undefined : v)}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder={t('selectGoal', { ns: 'common' })} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">{t('noGoal', { ns: 'common' })}</SelectItem>
+                  <SelectItem value="__none__">{t('noGoal', { ns: 'common' })}</SelectItem>
                   {/* Three Year Goals */}
                   {(threeYearGoalsQuery.data?.data ?? []).map((goal: any) => (
                     <SelectItem key={goal.id} value={goal.id}>

@@ -9,7 +9,7 @@ import {
 import type { RecurringExpense } from '../../../features/finances/api'
 import { CURRENCY_OPTIONS, EXPENSE_CATEGORY_OPTIONS } from '../../../features/finances/constants'
 import { QueryError } from '../../../components/query-error'
-import { PlusIcon } from '../../../components/icons'
+import { PlusIcon } from '../../../components/Icons'
 import { DeleteButton } from '../../../components/action-buttons'
 import { FinancesNav } from '@/features/finances/components/finances-nav'
 import { useCurrency } from '@/features/finances/hooks/use-currency'
@@ -98,6 +98,10 @@ function RecurringPage() {
   }
 
   return (
+    <FeatureGate
+      feature={FEATURES.FINANCES_MODULE}
+      fallback={<UpgradePrompt featureKey={FEATURES.FINANCES_MODULE} />}
+    >
     <div className="flex h-full flex-col">
       <FinancesNav />
       <div className="flex-1 overflow-y-auto">
@@ -204,6 +208,7 @@ function RecurringPage() {
 
       <RecurringDialog open={dialogOpen} onClose={() => setDialogOpen(false)} />
     </div>
+    </FeatureGate>
   )
 }
 

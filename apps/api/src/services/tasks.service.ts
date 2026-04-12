@@ -10,12 +10,11 @@
 import { tasksRepository } from '../repositories/tasks.repo'
 import { calendarService } from './calendar.service'
 import { scheduleOptimizer } from './schedule-optimizer'
-import { featuresService } from './features.service'
 import { validateLimit } from '../lib/limits'
 import { FEATURES } from '@repo/shared/constants'
 import { prisma } from '../lib/prisma'
 import type { Task } from '@prisma/client'
-import { generateObject, generateText } from 'ai'
+import { generateObject } from 'ai'
 import { anthropic } from '@ai-sdk/anthropic'
 import { z } from 'zod'
 
@@ -28,16 +27,16 @@ export interface CreateTaskInput {
   title: string
   description?: string
   priority?: string
-  due_date?: string
-  scheduled_date?: string
-  scheduled_start?: string
-  scheduled_end?: string
-  is_all_day?: boolean
-  estimated_duration_minutes?: number
-  backlog_state?: string
+  dueDate?: string
+  scheduledDate?: string
+  scheduledStart?: string
+  scheduledEnd?: string
+  isAllDay?: boolean
+  estimatedDuration?: number
+  backlogState?: string
   source?: string
   tags?: string[]
-  weekly_goal_id?: string
+  weeklyGoalId?: string
 }
 
 export interface UpdateTaskInput {
@@ -45,17 +44,17 @@ export interface UpdateTaskInput {
   description?: string
   status?: string
   priority?: string
-  due_date?: string
-  scheduled_date?: string
-  scheduled_start?: string
-  scheduled_end?: string
-  is_all_day?: boolean
-  estimated_duration_minutes?: number
-  backlog_state?: string
+  dueDate?: string
+  scheduledDate?: string
+  scheduledStart?: string
+  scheduledEnd?: string
+  isAllDay?: boolean
+  estimatedDuration?: number
+  backlogState?: string
   tags?: string[]
-  weekly_goal_id?: string
-  archived_at?: string | null
-  order_in_day?: number
+  weeklyGoalId?: string
+  archivedAt?: string | null
+  orderInDay?: number
 }
 
 export interface ListTasksFilters {
@@ -134,6 +133,8 @@ class TasksService {
         ? task.scheduledDate.toISOString().split('T')[0]!
         : 'no-date'
 
+      console.log('📊 Task grouping - taskId:', task.id, 'scheduledDate:', task.scheduledDate, 'dateKey:', dateKey)
+
       if (!groupMap.has(dateKey)) groupMap.set(dateKey, [])
       groupMap.get(dateKey)!.push(task)
     }
@@ -157,6 +158,7 @@ class TasksService {
 
   /** Create a new task with optional auto-scheduling */
   async createTask(userId: string, input: CreateTaskInput): Promise<TaskModel> {
+    console.log('📥 TasksService.createTask - input:', input)
     // Check task limit
     const [subscription, usage] = await Promise.all([
       prisma.userSubscription.findFirst({
@@ -179,18 +181,19 @@ class TasksService {
       description: input.description,
       priority: input.priority || 'medium',
       tags: input.tags || [],
-      weeklyGoalId: input.weekly_goal_id,
-      isAllDay: input.is_all_day,
-      estimatedDurationMinutes: input.estimated_duration_minutes,
-      backlogState: input.backlog_state,
+      weeklyGoalId: input.weeklyGoalId,
+      isAllDay: input.isAllDay,
+      estimatedDurationMinutes: input.estimatedDuration,
+      backlogState: input.backlogState,
       source: input.source,
     }
 
-    if (input.due_date) data.dueDate = input.due_date
-    if (input.scheduled_date) data.scheduledDate = input.scheduled_date
-    if (input.scheduled_start) data.scheduledStart = input.scheduled_start
-    if (input.scheduled_end) data.scheduledEnd = input.scheduled_end
+    if (input.dueDate) data.dueDate = input.dueDate
+    if (input.scheduledDate) data.scheduledDate = input.scheduledDate
+    if (input.scheduledStart) data.scheduledStart = input.scheduledStart
+    if (input.scheduledEnd) data.scheduledEnd = input.scheduledEnd
 
+    console.log('📥 TasksService.createTask - data to be saved:', data)
     return tasksRepository.create(userId, data)
   }
 
@@ -201,24 +204,24 @@ class TasksService {
       throw new Error('Title must be 1-255 characters')
     }
 
-    // Map snake_case input to camelCase for repository
+    // Map camelCase input to repository format
     const data: Record<string, any> = {}
 
     if (input.title !== undefined) data.title = input.title
     if (input.description !== undefined) data.description = input.description
     if (input.status !== undefined) data.status = input.status
     if (input.priority !== undefined) data.priority = input.priority
-    if (input.due_date !== undefined) data.dueDate = input.due_date
-    if (input.scheduled_date !== undefined) data.scheduledDate = input.scheduled_date
-    if (input.scheduled_start !== undefined) data.scheduledStart = input.scheduled_start
-    if (input.scheduled_end !== undefined) data.scheduledEnd = input.scheduled_end
-    if (input.is_all_day !== undefined) data.isAllDay = input.is_all_day
-    if (input.estimated_duration_minutes !== undefined) data.estimatedDurationMinutes = input.estimated_duration_minutes
-    if (input.backlog_state !== undefined) data.backlogState = input.backlog_state
+    if (input.dueDate !== undefined) data.dueDate = input.dueDate
+    if (input.scheduledDate !== undefined) data.scheduledDate = input.scheduledDate
+    if (input.scheduledStart !== undefined) data.scheduledStart = input.scheduledStart
+    if (input.scheduledEnd !== undefined) data.scheduledEnd = input.scheduledEnd
+    if (input.isAllDay !== undefined) data.isAllDay = input.isAllDay
+    if (input.estimatedDuration !== undefined) data.estimatedDurationMinutes = input.estimatedDuration
+    if (input.backlogState !== undefined) data.backlogState = input.backlogState
     if (input.tags !== undefined) data.tags = input.tags
-    if (input.weekly_goal_id !== undefined) data.weeklyGoalId = input.weekly_goal_id
-    if (input.archived_at !== undefined) data.archivedAt = input.archived_at
-    if (input.order_in_day !== undefined) data.orderInDay = input.order_in_day
+    if (input.weeklyGoalId !== undefined) data.weeklyGoalId = input.weeklyGoalId
+    if (input.archivedAt !== undefined) data.archivedAt = input.archivedAt
+    if (input.orderInDay !== undefined) data.orderInDay = input.orderInDay
 
     return tasksRepository.update(userId, taskId, data)
   }
@@ -254,8 +257,8 @@ class TasksService {
     // Get all planned tasks (with scheduledDate and times)
     const plannedTasks = tasks.filter((t) => t.scheduledDate).map((t) => ({
       scheduledDate: t.scheduledDate ? t.scheduledDate.toISOString().split('T')[0] : undefined,
-      scheduledStart: t.scheduledStart,
-      scheduledEnd: t.scheduledEnd,
+      scheduledStart: t.scheduledStart ? t.scheduledStart.toISOString() : undefined,
+      scheduledEnd: t.scheduledEnd ? t.scheduledEnd.toISOString() : undefined,
     }))
 
     // Get schedule suggestion
@@ -281,7 +284,7 @@ class TasksService {
     taskId?: string,
   ): Promise<{ minutes: number; rationale: string }> {
     // Get user's recent tasks for context calibration
-    const recentTasks = await tasksRepository.findTasksByUser(userId, {
+    const recentTasks = await tasksRepository.findMany(userId, {
       limit: 5,
     })
 
@@ -310,16 +313,16 @@ Provide a realistic estimate in minutes.
 
     // Optionally save to task if taskId provided
     if (taskId) {
-      await tasksRepository.updateTask(userId, taskId, {
-        estimatedDurationMinutes: result.minutes,
+      await tasksRepository.update(userId, taskId, {
+        estimatedDurationMinutes: result.object.minutes,
       })
     }
 
-    return result
+    return result.object
   }
 
   async scheduleTask(userId: string, taskId: string, duration?: number): Promise<{ slot: { start: string; end: string } | null; confidence: number }> {
-    const task = await tasksRepository.findTaskById(userId, taskId)
+    const task = await tasksRepository.findById(userId, taskId)
     if (!task) {
       return { slot: null, confidence: 0 }
     }
@@ -327,7 +330,7 @@ Provide a realistic estimate in minutes.
     const taskDuration = duration || task.estimatedDurationMinutes || 60
 
     // Get today's date
-    const today = new Date().toISOString().split('T')[0]
+    const today = new Date().toISOString().split('T')[0]!
 
     // Get free slots from calendar
     const result = await calendarService.getFreeSlots(userId, today, taskDuration)
@@ -337,6 +340,10 @@ Provide a realistic estimate in minutes.
 
     // Pick the best slot (first available for now, could be enhanced with AI)
     const bestSlot = result.freeSlots[0]
+    if (!bestSlot) {
+      return { slot: null, confidence: 0 }
+    }
+
     return {
       slot: {
         start: bestSlot.start,
@@ -347,7 +354,7 @@ Provide a realistic estimate in minutes.
   }
 
   async getTaskInsight(userId: string, taskId: string): Promise<{ contextBrief: string; suggestedSubtasks: string[]; tips: string[] }> {
-    const task = await tasksRepository.findTaskById(userId, taskId)
+    const task = await tasksRepository.findById(userId, taskId)
     if (!task) {
       return { contextBrief: '', suggestedSubtasks: [], tips: [] }
     }
@@ -387,12 +394,12 @@ Provide:
 
     // Cache the insight in the task
     if (taskId) {
-      await tasksRepository.updateTask(userId, taskId, {
-        aiInsightJson: result,
+      await tasksRepository.update(userId, taskId, {
+        aiInsightJson: result.object,
       })
     }
 
-    return result
+    return result.object
   }
 }
 

@@ -44,5 +44,14 @@
   "tabTracker": "Tracker",
   "tabList": "List",
   "tabStats": "Stats",
-  "habitCompletedToast": "{{name}} completed!"
+  "habitCompletedToast": "{{name}} completed!",
+  "aiInsights": "AI Insights",
+  "failedToLoadInsights": "Failed to load insights",
+  "applyReminder": "Apply Reminder",
+  "goalLinked": "Goal linked successfully",
+  "goalUnlinked": "Goal unlinked",
+  "failedToLinkGoal": "Failed to link goal",
+  "suggestedGoals": "Suggested goals",
+  "noGoalSuggestions": "No goal suggestions available yet",
+  "unlink": "Unlink"
 }

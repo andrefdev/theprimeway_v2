@@ -112,10 +112,11 @@ const weeklyPlanRoute = createRoute({
   responses: {
     200: { content: { 'application/json': { schema: z.object({ data: z.any() }) } }, description: 'Weekly plan' },
     400: { content: { 'application/json': { schema: errorResponse } }, description: 'Invalid request' },
+    500: { content: { 'application/json': { schema: errorResponse } }, description: 'Server error' },
   },
 })
 
-chatRoutes.openapi(weeklyPlanRoute, async (c) => {
+chatRoutes.openapi(weeklyPlanRoute, (async (c: any) => {
   const userId = c.get('user').userId
   const { weekStartDate } = c.req.valid('json')
 
@@ -129,4 +130,4 @@ chatRoutes.openapi(weeklyPlanRoute, async (c) => {
   } catch (err: any) {
     return c.json({ error: err.message || 'Failed to generate weekly plan' }, 500)
   }
-})
+}) as any)

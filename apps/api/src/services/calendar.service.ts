@@ -221,7 +221,7 @@ class CalendarService {
 
   async getFreeSlots(userId: string, date: string, duration: number) {
     // Get user's work preferences
-    const workPrefs = await prisma.userWorkPreferences.findUnique({
+    const workPrefs = await prisma.userWorkPreferences.findFirst({
       where: { userId },
     })
 
@@ -232,7 +232,6 @@ class CalendarService {
     // Parse date and create time bounds
     const dateObj = new Date(date)
     const dayOfWeek = dateObj.getDay()
-    const timeZone = workPrefs.timeZone || 'UTC'
 
     // Check if this is a work day
     const workDays = (workPrefs.workDays as number[] | null) || [1, 2, 3, 4, 5] // Default: Mon-Fri

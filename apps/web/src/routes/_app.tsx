@@ -22,7 +22,7 @@ function AppLayout() {
   useLocaleSync()
   return (
     <TooltipProvider>
-      <SidebarProvider className="!h-dvh !min-h-0">
+      <SidebarProvider className="h-dvh! min-h-0!">
         <AppSidebar />
         <SidebarInset className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
           <Header />

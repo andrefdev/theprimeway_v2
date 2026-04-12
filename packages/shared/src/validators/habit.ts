@@ -9,6 +9,7 @@ export const createHabitSchema = z.object({
   frequencyType: z.enum(['daily', 'week_days', 'times_per_week']).default('daily'),
   weekDays: z.array(z.number().int().min(0).max(6)).optional(),
   isActive: z.boolean().optional().default(true),
+  goalId: z.string().optional(),
 })
 
 export const updateHabitSchema = createHabitSchema.partial()

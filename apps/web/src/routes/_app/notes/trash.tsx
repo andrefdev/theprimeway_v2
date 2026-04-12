@@ -3,10 +3,10 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { notesQueries, useRestoreNote } from '../../../features/notes/queries'
 import { notesApi } from '../../../features/notes/api'
-import { SectionHeader } from '@/components/section-header'
+import { SectionHeader } from '@/components/SectionHeader'
 import { NotesNav } from '../../../features/notes/components/notes-nav'
 import { QueryError } from '../../../components/query-error'
-import { TrashIcon } from '../../../components/icons'
+import { TrashIcon } from '../../../components/Icons'
 import { useLocale } from '../../../i18n/useLocale'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -15,6 +15,9 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { toast } from 'sonner'
 import { formatDistanceToNow } from 'date-fns'
 import type { Note } from '@repo/shared/types'
+import { FeatureGate } from '@/features/feature-flags/FeatureGate'
+import { UpgradePrompt } from '@/features/subscriptions/components/upgrade-prompt'
+import { FEATURES } from '@repo/shared/constants'
 
 export const Route = createFileRoute('/_app/notes/trash')({
   component: NotesTrashPage,
@@ -49,6 +52,10 @@ function NotesTrashPage() {
   }
 
   return (
+    <FeatureGate
+      feature={FEATURES.NOTES_MODULE}
+      fallback={<UpgradePrompt featureKey={FEATURES.NOTES_MODULE} />}
+    >
     <div>
       <NotesNav />
       <SectionHeader
@@ -108,5 +115,6 @@ function NotesTrashPage() {
         )}
       </div>
     </div>
+    </FeatureGate>
   )
 }
