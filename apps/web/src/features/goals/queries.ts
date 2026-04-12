@@ -213,3 +213,17 @@ export function useDeleteWeeklyGoal() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: goalsQueries.all() }),
   })
 }
+
+export function useSuggestSubGoals() {
+  return useMutation({
+    mutationFn: ({ goalId, type }: { goalId: string; type: 'three-year' | 'annual' | 'quarterly' | 'weekly' }) =>
+      goalsApi.suggestSubGoals(goalId, type),
+  })
+}
+
+export function useGetQuarterlyReview() {
+  return useMutation({
+    mutationFn: ({ quarter, year }: { quarter: 1 | 2 | 3 | 4; year: number }) =>
+      goalsApi.getQuarterlyReview(quarter, year),
+  })
+}

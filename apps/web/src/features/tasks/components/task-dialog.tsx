@@ -5,6 +5,7 @@ import type { Task } from '@repo/shared/types'
 import { useCreateTask, useUpdateTask } from '../queries'
 import { useScheduleSuggestion } from '../hooks/use-schedule-suggestion'
 import { useEstimateTimebox } from '../hooks/use-estimate-timebox'
+import { useScheduleTask } from '../queries'
 import {
   Dialog,
   DialogContent,
@@ -52,7 +53,9 @@ export function TaskDialog({ open, onClose, task, defaultDate }: TaskDialogProps
   const createTask = useCreateTask()
   const updateTask = useUpdateTask()
   const estimateTimebox = useEstimateTimebox()
+  const scheduleTask = useScheduleTask()
   const [showInsights, setShowInsights] = useState(false)
+  const [showScheduleResult, setShowScheduleResult] = useState<{ start: string; end: string } | null>(null)
   const isEdit = !!task
 
   const { data: insight, isLoading: isInsightLoading } = useQuery({
@@ -239,7 +242,43 @@ export function TaskDialog({ open, onClose, task, defaultDate }: TaskDialogProps
 
             {/* Scheduled Date */}
             <div className="space-y-1.5">
-              <Label>{t('scheduledDate')}</Label>
+              <div className="flex items-center justify-between">
+                <Label>{t('scheduledDate')}</Label>
+                {isEdit && task && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={async () => {
+                      try {
+                        const result = await scheduleTask.mutateAsync({
+                          taskId: task.id,
+                          duration: form.watch('estimatedDuration'),
+                        })
+                        if (result.slot) {
+                          setShowScheduleResult(result.slot)
+                          const startDate = new Date(result.slot.start)
+                          const year = startDate.getFullYear()
+                          const month = String(startDate.getMonth() + 1).padStart(2, '0')
+                          const day = String(startDate.getDate()).padStart(2, '0')
+                          form.setValue('scheduledDate', `${year}-${month}-${day}`)
+                          form.setValue('scheduledStart', result.slot.start)
+                          form.setValue('scheduledEnd', result.slot.end)
+                          toast.success('Found optimal time slot!')
+                        } else {
+                          toast.error('No available time slots found')
+                        }
+                      } catch {
+                        toast.error('Failed to find time slot')
+                      }
+                    }}
+                    disabled={scheduleTask.isPending}
+                    className="text-xs"
+                  >
+                    {scheduleTask.isPending ? t('common:loading', { defaultValue: 'Loading...' }) : 'Find best time'}
+                  </Button>
+                )}
+              </div>
               <DatePicker
                 date={parseLocalDate(form.watch('scheduledDate'))}
                 onDateChange={(d) => {
@@ -256,6 +295,18 @@ export function TaskDialog({ open, onClose, task, defaultDate }: TaskDialogProps
                 className="w-full"
               />
             </div>
+
+            {/* Schedule Result */}
+            {showScheduleResult && (
+              <div className="space-y-1.5 p-3 rounded-lg bg-success/10 border border-success/30">
+                <p className="text-xs font-semibold text-foreground">Suggested time:</p>
+                <p className="text-sm text-foreground">
+                  {new Date(showScheduleResult.start).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                  {' '}-{' '}
+                  {new Date(showScheduleResult.end).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                </p>
+              </div>
+            )}
 
             {/* Schedule Suggestion */}
             {scheduledDate && estimatedDuration && (

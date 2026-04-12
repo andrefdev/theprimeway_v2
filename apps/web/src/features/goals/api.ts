@@ -101,4 +101,25 @@ export const goalsApi = {
 
   deleteFocusLink: (id: string) =>
     api.delete(`/goals/focus-links/${id}`).then((r) => r.data),
+
+  // AI Features
+  suggestSubGoals: (goalId: string, type: 'three-year' | 'annual' | 'quarterly' | 'weekly') =>
+    api
+      .post<{ data: Array<{ title: string; description: string }> }>('/goals/ai/suggest', {
+        goalId,
+        type,
+      })
+      .then((r) => r.data.data),
+
+  getQuarterlyReview: (quarter: 1 | 2 | 3 | 4, year: number) =>
+    api
+      .get<{
+        data: {
+          summary: string
+          topAchievements: string[]
+          stuckAreas: string[]
+          proposedFocuses: string[]
+        }
+      }>('/goals/ai/quarterly-review', { params: { quarter: String(quarter), year: String(year) } })
+      .then((r) => r.data.data),
 }
