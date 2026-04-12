@@ -9,7 +9,7 @@ import { SkeletonList } from '@/components/ui/skeleton-list'
 import { toast } from 'sonner'
 import { subscriptionQueries } from '../../features/subscriptions/queries'
 import { subscriptionsApi } from '../../features/subscriptions/api'
-import { PlanCard } from '../../features/subscriptions/components/plan-card'
+import { PlanCard } from '../../features/subscriptions/components/PlanCard'
 import type { SubscriptionPlan, SubscriptionStatus } from '@repo/shared/types'
 
 export const Route = createFileRoute('/_app/subscription')({

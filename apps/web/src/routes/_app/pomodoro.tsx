@@ -7,11 +7,11 @@ import {
   useCreateSession,
   useUpdateSession,
 } from '../../features/pomodoro/queries'
-import { PomodoroModeSelector, MODE_MINUTES, MODE_LABEL_KEYS, type TimerMode } from '../../features/pomodoro/components/pomodoro-mode-selector'
-import { PomodoroTimer } from '../../features/pomodoro/components/pomodoro-timer'
-import { PomodoroControls } from '../../features/pomodoro/components/pomodoro-controls'
-import { PomodoroStats } from '../../features/pomodoro/components/pomodoro-stats'
-import { PomodoroSessionList } from '../../features/pomodoro/components/pomodoro-session-list'
+import { PomodoroModeSelector, MODE_MINUTES, MODE_LABEL_KEYS, type TimerMode } from '../../features/pomodoro/components/PomodoroModeSelector'
+import { PomodoroTimer } from '../../features/pomodoro/components/PomodoroTimer'
+import { PomodoroControls } from '../../features/pomodoro/components/PomodoroControls'
+import { PomodoroStats } from '../../features/pomodoro/components/PomodoroStats'
+import { PomodoroSessionList } from '../../features/pomodoro/components/PomodoroSessionList'
 import { toast } from 'sonner'
 import { useState, useEffect, useRef, useCallback } from 'react'
 

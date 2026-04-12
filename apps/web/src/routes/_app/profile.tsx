@@ -2,8 +2,8 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ProfileCard } from '../../features/profile/components/profile-card'
-import { ProfileGamificationStats } from '../../features/profile/components/profile-gamification-stats'
+import { ProfileCard } from '../../features/profile/components/ProfileCard'
+import { ProfileGamificationStats } from '../../features/profile/components/ProfileGamificationStats'
 
 export const Route = createFileRoute('/_app/profile')({
   component: ProfilePage,

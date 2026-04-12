@@ -15,7 +15,7 @@ import {
   useDeleteAccount,
 } from '@/features/finances/queries'
 import { CURRENCY_OPTIONS } from '../../../features/finances/constants'
-import { FinancesNav } from '@/features/finances/components/finances-nav'
+import { FinancesNav } from '@/features/finances/components/FinancesNav'
 import { useCurrency } from '@/features/finances/hooks/use-currency'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -47,7 +47,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import type { FinanceAccount } from '@repo/shared/types'
 import { FeatureGate } from '@/features/feature-flags/FeatureGate'
-import { UpgradePrompt } from '@/features/subscriptions/components/upgrade-prompt'
+import { UpgradePrompt } from '@/features/subscriptions/components/UpgradePrompt'
 import { FEATURES } from '@repo/shared/constants'
 
 export const Route = createFileRoute('/_app/finances/accounts')({

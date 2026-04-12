@@ -8,13 +8,13 @@ import {
   useCreateVision,
   useCreateThreeYearGoal,
 } from '../../features/goals/queries'
-import { QuarterlyGoals } from '../../features/goals/components/quarterly-goals'
-import { WeeklyGoalsList } from '../../features/goals/components/weekly-goals'
-import { JourneyView } from '../../features/goals/components/journey-view'
+import { QuarterlyGoals } from '../../features/goals/components/QuarterlyGoals'
+import { WeeklyGoalsList } from '../../features/goals/components/WeeklyGoals'
+import { JourneyView } from '../../features/goals/components/JourneyView'
 import { GoalTreeView } from '../../features/goals/components/GoalTreeView'
-import { QueryError } from '../../components/query-error'
+import { QueryError } from '../../components/QueryError'
 import { PlusIcon, TargetIcon } from '../../components/Icons'
-import { EditButton, DeleteButton } from '../../components/action-buttons'
+import { EditButton, DeleteButton } from '../../components/ActionButtons'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'

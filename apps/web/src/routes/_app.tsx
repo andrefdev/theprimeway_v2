@@ -4,8 +4,8 @@ import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { AppSidebar } from '../components/layout/sidebar'
 import { Header } from '../components/layout/topbar'
-import { MobileBottomNav } from '../components/layout/mobile-bottom-nav'
-import { ErrorBoundary } from '../components/error-boundary'
+import { MobileBottomNav } from '../components/layout/MobileBottomNav'
+import { ErrorBoundary } from '../components/ErrorBoundary'
 import { useLocaleSync } from '../i18n/useLocaleSync'
 
 export const Route = createFileRoute('/_app')({

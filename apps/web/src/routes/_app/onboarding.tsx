@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
-import { OnboardingWizard } from '../../features/onboarding/components/onboarding-wizard'
+import { OnboardingWizard } from '../../features/onboarding/components/OnboardingWizard'
 
 export const Route = createFileRoute('/_app/onboarding')({
   component: OnboardingPage,

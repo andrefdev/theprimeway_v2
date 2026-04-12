@@ -7,10 +7,10 @@ import {
   useDeleteSavingsGoal,
 } from '../../../features/finances/queries'
 import type { SavingsGoal } from '../../../features/finances/api'
-import { QueryError } from '../../../components/query-error'
+import { QueryError } from '../../../components/QueryError'
 import { PlusIcon } from '../../../components/Icons'
-import { DeleteButton } from '../../../components/action-buttons'
-import { FinancesNav } from '@/features/finances/components/finances-nav'
+import { DeleteButton } from '../../../components/ActionButtons'
+import { FinancesNav } from '@/features/finances/components/FinancesNav'
 import { CURRENCY_OPTIONS } from '../../../features/finances/constants'
 import { useCurrency } from '@/features/finances/hooks/use-currency'
 import { Button } from '@/components/ui/button'

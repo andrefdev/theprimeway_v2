@@ -14,11 +14,11 @@ import {
   useCreateBudget,
   useDeleteBudget,
 } from '@/features/finances/queries'
-import { FinancesNav } from '@/features/finances/components/finances-nav'
+import { FinancesNav } from '@/features/finances/components/FinancesNav'
 import { useCurrency } from '@/features/finances/hooks/use-currency'
 import { useFinancialAnalytics } from '@/features/finances/hooks/use-financial-analytics'
-import { QueryError } from '@/components/query-error'
-import { DeleteButton } from '@/components/action-buttons'
+import { QueryError } from '@/components/QueryError'
+import { DeleteButton } from '@/components/ActionButtons'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -46,7 +46,7 @@ import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import type { Budget } from '@repo/shared/types'
 import { FeatureGate } from '@/features/feature-flags/FeatureGate'
-import { UpgradePrompt } from '@/features/subscriptions/components/upgrade-prompt'
+import { UpgradePrompt } from '@/features/subscriptions/components/UpgradePrompt'
 import { FEATURES } from '@repo/shared/constants'
 
 export const Route = createFileRoute('/_app/finances/monthly')({

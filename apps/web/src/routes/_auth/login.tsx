@@ -9,7 +9,7 @@ import {
   type RegisterInput,
 } from '@repo/shared/validators'
 import { useLogin, useRegister } from '../../features/auth/queries'
-import { OAuthButtons } from '../../features/auth/components/oauth-buttons'
+import { OAuthButtons } from '../../features/auth/components/OAuthButtons'
 import { useState } from 'react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'

@@ -5,9 +5,9 @@ import { ChevronLeftIcon, ChevronRightIcon } from '../../components/Icons'
 import { SectionHeader } from '@/components/SectionHeader'
 import { Button } from '@/components/ui/button'
 import { SkeletonList } from '@/components/ui/skeleton-list'
-import { MonthView } from '../../features/calendar/components/month-view'
-import { WeekView } from '../../features/calendar/components/week-view'
-import { DayDetail } from '../../features/calendar/components/day-detail'
+import { MonthView } from '../../features/calendar/components/MonthView'
+import { WeekView } from '../../features/calendar/components/WeekView'
+import { DayDetail } from '../../features/calendar/components/DayDetail'
 import { useCalendarItems } from '../../features/calendar/hooks/use-calendar-items'
 import {
   format,

@@ -16,7 +16,7 @@ import {
 } from '@/features/finances/queries'
 import type { Debt } from '@/features/finances/api'
 import { CURRENCY_OPTIONS } from '../../../features/finances/constants'
-import { FinancesNav } from '@/features/finances/components/finances-nav'
+import { FinancesNav } from '@/features/finances/components/FinancesNav'
 import { useCurrency } from '@/features/finances/hooks/use-currency'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
