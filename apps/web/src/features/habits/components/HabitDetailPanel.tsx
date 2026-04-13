@@ -197,7 +197,7 @@ export function HabitDetailPanel({ habit, onClose }: HabitDetailPanelProps) {
                         className="w-full text-left p-2 rounded-lg hover:bg-muted/50 transition-colors text-sm text-foreground"
                       >
                         <div className="flex items-start gap-2">
-                          <CheckCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-muted-foreground" />
+                          <CheckCircle className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />
                           <span>{goal.title}</span>
                         </div>
                       </button>
@@ -217,7 +217,7 @@ export function HabitDetailPanel({ habit, onClose }: HabitDetailPanelProps) {
                         className="w-full text-left p-2 rounded-lg hover:bg-muted/50 transition-colors text-sm text-foreground"
                       >
                         <div className="flex items-start gap-2">
-                          <CheckCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-muted-foreground" />
+                          <CheckCircle className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />
                           <span>{goal.title}</span>
                         </div>
                       </button>
@@ -237,7 +237,7 @@ export function HabitDetailPanel({ habit, onClose }: HabitDetailPanelProps) {
                         className="w-full text-left p-2 rounded-lg hover:bg-muted/50 transition-colors text-sm text-foreground"
                       >
                         <div className="flex items-start gap-2">
-                          <CheckCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-muted-foreground" />
+                          <CheckCircle className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />
                           <span>{goal.title}</span>
                         </div>
                       </button>

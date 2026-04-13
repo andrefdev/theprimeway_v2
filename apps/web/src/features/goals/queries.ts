@@ -1,4 +1,4 @@
-import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
+import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { goalsApi } from './api'
 import { CACHE_TIMES } from '@repo/shared/constants'
 
@@ -79,6 +79,25 @@ export const goalsQueries = {
       staleTime: CACHE_TIMES.standard,
       enabled: !!quarterlyGoalId,
     }),
+}
+
+export function useGoalDetail(goalId: string) {
+  const detailQuery = useQuery(goalsQueries.detail(goalId))
+  const visionsQuery = useQuery({
+    ...goalsQueries.visions(),
+    enabled: detailQuery.isError,
+  })
+
+  const visionsArray = Array.isArray(visionsQuery.data) ? visionsQuery.data : (visionsQuery.data as any)?.data
+  const data = detailQuery.data || (detailQuery.isError && visionsArray?.find((v: any) => v.id === goalId))
+  const goalType = detailQuery.data ? 'goal' : (data ? 'vision' : undefined)
+
+  return {
+    data,
+    goalType: goalType as 'goal' | 'vision' | undefined,
+    isLoading: detailQuery.isLoading || visionsQuery.isLoading,
+    isError: detailQuery.isError && visionsQuery.isError,
+  }
 }
 
 export function useCreateGoal() {

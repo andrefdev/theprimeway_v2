@@ -37,7 +37,7 @@ export function JourneyView() {
       </div>
 
       <ScrollArea className="w-full">
-        <div className="flex gap-4 pb-2 min-w-[800px]">
+        <div className="flex gap-4 pb-2 min-w-200">
           {[1, 2, 3, 4].map((quarter) => {
             const qGoals = goals.filter((g) => g.quarter === quarter)
             const isCurrent = quarter === CURRENT_QUARTER
@@ -48,7 +48,7 @@ export function JourneyView() {
             return (
               <div
                 key={quarter}
-                className={`flex-1 min-w-[180px] rounded-xl border p-4 ${
+                className={`flex-1 min-w-45 rounded-xl border p-4 ${
                   isCurrent ? 'border-primary bg-primary/5 ring-1 ring-primary/20' : 'border-border'
                 }`}
               >

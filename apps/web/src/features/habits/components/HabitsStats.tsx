@@ -36,7 +36,7 @@ export function HabitsStats() {
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium text-foreground">{t('statsTitle')}</h3>
         <Select value={period} onValueChange={setPeriod}>
-          <SelectTrigger className="max-w-[120px]">
+          <SelectTrigger className="max-w-30">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

@@ -8,8 +8,8 @@ import {
   useDeleteAnnualGoal,
   useUpdateQuarterlyGoal,
   useDeleteQuarterlyGoal,
+  useGoalDetail,
 } from '../queries'
-import { goalsApi } from '../api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -19,7 +19,6 @@ import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { X, Trash2, Edit2, Save } from 'lucide-react'
 import { toast } from 'sonner'
-import { cn } from '@/lib/utils'
 
 interface GoalDetailPanelProps {
   goalId: string
@@ -34,32 +33,7 @@ export function GoalDetailPanel({ goalId, onClose }: GoalDetailPanelProps) {
   const [editedDescription, setEditedDescription] = useState('')
   const [editedProgress, setEditedProgress] = useState(0)
   const [goalType, setGoalType] = useState<GoalType>('goal')
-
-  // Try to fetch goal from different endpoints
-  const goalQuery = useQuery({
-    queryKey: ['goal-detail', goalId],
-    queryFn: async () => {
-      try {
-        const goal = await goalsApi.get(goalId)
-        setGoalType('goal')
-        return goal
-      } catch {
-        // Try other endpoints
-        try {
-          const visions = await goalsApi.listVisions()
-          const vision = visions.data?.find((v: any) => v.id === goalId)
-          if (vision) {
-            setGoalType('vision')
-            return vision
-          }
-        } catch {}
-
-        // Will fail - let error boundary handle it
-        throw new Error('Goal not found')
-      }
-    },
-  })
-
+  const goalDetail = useGoalDetail(goalId)
   const updateGoal = useUpdateGoal()
   const deleteGoal = useDeleteGoal()
   const updateThreeYearGoal = useUpdateThreeYearGoal()
@@ -69,15 +43,18 @@ export function GoalDetailPanel({ goalId, onClose }: GoalDetailPanelProps) {
   const updateQuarterlyGoal = useUpdateQuarterlyGoal()
   const deleteQuarterlyGoal = useDeleteQuarterlyGoal()
 
-  const goal = goalQuery.data
+  const goal = goalDetail.data
 
   useEffect(() => {
     if (goal) {
       setEditedTitle(goal.title || goal.name || '')
       setEditedDescription(goal.description || '')
       setEditedProgress(goal.progress ?? 0)
+      if (goalDetail.goalType) {
+        setGoalType(goalDetail.goalType)
+      }
     }
-  }, [goal])
+  }, [goal, goalDetail.goalType])
 
   const handleSave = async () => {
     if (!goal) return
@@ -142,7 +119,7 @@ export function GoalDetailPanel({ goalId, onClose }: GoalDetailPanelProps) {
     }
   }
 
-  if (goalQuery.isLoading) {
+  if (goalDetail.isLoading) {
     return (
       <Card>
         <CardHeader>
@@ -198,7 +175,7 @@ export function GoalDetailPanel({ goalId, onClose }: GoalDetailPanelProps) {
             <Textarea
               value={editedDescription}
               onChange={(e) => setEditedDescription(e.target.value)}
-              className="text-sm min-h-[80px]"
+              className="text-sm min-h-20"
               placeholder="Add notes..."
             />
           ) : (
