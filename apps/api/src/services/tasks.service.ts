@@ -9,6 +9,7 @@
  */
 import { tasksRepository } from '../repositories/tasks.repo'
 import { calendarService } from './calendar.service'
+import { gamificationService } from './gamification.service'
 import { scheduleOptimizer } from './schedule-optimizer'
 import { validateLimit } from '../lib/limits'
 import { FEATURES } from '@repo/shared/constants'
@@ -204,6 +205,10 @@ class TasksService {
       throw new Error('Title must be 1-255 characters')
     }
 
+    // Get current task to check if status is changing to 'completed'
+    const currentTask = await tasksRepository.findById(userId, taskId)
+    if (!currentTask) return null
+
     // Map camelCase input to repository format
     const data: Record<string, any> = {}
 
@@ -223,7 +228,20 @@ class TasksService {
     if (input.archivedAt !== undefined) data.archivedAt = input.archivedAt
     if (input.orderInDay !== undefined) data.orderInDay = input.orderInDay
 
-    return tasksRepository.update(userId, taskId, data)
+    const updatedTask = await tasksRepository.update(userId, taskId, data)
+
+    // Auto-award XP if task is being completed for the first time
+    if (input.status === 'completed' && currentTask.status !== 'completed' && updatedTask) {
+      const xpAmount = currentTask.weeklyGoalId ? 40 : 15
+      await gamificationService.awardXp(userId, {
+        source: 'task',
+        sourceId: taskId,
+        amount: xpAmount,
+        metadata: { taskTitle: currentTask.title },
+      })
+    }
+
+    return updatedTask
   }
 
   /** Delete a task */
@@ -294,7 +312,7 @@ class TasksService {
       .join('\n')
 
     const result = await generateObject({
-      model: anthropic('claude-3-5-sonnet-20241022'),
+      model: anthropic('claude-sonnet-4-6'),
       schema: z.object({
         minutes: z.number().int().positive().describe('Estimated duration in minutes'),
         rationale: z.string().describe('Brief explanation of the estimate'),
@@ -372,7 +390,7 @@ Provide a realistic estimate in minutes.
     }
 
     const result = await generateObject({
-      model: anthropic('claude-3-5-sonnet-20241022'),
+      model: anthropic('claude-sonnet-4-6'),
       schema: z.object({
         contextBrief: z.string().describe('Brief context about the task'),
         suggestedSubtasks: z.array(z.string()).describe('3-5 suggested subtasks'),

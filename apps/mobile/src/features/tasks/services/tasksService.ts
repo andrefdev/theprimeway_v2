@@ -92,4 +92,9 @@ export const tasksService = {
     const { data } = await apiClient.post<{ archivedCount: number }>(TASKS.AUTO_ARCHIVE);
     return data;
   },
+
+  getTaskInsight: async (id: string) => {
+    const { data: response } = await apiClient.get(`${TASKS.BY_ID(id)}/ai/insight`);
+    return response.data ?? response;
+  },
 };

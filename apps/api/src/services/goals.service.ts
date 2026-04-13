@@ -313,7 +313,7 @@ class GoalsService {
     }
 
     const result = await generateObject({
-      model: anthropic('claude-3-5-sonnet-20241022'),
+      model: anthropic('claude-sonnet-4-6'),
       schema: z.object({
         suggestions: z.array(
           z.object({
@@ -362,7 +362,7 @@ Make them specific, actionable, and aligned with the parent goal.
       .join('\n')
 
     const result = await generateObject({
-      model: anthropic('claude-3-5-sonnet-20241022'),
+      model: anthropic('claude-sonnet-4-6'),
       schema: z.object({
         summary: z.string().describe('Overall quarterly performance summary'),
         topAchievements: z.array(z.string()).describe('3-5 top achievements'),

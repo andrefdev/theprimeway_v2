@@ -1,4 +1,5 @@
 import { gamificationRepo } from '../repositories/gamification.repo'
+import { prisma } from '../lib/prisma'
 
 function calculateLevel(totalXp: number): {
   level: number
@@ -72,19 +73,40 @@ class GamificationService {
       metadata?: Record<string, unknown>
     },
   ) {
+    // Get current streak for multiplier
+    const profile = await gamificationRepo.findProfile(userId)
+    let multiplier = 1
+    if (profile && profile.currentStreak >= 7) {
+      if (profile.currentStreak >= 90) {
+        multiplier = 5
+      } else if (profile.currentStreak >= 30) {
+        multiplier = 3
+      } else if (profile.currentStreak >= 14) {
+        multiplier = 2
+      } else if (profile.currentStreak >= 7) {
+        multiplier = 1.5
+      }
+    }
+
+    const finalXpAmount = Math.round(body.amount * multiplier)
+
     const xpEvent = await gamificationRepo.createXpEvent({
       userId,
       source: body.source,
       sourceId: body.sourceId || null,
-      amount: body.amount,
+      amount: finalXpAmount,
       earnedDate: body.earnedDate || new Date().toISOString().split('T')[0]!,
-      metadata: body.metadata || {},
+      metadata: {
+        ...body.metadata,
+        baseAmount: body.amount,
+        streakMultiplier: multiplier > 1 ? multiplier : undefined,
+      },
     })
 
     await gamificationRepo.upsertProfile(
       userId,
-      { totalXp: { increment: body.amount } },
-      { totalXp: body.amount },
+      { totalXp: { increment: finalXpAmount } },
+      { totalXp: finalXpAmount },
     )
 
     return xpEvent
@@ -201,9 +223,95 @@ class GamificationService {
     })
   }
 
-  async checkAchievements(_userId: string) {
-    // Placeholder — full check logic can be ported later
-    return { data: [], count: 0 }
+  async checkAchievements(userId: string) {
+    const unlockedAchievements = []
+
+    // 1. Check "First Habit" — completed at least 1 habit log
+    const habitLogs = await prisma.habitLog.count({
+      where: { habit: { userId }, completedCount: { gt: 0 } },
+    })
+
+    if (habitLogs > 0) {
+      const firstHabit = await prisma.achievement.findUnique({
+        where: { key: 'first_habit' },
+      })
+      if (firstHabit) {
+        const existing = await prisma.userAchievement.findUnique({
+          where: { userId_achievementId: { userId, achievementId: firstHabit.id } },
+        })
+        if (!existing) {
+          await prisma.userAchievement.create({
+            data: { userId, achievementId: firstHabit.id, unlockedAt: new Date() },
+          })
+          unlockedAchievements.push(firstHabit)
+        }
+      }
+    }
+
+    // 2. Check "Streak 7" — current streak >= 7 days
+    const profile = await gamificationRepo.findProfile(userId)
+    if (profile && profile.currentStreak >= 7) {
+      const streak7 = await prisma.achievement.findUnique({
+        where: { key: 'streak_7' },
+      })
+      if (streak7) {
+        const existing = await prisma.userAchievement.findUnique({
+          where: { userId_achievementId: { userId, achievementId: streak7.id } },
+        })
+        if (!existing) {
+          await prisma.userAchievement.create({
+            data: { userId, achievementId: streak7.id, unlockedAt: new Date() },
+          })
+          unlockedAchievements.push(streak7)
+        }
+      }
+    }
+
+    // 3. Check "Task Master" — completed 10+ tasks
+    const completedTasks = await prisma.task.count({
+      where: { userId, status: 'completed' },
+    })
+
+    if (completedTasks >= 10) {
+      const taskMaster = await prisma.achievement.findUnique({
+        where: { key: 'task_master' },
+      })
+      if (taskMaster) {
+        const existing = await prisma.userAchievement.findUnique({
+          where: { userId_achievementId: { userId, achievementId: taskMaster.id } },
+        })
+        if (!existing) {
+          await prisma.userAchievement.create({
+            data: { userId, achievementId: taskMaster.id, unlockedAt: new Date() },
+          })
+          unlockedAchievements.push(taskMaster)
+        }
+      }
+    }
+
+    // 4. Check "Goal Setter" — created at least 1 goal
+    const goalCount = await prisma.weeklyGoal.count({
+      where: { userId },
+    })
+
+    if (goalCount > 0) {
+      const goalSetter = await prisma.achievement.findUnique({
+        where: { key: 'goal_setter' },
+      })
+      if (goalSetter) {
+        const existing = await prisma.userAchievement.findUnique({
+          where: { userId_achievementId: { userId, achievementId: goalSetter.id } },
+        })
+        if (!existing) {
+          await prisma.userAchievement.create({
+            data: { userId, achievementId: goalSetter.id, unlockedAt: new Date() },
+          })
+          unlockedAchievements.push(goalSetter)
+        }
+      }
+    }
+
+    return { data: unlockedAchievements, count: unlockedAchievements.length }
   }
 
   async getChallenges(userId: string, date: string, locale: string) {

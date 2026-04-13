@@ -196,7 +196,7 @@ export function TaskDialog({ open, onClose, task, defaultDate }: TaskDialogProps
                 </Select>
               </div>
 
-              <div className="space-y-1.5">
+              <div className="space-y-0 -mt-2">
                 <div className="flex items-center justify-between">
                   <Label>{t('estimatedDuration')}</Label>
                   <Button

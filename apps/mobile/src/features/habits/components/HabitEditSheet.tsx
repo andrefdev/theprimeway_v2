@@ -10,6 +10,7 @@ import { cn } from '@/shared/utils/cn';
 import type { HabitWithLogs } from '../types';
 import type { ThreeYearGoal } from '@shared/types/models';
 import { ThreeYearGoalPickerSheet } from '@features/goals/components/ThreeYearGoalPickerSheet';
+import { HabitAiInsights } from './HabitAiInsights';
 
 const CATEGORIES = [
   { key: 'health', label: 'Health', emoji: '💪' },
@@ -149,6 +150,9 @@ export function HabitEditSheet({ habit, isOpen, onClose }: HabitEditSheetProps) 
           ) : null}
         </Pressable>
       </View>
+
+      {/* AI Insights */}
+      {habit && <HabitAiInsights habitId={habit.id} />}
 
       <Button className="h-12 rounded-xl" onPress={handleUpdate} disabled={updateHabit.isPending || !name.trim()}>
         {updateHabit.isPending ? (

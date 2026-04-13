@@ -164,7 +164,7 @@ class ChatService {
       : '09:00 - 17:00'
 
     const result = await generateObject({
-      model: anthropic('claude-3-5-sonnet-20241022'),
+      model: anthropic('claude-sonnet-4-6'),
       schema: z.object({
         plan: z.object({
           Monday: z.array(z.object({ title: z.string(), timeBlock: z.string().optional() })),

@@ -56,4 +56,20 @@ export const habitsService = {
     });
     return unwrap<HabitStats>(response);
   },
+
+  // AI methods
+  analyzeHabit: async (id: string) => {
+    const { data: response } = await apiClient.get(`${HABITS.BY_ID(id)}/ai/analyze`);
+    return unwrap(response);
+  },
+
+  getOptimalReminderTime: async (id: string) => {
+    const { data: response } = await apiClient.get(`${HABITS.BY_ID(id)}/ai/optimal-time`);
+    return unwrap(response);
+  },
+
+  suggestGoalsForHabit: async (id: string) => {
+    const { data: response } = await apiClient.post(`${HABITS.BY_ID(id)}/ai/suggest-goals`);
+    return unwrap(response);
+  },
 };

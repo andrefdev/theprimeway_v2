@@ -590,3 +590,81 @@ habitRoutes.openapi(suggestGoalsRoute, async (c) => {
     return c.json({ error: 'Internal Error' }, 500)
   }
 })
+
+// ---------------------------------------------------------------------------
+// Habit Reminder Endpoint
+// ---------------------------------------------------------------------------
+
+const scheduleReminderRoute = createRoute({
+  method: 'post',
+  path: '/:id/reminder',
+  tags: ['Habits - Reminders'],
+  summary: 'Schedule a reminder for this habit',
+  security: [{ Bearer: [] }],
+  request: {
+    param: z.object({ id: z.string() }),
+    body: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            time: z.string().regex(/^\d{2}:\d{2}$/, 'Time must be in HH:MM format'),
+            timezone: z.string().optional().default('UTC'),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            data: z.object({
+              habitId: z.string(),
+              reminderTime: z.string(),
+              timezone: z.string(),
+              message: z.string(),
+            }),
+          }),
+        },
+      },
+      description: 'Reminder scheduled successfully',
+    },
+    404: { content: { 'application/json': { schema: errorResponse } }, description: 'Habit not found' },
+  },
+})
+
+habitRoutes.openapi(scheduleReminderRoute, async (c) => {
+  const { userId } = c.get('user')
+  const { id: habitId } = c.req.valid('param')
+  const { time, timezone } = c.req.valid('json')
+
+  try {
+    // Verify habit exists
+    const habit = await habitsService.getHabit(userId, habitId)
+    if (!habit) return c.json({ error: 'Habit not found' }, 404)
+
+    // Update or create notification preferences
+    const { prisma } = await import('../lib/prisma')
+    const notifPrefs = await prisma.notificationPreferences.upsert({
+      where: { userId },
+      update: { habitReminderTime: time },
+      create: { userId, habitReminderTime: time },
+    })
+
+    return c.json(
+      {
+        data: {
+          habitId,
+          reminderTime: time,
+          timezone,
+          message: `Reminder set for ${time}`,
+        },
+      },
+      200,
+    )
+  } catch (error) {
+    console.error('[HABIT_SCHEDULE_REMINDER]', error)
+    return c.json({ error: 'Internal Error' }, 500)
+  }
+})

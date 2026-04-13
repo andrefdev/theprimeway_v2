@@ -131,8 +131,8 @@ function PomodoroPage() {
   const recentSessions = (sessionsQuery.data?.data ?? []).slice(0, 5)
 
   return (
-    <div>
-      <SectionHeader sectionId="pomodoro" title={t('title')} />
+    <div className='mt-30'>
+      {/*<SectionHeader sectionId="pomodoro" title={t('title')} />*/}
       <div className="mx-auto max-w-5xl px-6 pb-6 space-y-6">
         <PomodoroModeSelector mode={mode} onModeChange={switchMode} disabled={isRunning} />
         <PomodoroTimer mode={mode} minutes={minutes} seconds={seconds} progress={progress} modeColor={modeColor} />

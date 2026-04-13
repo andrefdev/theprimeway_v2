@@ -8,9 +8,13 @@
  * - NO Prisma queries, NO HTTP concerns
  */
 import { habitsRepository } from '../repositories/habits.repo'
+import { gamificationService } from './gamification.service'
 import { prisma } from '../lib/prisma'
 import { validateLimit } from '../lib/limits'
 import { FEATURES } from '@repo/shared/constants'
+import { generateObject } from 'ai'
+import { anthropic } from '@ai-sdk/anthropic'
+import { z } from 'zod'
 import type { Habit, HabitLog } from '@prisma/client'
 
 type HabitModel = Habit & { logs?: HabitLog[] }
@@ -345,11 +349,11 @@ class HabitsService {
     habitId: string,
     input: UpsertLogInput,
   ): Promise<{ log?: HabitLogModel; error?: string; notFound?: boolean }> {
-    const habit = await habitsRepository.findHabitForValidation(habitId, userId)
-    if (!habit) return { notFound: true }
+    const habitValidation = await habitsRepository.findHabitForValidation(habitId, userId)
+    if (!habitValidation) return { notFound: true }
 
     // Validate applicability
-    if (!isHabitApplicable(habit, input.date)) {
+    if (!isHabitApplicable(habitValidation, input.date)) {
       return { error: 'Log date is not scheduled for this habit' }
     }
 
@@ -361,6 +365,23 @@ class HabitsService {
       input.completedCount,
       input.notes,
     )
+
+    // Auto-award XP and check streak if completed
+    if (input.completedCount > 0) {
+      // Fetch full habit for metadata
+      const habit = await habitsRepository.findById(userId, habitId)
+      const xpAmount = habit?.goalId ? 25 : 10
+      await gamificationService.awardXp(userId, {
+        source: 'habit',
+        sourceId: habitId,
+        amount: xpAmount,
+        earnedDate: completionDate.toISOString().split('T')[0]!,
+        metadata: { habitName: habit?.name || 'Habit' },
+      })
+
+      // Auto-check-in streak
+      await gamificationService.checkInStreak(userId, input.date)
+    }
 
     return { log }
   }
@@ -566,7 +587,8 @@ class HabitsService {
     const logs = await habitsRepository.findRecentLogs([habitId], 90)
     const logsByDate = logs.reduce(
       (acc, log) => {
-        acc[log.date] = log
+        const dateStr = log.date instanceof Date ? log.date.toISOString().split('T')[0]! : log.date
+        acc[dateStr] = log
         return acc
       },
       {} as Record<string, HabitLogModel>,
@@ -574,12 +596,22 @@ class HabitsService {
 
     // Calculate stats
     const totalDays = 90
-    const completedDays = logs.filter((l) => l.completedCount > 0).length
+    const completedDays = logs.filter((l) => (l.completedCount ?? 0) > 0).length
     const completionRate = (completedDays / totalDays) * 100
-    const totalCompletions = logs.reduce((sum, l) => sum + l.completedCount, 0)
+    const totalCompletions = logs.reduce((sum, l) => sum + (l.completedCount ?? 0), 0)
 
     // Find streaks
-    const { currentStreak, longestStreak } = calculateStreaks(habit, logsByDate)
+    const endDate = new Date().toISOString().split('T')[0]!
+    const startDate = new Date()
+    startDate.setDate(startDate.getDate() - 90)
+    const startDateStr = startDate.toISOString().split('T')[0]!
+
+    const { currentStreak, longestStreak } = calculateStreaks(
+      logsByDate,
+      startDateStr,
+      endDate,
+      (dateStr: string) => isHabitApplicable(habit, dateStr),
+    )
 
     // Identify patterns (best days of week)
     const dayPatterns: Record<number, number> = {}
@@ -587,7 +619,7 @@ class HabitsService {
       const date = new Date(log.date)
       const dayOfWeek = date.getDay()
       if (!dayPatterns[dayOfWeek]) dayPatterns[dayOfWeek] = 0
-      dayPatterns[dayOfWeek] += log.completedCount
+      dayPatterns[dayOfWeek] += log.completedCount ?? 0
     })
 
     const bestDays = Object.entries(dayPatterns)
@@ -647,31 +679,79 @@ class HabitsService {
     }
 
     // Fetch unlinked goals at different levels
-    const weeklyGoals = await prisma.weeklyGoal.findMany({
-      where: { userId, isArchived: false },
-      select: { id: true, title: true },
-      take: 3,
+    const [weeklyGoals, quarterlyGoals, annualGoals] = await Promise.all([
+      prisma.weeklyGoal.findMany({
+        where: { userId },
+        select: { id: true, title: true, description: true },
+        take: 10,
+      }),
+      prisma.quarterlyGoal.findMany({
+        where: { userId },
+        select: { id: true, title: true },
+        take: 5,
+      }),
+      prisma.annualGoal.findMany({
+        where: { userId },
+        select: { id: true, title: true },
+        take: 3,
+      }),
+    ])
+
+    // Get habit statistics for context
+    const logs = await habitsRepository.findRecentLogs([habitId], 30)
+    const completionRate = logs.length > 0
+      ? (logs.filter((l) => (l.completedCount ?? 0) > 0).length / 30) * 100
+      : 0
+
+    // Use AI to suggest relevant goals
+    const result = await generateObject({
+      model: anthropic('claude-sonnet-4-6'),
+      schema: z.object({
+        suggestedGoalIds: z.array(z.string()).describe('IDs of suggested goals that align with this habit'),
+        reasoning: z.string().describe('Brief explanation of why these goals align with the habit'),
+      }),
+      prompt: `
+You are a goal-setting assistant. Based on the following habit and existing goals, suggest which goals this habit would directly support.
+
+HABIT:
+- Name: ${habit.name}
+- Description: ${habit.description || 'No description'}
+- Category: ${habit.category || 'Uncategorized'}
+- Frequency: ${habit.frequencyType} (target: ${habit.targetFrequency}x)
+- Completion Rate (last 30 days): ${Math.round(completionRate)}%
+
+AVAILABLE GOALS:
+
+Weekly Goals:
+${weeklyGoals.map((g) => `- [${g.id}] ${g.title}: ${g.description || 'No description'}`).join('\n')}
+
+Quarterly Goals:
+${quarterlyGoals.map((g) => `- [${g.id}] ${g.title}`).join('\n')}
+
+Annual Goals:
+${annualGoals.map((g) => `- [${g.id}] ${g.title}`).join('\n')}
+
+Based on the habit's characteristics, suggest up to 3 goal IDs that would be directly supported or enhanced by completing this habit consistently.
+Return only the goal IDs that make strong logical connections to the habit.
+      `,
     })
 
-    const quarterlyGoals = await prisma.quarterlyGoal.findMany({
-      where: { userId, isArchived: false },
-      select: { id: true, title: true },
-      take: 3,
-    })
-
-    const annualGoals = await prisma.annualGoal.findMany({
-      where: { userId, isArchived: false },
-      select: { id: true, title: true },
-      take: 2,
-    })
-
+    // Filter goals to only include suggested ones and reformat
+    const suggestedIds = result.object.suggestedGoalIds
     return {
       linkedGoal: null,
       suggestions: {
-        weeklyGoals: weeklyGoals.map((g) => ({ id: g.id, title: g.title, type: 'weekly' })),
-        quarterlyGoals: quarterlyGoals.map((g) => ({ id: g.id, title: g.title, type: 'quarterly' })),
-        annualGoals: annualGoals.map((g) => ({ id: g.id, title: g.title, type: 'annual' })),
+        weeklyGoals: weeklyGoals
+          .filter((g) => suggestedIds.includes(g.id))
+          .map((g) => ({ id: g.id, title: g.title, type: 'weekly' })),
+        quarterlyGoals: quarterlyGoals
+          .filter((g) => suggestedIds.includes(g.id))
+          .map((g) => ({ id: g.id, title: g.title, type: 'quarterly' })),
+        annualGoals: annualGoals
+          .filter((g) => suggestedIds.includes(g.id))
+          .map((g) => ({ id: g.id, title: g.title, type: 'annual' })),
       },
+      reasoning: result.object.reasoning,
     }
   }
 
@@ -680,36 +760,73 @@ class HabitsService {
     const habit = await habitsRepository.findById(userId, habitId)
     if (!habit) return null
 
-    // Fetch recent logs to identify best completion times
+    // Fetch recent logs with timestamps (next 30 days of schedule)
     const logs = await habitsRepository.findRecentLogs([habitId], 30)
 
-    // If no logs yet, suggest morning (08:00)
+    // If no logs, use AI to suggest based on habit type
     if (logs.length === 0) {
+      const result = await generateObject({
+        model: anthropic('claude-sonnet-4-6'),
+        schema: z.object({
+          hour: z.number().min(0).max(23),
+          minute: z.number().min(0).max(59),
+          reason: z.string(),
+        }),
+        prompt: `
+Suggest the optimal reminder time (HH:MM format) for the following habit:
+- Name: ${habit.name}
+- Frequency: ${habit.frequencyType}
+- Category: ${habit.category || 'General'}
+- Description: ${habit.description || 'No description'}
+
+Consider typical patterns for ${habit.frequencyType} habits. Return the hour (0-23) and minute (0-59) for the best reminder time.
+        `,
+      })
+
+      const suggestedTime = `${String(result.object.hour).padStart(2, '0')}:${String(result.object.minute).padStart(2, '0')}`
       return {
         habitId,
-        suggestedTime: '08:00',
-        confidence: 0.5,
-        reason: 'No historical data. Morning is typically optimal.',
+        suggestedTime,
+        confidence: 0.6,
+        reason: result.object.reason,
       }
     }
 
-    // In production, analyze actual completion timestamps from logs
-    // For now, suggest based on frequency type
-    const timeByFrequency: Record<string, string> = {
-      daily: '08:00',
-      'every_2_days': '08:00',
-      'every_3_days': '08:00',
-      'every_week': '19:00',
-      'multiple_per_week': '18:00',
-    }
+    // Analyze actual completion times if available
+    // Most habits tracked at date level, but use frequency pattern + AI for optimization
+    const completedDays = logs.filter((l) => (l.completedCount ?? 0) > 0).length
+    const completionRate = (completedDays / 30) * 100
 
-    const suggestedTime = timeByFrequency[habit.frequencyType] || '08:00'
+    const result = await generateObject({
+      model: anthropic('claude-sonnet-4-6'),
+      schema: z.object({
+        hour: z.number().min(0).max(23),
+        minute: z.number().min(0).max(59),
+        reason: z.string(),
+      }),
+      prompt: `
+Optimize the reminder time for this habit based on its characteristics and performance:
+
+HABIT:
+- Name: ${habit.name}
+- Frequency: ${habit.frequencyType}
+- Completion Rate (last 30 days): ${Math.round(completionRate)}%
+- Category: ${habit.category || 'General'}
+
+Based on the ${habit.frequencyType} schedule and ${Math.round(completionRate)}% completion rate, suggest the optimal reminder time.
+If completion rate is low, suggest an earlier morning time. If high, consider their current pattern.
+Return the hour (0-23) and minute (0-59).
+      `,
+    })
+
+    const suggestedTime = `${String(result.object.hour).padStart(2, '0')}:${String(result.object.minute).padStart(2, '0')}`
+    const confidence = Math.min(0.5 + (completionRate / 100) * 0.4, 0.95)
 
     return {
       habitId,
       suggestedTime,
-      confidence: 0.7,
-      reason: `Based on ${habit.frequencyType} frequency, ${suggestedTime} is typically optimal.`,
+      confidence: Math.round(confidence * 100) / 100,
+      reason: result.object.reason,
     }
   }
 }

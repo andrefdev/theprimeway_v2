@@ -316,9 +316,11 @@ taskRoutes.openapi(timeboxRoute, (async (c: any) => {
 
   try {
     const result = await tasksService.estimateTimebox(userId, title, description, taskId)
-    return c.json(result, 200)
+    return c.json({ data: result }, 200)
   } catch (err) {
-    return c.json({ error: 'Failed to estimate timebox' }, 400)
+    console.error('[TIMEBOX_ERROR]', err)
+    const message = err instanceof Error ? err.message : 'Unknown error'
+    return c.json({ error: 'Failed to estimate timebox', details: message }, 400)
   }
 }) as any)
 

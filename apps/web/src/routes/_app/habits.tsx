@@ -265,69 +265,83 @@ function HabitCard({
   const progress = habit.targetFrequency > 0 ? Math.min(completedCount / habit.targetFrequency, 1) : 0
 
   return (
-    <Card className="group transition-colors hover:bg-muted/30 cursor-pointer" onClick={onView}>
-      <CardContent className="flex items-center gap-4 p-4">
-        {/* Toggle button */}
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation()
-            onToggle()
-          }}
-          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 transition-all ${
-            isComplete
-              ? 'border-primary bg-primary text-primary-foreground'
-              : 'border-muted-foreground/40 hover:border-primary'
-          }`}
-          style={!isComplete && habit.color ? { borderColor: habit.color } : undefined}
-        >
-          {isComplete ? (
-            <CheckIcon size={18} />
-          ) : habit.targetFrequency > 1 ? (
-            <span className="text-xs font-bold">{completedCount}/{habit.targetFrequency}</span>
-          ) : null}
-        </button>
+    <Card className="group cursor-pointer overflow-hidden transition-all hover:border-border hover:shadow-md" onClick={onView}>
+      <CardContent className="p-0">
+        <div className="flex items-stretch gap-0">
+          {/* Left: Toggle button */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              onToggle()
+            }}
+            className="flex shrink-0 items-center justify-center w-14 transition-colors"
+            style={
+              isComplete
+                ? { backgroundColor: habit.color || 'var(--color-primary)' }
+                : { backgroundColor: (habit.color || 'var(--color-primary)') + '15' }
+            }
+          >
+            <div
+              className={`flex h-8 w-8 items-center justify-center rounded-full border-2 transition-all ${
+                isComplete
+                  ? 'border-white bg-white/20 text-white'
+                  : 'border-white/30'
+              }`}
+            >
+              {isComplete ? (
+                <CheckIcon size={16} />
+              ) : habit.targetFrequency > 1 ? (
+                <span className="text-xs font-bold text-white">{completedCount}/{habit.targetFrequency}</span>
+              ) : null}
+            </div>
+          </button>
 
-        {/* Info */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <p className={`text-sm font-medium ${isComplete ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
-              {habit.name}
-            </p>
-            {habit.category && (
-              <Badge variant="outline" className="text-[10px]">{habit.category}</Badge>
+          {/* Right: Info */}
+          <div className="flex-1 min-w-0 p-4">
+            <div className="flex items-start justify-between gap-2 mb-2">
+              <div className="flex-1">
+                <p className={`text-sm font-semibold leading-tight ${isComplete ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
+                  {habit.name}
+                </p>
+              </div>
+              <div
+                className="flex items-center gap-0.5 shrink-0"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <EditButton onClick={onEdit} />
+                <DeleteButton onClick={onDelete} />
+              </div>
+            </div>
+
+            {habit.description && (
+              <p className="text-xs text-muted-foreground line-clamp-1 mb-2">{habit.description}</p>
+            )}
+
+            <div className="flex items-center gap-2 flex-wrap">
+              {habit.category && (
+                <Badge variant="secondary" className="text-[10px] py-0.5">{habit.category}</Badge>
+              )}
+              <span className="text-xs text-muted-foreground">
+                {habit.frequencyType === 'daily' && t('displayDaily')}
+                {habit.frequencyType === 'week_days' && `${habit.weekDays.map((d) => DAY_LABELS[d]).join(', ')}`}
+                {habit.frequencyType === 'times_per_week' && `${habit.targetFrequency}${t('displayPerWeek')}`}
+              </span>
+            </div>
+
+            {/* Progress bar for multi-target habits */}
+            {habit.targetFrequency > 1 && (
+              <div className="mt-2 h-1.5 rounded-full bg-muted/50 overflow-hidden">
+                <div
+                  className="h-1.5 rounded-full transition-all"
+                  style={{
+                    width: `${progress * 100}%`,
+                    backgroundColor: habit.color || 'var(--color-primary)',
+                  }}
+                />
+              </div>
             )}
           </div>
-          {habit.description && (
-            <p className="text-xs text-muted-foreground mt-0.5 truncate">{habit.description}</p>
-          )}
-          {/* Mini progress bar for multi-target habits */}
-          {habit.targetFrequency > 1 && !isComplete && (
-            <div className="mt-1.5 h-1 w-24 rounded-full bg-muted">
-              <div
-                className="h-1 rounded-full transition-all"
-                style={{
-                  width: `${progress * 100}%`,
-                  backgroundColor: habit.color || 'var(--color-primary)',
-                }}
-              />
-            </div>
-          )}
-        </div>
-
-        {/* Frequency badge */}
-        <span className="hidden text-xs text-muted-foreground sm:block">
-          {habit.frequencyType === 'daily' && t('displayDaily')}
-          {habit.frequencyType === 'week_days' && `${habit.weekDays.map((d) => DAY_LABELS[d]).join(', ')}`}
-          {habit.frequencyType === 'times_per_week' && `${habit.targetFrequency}${t('displayPerWeek')}`}
-        </span>
-
-        <div
-          className="flex items-center gap-1"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <EditButton onClick={onEdit} />
-          <DeleteButton onClick={onDelete} />
         </div>
       </CardContent>
     </Card>

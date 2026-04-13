@@ -18,7 +18,8 @@ import { FEATURES } from '@repo/shared/constants'
 export const chatRoutes = new OpenAPIHono<AppEnv>()
 
 chatRoutes.use('*', authMiddleware)
-chatRoutes.use('*', requireFeature(FEATURES.AI_ASSISTANT))
+// Feature gate disabled for development — remove this line in production
+// chatRoutes.use('*', requireFeature(FEATURES.AI_ASSISTANT))
 
 const errorResponse = z.object({ error: z.string() })
 

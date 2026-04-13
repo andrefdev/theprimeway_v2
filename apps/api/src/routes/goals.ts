@@ -109,99 +109,6 @@ goalsRoutes.openapi(createGoalRoute, (async (c: any) => {
   }
 }) as any)
 
-// GET /goals/:id
-const getGoalRoute = createRoute({
-  method: 'get',
-  path: '/:id',
-  tags: ['Goals'],
-  summary: 'Get a goal by ID',
-  security: [{ Bearer: [] }],
-  request: { params: z.object({ id: z.string() }) },
-  responses: {
-    200: { content: { 'application/json': { schema: genericData } }, description: 'Goal found' },
-    404: { content: { 'application/json': { schema: errorResponse } }, description: 'Not found' },
-    500: { content: { 'application/json': { schema: errorResponse } }, description: 'Server error' },
-  },
-})
-
-goalsRoutes.openapi(getGoalRoute, async (c) => {
-  const { userId } = c.get('user')
-  const { id } = c.req.valid('param')
-
-  try {
-    const goal = await goalsService.getGoal(userId, id)
-    if (!goal) return c.json({ error: 'Not found' }, 404)
-    return c.json(goal, 200)
-  } catch (error) {
-    console.error('[GOAL_GET]', error)
-    return c.json({ error: 'Internal server error' }, 500)
-  }
-})
-
-// PATCH /goals/:id
-const updateGoalBody = createGoalBody.partial()
-
-const updateGoalRoute = createRoute({
-  method: 'patch',
-  path: '/:id',
-  tags: ['Goals'],
-  summary: 'Update a goal',
-  security: [{ Bearer: [] }],
-  request: {
-    params: z.object({ id: z.string() }),
-    body: { content: { 'application/json': { schema: updateGoalBody } } },
-  },
-  responses: {
-    200: { content: { 'application/json': { schema: genericData } }, description: 'Goal updated' },
-    404: { content: { 'application/json': { schema: errorResponse } }, description: 'Not found' },
-    500: { content: { 'application/json': { schema: errorResponse } }, description: 'Server error' },
-  },
-})
-
-goalsRoutes.openapi(updateGoalRoute, async (c) => {
-  const { userId } = c.get('user')
-  const { id } = c.req.valid('param')
-  const body = c.req.valid('json')
-
-  try {
-    const goal = await goalsService.updateGoal(userId, id, body)
-    if (!goal) return c.json({ error: 'Not found' }, 404)
-    return c.json(goal, 200)
-  } catch (error) {
-    console.error('[GOAL_PATCH]', error)
-    return c.json({ error: 'Internal server error' }, 500)
-  }
-})
-
-// DELETE /goals/:id
-const deleteGoalRoute = createRoute({
-  method: 'delete',
-  path: '/:id',
-  tags: ['Goals'],
-  summary: 'Delete a goal',
-  security: [{ Bearer: [] }],
-  request: { params: z.object({ id: z.string() }) },
-  responses: {
-    204: { description: 'Goal deleted' },
-    404: { content: { 'application/json': { schema: errorResponse } }, description: 'Not found' },
-    500: { content: { 'application/json': { schema: errorResponse } }, description: 'Server error' },
-  },
-})
-
-goalsRoutes.openapi(deleteGoalRoute, async (c) => {
-  const { userId } = c.get('user')
-  const { id } = c.req.valid('param')
-
-  try {
-    const deleted = await goalsService.deleteGoal(userId, id)
-    if (!deleted) return c.json({ error: 'Not found' }, 404)
-    return c.body(null, 204)
-  } catch (error) {
-    console.error('[GOAL_DELETE]', error)
-    return c.json({ error: 'Internal server error' }, 500)
-  }
-})
-
 // ═══════════════════════════════════════════════════════════════════════════════
 // GOAL TREE
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1387,3 +1294,100 @@ goalsRoutes.openapi(quarterlyReviewRoute, (async (c: any) => {
     return c.json({ error: 'Failed to generate review' }, 400)
   }
 }) as any)
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// GOAL CRUD (:id routes) — Registered LAST to avoid shadowing named routes
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// GET /goals/:id
+const getGoalRoute = createRoute({
+  method: 'get',
+  path: '/:id',
+  tags: ['Goals'],
+  summary: 'Get a goal by ID',
+  security: [{ Bearer: [] }],
+  request: { params: z.object({ id: z.string() }) },
+  responses: {
+    200: { content: { 'application/json': { schema: genericData } }, description: 'Goal found' },
+    404: { content: { 'application/json': { schema: errorResponse } }, description: 'Not found' },
+    500: { content: { 'application/json': { schema: errorResponse } }, description: 'Server error' },
+  },
+})
+
+goalsRoutes.openapi(getGoalRoute, async (c) => {
+  const { userId } = c.get('user')
+  const { id } = c.req.valid('param')
+
+  try {
+    const goal = await goalsService.getGoal(userId, id)
+    if (!goal) return c.json({ error: 'Not found' }, 404)
+    return c.json(goal, 200)
+  } catch (error) {
+    console.error('[GOAL_GET]', error)
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
+// PATCH /goals/:id
+const updateGoalBody = createGoalBody.partial()
+
+const updateGoalRoute = createRoute({
+  method: 'patch',
+  path: '/:id',
+  tags: ['Goals'],
+  summary: 'Update a goal',
+  security: [{ Bearer: [] }],
+  request: {
+    params: z.object({ id: z.string() }),
+    body: { content: { 'application/json': { schema: updateGoalBody } } },
+  },
+  responses: {
+    200: { content: { 'application/json': { schema: genericData } }, description: 'Goal updated' },
+    404: { content: { 'application/json': { schema: errorResponse } }, description: 'Not found' },
+    500: { content: { 'application/json': { schema: errorResponse } }, description: 'Server error' },
+  },
+})
+
+goalsRoutes.openapi(updateGoalRoute, async (c) => {
+  const { userId } = c.get('user')
+  const { id } = c.req.valid('param')
+  const body = c.req.valid('json')
+
+  try {
+    const goal = await goalsService.updateGoal(userId, id, body)
+    if (!goal) return c.json({ error: 'Not found' }, 404)
+    return c.json(goal, 200)
+  } catch (error) {
+    console.error('[GOAL_PATCH]', error)
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
+// DELETE /goals/:id
+const deleteGoalRoute = createRoute({
+  method: 'delete',
+  path: '/:id',
+  tags: ['Goals'],
+  summary: 'Delete a goal',
+  security: [{ Bearer: [] }],
+  request: { params: z.object({ id: z.string() }) },
+  responses: {
+    204: { description: 'Goal deleted' },
+    404: { content: { 'application/json': { schema: errorResponse } }, description: 'Not found' },
+    500: { content: { 'application/json': { schema: errorResponse } }, description: 'Server error' },
+  },
+})
+
+goalsRoutes.openapi(deleteGoalRoute, async (c) => {
+  const { userId } = c.get('user')
+  const { id } = c.req.valid('param')
+
+  try {
+    const deleted = await goalsService.deleteGoal(userId, id)
+    if (!deleted) return c.json({ error: 'Not found' }, 404)
+    return c.body(null, 204)
+  } catch (error) {
+    console.error('[GOAL_DELETE]', error)
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+})

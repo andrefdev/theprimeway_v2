@@ -27,16 +27,10 @@ interface HabitCardProps {
   className?: string;
 }
 
-function getStreakBg(streak: number): string {
-  if (streak >= 30) return 'bg-streak-legendary/15';
-  if (streak >= 7) return 'bg-streak-fire/15';
-  return 'bg-warning/15';
-}
-
-function getStreakText(streak: number): string {
-  if (streak >= 30) return 'text-streak-legendary';
-  if (streak >= 7) return 'text-streak-fire';
-  return 'text-warning';
+function getStreakColor(streak: number): string {
+  if (streak >= 30) return 'text-amber-500';
+  if (streak >= 7) return 'text-orange-500';
+  return 'text-slate-400';
 }
 
 function AnimatedStreak({ streak }: { streak: number }) {
@@ -45,8 +39,8 @@ function AnimatedStreak({ streak }: { streak: number }) {
   if (streak >= 7) {
     pulseScale.value = withRepeat(
       withSequence(
-        withTiming(1.15, { duration: 800 }),
-        withTiming(1, { duration: 800 })
+        withTiming(1.1, { duration: 1000 }),
+        withTiming(1, { duration: 1000 })
       ),
       -1,
       true
@@ -58,11 +52,11 @@ function AnimatedStreak({ streak }: { streak: number }) {
   }));
 
   return (
-    <View className={cn('flex-row items-center gap-1 rounded-full px-2.5 py-1', getStreakBg(streak))}>
+    <View className="flex-row items-center gap-1">
       <Animated.View style={iconStyle}>
-        <Icon as={Flame} size={12} className={getStreakText(streak)} />
+        <Icon as={Flame} size={14} className={getStreakColor(streak)} />
       </Animated.View>
-      <Text className={cn('text-xs font-bold', getStreakText(streak))}>{streak}d</Text>
+      <Text className={cn('text-xs font-bold', getStreakColor(streak))}>{streak}d</Text>
     </View>
   );
 }
@@ -85,18 +79,18 @@ function WeekDots({ habit }: { habit: HabitWithLogs }) {
         <Text className="text-[9px] font-medium text-muted-foreground">{dayLabels[6 - i]}</Text>
         <View
           className={cn(
-            'h-3.5 w-3.5 items-center justify-center rounded-full',
-            completed ? 'opacity-100' : 'opacity-20',
+            'h-3 w-3 items-center justify-center rounded-sm',
+            completed ? 'opacity-100' : 'opacity-30',
             isToday && !completed && 'border border-muted-foreground/40'
           )}
           style={{ backgroundColor: habit.color || '#6454FD' }}
         >
-          {completed && <Icon as={Check} size={8} className="text-white" />}
+          {completed && <Icon as={Check} size={7} className="text-white font-bold" />}
         </View>
       </View>
     );
   }
-  return <View className="flex-row items-center gap-2">{dots}</View>;
+  return <View className="flex-row items-center justify-between gap-1">{dots}</View>;
 }
 
 export function HabitCard({
@@ -136,7 +130,6 @@ export function HabitCard({
       onComplete();
       addXp({ type: 'habit', amount: XP_VALUES.habit });
       setShowXp(true);
-      // Sync with backend (fire & forget)
       awardXpToBackend({
         source: 'habit',
         sourceId: habit.id,
@@ -151,61 +144,69 @@ export function HabitCard({
     <Pressable
       onPress={onPress}
       className={cn(
-        'flex-row items-center gap-4 rounded-2xl border border-border bg-card px-4 py-4',
+        'rounded-2xl border border-border bg-card p-4',
         className
       )}
     >
-      {/* Toggle button — bigger, uses habit color */}
-      <View className="relative">
-        <XpFloater amount={XP_VALUES.habit} visible={showXp} onComplete={() => setShowXp(false)} />
-        <Animated.View style={buttonAnimStyle}>
-          <Pressable
-            onPress={handleToggle}
-            className={cn(
-              'h-12 w-12 items-center justify-center rounded-full border-2',
-              isCompleted ? 'border-transparent' : 'border-muted-foreground/20'
-            )}
-            style={isCompleted ? { backgroundColor: habit.color || '#6454FD' } : undefined}
-            hitSlop={8}
-          >
-            {isCompleted ? (
-              <Icon as={Check} size={22} className="text-white" />
-            ) : (
-              <View
-                className="h-5 w-5 rounded-full"
-                style={{ backgroundColor: (habit.color || '#6454FD') + '30' }}
-              />
-            )}
-          </Pressable>
-        </Animated.View>
-      </View>
-
-      {/* Content */}
-      <View className="flex-1 gap-2.5">
-        {/* Name + Streak */}
-        <View className="flex-row items-center gap-2">
+      {/* Header: Title + Streak + Toggle Button */}
+      <View className="flex-row items-start justify-between gap-3 mb-3">
+        <View className="flex-1">
           <Text
             className={cn(
-              'flex-1 text-base font-semibold text-foreground',
-              isCompleted && 'text-muted-foreground'
+              'text-base font-semibold text-foreground',
+              isCompleted && 'text-muted-foreground opacity-60'
             )}
             numberOfLines={1}
           >
             {habit.name}
           </Text>
-          {currentStreak > 0 && <AnimatedStreak streak={currentStreak} />}
         </View>
 
-        {/* Week dots + Progress */}
-        <View className="flex-row items-center justify-between">
-          <WeekDots habit={habit} />
-          {target > 1 && (
-            <Text className="text-xs text-muted-foreground">
-              {completedToday}/{target}
-            </Text>
-          )}
+        {/* Streak badge */}
+        {currentStreak > 0 && (
+          <AnimatedStreak streak={currentStreak} />
+        )}
+
+        {/* Toggle button top-right */}
+        <View className="relative">
+          <XpFloater amount={XP_VALUES.habit} visible={showXp} onComplete={() => setShowXp(false)} />
+          <Animated.View style={buttonAnimStyle}>
+            <Pressable
+              onPress={handleToggle}
+              className={cn(
+                'h-10 w-10 items-center justify-center rounded-full border-2',
+                isCompleted ? 'border-transparent' : 'border-slate-300 dark:border-slate-600'
+              )}
+              style={isCompleted ? { backgroundColor: habit.color || '#6454FD' } : undefined}
+              hitSlop={8}
+            >
+              {isCompleted ? (
+                <Icon as={Check} size={18} className="text-white" />
+              ) : (
+                <View
+                  className="h-4 w-4 rounded-full"
+                  style={{ backgroundColor: (habit.color || '#6454FD') + '40' }}
+                />
+              )}
+            </Pressable>
+          </Animated.View>
         </View>
       </View>
+
+      {/* Week dots — full width */}
+      <View className="mb-2">
+        <WeekDots habit={habit} />
+      </View>
+
+      {/* Progress counter if target > 1 */}
+      {target > 1 && (
+        <View className="flex-row items-center justify-between pt-2 border-t border-border/50">
+          <Text className="text-xs text-muted-foreground">Daily target</Text>
+          <Text className="text-sm font-semibold" style={{ color: habit.color || '#6454FD' }}>
+            {completedToday}/{target}
+          </Text>
+        </View>
+      )}
     </Pressable>
   );
 }

@@ -11,6 +11,7 @@ import { cn } from '@/shared/utils/cn';
 import { format } from 'date-fns';
 import type { Task, WeeklyGoal } from '@shared/types/models';
 import { GoalPickerSheet } from '@features/goals/components/GoalPickerSheet';
+import { TaskAiInsights } from './TaskAiInsights';
 
 const DURATIONS = [15, 30, 45, 60, 90, 120];
 const PRIORITIES = [
@@ -189,6 +190,9 @@ export function TaskEditSheet({ task, isOpen, onClose }: TaskEditSheetProps) {
           ) : null}
         </Pressable>
       </View>
+
+      {/* AI Insights */}
+      {task && <TaskAiInsights taskId={task.id} />}
 
       <Button className="h-12 rounded-xl" onPress={handleUpdate} disabled={updateTask.isPending || !title.trim()}>
         {updateTask.isPending ? (
