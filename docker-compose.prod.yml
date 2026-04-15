@@ -7,7 +7,7 @@ services:
   # Depends on environment: DATABASE_URL must be set in .env
   migrate:
     image: ghcr.io/${DOCKER_REGISTRY}/theprimeway-api:latest
-    command: sh -c "node_modules/.bin/prisma migrate deploy"
+    command: sh -c "node node_modules/prisma/build/index.js migrate deploy"
     env_file: .env
     environment:
       NODE_ENV: production
