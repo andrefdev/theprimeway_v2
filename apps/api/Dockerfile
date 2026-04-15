@@ -32,12 +32,6 @@ RUN for dir in apps/api/node_modules/.prisma node_modules/.prisma; do \
       if [ -d "$dir" ]; then cp -rL "$dir" /deploy/node_modules/.prisma && break; fi; \
     done
 
-# Stage Prisma CLI + its sibling deps to a known path for the runtime image
-# (glob patterns don't work in COPY --from, so we collect them here)
-RUN mkdir -p /prisma-cli && \
-    cp -rL /repo/node_modules/.pnpm/prisma@*/node_modules/prisma /prisma-cli/prisma && \
-    cp -rL /repo/node_modules/.pnpm/prisma@*/node_modules/@prisma /prisma-cli/@prisma
-
 # Runtime stage: minimal image with only what's needed to run the API
 FROM node:22-alpine AS runner
 WORKDIR /app
@@ -52,12 +46,9 @@ COPY --from=builder --chown=hono:nodejs /deploy .
 # Copy Prisma schema and migrations (needed for runtime migrations)
 COPY --from=builder --chown=hono:nodejs /repo/apps/api/prisma ./prisma
 
-# Copy Prisma CLI + engines (needed for `prisma migrate deploy`)
-# pnpm deploy --prod strips devDependencies, so we copy from the builder stage
-COPY --from=builder --chown=hono:nodejs /prisma-cli/prisma ./node_modules/prisma
-# Merge @prisma CLI deps (engines, config, etc.) without overwriting .prisma client
-COPY --from=builder --chown=hono:nodejs /prisma-cli/@prisma/engines ./node_modules/@prisma/engines
-COPY --from=builder --chown=hono:nodejs /prisma-cli/@prisma/config ./node_modules/@prisma/config
+# Install Prisma CLI for runtime migrations (prisma migrate deploy)
+# This is a devDependency stripped by pnpm deploy --prod, but needed at deploy time
+RUN npm install --no-save prisma@7 && chown -R hono:nodejs node_modules/prisma node_modules/@prisma
 
 # Use the non-root user
 USER hono
