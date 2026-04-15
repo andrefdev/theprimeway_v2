@@ -28,6 +28,9 @@ ENV VITE_APPLE_REDIRECT_URI=$VITE_APPLE_REDIRECT_URI
 # Install dependencies
 RUN pnpm install --frozen-lockfile
 
+# Build shared package (exports point to dist/ JS files)
+RUN pnpm --filter @repo/shared build
+
 # Build the SPA
 # Output: dist/ (optimized, hashed asset filenames, code-split bundles)
 RUN pnpm --filter @repo/admin build
