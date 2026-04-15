@@ -17,6 +17,9 @@ COPY apps/api/ ./apps/api/
 # Install all dependencies (including devDependencies for build)
 RUN pnpm install --frozen-lockfile
 
+# Build shared package (so dist/ JS files exist for Node.js runtime in production)
+RUN pnpm --filter @repo/shared build
+
 # Build the API (tsup compiles TypeScript to dist/)
 RUN pnpm --filter @repo/api build
 

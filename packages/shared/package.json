@@ -4,13 +4,34 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./types": "./src/types/index.ts",
-    "./validators": "./src/validators/index.ts",
-    "./constants": "./src/constants/index.ts",
-    "./constants/plans": "./src/constants/plans.ts",
-    "./utils": "./src/utils/index.ts"
+    "./types": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/types/index.js",
+      "default": "./src/types/index.ts"
+    },
+    "./validators": {
+      "types": "./dist/validators/index.d.ts",
+      "import": "./dist/validators/index.js",
+      "default": "./src/validators/index.ts"
+    },
+    "./constants": {
+      "types": "./dist/constants/index.d.ts",
+      "import": "./dist/constants/index.js",
+      "default": "./src/constants/index.ts"
+    },
+    "./constants/plans": {
+      "types": "./dist/constants/plans.d.ts",
+      "import": "./dist/constants/plans.js",
+      "default": "./src/constants/plans.ts"
+    },
+    "./utils": {
+      "types": "./dist/utils/index.d.ts",
+      "import": "./dist/utils/index.js",
+      "default": "./src/utils/index.ts"
+    }
   },
   "scripts": {
+    "build": "tsc",
     "typecheck": "tsc --noEmit",
     "lint": "biome check src/",
     "format": "biome format --write src/"

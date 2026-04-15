@@ -199,6 +199,7 @@ jobs:
           # Build .env with printf — single quotes prevent special char issues
           # (angle brackets in SMTP_FROM, passwords with symbols, etc.)
           : > .env
+          printf "DOCKER_REGISTRY='%s'\n" "${{ github.repository_owner }}" >> .env
           printf "NODE_ENV='production'\n" >> .env
           printf "PORT='3001'\n" >> .env
           printf "DATABASE_URL='%s'\n" "$DATABASE_URL" >> .env
@@ -263,8 +264,8 @@ jobs:
 
             cd /var/www/theprimeway
 
-            # Set DOCKER_REGISTRY for docker-compose variable substitution
-            export DOCKER_REGISTRY=${{ github.repository_owner }}
+            # DOCKER_REGISTRY is in .env for docker-compose variable substitution
+            # (persists across manual restarts / server reboots)
 
             # Pull latest images from GHCR (--ignore-buildable avoids failures for missing images)
             docker compose -f docker-compose.prod.yml pull --ignore-buildable || true
