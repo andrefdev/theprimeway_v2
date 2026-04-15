@@ -20,20 +20,17 @@ RUN pnpm install --frozen-lockfile
 # Build the API (tsup compiles TypeScript to dist/)
 RUN pnpm --filter @repo/api build
 
+# Generate Prisma client in /repo where all deps (including dotenv) are available
+RUN DATABASE_URL="postgresql://build:build@localhost:5432/build" pnpm --filter @repo/api exec prisma generate
+
 # Create a standalone production deployment with pnpm deploy
-# This creates /deploy with:
-#   - dist/ (compiled output)
-#   - node_modules/ (production deps only, no devDependencies)
-#   - package.json, package-lock (if exists)
-#   - Workspace packages inlined into node_modules/@repo/*
 RUN pnpm deploy --filter @repo/api --prod /deploy
 
-# Generate Prisma client inside the deploy directory
-# Prisma 7 generates into node_modules/@prisma/client (not .prisma/)
-# Must run after pnpm deploy so the client lands in /deploy/node_modules/
-WORKDIR /deploy
-RUN DATABASE_URL="postgresql://build:build@localhost:5432/build" npx prisma generate
-WORKDIR /repo
+# Copy generated Prisma client into deploy directory
+# pnpm deploy --prod strips it; check app-level then root-level, follow symlinks
+RUN for dir in apps/api/node_modules/.prisma node_modules/.prisma; do \
+      if [ -d "$dir" ]; then cp -rL "$dir" /deploy/node_modules/.prisma && break; fi; \
+    done
 
 # Runtime stage: minimal image with only what's needed to run the API
 FROM node:22-alpine AS runner
