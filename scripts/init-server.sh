@@ -30,16 +30,16 @@ fi
 echo ""
 echo "Requesting SSL certificates..."
 echo "Make sure these DNS records point to this server's IP:"
-echo "  - api.theprimeway.app → $(curl -s ifconfig.me)"
-echo "  - app.theprimeway.app → $(curl -s ifconfig.me)"
-echo "  - admin.theprimeway.app → $(curl -s ifconfig.me)"
+echo "  - staging-api.theprimeway.app → $(curl -s ifconfig.me)"
+echo "  - staging.theprimeway.app     → $(curl -s ifconfig.me)"
+echo "  - admin.theprimeway.app       → $(curl -s ifconfig.me)"
 echo ""
 
 # Stop anything on port 80 temporarily
 sudo systemctl stop nginx 2>/dev/null || true
 docker stop $(docker ps -q --filter "publish=80") 2>/dev/null || true
 
-for domain in api.theprimeway.app app.theprimeway.app admin.theprimeway.app; do
+for domain in staging-api.theprimeway.app staging.theprimeway.app admin.theprimeway.app; do
   if [ ! -d "/etc/letsencrypt/live/$domain" ]; then
     echo "Getting cert for $domain..."
     sudo certbot certonly --standalone \
