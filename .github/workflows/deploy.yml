@@ -236,6 +236,11 @@ jobs:
           ssh-keyscan -p ${{ secrets.SSH_PORT }} -H ${{ secrets.SSH_HOST }} \
             >> ~/.ssh/known_hosts
 
+      - name: Ensure server directories exist
+        run: |
+          ssh -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+            'mkdir -p /var/www/theprimeway/nginx'
+
       - name: Copy config files to server
         run: |
           scp -P ${{ secrets.SSH_PORT }} .env \
@@ -244,8 +249,8 @@ jobs:
           scp -P ${{ secrets.SSH_PORT }} docker-compose.prod.yml \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/theprimeway/docker-compose.prod.yml
 
-          scp -rP ${{ secrets.SSH_PORT }} nginx \
-            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/theprimeway/
+          scp -P ${{ secrets.SSH_PORT }} nginx/theprimeway.conf nginx/spa.conf \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/theprimeway/nginx/
 
       - name: Pull latest images and start containers
         uses: appleboy/ssh-action@v1
