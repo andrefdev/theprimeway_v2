@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { AlertTriangle } from 'lucide-react'
-import type { DashboardSummary } from '@repo/shared/types'
+import type { DashboardSummary } from '../api'
 
 interface OverdueTasksBannerProps {
   summary?: DashboardSummary

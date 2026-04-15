@@ -43,7 +43,7 @@ function RootLayout() {
     const syncTokenToTauri = async () => {
       if (authState.token && authState.refreshToken) {
         try {
-          await invoke('set_auth_token', {
+          await invoke!('set_auth_token', {
             token: authState.token,
             refreshToken: authState.refreshToken,
           })
@@ -52,7 +52,7 @@ function RootLayout() {
         }
       } else {
         try {
-          await invoke('clear_auth_token')
+          await invoke!('clear_auth_token')
         } catch (error) {
           console.error('Failed to clear token in Tauri:', error)
         }

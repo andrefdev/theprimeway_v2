@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'sonner'
 import { habitsQueries, useLinkHabitToGoal } from '../queries'
-import { HabitAIInsights } from './habitAiInsights'
+import { HabitAIInsights } from './HabitAiInsights'
 import type { Habit } from '@repo/shared/types'
 import { LIFE_PILLARS, CATEGORY_TO_PILLAR } from '@repo/shared/constants'
 

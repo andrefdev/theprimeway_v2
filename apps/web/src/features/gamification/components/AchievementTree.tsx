@@ -180,7 +180,7 @@ function CategoryCard({
 }
 
 function AchievementBadge({ achievement }: { achievement: CategoryAchievement }) {
-  const rarity = RARITY_COLORS[achievement.rarity] || RARITY_COLORS.common
+  const rarity = (RARITY_COLORS[achievement.rarity] ?? RARITY_COLORS.common)!
   const isUnlocked = achievement.isUnlocked
 
   return (

@@ -20,6 +20,7 @@ import {
   PinOff,
   Type,
   X,
+  type LucideIcon,
 } from 'lucide-react'
 import * as React from 'react'
 
@@ -36,7 +37,7 @@ import { cn } from '@/lib/utils'
 import type { CellOpts } from './types'
 
 function getColumnVariant(variant?: CellOpts['variant']): {
-  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>
+  icon: LucideIcon
   label: string
 } | null {
   switch (variant) {

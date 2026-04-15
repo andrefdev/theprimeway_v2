@@ -494,7 +494,7 @@ export function TaskDialog({ open, onClose, task, defaultDate }: TaskDialogProps
 function parseLocalDate(dateString?: string): Date | undefined {
   if (!dateString) return undefined
   // Handle both "YYYY-MM-DD" and "YYYY-MM-DDTHH:MM:SSZ" formats
-  const datePart = dateString.includes('T') ? dateString.split('T')[0] : dateString
+  const datePart = dateString.includes('T') ? dateString.split('T')[0]! : dateString
   const [year, month, day] = datePart.split('-').map(Number) as [number, number, number]
   return new Date(year, month - 1, day)
 }

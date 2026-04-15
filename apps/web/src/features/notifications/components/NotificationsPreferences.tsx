@@ -13,7 +13,7 @@ export function NotificationsPreferences() {
   const queryClient = useQueryClient()
   const notifQuery = useQuery(notificationQueries.preferences())
   const notifPrefs = notifQuery.data?.data as NotificationPreferences | undefined
-  const [savingNotifs, setSavingNotifs] = useState(false)
+  const [, setSavingNotifs] = useState(false)
 
   async function handleNotifToggle(key: keyof NotificationPreferences, value: boolean) {
     setSavingNotifs(true)

@@ -74,7 +74,7 @@ function formatDateKey(key: string, t: (k: string) => string): string {
   // Fallback: assume it's a date string (YYYY-MM-DD)
   try {
     // Parse as local timezone date, not UTC
-    const [year, month, day] = key.split('-').map(Number)
+    const [year, month, day] = key.split('-').map(Number) as [number, number, number]
     const date = new Date(year, month - 1, day)
     const formatted = date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
     console.log('📊 TaskGroup formatDateKey:', key, '→', formatted, 'date:', date)

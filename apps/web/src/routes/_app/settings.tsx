@@ -16,7 +16,7 @@ export const Route = createFileRoute('/_app/settings')({
 function SettingsPage() {
   const { t } = useTranslation('settings')
   const [settings, setSettings] = useState<UserSettings | null>(null)
-  const [saving, setSaving] = useState(false)
+  const [saving] = useState(false)
   const customThemeCreationFeature = useFeature(FEATURES.CUSTOM_THEME_CREATION)
   const exportDataFeature = useFeature(FEATURES.EXPORT_DATA)
 

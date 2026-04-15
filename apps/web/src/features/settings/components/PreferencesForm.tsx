@@ -53,7 +53,7 @@ const TIMEZONE_OPTIONS = [
   { value: 'Europe/Madrid', label: 'Madrid' },
 ]
 
-export function PreferencesForm({ settings, saving, onSettingsChange, isPremium }: PreferencesFormProps) {
+export function PreferencesForm({ settings, saving, onSettingsChange }: PreferencesFormProps) {
   const { t } = useTranslation('settings')
   const { i18n } = useTranslation()
   const { setTheme } = useTheme()

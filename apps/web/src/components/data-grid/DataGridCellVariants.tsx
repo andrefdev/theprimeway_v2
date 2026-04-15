@@ -10,6 +10,7 @@ import {
   Presentation,
   Upload,
   X,
+  type LucideIcon,
 } from 'lucide-react'
 import * as React from 'react'
 import { toast } from 'sonner'
@@ -1427,7 +1428,7 @@ function formatFileSize(bytes: number): string {
 
 function getFileIcon(
   type: string,
-): React.ComponentType<React.SVGProps<SVGSVGElement>> {
+): LucideIcon {
   if (type.startsWith('image/')) return FileImage
   if (type.startsWith('video/')) return FileVideo
   if (type.startsWith('audio/')) return FileAudio

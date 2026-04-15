@@ -87,7 +87,7 @@ export function UpgradePrompt({ featureKey, title, description }: UpgradePromptP
 
   // Get translated upgrade prompt message if available
   const translationKey = featureKeyToTranslationKey[featureKey]
-  const translatedDescription = translationKey ? t(translationKey, null) : null
+  const translatedDescription = translationKey ? t(translationKey) : null
 
   const finalTitle = title || message.title
   const finalDescription = description || translatedDescription || message.description
