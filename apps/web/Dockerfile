@@ -1,4 +1,5 @@
 # Build stage: compile Vite SPA with build-time environment variables
+# Staging: staging.theprimeway.app
 FROM node:22-alpine AS builder
 RUN npm install -g pnpm@9.12.2
 

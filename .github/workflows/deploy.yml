@@ -266,8 +266,8 @@ jobs:
             # Set DOCKER_REGISTRY for docker-compose variable substitution
             export DOCKER_REGISTRY=${{ github.repository_owner }}
 
-            # Pull latest images from GHCR
-            docker compose -f docker-compose.prod.yml pull
+            # Pull latest images from GHCR (--ignore-buildable avoids failures for missing images)
+            docker compose -f docker-compose.prod.yml pull --ignore-buildable || true
 
             # Start containers (runs migrations automatically, creates volumes, etc.)
             docker compose -f docker-compose.prod.yml up -d --remove-orphans
