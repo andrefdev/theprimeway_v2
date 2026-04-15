@@ -37,6 +37,7 @@ RUN pnpm --filter @repo/admin build
 
 # Runtime stage: serve static SPA with nginx
 FROM nginx:alpine AS runner
+LABEL org.opencontainers.image.source="https://github.com/andrefdev/theprimeway_v2"
 
 # Copy the compiled SPA from builder
 COPY --from=builder /repo/apps/admin/dist /usr/share/nginx/html
