@@ -230,13 +230,16 @@ jobs:
           ssh-keyscan -p ${{ secrets.SSH_PORT }} -H ${{ secrets.SSH_HOST }} \
             >> ~/.ssh/known_hosts
 
-      - name: Copy .env and docker-compose to server
+      - name: Copy config files to server
         run: |
           scp -P ${{ secrets.SSH_PORT }} .env \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/theprimeway/.env
 
           scp -P ${{ secrets.SSH_PORT }} docker-compose.prod.yml \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/theprimeway/docker-compose.prod.yml
+
+          scp -rP ${{ secrets.SSH_PORT }} nginx \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/theprimeway/
 
       - name: Pull latest images and start containers
         uses: appleboy/ssh-action@v1
