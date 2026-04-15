@@ -31,13 +31,14 @@
     }
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsup",
     "typecheck": "tsc --noEmit",
     "lint": "biome check src/",
     "format": "biome format --write src/"
   },
   "devDependencies": {
     "@repo/config-ts": "workspace:*",
+    "tsup": "^8.0.0",
     "typescript": "^5.8.0"
   },
   "dependencies": {
