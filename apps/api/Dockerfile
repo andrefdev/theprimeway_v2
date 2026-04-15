@@ -30,10 +30,18 @@ RUN pnpm --filter @repo/api build
 RUN pnpm deploy --filter @repo/api --prod /deploy
 
 # Copy generated Prisma client into deploy directory
-# pnpm deploy --prod strips it; check app-level then root-level, follow symlinks
-RUN for dir in apps/api/node_modules/.prisma node_modules/.prisma; do \
-      if [ -d "$dir" ]; then cp -rL "$dir" /deploy/node_modules/.prisma && break; fi; \
-    done
+# pnpm deploy --prod strips it; must be placed both at top-level AND inside the
+# .pnpm structure next to @prisma/client (Node resolves from there first)
+RUN PRISMA_SRC=""; \
+    for dir in apps/api/node_modules/.prisma node_modules/.prisma; do \
+      if [ -d "$dir" ]; then PRISMA_SRC="$dir"; break; fi; \
+    done && \
+    if [ -n "$PRISMA_SRC" ]; then \
+      cp -rL "$PRISMA_SRC" /deploy/node_modules/.prisma; \
+      for pc_dir in /deploy/node_modules/.pnpm/@prisma+client@*/node_modules; do \
+        [ -d "$pc_dir" ] && cp -rL "$PRISMA_SRC" "$pc_dir/.prisma"; \
+      done; \
+    fi
 
 # Runtime stage: minimal image with only what's needed to run the API
 FROM node:22-alpine AS runner
