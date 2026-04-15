@@ -20,11 +20,11 @@ RUN pnpm install --frozen-lockfile
 # Build shared package (so dist/ JS files exist for Node.js runtime in production)
 RUN pnpm --filter @repo/shared build
 
+# Generate Prisma client (must happen before API build — tsup bundles @prisma/client)
+RUN DATABASE_URL="postgresql://build:build@localhost:5432/build" pnpm --filter @repo/api exec prisma generate
+
 # Build the API (tsup compiles TypeScript to dist/)
 RUN pnpm --filter @repo/api build
-
-# Generate Prisma client in /repo where all deps (including dotenv) are available
-RUN DATABASE_URL="postgresql://build:build@localhost:5432/build" pnpm --filter @repo/api exec prisma generate
 
 # Create a standalone production deployment with pnpm deploy
 RUN pnpm deploy --filter @repo/api --prod /deploy
