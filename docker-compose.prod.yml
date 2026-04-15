@@ -8,7 +8,7 @@ services:
   # Database migration service (runs once and exits)
   # Depends on environment: DATABASE_URL must be set in .env
   migrate:
-    image: ghcr.io/${{ DOCKER_REGISTRY }}/theprimeway-api:latest
+    image: ghcr.io/${DOCKER_REGISTRY}/theprimeway-api:latest
     command: sh -c "node_modules/.bin/prisma migrate deploy"
     env_file: .env
     environment:
@@ -20,7 +20,7 @@ services:
 
   # API server (Hono on Node.js)
   api:
-    image: ghcr.io/${{ DOCKER_REGISTRY }}/theprimeway-api:latest
+    image: ghcr.io/${DOCKER_REGISTRY}/theprimeway-api:latest
     restart: unless-stopped
     env_file: .env
     environment:
@@ -53,7 +53,7 @@ services:
 
   # Web SPA (nginx serving Vite dist)
   web:
-    image: ghcr.io/${{ DOCKER_REGISTRY }}/theprimeway-web:latest
+    image: ghcr.io/${DOCKER_REGISTRY}/theprimeway-web:latest
     restart: unless-stopped
     expose:
       - "80"
@@ -73,7 +73,7 @@ services:
 
   # Admin SPA (nginx serving Vite dist)
   admin:
-    image: ghcr.io/${{ DOCKER_REGISTRY }}/theprimeway-admin:latest
+    image: ghcr.io/${DOCKER_REGISTRY}/theprimeway-admin:latest
     restart: unless-stopped
     expose:
       - "80"
