@@ -196,37 +196,36 @@ jobs:
           CLOUDINARY_UPLOAD_PRESET: ${{ secrets.CLOUDINARY_UPLOAD_PRESET }}
           RAPIDAPI_KEY: ${{ secrets.RAPIDAPI_KEY }}
         run: |
-          # Expand \n escape sequences in FIREBASE_PRIVATE_KEY
+          # Build .env with printf — single quotes prevent special char issues
+          # (angle brackets in SMTP_FROM, passwords with symbols, etc.)
+          : > .env
+          printf "NODE_ENV='production'\n" >> .env
+          printf "PORT='3001'\n" >> .env
+          printf "DATABASE_URL='%s'\n" "$DATABASE_URL" >> .env
+          printf "JWT_SECRET='%s'\n" "$JWT_SECRET" >> .env
+          printf "JWT_ACCESS_EXPIRY='%s'\n" "$JWT_ACCESS_EXPIRY" >> .env
+          printf "JWT_REFRESH_EXPIRY='%s'\n" "$JWT_REFRESH_EXPIRY" >> .env
+          printf "AUTH_GOOGLE_ID='%s'\n" "$AUTH_GOOGLE_ID" >> .env
+          printf "AUTH_GOOGLE_SECRET='%s'\n" "$AUTH_GOOGLE_SECRET" >> .env
+          printf "AUTH_APPLE_ID='%s'\n" "$AUTH_APPLE_ID" >> .env
+          printf "AUTH_APPLE_SECRET='%s'\n" "$AUTH_APPLE_SECRET" >> .env
+          printf "OPENAI_API_KEY='%s'\n" "$OPENAI_API_KEY" >> .env
+          printf "SMTP_HOST='%s'\n" "$SMTP_HOST" >> .env
+          printf "SMTP_PORT='%s'\n" "$SMTP_PORT" >> .env
+          printf "SMTP_USER='%s'\n" "$SMTP_USER" >> .env
+          printf "SMTP_PASS='%s'\n" "$SMTP_PASS" >> .env
+          printf "SMTP_FROM='%s'\n" "$SMTP_FROM" >> .env
+          printf "LEMON_SQUEEZY_API_KEY='%s'\n" "$LEMON_SQUEEZY_API_KEY" >> .env
+          printf "LEMON_SQUEEZY_STORE_ID='%s'\n" "$LEMON_SQUEEZY_STORE_ID" >> .env
+          printf "LEMON_SQUEEZY_WEBHOOK_SECRET='%s'\n" "$LEMON_SQUEEZY_WEBHOOK_SECRET" >> .env
+          printf "FIREBASE_PROJECT_ID='%s'\n" "$FIREBASE_PROJECT_ID" >> .env
+          printf "FIREBASE_CLIENT_EMAIL='%s'\n" "$FIREBASE_CLIENT_EMAIL" >> .env
+          printf "CLOUDINARY_CLOUD_NAME='%s'\n" "$CLOUDINARY_CLOUD_NAME" >> .env
+          printf "CLOUDINARY_UPLOAD_PRESET='%s'\n" "$CLOUDINARY_UPLOAD_PRESET" >> .env
+          printf "RAPIDAPI_KEY='%s'\n" "$RAPIDAPI_KEY" >> .env
+
+          # FIREBASE_PRIVATE_KEY: expand \n escapes, wrap in double quotes for multiline
           FIREBASE_PRIVATE_KEY_EXPANDED=$(printf '%b' "$FIREBASE_PRIVATE_KEY_RAW")
-
-          cat > .env <<EOF
-          NODE_ENV="production"
-          PORT="3001"
-          DATABASE_URL="${DATABASE_URL}"
-          JWT_SECRET="${JWT_SECRET}"
-          JWT_ACCESS_EXPIRY="${JWT_ACCESS_EXPIRY}"
-          JWT_REFRESH_EXPIRY="${JWT_REFRESH_EXPIRY}"
-          AUTH_GOOGLE_ID="${AUTH_GOOGLE_ID}"
-          AUTH_GOOGLE_SECRET="${AUTH_GOOGLE_SECRET}"
-          AUTH_APPLE_ID="${AUTH_APPLE_ID}"
-          AUTH_APPLE_SECRET="${AUTH_APPLE_SECRET}"
-          OPENAI_API_KEY="${OPENAI_API_KEY}"
-          SMTP_HOST="${SMTP_HOST}"
-          SMTP_PORT="${SMTP_PORT}"
-          SMTP_USER="${SMTP_USER}"
-          SMTP_PASS="${SMTP_PASS}"
-          SMTP_FROM="${SMTP_FROM}"
-          LEMON_SQUEEZY_API_KEY="${LEMON_SQUEEZY_API_KEY}"
-          LEMON_SQUEEZY_STORE_ID="${LEMON_SQUEEZY_STORE_ID}"
-          LEMON_SQUEEZY_WEBHOOK_SECRET="${LEMON_SQUEEZY_WEBHOOK_SECRET}"
-          FIREBASE_PROJECT_ID="${FIREBASE_PROJECT_ID}"
-          FIREBASE_CLIENT_EMAIL="${FIREBASE_CLIENT_EMAIL}"
-          CLOUDINARY_CLOUD_NAME="${CLOUDINARY_CLOUD_NAME}"
-          CLOUDINARY_UPLOAD_PRESET="${CLOUDINARY_UPLOAD_PRESET}"
-          RAPIDAPI_KEY="${RAPIDAPI_KEY}"
-          EOF
-
-          # Append FIREBASE_PRIVATE_KEY separately to preserve real newlines
           printf 'FIREBASE_PRIVATE_KEY="%s"\n' "$FIREBASE_PRIVATE_KEY_EXPANDED" >> .env
 
       - name: Set up SSH key
