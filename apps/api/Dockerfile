@@ -20,7 +20,7 @@ RUN pnpm install --frozen-lockfile
 # Build shared package (so dist/ JS files exist for Node.js runtime in production)
 RUN pnpm --filter @repo/shared build
 
-# Generate Prisma client (must happen before API build — tsup bundles @prisma/client)
+# Generate Prisma client (needed for TypeScript DTS generation)
 RUN DATABASE_URL="postgresql://build:build@localhost:5432/build" pnpm --filter @repo/api exec prisma generate
 
 # Build the API (tsup compiles TypeScript to dist/)
@@ -28,20 +28,6 @@ RUN pnpm --filter @repo/api build
 
 # Create a standalone production deployment with pnpm deploy
 RUN pnpm deploy --filter @repo/api --prod /deploy
-
-# Copy generated Prisma client into deploy directory
-# pnpm deploy --prod strips it; must be placed both at top-level AND inside the
-# .pnpm structure next to @prisma/client (Node resolves from there first)
-RUN PRISMA_SRC=""; \
-    for dir in apps/api/node_modules/.prisma node_modules/.prisma; do \
-      if [ -d "$dir" ]; then PRISMA_SRC="$dir"; break; fi; \
-    done && \
-    if [ -n "$PRISMA_SRC" ]; then \
-      cp -rL "$PRISMA_SRC" /deploy/node_modules/.prisma; \
-      for pc_dir in /deploy/node_modules/.pnpm/@prisma+client@*/node_modules; do \
-        [ -d "$pc_dir" ] && cp -rL "$PRISMA_SRC" "$pc_dir/.prisma"; \
-      done; \
-    fi
 
 # Runtime stage: minimal image with only what's needed to run the API
 FROM node:22-alpine AS runner
@@ -65,6 +51,12 @@ RUN cd /tmp && npm init -y > /dev/null 2>&1 && npm install prisma@7 && \
     cp -r /tmp/node_modules/@prisma/* /app/node_modules/@prisma/ && \
     chown -R hono:nodejs /app/node_modules && \
     rm -rf /tmp/node_modules /tmp/package.json /tmp/package-lock.json
+
+# Generate Prisma client in the runtime node_modules structure
+# This places .prisma/client in the correct location for pnpm's layout
+RUN DATABASE_URL="postgresql://build:build@localhost:5432/build" \
+    node node_modules/prisma/build/index.js generate --schema=./prisma/schema.prisma && \
+    chown -R hono:nodejs /app/node_modules/.prisma
 
 # Use the non-root user
 USER hono
