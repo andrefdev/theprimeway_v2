@@ -1,6 +1,7 @@
 import { Input } from '@/components/ui/input'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
 import { useTranslation } from 'react-i18next'
+import { LIFE_PILLARS } from '@repo/shared/constants'
 
 interface HabitsFiltersProps {
   search: string
@@ -9,10 +10,9 @@ interface HabitsFiltersProps {
   onCategoryChange: (value: string) => void
 }
 
-const CATEGORIES = [
-  '', 'health', 'fitness', 'productivity', 'mindfulness',
-  'learning', 'social', 'finance', 'other',
-]
+// Map pillar id to i18n key: health_body -> pillarHealthBody
+const pillarI18nKey = (id: string) =>
+  'pillar' + id.split('_').map(w => w[0]!.toUpperCase() + w.slice(1)).join('')
 
 export function HabitsFilters({
   search,
@@ -35,9 +35,16 @@ export function HabitsFilters({
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          {CATEGORIES.map((cat) => (
-            <SelectItem key={cat || '__all__'} value={cat || '__all__'}>
-              {cat ? t(`category${cat.charAt(0).toUpperCase()}${cat.slice(1)}`) : t('allCategories')}
+          <SelectItem value="__all__">{t('allPillars')}</SelectItem>
+          {LIFE_PILLARS.map((p) => (
+            <SelectItem key={p.id} value={p.id}>
+              <span className="flex items-center gap-2">
+                <span
+                  className="inline-block h-2 w-2 rounded-full shrink-0"
+                  style={{ backgroundColor: p.color }}
+                />
+                {t(pillarI18nKey(p.id) as any)}
+              </span>
             </SelectItem>
           ))}
         </SelectContent>

@@ -1,12 +1,8 @@
 import { useTranslation } from 'react-i18next'
+import { type TimerMode, MODE_MINUTES } from '@/stores/pomodoro.store'
 
-export type TimerMode = 'focus' | 'short_break' | 'long_break'
-
-export const MODE_MINUTES: Record<TimerMode, number> = {
-  focus: 25,
-  short_break: 5,
-  long_break: 15,
-}
+export type { TimerMode }
+export { MODE_MINUTES }
 
 export const MODE_LABEL_KEYS: Record<TimerMode, string> = {
   focus: 'modeFocus',

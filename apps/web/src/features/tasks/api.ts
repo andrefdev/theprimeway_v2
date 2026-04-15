@@ -30,6 +30,8 @@ interface TaskInsightResponse {
     contextBrief: string
     suggestedSubtasks: string[]
     tips: string[]
+    suggestedGoalId?: string
+    suggestedGoalTitle?: string
   }
 }
 
@@ -40,6 +42,44 @@ interface TaskScheduleResponse {
       end: string
     } | null
     confidence: number
+  }
+}
+
+interface NextTaskResponse {
+  data: {
+    taskId: string
+    title: string
+    reason: string
+    confidence: number
+  } | null
+}
+
+interface CompletionImpactResponse {
+  data: {
+    task: { id: string; title: string; priority: string }
+    goalProgress: { title: string; progress: number; tasksRemaining: number } | null
+    todayStats: { tasksCompleted: number; habitsCompleted: number; xpEarned: number }
+    timeStats: { actual: number; estimated: number | null; accuracy: number | null } | null
+    xpAwarded: number
+  }
+}
+
+interface ScheduleConflictsResponse {
+  data: {
+    conflicts: Array<{
+      taskId: string
+      taskTitle: string
+      taskStart: string
+      taskEnd: string
+      conflictsWith: string
+      conflictType: 'calendar_event' | 'task_overlap'
+    }>
+    suggestions: Array<{
+      taskId: string
+      taskTitle: string
+      suggestedStart: string
+      suggestedEnd: string
+    }>
   }
 }
 
@@ -112,4 +152,28 @@ export const tasksApi = {
         duration,
       })
       .then((r) => r.data.data),
+
+  suggestNextTask: () =>
+    api
+      .get<NextTaskResponse>('/tasks/ai/next')
+      .then((r) => r.data.data),
+
+  getCompletionImpact: (taskId: string) =>
+    api
+      .get<CompletionImpactResponse>(`/tasks/${taskId}/impact`)
+      .then((r) => r.data.data),
+
+  getScheduleConflicts: (date: string) =>
+    api
+      .get<ScheduleConflictsResponse>('/tasks/schedule-conflicts', { params: { date } })
+      .then((r) => r.data.data),
+
+  generateRecurring: () =>
+    api.post('/tasks/recurring/generate').then((r) => r.data),
+
+  startTimer: (taskId: string) =>
+    api.post<TaskResponse>(`/tasks/${taskId}/timer/start`).then((r) => r.data),
+
+  stopTimer: (taskId: string) =>
+    api.post<TaskResponse>(`/tasks/${taskId}/timer/stop`).then((r) => r.data),
 }

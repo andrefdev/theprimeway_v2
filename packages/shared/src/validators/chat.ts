@@ -1,8 +1,12 @@
 import { z } from 'zod'
 
 export const chatMessageSchema = z.object({
-  messages: z.array(z.unknown()).optional(),
-  model: z.string().optional(),
+  messages: z.array(
+    z.object({
+      role: z.enum(['user', 'assistant']),
+      content: z.string(),
+    }),
+  ),
   locale: z.string().optional(),
 })
 

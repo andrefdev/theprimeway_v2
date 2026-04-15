@@ -51,11 +51,22 @@ class HabitsRepository {
       prisma.habit.count({ where }),
     ])
 
-    return { habits, count }
+    // Ensure all habits have a valid color
+    const habitsWithColor = habits.map(h => ({
+      ...h,
+      color: h.color || '#3B82F6',
+    }))
+
+    return { habits: habitsWithColor, count }
   }
 
   async findById(userId: string, habitId: string) {
-    return prisma.habit.findUnique({ where: { id: habitId, userId } })
+    const habit = await prisma.habit.findUnique({ where: { id: habitId, userId } })
+    if (!habit) return null
+    return {
+      ...habit,
+      color: habit.color || '#3B82F6',
+    }
   }
 
   async create(userId: string, data: {
@@ -69,13 +80,13 @@ class HabitsRepository {
     isActive: boolean
     goalId?: string
   }) {
-    return prisma.habit.create({
+    const habit = await prisma.habit.create({
       data: {
         userId,
         name: data.name,
         description: data.description,
         category: data.category,
-        color: data.color || '#4f46e5',
+        color: data.color || '#3B82F6',
         targetFrequency: data.targetFrequency,
         frequencyType: data.frequencyType,
         weekDays: data.weekDays,
@@ -83,16 +94,26 @@ class HabitsRepository {
         goalId: data.goalId,
       },
     })
+
+    return {
+      ...habit,
+      color: habit.color || '#3B82F6',
+    }
   }
 
   async update(userId: string, habitId: string, data: Prisma.HabitUpdateInput) {
     const existing = await prisma.habit.findUnique({ where: { id: habitId, userId } })
     if (!existing) return null
 
-    return prisma.habit.update({
+    const updated = await prisma.habit.update({
       where: { id: habitId },
       data,
     })
+
+    return {
+      ...updated,
+      color: updated.color || '#3B82F6',
+    }
   }
 
   async delete(userId: string, habitId: string): Promise<boolean> {
@@ -175,13 +196,17 @@ class HabitsRepository {
   // ── Stats data ─────────────────────────────────────────────────────────
 
   async findActiveHabits(userId: string, habitId?: string): Promise<Habit[]> {
-    return prisma.habit.findMany({
+    const habits = await prisma.habit.findMany({
       where: {
         userId,
         isActive: true,
         ...(habitId ? { id: habitId } : {}),
       },
     })
+    return habits.map(h => ({
+      ...h,
+      color: h.color || '#3B82F6',
+    }))
   }
 
   async findLogsByHabitIds(

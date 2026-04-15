@@ -32,6 +32,6 @@ export type {
 export type { Book, ReadingGoal, ReadingStats } from './reading'
 export type { CalendarAccount, CalendarInfo, CalendarEvent } from './calendar'
 export type { ChatThread, ChatMessage, Briefing } from './chat'
-export type { NotificationPreferences, PushSubscription } from './notifications'
+export type { NotificationPreferences, PushSubscription, AppNotification, SmartReminder, BatchedNotification, BatchedNotificationsResponse } from './notifications'
 export type { SubscriptionPlan, SubscriptionStatus } from './subscriptions'
 export type { FeatureValue, ResolvedFeatureSet, FeaturesResponse } from './features'

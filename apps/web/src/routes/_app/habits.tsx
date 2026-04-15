@@ -34,6 +34,7 @@ import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLocale } from '../../i18n/useLocale'
 import type { Habit } from '@repo/shared/types'
+import { LIFE_PILLARS, CATEGORY_TO_PILLAR } from '@repo/shared/constants'
 
 export const Route = createFileRoute('/_app/habits')({
   component: HabitsPage,
@@ -50,6 +51,17 @@ const COLOR_OPTIONS = [
 ]
 
 type Tab = 'tracker' | 'list' | 'stats'
+
+// Helper: Get color with alpha (supports hex and CSS vars)
+function getColorWithAlpha(color: string | null | undefined, alpha: string): string {
+  const c = color || '#3b82f6'
+  if (c.startsWith('var(')) {
+    // CSS variable — use rgba with opacity instead
+    return `rgba(59, 130, 246, ${parseInt(alpha, 16) / 255})`
+  }
+  // Hex color — append alpha digits
+  return c + alpha
+}
 
 // ---------------------------------------------------------------------------
 // Main page
@@ -80,7 +92,10 @@ function HabitsPage() {
   const filteredHabits = useMemo(() => {
     return habits.filter((h) => {
       if (search && !h.name.toLowerCase().includes(search.toLowerCase())) return false
-      if (categoryFilter && h.category !== categoryFilter) return false
+      if (categoryFilter) {
+        const habitPillar = CATEGORY_TO_PILLAR[h.category ?? ''] || h.category
+        if (habitPillar !== categoryFilter) return false
+      }
       return true
     })
   }, [habits, search, categoryFilter])
@@ -278,8 +293,8 @@ function HabitCard({
             className="flex shrink-0 items-center justify-center w-14 transition-colors"
             style={
               isComplete
-                ? { backgroundColor: habit.color || 'var(--color-primary)' }
-                : { backgroundColor: (habit.color || 'var(--color-primary)') + '15' }
+                ? { backgroundColor: habit.color || '#3b82f6' }
+                : { backgroundColor: getColorWithAlpha(habit.color, '15') }
             }
           >
             <div
@@ -375,16 +390,16 @@ function HabitDialog({
     { value: 'times_per_week', label: t('frequencyTimesPerWeek') },
   ]
 
+  // Map pillar id to i18n key: health_body -> pillarHealthBody
+  const pillarI18nKey = (id: string) =>
+    'pillar' + id.split('_').map(w => w[0]!.toUpperCase() + w.slice(1)).join('')
+
   const CATEGORY_OPTIONS = [
     { value: 'none', label: t('categoryNone') },
-    { value: 'health', label: t('categoryHealth') },
-    { value: 'fitness', label: t('categoryFitness') },
-    { value: 'productivity', label: t('categoryProductivity') },
-    { value: 'mindfulness', label: t('categoryMindfulness') },
-    { value: 'learning', label: t('categoryLearning') },
-    { value: 'social', label: t('categorySocial') },
-    { value: 'finance', label: t('categoryFinance') },
-    { value: 'other', label: t('categoryOther') },
+    ...LIFE_PILLARS.map(p => ({
+      value: p.id,
+      label: t(pillarI18nKey(p.id) as any),
+    })),
   ]
 
   const [name, setName] = useState('')
@@ -402,7 +417,7 @@ function HabitDialog({
     if (habit) {
       setName(habit.name)
       setDescription(habit.description ?? '')
-      setCategory(habit.category || 'none')
+      setCategory(CATEGORY_TO_PILLAR[habit.category ?? ''] || habit.category || 'none')
       setColor(habit.color ?? COLOR_OPTIONS[0])
       setFrequencyType(habit.frequencyType)
       setTargetFrequency(habit.targetFrequency)
@@ -489,15 +504,28 @@ function HabitDialog({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label>{t('category')}</Label>
+                <Label>{t('lifePillar')}</Label>
                 <Select value={category || '__none__'} onValueChange={(v) => setCategory(v === '__none__' ? '' : v)}>
                   <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {CATEGORY_OPTIONS.map(opt => (
-                      <SelectItem key={opt.value || '__none__'} value={opt.value || '__none__'}>{opt.label}</SelectItem>
-                    ))}
+                    {CATEGORY_OPTIONS.map(opt => {
+                      const pillar = LIFE_PILLARS.find(p => p.id === opt.value)
+                      return (
+                        <SelectItem key={opt.value || '__none__'} value={opt.value || '__none__'}>
+                          <span className="flex items-center gap-2">
+                            {pillar && (
+                              <span
+                                className="inline-block h-2.5 w-2.5 rounded-full shrink-0"
+                                style={{ backgroundColor: pillar.color }}
+                              />
+                            )}
+                            {opt.label}
+                          </span>
+                        </SelectItem>
+                      )
+                    })}
                   </SelectContent>
                 </Select>
               </div>

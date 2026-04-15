@@ -223,6 +223,183 @@ habitRoutes.openapi(getHabitStatsRoute, async (c) => {
 })
 
 // ---------------------------------------------------------------------------
+// GET /habits/ai/suggestions — Suggest habits based on goals
+// ---------------------------------------------------------------------------
+const suggestHabitsRoute = createRoute({
+  method: 'get',
+  path: '/ai/suggestions',
+  tags: ['Habits - AI'],
+  summary: 'Get AI-suggested habits based on user goals',
+  security: [{ Bearer: [] }],
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            data: z.object({
+              suggestions: z.array(z.object({
+                name: z.string(),
+                description: z.string(),
+                frequency: z.string(),
+                targetFrequency: z.number(),
+                goalTitle: z.string(),
+                goalId: z.string(),
+              })),
+            }),
+          }),
+        },
+      },
+      description: 'Habit suggestions',
+    },
+    400: { content: { 'application/json': { schema: errorResponse } }, description: 'Failed to generate suggestions' },
+  },
+})
+
+habitRoutes.openapi(suggestHabitsRoute, (async (c: any) => {
+  const { userId } = c.get('user')
+
+  try {
+    const result = await habitsService.suggestHabitsForGoals(userId)
+    return c.json({ data: result }, 200)
+  } catch (err) {
+    console.error('[HABIT_SUGGEST]', err)
+    return c.json({ error: 'Failed to generate suggestions' }, 400)
+  }
+}) as any)
+
+// ---------------------------------------------------------------------------
+// GET /habits/ai/stacking — Suggest habit stacking patterns
+// ---------------------------------------------------------------------------
+const habitStackingRoute = createRoute({
+  method: 'get',
+  path: '/ai/stacking',
+  tags: ['Habits - AI'],
+  summary: 'Get AI-suggested habit stacking patterns',
+  security: [{ Bearer: [] }],
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            data: z.object({
+              stacks: z.array(z.object({
+                anchor: z.string(),
+                anchorId: z.string(),
+                newHabit: z.string(),
+                reason: z.string(),
+              })),
+            }),
+          }),
+        },
+      },
+      description: 'Habit stacking suggestions',
+    },
+    400: { content: { 'application/json': { schema: errorResponse } }, description: 'Failed to generate stacking suggestions' },
+  },
+})
+
+habitRoutes.openapi(habitStackingRoute, (async (c: any) => {
+  const { userId } = c.get('user')
+
+  try {
+    const result = await habitsService.suggestHabitStacking(userId)
+    return c.json({ data: result }, 200)
+  } catch (err) {
+    console.error('[HABIT_STACKING]', err)
+    return c.json({ error: 'Failed to generate stacking suggestions' }, 400)
+  }
+}) as any)
+
+// ---------------------------------------------------------------------------
+// GET /habits/ai/correlations — Analyze habit-productivity correlations
+// ---------------------------------------------------------------------------
+const correlationsRoute = createRoute({
+  method: 'get',
+  path: '/ai/correlations',
+  tags: ['Habits - AI'],
+  summary: 'Analyze habit-productivity correlations',
+  security: [{ Bearer: [] }],
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            data: z.object({
+              correlations: z.array(z.object({
+                pattern: z.string(),
+                strength: z.enum(['strong', 'moderate', 'weak']),
+                habitNames: z.array(z.string()),
+                insight: z.string(),
+              })),
+              summary: z.string(),
+            }),
+          }),
+        },
+      },
+      description: 'Correlation analysis',
+    },
+    400: { content: { 'application/json': { schema: errorResponse } }, description: 'Failed to analyze correlations' },
+  },
+})
+
+habitRoutes.openapi(correlationsRoute, (async (c: any) => {
+  const { userId } = c.get('user')
+
+  try {
+    const data = await habitsService.analyzeCorrelations(userId)
+    return c.json({ data }, 200)
+  } catch (err) {
+    console.error('[HABIT_CORRELATIONS]', err)
+    return c.json({ error: 'Failed to analyze correlations' }, 400)
+  }
+}) as any)
+
+// ---------------------------------------------------------------------------
+// GET /habits/streak-protection — Streak at-risk reminders (escalating urgency)
+// ---------------------------------------------------------------------------
+const streakProtectionSchema = z.object({
+  habitId: z.string(),
+  habitName: z.string(),
+  currentStreak: z.number(),
+  urgency: z.enum(['none', 'gentle', 'urgent', 'critical', 'minimal']),
+  hoursRemaining: z.number(),
+  message: z.string(),
+})
+
+const getStreakProtectionRoute = createRoute({
+  method: 'get',
+  path: '/streak-protection',
+  tags: ['Habits'],
+  summary: 'Get streak protection status for all active habits',
+  security: [{ Bearer: [] }],
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            data: z.array(streakProtectionSchema),
+          }),
+        },
+      },
+      description: 'Streak protection statuses',
+    },
+    500: { content: { 'application/json': { schema: errorResponse } }, description: 'Internal error' },
+  },
+})
+
+habitRoutes.openapi(getStreakProtectionRoute, async (c) => {
+  const { userId } = c.get('user')
+
+  try {
+    const data = await habitsService.getStreakProtectionStatus(userId)
+    return c.json({ data } as any, 200)
+  } catch (error) {
+    console.error('[STREAK_PROTECTION_GET]', error)
+    return c.json({ error: 'Internal Error' }, 500)
+  }
+})
+
+// ---------------------------------------------------------------------------
 // GET /habits/:id — Get a single habit
 // ---------------------------------------------------------------------------
 const getHabitByIdRoute = createRoute({

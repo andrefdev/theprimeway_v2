@@ -62,3 +62,36 @@ cronRoutes.post('/habit-reminders', async (c) => {
     return c.json({ error: 'Internal Server Error' }, 500)
   }
 })
+
+// POST /quarterly-review
+cronRoutes.post('/quarterly-review', async (c) => {
+  try {
+    const result = await cronService.processQuarterlyReview()
+    return c.json({ data: result }, 200)
+  } catch (err: any) {
+    console.error('[CRON_QUARTERLY_REVIEW]', err)
+    return c.json({ error: err.message || 'Failed to process quarterly review' }, 500)
+  }
+})
+
+// POST /weekly-review
+cronRoutes.post('/weekly-review', async (c) => {
+  try {
+    const result = await cronService.processWeeklyReview()
+    return c.json({ data: result }, 200)
+  } catch (err: any) {
+    console.error('[CRON_WEEKLY_REVIEW]', err)
+    return c.json({ error: err.message || 'Failed to process weekly review' }, 500)
+  }
+})
+
+// POST /quarterly-nudge
+cronRoutes.post('/quarterly-nudge', async (c) => {
+  try {
+    const result = await cronService.processQuarterlyNudge()
+    return c.json({ data: result }, 200)
+  } catch (err: any) {
+    console.error('[CRON_QUARTERLY_NUDGE]', err)
+    return c.json({ error: err.message || 'Failed to process quarterly nudge' }, 500)
+  }
+})

@@ -4,7 +4,12 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Badge } from '@/components/ui/badge'
 import { useIsMobile } from '@/hooks/use-mobile'
 import type { Habit } from '@repo/shared/types'
+import { LIFE_PILLARS, CATEGORY_TO_PILLAR } from '@repo/shared/constants'
 import { useTranslation } from 'react-i18next'
+
+// Map pillar id to i18n key: health_body -> pillarHealthBody
+const pillarI18nKey = (id: string) =>
+  'pillar' + id.split('_').map(w => w[0]!.toUpperCase() + w.slice(1)).join('')
 
 interface HabitTrackerProps {
   habits: Habit[]
@@ -116,6 +121,7 @@ function HabitRow({
   onToggle: (habit: Habit, date: string) => void
   onEdit: (habit: Habit) => void
 }) {
+  const { t } = useTranslation('habits')
   const logs = habit.logs ?? []
   const streak = computeStreak(habit, logs)
 
@@ -151,16 +157,26 @@ function HabitRow({
         >
           <div
             className="h-2.5 w-2.5 rounded-full shrink-0"
-            style={{ backgroundColor: habit.color ?? 'var(--color-primary)' }}
+            style={{ backgroundColor: habit.color || '#3b82f6' }}
           />
           <span className="text-sm font-medium text-foreground truncate max-w-30">
             {habit.name}
           </span>
-          {habit.category && (
-            <Badge variant="outline" className="text-[8px] px-1 py-0 hidden sm:inline-flex">
-              {habit.category}
-            </Badge>
-          )}
+          {habit.category && (() => {
+            const pillarId = CATEGORY_TO_PILLAR[habit.category] || habit.category
+            const pillar = LIFE_PILLARS.find(p => p.id === pillarId)
+            return (
+              <Badge variant="outline" className="text-[8px] px-1 py-0 hidden sm:inline-flex gap-1">
+                {pillar && (
+                  <span
+                    className="inline-block h-1.5 w-1.5 rounded-full"
+                    style={{ backgroundColor: pillar.color }}
+                  />
+                )}
+                {t(pillarI18nKey(pillarId) as any)}
+              </Badge>
+            )
+          })()}
         </button>
       </td>
 
@@ -192,9 +208,9 @@ function HabitRow({
               }`}
               style={
                 !disabled && !completed
-                  ? { borderColor: habit.color ?? undefined }
+                  ? { borderColor: habit.color || '#3b82f6' }
                   : completed
-                    ? { backgroundColor: habit.color ?? undefined }
+                    ? { backgroundColor: habit.color || '#3b82f6' }
                     : undefined
               }
             >

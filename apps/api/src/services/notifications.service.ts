@@ -1,4 +1,6 @@
 import { notificationsRepo } from '../repositories/notifications.repo'
+import { gamificationService } from './gamification.service'
+import { calendarService } from './calendar.service'
 
 interface AppNotification {
   id: string
@@ -7,6 +9,15 @@ interface AppNotification {
   message: string
   href: string
   created_at: string
+}
+
+interface SmartReminder {
+  habitId: string
+  habitName: string
+  urgency: 'high' | 'medium' | 'low'
+  message: string
+  streakAtRisk: boolean
+  calendarBusy: boolean
 }
 
 class NotificationsService {
@@ -111,6 +122,183 @@ class NotificationsService {
     }
 
     return notifications
+  }
+
+  async generateSmartReminders(userId: string): Promise<SmartReminder[]> {
+    const now = new Date()
+    const todayStr = now.toISOString().split('T')[0]!
+    const todayStartUTC = new Date(`${todayStr}T00:00:00.000Z`)
+    const tomorrowStartUTC = new Date(todayStartUTC.getTime() + 24 * 60 * 60 * 1000)
+
+    // Fetch active habits with today's logs
+    const activeHabits = await notificationsRepo.findActiveHabitsWithTodayLogs(
+      userId,
+      todayStartUTC,
+      tomorrowStartUTC,
+    )
+
+    // Fetch gamification profile for streak info
+    let currentStreak = 0
+    try {
+      const profile = await gamificationService.getProfile(userId, todayStr)
+      currentStreak = profile.currentStreak ?? 0
+    } catch {
+      // Gamification profile may not exist yet
+    }
+
+    // Fetch today's calendar density
+    let calendarDensity = 0
+    try {
+      const dayStart = new Date(`${todayStr}T00:00:00.000Z`)
+      const dayEnd = new Date(`${todayStr}T23:59:59.999Z`)
+      const events = await calendarService.getGoogleEvents(
+        userId,
+        dayStart.toISOString(),
+        dayEnd.toISOString(),
+      )
+      calendarDensity = Array.isArray(events) ? events.length : 0
+    } catch {
+      // Calendar may not be connected
+    }
+
+    const calendarBusy = calendarDensity > 5
+    const reminders: SmartReminder[] = []
+
+    for (const habit of activeHabits) {
+      const hasLogToday =
+        habit.logs.length > 0 && habit.logs.some((l) => (l.completedCount ?? 0) > 0)
+
+      if (hasLogToday) continue
+
+      // Determine urgency
+      const streakAtRisk = currentStreak > 7
+      let urgency: SmartReminder['urgency']
+
+      if (streakAtRisk) {
+        urgency = 'high'
+      } else {
+        // All active habits not done are at least medium
+        urgency = 'medium'
+      }
+
+      // Smart suppress: if calendar busy, only keep high urgency
+      if (calendarBusy && urgency !== 'high') {
+        continue
+      }
+
+      // Generate contextual message
+      let message: string
+      if (urgency === 'high') {
+        message = `${currentStreak}-day streak at risk! Complete "${habit.name}" today.`
+      } else if (calendarBusy) {
+        message = `Busy day — focus on essentials. Don't forget: ${habit.name}`
+      } else {
+        message = `Don't forget: ${habit.name}`
+      }
+
+      reminders.push({
+        habitId: habit.id,
+        habitName: habit.name,
+        urgency,
+        message,
+        streakAtRisk,
+        calendarBusy,
+      })
+    }
+
+    // Sort: high urgency first, then medium, then low
+    const urgencyOrder = { high: 0, medium: 1, low: 2 }
+    reminders.sort((a, b) => urgencyOrder[a.urgency] - urgencyOrder[b.urgency])
+
+    return reminders
+  }
+
+  async getBatchedNotifications(userId: string) {
+    const notifications = await this.getAggregated(userId)
+    const smartReminders = await this.generateSmartReminders(userId)
+
+    // Group notifications by type
+    const overdueTasks = notifications.filter((n) => n.type === 'overdue_task')
+    const missedHabits = notifications.filter((n) => n.type === 'habit_missed')
+    const pendingTx = notifications.filter((n) => n.type === 'pending_transaction')
+
+    const batched: Array<{
+      type: 'batch_tasks' | 'batch_habits' | 'batch_transactions' | 'smart_reminder'
+      title: string
+      message: string
+      count: number
+      items: Array<{ id: string; title: string; href: string }>
+      urgency?: 'high' | 'medium' | 'low'
+    }> = []
+
+    if (overdueTasks.length > 0) {
+      batched.push({
+        type: 'batch_tasks',
+        title:
+          overdueTasks.length === 1
+            ? overdueTasks[0]!.title
+            : `${overdueTasks.length} overdue tasks`,
+        message:
+          overdueTasks.length === 1
+            ? overdueTasks[0]!.message
+            : overdueTasks
+                .slice(0, 3)
+                .map((t) => t.title)
+                .join(', ') + (overdueTasks.length > 3 ? '...' : ''),
+        count: overdueTasks.length,
+        items: overdueTasks.map((t) => ({ id: t.id, title: t.title, href: t.href })),
+        urgency: overdueTasks.length >= 5 ? 'high' : overdueTasks.length >= 3 ? 'medium' : 'low',
+      })
+    }
+
+    if (missedHabits.length > 0) {
+      batched.push({
+        type: 'batch_habits',
+        title:
+          missedHabits.length === 1
+            ? missedHabits[0]!.title
+            : `${missedHabits.length} habits to complete`,
+        message:
+          missedHabits.length === 1
+            ? missedHabits[0]!.message
+            : missedHabits
+                .slice(0, 3)
+                .map((h) => h.title)
+                .join(', ') + (missedHabits.length > 3 ? '...' : ''),
+        count: missedHabits.length,
+        items: missedHabits.map((h) => ({ id: h.id, title: h.title, href: h.href })),
+      })
+    }
+
+    if (pendingTx.length > 0) {
+      batched.push({
+        type: 'batch_transactions',
+        title: `${pendingTx.length} pending transactions`,
+        message: pendingTx
+          .slice(0, 3)
+          .map((t) => t.title)
+          .join(', '),
+        count: pendingTx.length,
+        items: pendingTx.map((t) => ({ id: t.id, title: t.title, href: t.href })),
+      })
+    }
+
+    // Add smart reminders as individual items (already prioritized)
+    for (const sr of smartReminders) {
+      batched.push({
+        type: 'smart_reminder',
+        title: sr.habitName,
+        message: sr.message,
+        count: 1,
+        items: [{ id: sr.habitId, title: sr.habitName, href: '/habits' }],
+        urgency: sr.urgency,
+      })
+    }
+
+    return {
+      batched,
+      totalCount: notifications.length + smartReminders.length,
+    }
   }
 
   async sendPush(body: {

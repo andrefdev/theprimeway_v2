@@ -11,7 +11,7 @@ import { habitsRepository } from '../repositories/habits.repo'
 import { gamificationService } from './gamification.service'
 import { prisma } from '../lib/prisma'
 import { validateLimit } from '../lib/limits'
-import { FEATURES } from '@repo/shared/constants'
+import { FEATURES, CATEGORY_TO_PILLAR } from '@repo/shared/constants'
 import { generateObject } from 'ai'
 import { anthropic } from '@ai-sdk/anthropic'
 import { z } from 'zod'
@@ -828,6 +828,371 @@ Return the hour (0-23) and minute (0-59).
       confidence: Math.round(confidence * 100) / 100,
       reason: result.object.reason,
     }
+  }
+
+  /** Suggest new habits based on user's active goals */
+  async suggestHabitsForGoals(userId: string): Promise<{ suggestions: Array<{ name: string; description: string; frequency: string; targetFrequency: number; goalTitle: string; goalId: string }> }> {
+    // Get user's active goals
+    const [threeYearGoals, annualGoals, quarterlyGoals] = await Promise.all([
+      prisma.threeYearGoal.findMany({ where: { userId }, select: { id: true, title: true }, take: 5 }),
+      prisma.annualGoal.findMany({ where: { userId }, select: { id: true, title: true }, take: 5 }),
+      prisma.quarterlyGoal.findMany({ where: { userId }, select: { id: true, title: true }, take: 5 }),
+    ])
+
+    // Get existing habits to avoid duplicates
+    const existingHabits = await habitsRepository.findActiveHabits(userId)
+    const existingNames = existingHabits.map(h => h.name.toLowerCase())
+
+    const goalsList = [
+      ...threeYearGoals.map(g => `[3Y|${g.id}] ${g.title}`),
+      ...annualGoals.map(g => `[1Y|${g.id}] ${g.title}`),
+      ...quarterlyGoals.map(g => `[Q|${g.id}] ${g.title}`),
+    ].join('\n')
+
+    if (!goalsList) return { suggestions: [] }
+
+    const result = await generateObject({
+      model: anthropic('claude-sonnet-4-6'),
+      schema: z.object({
+        suggestions: z.array(z.object({
+          name: z.string().describe('Habit name, concise'),
+          description: z.string().describe('Why this habit helps the goal'),
+          frequency: z.enum(['daily', 'week_days', 'times_per_week']),
+          targetFrequency: z.number().int().min(1).max(7),
+          goalId: z.string().describe('ID of the goal this habit supports'),
+          goalTitle: z.string().describe('Title of the goal'),
+        })),
+      }),
+      prompt: `
+You are a habit-building coach. Suggest 3-5 NEW habits that would directly support the user's goals.
+
+EXISTING HABITS (do NOT suggest duplicates):
+${existingNames.join(', ') || '(none)'}
+
+USER'S GOALS:
+${goalsList}
+
+For each suggestion:
+- Name should be specific and actionable (e.g., "Read 20 pages" not "Read more")
+- Frequency should be realistic
+- Link to the most relevant goal using its exact ID
+- Description explains the connection between habit and goal
+      `,
+    })
+
+    return result.object
+  }
+
+  /** Suggest habit stacking based on completion patterns */
+  async suggestHabitStacking(userId: string): Promise<{ stacks: Array<{ anchor: string; anchorId: string; newHabit: string; reason: string }> }> {
+    const habits = await habitsRepository.findActiveHabits(userId)
+    if (habits.length < 2) return { stacks: [] }
+
+    const habitIds = habits.map(h => h.id)
+    const logs = await habitsRepository.findRecentLogs(habitIds, 30)
+
+    // Calculate completion rates per habit
+    const completionByHabit: Record<string, { name: string; rate: number }> = {}
+    for (const habit of habits) {
+      const habitLogs = logs.filter(l => l.habitId === habit.id)
+      const completed = habitLogs.filter(l => (l.completedCount ?? 0) > 0).length
+      completionByHabit[habit.id] = {
+        name: habit.name,
+        rate: Math.round((completed / 30) * 100),
+      }
+    }
+
+    const habitsList = habits.map(h =>
+      `- [${h.id}] "${h.name}" (${h.frequencyType}, completion: ${completionByHabit[h.id]?.rate || 0}%)`
+    ).join('\n')
+
+    const result = await generateObject({
+      model: anthropic('claude-sonnet-4-6'),
+      schema: z.object({
+        stacks: z.array(z.object({
+          anchorId: z.string().describe('ID of the anchor habit (high completion rate)'),
+          anchor: z.string().describe('Name of the anchor habit'),
+          newHabit: z.string().describe('Suggested habit to stack after the anchor'),
+          reason: z.string().describe('Why this stack works'),
+        })),
+      }),
+      prompt: `
+You are a habit stacking expert. Based on the user's habit data, suggest "habit stacks" — pairing a new small habit right after an existing strong habit (anchor).
+
+Rules:
+- Anchor habits should have >60% completion rate (they're reliable triggers)
+- Suggested new habits should be small (2-10 minutes)
+- The stack should feel natural (e.g., "After morning coffee, journal for 5 min")
+- Suggest 2-4 stacks maximum
+
+USER'S HABITS:
+${habitsList}
+
+For each stack, use the exact anchor habit ID from the list.
+      `,
+    })
+
+    return result.object
+  }
+
+  /** Analyze correlations between habits and productivity metrics */
+  async analyzeCorrelations(userId: string) {
+    const habits = await habitsRepository.findActiveHabits(userId)
+    if (habits.length < 2) {
+      return { correlations: [], summary: 'Need at least 2 active habits with history to find patterns.' }
+    }
+
+    const sixtyDaysAgo = new Date()
+    sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60)
+
+    const habitIds = habits.map((h: any) => h.id)
+    const logs = await habitsRepository.findRecentLogs(habitIds, 60)
+
+    // Get task completions by day
+    const tasks = await prisma.task.findMany({
+      where: { userId, status: 'completed', completedAt: { gte: sixtyDaysAgo } },
+      select: { completedAt: true },
+    })
+
+    // Get pomodoro sessions by day
+    const pomodoros = await prisma.pomodoroSession.findMany({
+      where: { userId, isCompleted: true, createdAt: { gte: sixtyDaysAgo } },
+      select: { createdAt: true },
+    })
+
+    // Build daily summary
+    const dailyData: Record<string, { habits: string[]; taskCount: number; pomodoroCount: number }> = {}
+
+    for (const log of logs) {
+      const dateStr = (log as any).date instanceof Date
+        ? (log as any).date.toISOString().split('T')[0]!
+        : String((log as any).date)
+      if (!dailyData[dateStr]) dailyData[dateStr] = { habits: [], taskCount: 0, pomodoroCount: 0 }
+      if ((log as any).completedCount > 0) {
+        const habit = habits.find((h: any) => h.id === (log as any).habitId)
+        if (habit) dailyData[dateStr]!.habits.push((habit as any).name)
+      }
+    }
+
+    for (const task of tasks) {
+      if (!task.completedAt) continue
+      const dateStr = task.completedAt.toISOString().split('T')[0]!
+      if (!dailyData[dateStr]) dailyData[dateStr] = { habits: [], taskCount: 0, pomodoroCount: 0 }
+      dailyData[dateStr]!.taskCount++
+    }
+
+    for (const pomo of pomodoros) {
+      if (!pomo.createdAt) continue
+      const dateStr = pomo.createdAt.toISOString().split('T')[0]!
+      if (!dailyData[dateStr]) dailyData[dateStr] = { habits: [], taskCount: 0, pomodoroCount: 0 }
+      dailyData[dateStr]!.pomodoroCount++
+    }
+
+    const summaryText = Object.entries(dailyData)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .slice(-30)
+      .map(([date, d]) => `${date}: habits=[${d.habits.join(',')}] tasks=${d.taskCount} pomodoros=${d.pomodoroCount}`)
+      .join('\n')
+
+    if (!summaryText) {
+      return { correlations: [], summary: 'Not enough data to analyze correlations yet.' }
+    }
+
+    const result = await generateObject({
+      model: anthropic('claude-sonnet-4-6'),
+      schema: z.object({
+        correlations: z.array(z.object({
+          pattern: z.string().describe('Description of the correlation pattern'),
+          strength: z.enum(['strong', 'moderate', 'weak']),
+          habitNames: z.array(z.string()),
+          insight: z.string().describe('Actionable insight for the user'),
+        })),
+        summary: z.string().describe('Overall summary of habit-productivity patterns'),
+      }),
+      prompt: `Analyze this 30-day habit and productivity data to find correlations between habit completion and productivity output.
+
+DATA (format: date: habits=[completed habits] tasks=completed_tasks pomodoros=completed_pomodoros):
+${summaryText}
+
+Find patterns like:
+- Habits that correlate with higher task completion
+- Habit combinations that boost productivity
+- Days without certain habits showing lower output
+- Pomodoro session patterns tied to specific habits
+
+Return 2-5 correlations ordered by strength. Be specific about the data patterns you observe.`,
+    })
+
+    return result.object
+  }
+
+  // ---------------------------------------------------------------------------
+  // Streak Protection — escalating reminders for at-risk streaks
+  // ---------------------------------------------------------------------------
+
+  /** Urgency level for a streak-at-risk habit */
+  static readonly STREAK_URGENCY = {
+    NONE: 'none',
+    GENTLE: 'gentle',
+    URGENT: 'urgent',
+    CRITICAL: 'critical',
+    MINIMAL: 'minimal',
+  } as const
+
+  /**
+   * For each active habit with an ongoing streak, determine if the streak is
+   * at risk and return a progressively urgent reminder payload.
+   *
+   * Urgency rules (UTC midnight cutoff):
+   *  - `none`     — already logged today
+   *  - `gentle`   — >6 h remaining, streak > 3 days
+   *  - `urgent`   — 2-6 h remaining, streak > 7 days
+   *  - `critical` — <2 h remaining, streak > 0
+   *  - `minimal`  — <2 h remaining, offer a "just 1 rep" fallback
+   */
+  async getStreakProtectionStatus(userId: string) {
+    const todayStr = new Date().toISOString().split('T')[0]!
+
+    // 1. Fetch all active habits
+    const { habits } = await habitsRepository.findMany(userId, {
+      isActive: true,
+      limit: 200,
+    })
+
+    if (habits.length === 0) return []
+
+    // 2. Fetch today's logs for all habits in one query
+    const habitIds = habits.map((h) => h.id)
+    const todayDate = new Date(todayStr + 'T00:00:00Z')
+
+    const todayLogs = await prisma.habitLog.findMany({
+      where: {
+        habitId: { in: habitIds },
+        date: todayDate,
+      },
+    })
+
+    const logsByHabit = new Map(todayLogs.map((l) => [l.habitId, l]))
+
+    // 3. Fetch recent logs (last 60 days) to compute current streaks
+    const recentLogs = await habitsRepository.findRecentLogs(habitIds, 60)
+
+    // Group logs by habitId -> { dateStr: log }
+    const logMapByHabit: Record<string, Record<string, { completedCount: number | null }>> = {}
+    for (const log of recentLogs) {
+      const hid = log.habitId ?? ''
+      if (!logMapByHabit[hid]) logMapByHabit[hid] = {}
+      const dateStr = log.date instanceof Date
+        ? log.date.toISOString().split('T')[0]!
+        : String(log.date).split('T')[0]!
+      logMapByHabit[hid]![dateStr] = log
+    }
+
+    // 4. Hours remaining until UTC midnight
+    const now = new Date()
+    const endOfDayUTC = new Date(todayStr + 'T23:59:59.999Z')
+    const hoursRemaining = Math.max(
+      0,
+      (endOfDayUTC.getTime() - now.getTime()) / (1000 * 60 * 60),
+    )
+
+    // 5. Build per-habit protection status
+    type Urgency = 'none' | 'gentle' | 'urgent' | 'critical' | 'minimal'
+    const results: Array<{
+      habitId: string
+      habitName: string
+      currentStreak: number
+      urgency: Urgency
+      hoursRemaining: number
+      message: string
+    }> = []
+
+    for (const habit of habits) {
+      // Check applicability — skip habits not scheduled for today
+      if (!isHabitApplicable(habit, todayStr)) continue
+
+      // Compute current streak from logs (walking backwards from yesterday)
+      const habitLogs = logMapByHabit[habit.id] ?? {}
+      const streakStart = new Date()
+      streakStart.setDate(streakStart.getDate() - 59)
+      const { currentStreak } = calculateStreaks(
+        habitLogs,
+        streakStart.toISOString().split('T')[0]!,
+        todayStr,
+        (d) => isHabitApplicable(habit, d),
+      )
+
+      if (currentStreak === 0) continue
+
+      // Check if already logged today
+      const todayLog = logsByHabit.get(habit.id)
+      const loggedToday = todayLog && (todayLog.completedCount ?? 0) > 0
+
+      let urgency: Urgency
+      let message: string
+
+      if (loggedToday) {
+        urgency = 'none'
+        message = `${habit.name} is on track — ${currentStreak}-day streak safe.`
+      } else if (hoursRemaining < 2 && currentStreak > 0) {
+        // Under 2 hours: critical + minimal offer
+        urgency = 'minimal'
+        message = `Only ${Math.round(hoursRemaining * 60)} minutes left! Do a minimal version of ${habit.name} to save your ${currentStreak}-day streak.`
+      } else if (hoursRemaining < 2) {
+        urgency = 'critical'
+        message = `${habit.name}: ${currentStreak}-day streak expires soon! Less than 2 hours remaining.`
+      } else if (hoursRemaining <= 6 && currentStreak > 7) {
+        urgency = 'urgent'
+        message = `${habit.name}: your ${currentStreak}-day streak is at risk — only ${Math.round(hoursRemaining)} hours left today.`
+      } else if (hoursRemaining > 6 && currentStreak > 3) {
+        urgency = 'gentle'
+        message = `Friendly reminder: keep your ${currentStreak}-day ${habit.name} streak going today.`
+      } else {
+        // Streak exists but doesn't meet any escalation threshold yet
+        continue
+      }
+
+      results.push({
+        habitId: habit.id,
+        habitName: habit.name,
+        currentStreak,
+        urgency,
+        hoursRemaining: Math.round(hoursRemaining * 10) / 10,
+        message,
+      })
+    }
+
+    // Sort by urgency severity: minimal > critical > urgent > gentle > none
+    const urgencyOrder: Record<Urgency, number> = {
+      minimal: 0,
+      critical: 1,
+      urgent: 2,
+      gentle: 3,
+      none: 4,
+    }
+    results.sort((a, b) => urgencyOrder[a.urgency] - urgencyOrder[b.urgency])
+
+    return results
+  }
+
+  // ---------------------------------------------------------------------------
+  // Migration: old categories -> life pillars
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Migrate habits from the legacy 8-category system to the 6 life pillars.
+   * Safe to run multiple times — only updates rows whose category matches an old value.
+   */
+  async migrateCategoryToPillars(userId: string): Promise<{ migrated: number }> {
+    let count = 0
+    for (const [oldCat, newPillar] of Object.entries(CATEGORY_TO_PILLAR)) {
+      const result = await prisma.habit.updateMany({
+        where: { userId, category: oldCat },
+        data: { category: newPillar },
+      })
+      count += result.count
+    }
+    return { migrated: count }
   }
 }
 

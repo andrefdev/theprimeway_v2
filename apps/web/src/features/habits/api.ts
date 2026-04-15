@@ -79,4 +79,49 @@ export const habitsApi = {
         }
       }>(`/habits/${habitId}/ai/suggest-goals`, {})
       .then((r) => r.data.data),
+
+  suggestHabitsForGoals: () =>
+    api
+      .get<{
+        data: {
+          suggestions: Array<{
+            name: string
+            description: string
+            frequency: string
+            targetFrequency: number
+            goalTitle: string
+            goalId: string
+          }>
+        }
+      }>('/habits/ai/suggestions')
+      .then((r) => r.data.data),
+
+  suggestHabitStacking: () =>
+    api
+      .get<{
+        data: {
+          stacks: Array<{
+            anchor: string
+            anchorId: string
+            newHabit: string
+            reason: string
+          }>
+        }
+      }>('/habits/ai/stacking')
+      .then((r) => r.data.data),
+
+  analyzeCorrelations: () =>
+    api
+      .get<{
+        data: {
+          correlations: Array<{
+            pattern: string
+            strength: 'strong' | 'moderate' | 'weak'
+            habitNames: string[]
+            insight: string
+          }>
+          summary: string
+        }
+      }>('/habits/ai/correlations')
+      .then((r) => r.data.data),
 }

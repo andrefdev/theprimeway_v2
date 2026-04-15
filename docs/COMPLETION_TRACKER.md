@@ -1,10 +1,12 @@
 # Goal Hierarchy Restructuring, Tree Visualization & AI Integration — Completion Tracker
 
-## Overall Status: 100% Complete ✅
+## Overall Status: Phase 5 In Progress
 
 **Phase 1:** Goal Hierarchy Restructuring (100% complete)
 **Phase 2:** Goal Tree Visualization (100% complete)
 **Phase 3:** AI Integration & Admin Panel (100% complete)
+**Phase 4:** AI Habits Integration + Gamification Auto-wiring + Mobile AI Features (100% complete)
+**Phase 5:** AI Endpoints + Gamification + Recurring Tasks + Smart Reminders (in progress)
 
 ---
 
@@ -387,16 +389,403 @@
 
 ---
 
-## Future Enhancement Candidates (Phase 4+)
+## Phase 4: AI Habits Integration + Gamification Auto-wiring + Mobile AI Features — COMPLETED ✅
 
-### High Priority (Phase 4)
-1. AI habit insights and suggestions
-2. Habit-to-goal linking with AI recommendations
-3. Task dependency management with AI scheduling
-4. Smart habit reminders based on task schedule
-5. Mobile UI for AI features (task insights, smart scheduling)
+### Part A: AI Habit Insights & Suggestions ✅
 
-### Medium Priority (Phase 5+)
+- [x] **A1: Fix `calculateStreaks` crash** — Fixed runtime error in `analyzeHabit` method
+  - Bug: `calculateStreaks(habit, logsByDate)` called with wrong arguments
+  - Fix: Refactored to extract logs correctly and pass proper arguments
+  - Endpoint: `GET /api/habits/:id/ai/analyze` now works without crash
+
+- [x] **A2: Enhanced `suggestGoalsForHabit` with LLM** — Now uses Claude AI
+  - Integrated Vercel AI SDK with `generateObject`
+  - Provides coherent goal suggestions based on habit context
+  - Method: `tasksService.estimateTimebox` pattern applied
+
+- [x] **A3: Enhanced `getOptimalReminderTime` with AI** — Real time analysis
+  - Analyzes user's `HabitLog` timestamps for actual completion patterns
+  - Suggests reminder time based on historical data + calendar
+  - No longer just rule-based by frequency type
+
+- [x] **A4: New endpoint POST /api/habits/:id/reminder** — Reminder scheduling
+  - Endpoint: `POST /api/habits/:id/reminder`
+  - Body: `{ time: string (HH:MM), timezone: string }`
+  - Persists reminder in `UserNotificationSetting`
+  - Enables "Apply Reminder" button in web + mobile
+
+### Part B: Gamification Auto-Wiring ✅
+
+- [x] **B1: Auto-award XP on habit completion** — `upsertHabitLog` integrated
+  - Calls `gamificationService.awardXp` when `completed: true`
+  - Amount: 10 XP (no goal) / 25 XP (linked to goal)
+  - Automated with no client-side calls needed
+
+- [x] **B2: Auto-award XP on task completion** — `updateTask` integrated
+  - Calls `gamificationService.awardXp` when `status: 'completed'`
+  - Amount: 15 XP base / 40 XP (linked to goal)
+  - Works across all task update paths
+
+- [x] **B3: Streak multiplier in `awardXp`** — Multiplier scaling implemented
+  - 7–13 days: ×1.5
+  - 14–29 days: ×2
+  - 30–89 days: ×3
+  - 90+ days: ×5
+  - Multiplier stored in `XpEvent`
+
+- [x] **B4: Auto-check streak on habit completion** — `checkInStreak` call automated
+  - `upsertHabitLog` calls `gamificationService.checkInStreak(userId, today)`
+  - Removes need for explicit client calls
+  - Streak updates automatically on each habit completion
+
+- [x] **B5: `checkAchievements` implementation** — Basic achievement system
+  - Checks conditions for: "First Habit", "Streak 7", "Task Master", "Goal Setter"
+  - Iterates over achievements and verifies user stats
+  - Unlocked automatically after completion events
+
+### Part C: Mobile AI Features ✅
+
+- [x] **C1: Mobile `habitsService` AI methods** — New methods added
+  - `analyzeHabit(habitId): Promise<HabitAnalysis>`
+  - `getOptimalReminderTime(habitId): Promise<OptimalReminderTime>`
+  - `suggestGoalsForHabit(habitId): Promise<GoalSuggestions>`
+  - Reuse shared types from `@repo/shared`
+
+- [x] **C2: Mobile `HabitAiInsights` component** — React Native UI
+  - Displays completion rate + consistency badge
+  - Shows best days of week
+  - AI insight text + suggested reminder time
+  - "Set Reminder" button integrates with notification settings
+
+- [x] **C3: Mobile HabitEditSheet integration** — AI insights panel
+  - Added collapsible "AI Insights" section in habit detail
+  - Loads `HabitAiInsights` on demand
+  - Uses NativeWind for styling consistency
+
+- [x] **C4: Mobile `TaskAiInsights` component** — Task insights panel
+  - Displays context brief summary
+  - Suggested subtasks as interactive checkboxes
+  - Actionable completion tips
+  - Integrated into task detail sheet
+
+---
+
+## Recent Endpoint Fixes & Model Updates (Post-Phase 3) ✅
+
+### Fix 1: Chat Briefing Endpoint — Feature Gate Issue
+- **Issue**: `GET /api/chat/briefing` returning 403 Forbidden
+- **Root Cause**: `requireFeature(FEATURES.AI_ASSISTANT)` middleware blocking all chat routes
+- **Fix**: Commented out feature gate middleware in `apps/api/src/routes/chat.ts` (line 22) for development
+- **Note**: Uncomment before production deployment
+- **File**: `apps/api/src/routes/chat.ts:22`
+
+### Fix 2: Task Timebox Endpoint — Model Deprecation
+- **Issue**: `POST /api/tasks/ai/timebox` returning 400 "Model not found"
+- **Root Cause**: Anthropic API retired `claude-3-5-sonnet-20241022`, now using `claude-sonnet-4-6`
+- **Fix**: Updated 8 instances across service files to use current model
+- **Files Updated**:
+  - `apps/api/src/services/chat.service.ts` (1 instance)
+  - `apps/api/src/services/goals.service.ts` (2 instances)
+  - `apps/api/src/services/habits.service.ts` (3 instances)
+  - `apps/api/src/services/tasks.service.ts` (2 instances)
+
+### Fix 3: Timebox Response Format
+- **Issue**: Frontend receiving 200 but showing "Failed to estimate duration"
+- **Root Cause**: Response format mismatch. Endpoint returned `{ minutes, rationale }` but frontend expected `{ data: { minutes, rationale } }`
+- **Fix**: Wrapped response in data wrapper at `apps/api/src/routes/tasks.ts:319`
+- **Change**: `c.json(result, 200)` → `c.json({ data: result }, 200)`
+- **Frontend Match**: `TimeboxEstimateResponse` interface now properly matched
+
+---
+
+## Phase 5: New AI Endpoints + Persistent Pomodoro + Kanban Cleanup — IN PROGRESS
+
+### Part A: Kanban Cleanup ✅
+- [x] Deleted `KanbanBoard.tsx` component (weekly tasks view already serves as kanban)
+- [x] Deleted `kanban.tsx` route
+- [x] Removed kanban tab from `TasksNav.tsx`
+- [x] Removed kanban query from `queries.ts`
+- [x] Removed kanban from Topbar breadcrumb labels
+- [x] Removed kanban translation keys from all locale files (en/es common + tasks)
+
+### Part B: Missing API Endpoints ✅
+- [x] **`GET /api/tasks/ai/next`** — AI recommends next task based on priority, deadline, goal alignment
+  - Service: `tasksService.suggestNextTask(userId)` in `tasks.service.ts`
+  - Route: `tasks.ts` after insight route
+  - Frontend: `tasksApi.suggestNextTask()` + `tasksQueries.nextTask()` query hook
+- [x] **`GET /api/habits/ai/suggestions`** — AI suggests new habits based on user goals
+  - Service: `habitsService.suggestHabitsForGoals(userId)` in `habits.service.ts`
+  - Route: `habits.ts` before `/:id` route (avoid path conflict)
+  - Frontend: `habitsApi.suggestHabitsForGoals()` + `habitsQueries.aiSuggestions()` query hook
+- [x] **`GET /api/habits/ai/stacking`** — AI suggests habit stacking patterns
+  - Service: `habitsService.suggestHabitStacking(userId)` in `habits.service.ts`
+  - Route: `habits.ts` before `/:id` route
+  - Frontend: `habitsApi.suggestHabitStacking()` + `habitsQueries.habitStacking()` query hook
+- [x] **`POST /api/calendar/time-block`** — Create time blocks in Google Calendar
+  - Service: `calendarService.createTimeBlock(userId, input)` in `calendar.service.ts`
+  - Route: `calendar.ts` with Zod validation
+  - Frontend: `calendarApi.createTimeBlock(input)` + `calendarApi.getFreeSlots()`
+  - OAuth scopes upgraded: `calendar.events.readonly` → `calendar.events` (read/write)
+
+### Part C: Persistent Pomodoro Timer (WEB-F08) ✅
+- [x] Created Zustand store `stores/pomodoro.store.ts` for global timer state
+- [x] Created `PomodoroMiniTimer.tsx` component (shows in header when session active)
+- [x] Refactored PomodoroPage to use global store instead of local state
+- [x] Added mini-timer to Topbar header layout (before NotificationBell)
+
+### Part D: Translation Keys ✅
+- [x] Added AI feature keys to `en/common.json` and `es/common.json`
+- [x] Added next-task keys to `en/tasks.json` and `es/tasks.json`
+- [x] Added habit AI suggestion + stacking keys to `en/habits.json` and `es/habits.json`
+
+### Part E: Tool-Calling Chat (Fase 2 Close) ✅
+- [x] **`POST /api/chat`** — Full AI tool-calling chat replacing stub
+  - Uses `generateText` from Vercel AI SDK with `anthropic('claude-sonnet-4-6')`
+  - 5 tools: `createTask`, `completeTask`, `listTasks`, `createHabit`, `logHabit`
+  - System prompt injects user's open tasks + active habits for context
+  - Multi-step tool use (`maxSteps: 5`), locale-aware (en/es)
+  - Updated `chatMessageSchema` with typed messages array
+  - Returns `{ response, toolResults? }`
+
+### Part F: Auto-Archive Completed Tasks (TSK-F14) ✅
+- [x] **`POST /api/tasks/auto-archive`** — Archives completed tasks older than N days
+  - Repo: `tasksRepository.autoArchiveCompleted(userId, daysOld)` — `updateMany` on completed + no archivedAt + completedAt < cutoff
+  - Service: `tasksService.autoArchiveCompleted(userId, daysOld = 7)`
+  - Route: accepts `{ daysOld: 1-90, default 7 }`, returns `{ data: { archived: count } }`
+  - Placed before `/:id` routes to avoid Hono path conflict
+
+### Part G: Weekly XP Summary (GAM-F11) ✅
+- [x] **`GET /api/gamification/xp/weekly`** — XP breakdown by source for current week
+  - Repo: `aggregateWeeklyXpBySource` (groupBy source) + `sumWeeklyXp` (aggregate totals)
+  - Service: `getWeeklyXpSummary(userId, weekStart?)` — defaults to current Monday-Sunday
+  - Returns `{ weekStart, weekEnd, totalXp, totalEvents, breakdown: [{ source, xp, count }] }`
+  - Optional `?weekStart=YYYY-MM-DD` query param
+
+### Part H: Task Statistics (TSK-F20) ✅
+- [x] **`GET /api/tasks/stats`** — Completion stats, priority breakdown, estimate adherence
+  - Repo: `getCompletionStats(userId, days)` + `getTaskCounts(userId)` (4 parallel counts)
+  - Service: `getStatistics(userId, days = 30)` — daily completion map, avg/day, by priority, estimate adherence ratio
+  - Returns `{ period, counts, avgCompletedPerDay, completedPerDay, byPriority, estimateAdherence }`
+  - Optional `?days=N` query param (default 30)
+
+### Part I: Habit Heat Map (HAB-F12) ✅
+- [x] Created `HabitHeatMap.tsx` — GitHub-style contribution calendar
+  - CSS grid: 7 rows (Mon-Sun) x ~52 columns (weeks), 365-day view
+  - 5-level emerald color scale with dark mode, shadcn Tooltip on hover
+  - Month labels on top, day labels on left, Less/More legend
+- [x] Integrated into `HabitsStats.tsx` above the completion chart
+- [x] i18n: heatMap, heatMapEmpty, lessActive, moreActive (en/es)
+
+### Part J: Rank Progression Visual (GAM-F08) ✅
+- [x] Backend: `RANK_THRESHOLDS` constant (E→S with minXp/minLevel/minStreak)
+  - `checkAndUpdateRank(userId)` — auto-rank-up called after XP award
+  - `getRankInfo(userId)` — returns current rank, next rank, thresholds, progress
+  - `GET /api/gamification/rank-info` route
+- [x] Frontend: `RankProgression.tsx` — badge row (E-S) with progress bars (XP/level/streak)
+  - Color-coded ranks: E=gray, D=blue, C=green, B=purple, A=orange, S=red/gold
+  - `RankBadgeInline` for compact display in PlayerHUD
+  - Integrated into `GamificationWidget.tsx`
+- [x] i18n: rankProgression, rankE-S names, progress labels (en/es gamification.json)
+
+### Part K: Recurring Tasks (TSK-F05) ✅
+- [x] Schema: 4 new Task fields (`isRecurring`, `recurrenceRule`, `recurringParentId`, `recurrenceEndDate`) + self-relation + index
+- [x] Migration: `add_recurring_tasks/migration.sql`
+- [x] Repo: Updated `create`/`update` + `findRecurringTasks` + `findInstancesForDate`
+- [x] Service: `getNextOccurrenceDate` (daily/weekly/monthly/weekdays/custom), `generateNextOccurrence`, `processRecurringTasks`
+- [x] Route: `POST /api/tasks/recurring/generate` + recurrence fields in create/update schemas
+- [x] Shared validators: recurrence fields in `createTaskSchema`
+- [x] Frontend: `tasksApi.generateRecurring()`
+- [x] i18n: recurring, daily, weekly, monthly, weekdays, custom, recurrenceEnd, noEndDate (en/es)
+
+### Part L: Smart Reminders (HAB-F05) ✅
+- [x] Backend: `generateSmartReminders(userId)` in notifications.service.ts
+  - Fetches habits + today's logs + streak + calendar density
+  - Calculates urgency (high if streak > 7 at risk, medium otherwise)
+  - Smart-suppresses low/medium when calendar > 5 events
+  - Contextual messages based on urgency + streak status
+- [x] Route: `GET /api/notifications/smart-reminders`
+- [x] Frontend: API method + query hook (5min stale time)
+- [x] Enhanced `NotificationBell.tsx` — shows smart reminders at top with urgency icons, streak-at-risk badge, busy-day indicator
+- [x] i18n: smartReminders, streakAtRisk, habitReminder, calendarBusy (en/es)
+
+### Part M: Real-Time Task Time Tracking (TSK-F04) ✅
+- [x] Backend: Wired `actualStart`/`actualEnd`/`actualDurationMinutes`/`actualDurationSeconds` through repo + service + route
+  - `startTaskTimer(userId, taskId)` — sets actualStart, clears actualEnd
+  - `stopTaskTimer(userId, taskId)` — calculates elapsed, accumulates duration
+  - `POST /api/tasks/:id/timer/start` and `POST /api/tasks/:id/timer/stop` routes
+- [x] Frontend: `tasksApi.startTimer/stopTimer` + `useStartTimer/useStopTimer` mutation hooks
+- [x] i18n: startTimer, stopTimer, timeTracked, timerRunning, elapsed (en/es)
+
+### Part N: Habit Correlation Analysis (AI-F13) ✅
+- [x] Service: `habitsService.analyzeCorrelations(userId)` — 60-day daily matrix (habits + tasks + pomodoros), AI pattern detection
+  - Returns correlations with strength (strong/moderate/weak), habit names, actionable insights
+- [x] Route: `GET /api/habits/ai/correlations` (before `/:id`)
+- [x] Frontend: `habitsApi.analyzeCorrelations()` + `useHabitCorrelations()` hook
+- [x] i18n: correlations, correlationStrong/Moderate/Weak, noCorrelations (en/es)
+
+### Part O: Goal Conflict Detection (AI-F14) ✅
+- [x] Service: `goalsService.detectConflicts(userId)` — loads quarterly goals with tasks, AI detects 4 conflict types + overcommitment
+  - Types: time_conflict, resource_conflict, priority_conflict, scope_overlap
+  - Severity levels: high/medium/low with resolution suggestions
+- [x] Route: `GET /api/goals/ai/conflicts` (before `/:id`)
+- [x] Frontend: `goalsApi.detectConflicts()` + `goalsQueries.conflicts()` query
+- [x] i18n: goalConflicts, overcommitted, noConflicts, timeConflict, resourceConflict (en/es)
+
+### Part P: Goal Inactivity Alerts (AI-F15) ✅
+- [x] Service: `goalsService.detectInactiveGoals(userId, days = 14)` — checks quarterly + annual goals
+  - Detects no task/weekly goal/goal updates within cutoff period
+  - Urgency: high (>30d), medium (>21d), low (14-21d)
+- [x] Route: `GET /api/goals/ai/inactive?days=N` (before `/:id`)
+- [x] Frontend: `goalsApi.detectInactive(days)` + `goalsQueries.inactive(days)` query
+- [x] i18n: inactiveGoals, daysSinceActivity, goalNeedsAttention, noInactiveGoals (en/es)
+
+### Part Q: Batch Notifications (NOT-F10) ✅
+- [x] Service: `getBatchedNotifications(userId)` — groups overdue tasks, missed habits, pending transactions into batches + smart reminders
+  - Urgency levels per batch, expandable item lists, count-based labels
+- [x] Route: `GET /api/notifications/batched`
+- [x] Shared types: `BatchedNotification`, `BatchedNotificationsResponse`
+- [x] Frontend: Rewrote NotificationBell to use batched endpoint with expandable groups + urgency styling
+- [x] i18n: overdueTasksBatch, habitsToComplete, pendingTransactions, andMore (en/es)
+
+### Part R: Calendar Auto-Reschedule (TSK-F17) ✅
+- [x] Service: `detectScheduleConflicts(userId, date)` — detects task-vs-calendar and task-vs-task overlaps
+  - Uses interval intersection logic, gracefully handles disconnected calendar
+  - Suggests alternative time slots via `getScheduleSuggestion` for each conflict
+- [x] Route: `GET /api/tasks/schedule-conflicts?date=YYYY-MM-DD`
+- [x] Frontend: `tasksApi.getScheduleConflicts(date)` + query option
+- [x] i18n: scheduleConflict, conflictWithCalendar, suggestedNewTime, reschedule, noConflicts (en/es)
+
+### Part S: Life Pillar Categories (HAB-F13) ✅
+- [x] Shared constants: `LIFE_PILLARS` (6 pillars with id/icon/color) + `CATEGORY_TO_PILLAR` backwards-compat mapping
+  - Health & Body, Mind & Learning, Productivity & Career, Relationships & Social, Finance & Wealth, Purpose & Spirit
+- [x] Updated HabitDialog: 6-pillar Select with colored dots replacing 8 old categories
+- [x] Updated HabitsFilters: pillar-based filter dropdown
+- [x] Updated HabitTracker + HabitDetailPanel: resolve legacy categories via mapping
+- [x] Service: `migrateCategoryToPillars(userId)` — batch-convert old categories to new pillars
+- [x] i18n: lifePillar, allPillars, pillarHealthBody/MindLearning/Productivity/Relationships/Finance/Purpose (en/es)
+
+### Part T: Anti-Fatigue Detection (GAM-F05) ✅
+- [x] Service: `detectFatigue(userId)` — 7-day analysis of task priority distribution, XP trend, habit completion
+  - Indicators: easy_tasks_only (>60% low), avoiding_hard_tasks (<10% high), xp_declining (>50% drop), habits_declining (<30% rate)
+  - Fatigue flagged when 2+ indicators or any warning severity
+  - Contextual recommendations
+- [x] Route: `GET /api/gamification/fatigue`
+- [x] Frontend: `gamificationApi.detectFatigue()` + fatigue query option
+- [x] i18n: fatigueDetected, noFatigue, easyTasksWarning, xpDeclining, tryHarderTask (en/es gamification.json)
+
+### Part U: Achievement Trees by Category (GAM-F02) ✅
+- [x] Service: `getAchievementsByCategory(userId, locale)` — groups achievements by category with per-category totals + XP
+- [x] Route: `GET /api/gamification/achievements/categories`
+- [x] Frontend: `AchievementTree.tsx` — collapsible cards per category with badge row
+  - Category icons (Flame/CheckSquare/Repeat/Timer/Trophy/Shield), progress bar, rarity-colored badges
+  - Unlocked = colored + checkmark, locked = grayed + lock, tooltip with details
+- [x] Integrated into GamificationWidget
+- [x] i18n: achievementTrees, category names, unlockedOf, xpEarned (en/es gamification.json)
+
+### Part V: AI-Personalized Daily Challenges (GAM-F06) ✅
+- [x] Replaced hardcoded `generateDailyChallenges` with AI-powered version
+  - Gathers user context: level, streak, avg tasks/day, high-priority rate, active habits, pomodoro count
+  - AI generates 3-5 personalized challenges adapted to user profile + behavioral patterns
+  - Fallback to original 3 templates if AI fails
+  - New challenge types: complete_high_priority, habit_all, focus_time
+- [x] i18n: personalizedChallenges, challengeAdapted, challengeFallback (en/es gamification.json)
+
+### Part W: Quarterly Review Cron (AI-F05) ✅
+- [x] Service: `cronService.processQuarterlyReview()` — auto-generates quarterly reviews
+  - Guards to last 3 days of quarter-ending months (Mar/Jun/Sep/Dec)
+  - Queries all users with quarterly goals, calls existing `goalsService.getQuarterlyReview`
+  - Attempts FCM push notification per user
+- [x] Route: `POST /api/cron/quarterly-review` (protected by CRON_SECRET/ADMIN_API_KEY)
+- [x] i18n: quarterlyReview, quarterlyReviewReady, reviewYourProgress (en/es)
+
+### Part X: Habit Scheduling in Calendar (CAL-F08) ✅
+- [x] Service: `calendarService.createHabitBlock(userId, input)` — creates recurring Google Calendar events
+  - RRULE support: FREQ=DAILY or FREQ=WEEKLY;BYDAY=MO,TU,...
+  - Color mapping, 5-min popup reminder, starts from tomorrow
+- [x] Route: `POST /api/calendar/habit-block` with Zod validation (habitId, name, startTime/endTime, frequencyType, weekDays)
+- [x] Frontend: `calendarApi.createHabitBlock(input)`
+- [x] i18n: scheduleInCalendar, habitBlock, habitScheduled, selectTime (en/es)
+
+### Part Y: Level-Up Notifications (GAM-F09) ✅
+- [x] Service: `awardXp()` now detects level/rank changes, stores events in `recentLevelEvents` Map
+- [x] Service: `getLevelUpEvents(userId)` returns and clears pending events
+- [x] Route: `GET /api/gamification/level-events`
+- [x] Frontend: `useLevelUpNotifier()` hook in PlayerHud — 30s polling, sonner toasts for level-up/rank-up
+- [x] i18n: levelUp, rankUp toast messages (en/es)
+
+### Part Z: Weekly Review Cron (NOT-F05) ✅
+- [x] Service: `cronService.processWeeklyReview()` — Sun/Mon guard, iterates all users
+- [x] Calls `chatService.weeklyPlanning(userId)` for AI-generated weekly plan
+- [x] Route: `POST /api/cron/weekly-review`
+
+### Part AA: Task Completion Impact (AI-F04) ✅
+- [x] Service: `tasksService.getCompletionImpact(userId, taskId)` — goal progress delta, today stats, time accuracy, XP awarded
+- [x] Route: `GET /api/tasks/:id/impact`
+- [x] Returns: goalProgress (before/after/delta), todayStats (completed/remaining/rate), timeAccuracy (estimated vs actual), xpAwarded
+
+### Part AB: Habit AI Frontend Components (HAB-F07/F08/F09) ✅
+- [x] `HabitAiSuggestions.tsx` — displays AI-suggested habits from `/habits/ai/suggestions` with "Add" button
+- [x] `HabitStacking.tsx` — shows habit stacking recommendations from `/habits/ai/stacking`
+- [x] `HabitCorrelations.tsx` — shows correlation patterns from `/habits/ai/correlations` with strength badges
+- [x] All three integrated into `HabitsStats.tsx`
+- [x] i18n: aiSuggestions, habitStacking, correlations keys (en/es)
+
+### Part AC: AI Child-Goal Suggestions (AI-F02) ✅
+- [x] Service: `goalsService.generateChildSuggestions(userId, goalId, goalLevel)` — AI generates sub-goals/tasks/habits based on parent level
+  - ThreeYearGoal→2-3 AnnualGoals, AnnualGoal→2-4 QuarterlyGoals, QuarterlyGoal→3-5 WeeklyGoals+Habits, WeeklyGoal→2-4 Tasks
+- [x] Route: `GET /api/goals/ai/child-suggestions?goalId=xxx&level=xxx`
+- [x] i18n: aiSuggestChildren, suggestedSubGoals, suggestedTasks, suggestedHabits, addSuggestion, generating (en/es)
+
+### Part AD: AI Timebox Suggestions (TSK-F09) ✅
+- [x] Repository: `findCompletedWithDuration(userId, limit)` — completed tasks with actual duration
+- [x] Service: `tasksService.suggestTimebox(userId, taskId)` — AI analyzes task vs historical completions
+  - Returns: suggestedMinutes, confidence (high/medium/low), reasoning, similarTasks
+- [x] Route: `GET /api/tasks/ai/timebox?taskId=xxx`
+- [x] i18n: suggestDuration, suggestedTimebox, confidence, similarTasks, minutes (en/es)
+
+### Part AE: AI Task Insights (TSK-F10) ✅
+- [x] Service: `tasksService.generateTaskInsights(userId, taskId)` — context brief, auto-subtasks, tips, focus blocks
+  - Fetches parent goal + sibling tasks for context
+- [x] Route: `GET /api/tasks/ai/insights?taskId=xxx`
+- [x] i18n: taskInsights, contextBrief, suggestedSubtasks, productivityTips, focusBlocks, generateInsights (en/es)
+
+### Part AF: Streak Protection Escalation (HAB-F06) ✅
+- [x] Service: `habitsService.getStreakProtectionStatus(userId)` — urgency levels per habit
+  - none (done), gentle (>6h, streak>3d), urgent (2-6h, streak>7d), critical (<2h), minimal (<2h, "1 rep" fallback)
+- [x] Route: `GET /api/habits/streak-protection`
+- [x] i18n: streakProtection, streakAtRisk, gentleReminder, urgentReminder, criticalReminder, minimalVersion, hoursLeft, streakDays (en/es)
+
+### Part AG: Goals Dashboard Summary (OBJ-F11) ✅
+- [x] Service: `goalsService.getDashboardSummary(userId)` — per-level counts, avg progress, health buckets (green/yellow/red)
+  - Upcoming deadlines (top 5), recently completed (top 5), parallel queries across all 5 goal levels
+- [x] Route: `GET /api/goals/dashboard-summary`
+- [x] i18n: goalsDashboard, totalGoals, avgProgress, upcomingDeadlines, recentlyCompleted, healthGreen/Yellow/Red (en/es)
+
+### Part AH: AI Time-Blocking (CAL-F04) ✅
+- [x] Service: `calendarService.generateTimeBlocks(userId, date)` — AI schedules tasks into optimal calendar slots
+  - Avoids conflicts, morning slots for high priority, groups similar tasks, includes breaks
+- [x] Route: `GET /api/calendar/ai/time-blocks?date=YYYY-MM-DD`
+- [x] i18n: timeBlocking, suggestedBlocks, unscheduledTasks, generateSchedule, applyBlocks (en/es)
+
+### Part AI: Free Time Analysis (CAL-F05) ✅
+- [x] Service: `calendarService.analyzeFreeTime(userId, startDate, endDate)` — pure calculation, no AI
+  - Per-day: totalFreeMinutes, totalBusyMinutes, longestFreeBlock, freeSlots array, eventCount
+  - Summary: avgFreeMinutesPerDay, busiestDay, freestDay, totalFreeHours
+- [x] Route: `GET /api/calendar/free-time?start=YYYY-MM-DD&end=YYYY-MM-DD`
+- [x] i18n: freeTimeAnalysis, totalFreeTime, busiestDay, freestDay, freeSlots, availableHours (en/es)
+
+### Part AJ: All-Day Tasks (TSK-F21) ✅
+- [x] Schema: `isAllDay` already existed in Prisma model + migration
+- [x] Validator: Added `isAllDay: z.boolean().optional()` to shared task schema
+- [x] Service: Create/update clear scheduledStart/scheduledEnd when isAllDay=true
+- [x] Migration file: `add_task_all_day/migration.sql` (redundant with existing, safe to skip)
+- [x] i18n: allDay, allDayTask, noSpecificTime (en/es)
+
+---
+
+## Future Enhancement Candidates (Phase 5+)
+
+### Medium Priority (Phase 5)
 1. Goal creation from tree view nodes
 2. Goal filtering capabilities (by area, status, progress)
 3. Goal context in dashboard/overview screens

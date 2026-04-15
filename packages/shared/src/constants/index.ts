@@ -7,6 +7,7 @@ export const TASK_PRIORITIES = ['low', 'medium', 'high'] as const
 // --- Habits ---
 export const HABIT_FREQUENCIES = ['daily', 'weekly', 'monthly'] as const
 export const HABIT_STATUSES = ['active', 'paused', 'archived'] as const
+export { LIFE_PILLARS, CATEGORY_TO_PILLAR, type LifePillarId } from './habits'
 
 // --- Pomodoro ---
 export const POMODORO_SESSION_TYPES = ['focus', 'short_break', 'long_break'] as const
@@ -39,6 +40,12 @@ export const PRIME_PILLARS = [
   'mindset',
   'lifestyle',
 ] as const
+export {
+  GOAL_TEMPLATE_CATEGORIES,
+  GOAL_TEMPLATES,
+  type GoalTemplateCategory,
+  type GoalTemplate,
+} from './goal-templates'
 
 // --- Gamification ---
 export const GAMIFICATION_XP_SOURCES = [

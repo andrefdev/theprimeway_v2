@@ -79,24 +79,59 @@ export const goalsQueries = {
       staleTime: CACHE_TIMES.standard,
       enabled: !!quarterlyGoalId,
     }),
+
+  conflicts: () =>
+    queryOptions({
+      queryKey: [...goalsQueries.all(), 'ai-conflicts'],
+      queryFn: () => goalsApi.detectConflicts(),
+      staleTime: CACHE_TIMES.long,
+    }),
+
+  inactive: (days?: number) =>
+    queryOptions({
+      queryKey: [...goalsQueries.all(), 'ai-inactive', days],
+      queryFn: () => goalsApi.detectInactive(days),
+      staleTime: CACHE_TIMES.long,
+    }),
 }
 
 export function useGoalDetail(goalId: string) {
   const detailQuery = useQuery(goalsQueries.detail(goalId))
-  const visionsQuery = useQuery({
-    ...goalsQueries.visions(),
-    enabled: detailQuery.isError,
-  })
 
-  const visionsArray = Array.isArray(visionsQuery.data) ? visionsQuery.data : (visionsQuery.data as any)?.data
-  const data = detailQuery.data || (detailQuery.isError && visionsArray?.find((v: any) => v.id === goalId))
-  const goalType = detailQuery.data ? 'goal' : (data ? 'vision' : undefined)
+  // Fallback: scan hierarchy lists when flat /goals/:id returns 404
+  const visionsQuery = useQuery({ ...goalsQueries.visions(), enabled: detailQuery.isError })
+  const threeYearQuery = useQuery({ ...goalsQueries.threeYearGoals(), enabled: detailQuery.isError })
+  const annualQuery = useQuery({ ...goalsQueries.annualGoals(), enabled: detailQuery.isError })
+  const quarterlyQuery = useQuery({ ...goalsQueries.quarterlyGoals(), enabled: detailQuery.isError })
+
+  const toArray = (d: unknown) => (Array.isArray(d) ? d : (d as any)?.data ?? [])
+
+  const threeYearGoal = toArray(threeYearQuery.data).find((g: any) => g.id === goalId)
+  const annualGoal = toArray(annualQuery.data).find((g: any) => g.id === goalId)
+  const quarterlyGoal = toArray(quarterlyQuery.data).find((g: any) => g.id === goalId)
+  const vision = toArray(visionsQuery.data).find((g: any) => g.id === goalId)
+
+  const data = detailQuery.data || threeYearGoal || annualGoal || quarterlyGoal || vision || null
+  const goalType = detailQuery.data
+    ? 'goal'
+    : threeYearGoal
+      ? 'three-year'
+      : annualGoal
+        ? 'annual'
+        : quarterlyGoal
+          ? 'quarterly'
+          : vision
+            ? 'vision'
+            : undefined
+
+  const fallbackLoading = detailQuery.isError &&
+    (visionsQuery.isLoading || threeYearQuery.isLoading || annualQuery.isLoading || quarterlyQuery.isLoading)
 
   return {
     data,
-    goalType: goalType as 'goal' | 'vision' | undefined,
-    isLoading: detailQuery.isLoading || visionsQuery.isLoading,
-    isError: detailQuery.isError && visionsQuery.isError,
+    goalType: goalType as 'goal' | 'three-year' | 'annual' | 'quarterly' | 'vision' | undefined,
+    isLoading: detailQuery.isLoading || fallbackLoading,
+    isError: detailQuery.isError && !data,
   }
 }
 

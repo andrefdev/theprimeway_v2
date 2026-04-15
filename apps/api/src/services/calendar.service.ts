@@ -1,5 +1,9 @@
 import { calendarRepo } from '../repositories/calendar.repo'
+import { tasksRepository } from '../repositories/tasks.repo'
 import { prisma } from '../lib/prisma'
+import { generateObject } from 'ai'
+import { anthropic } from '@ai-sdk/anthropic'
+import { z } from 'zod'
 
 class CalendarService {
   async listAccounts(userId: string) {
@@ -52,7 +56,7 @@ class CalendarService {
 
     const scopes = [
       'https://www.googleapis.com/auth/calendar.readonly',
-      'https://www.googleapis.com/auth/calendar.events.readonly',
+      'https://www.googleapis.com/auth/calendar.events',
     ].join(' ')
 
     return `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scopes)}&access_type=offline&prompt=consent`
@@ -294,6 +298,530 @@ class CalendarService {
     }
 
     return { freeSlots }
+  }
+
+  async analyzeFreeTime(
+    userId: string,
+    startDate: string,
+    endDate: string,
+    workStartHour = 8,
+    workEndHour = 22,
+  ) {
+    const start = new Date(startDate)
+    const end = new Date(endDate)
+
+    // Fetch all events for the entire range in one call
+    const rangeStart = new Date(start)
+    rangeStart.setUTCHours(0, 0, 0, 0)
+    const rangeEnd = new Date(end)
+    rangeEnd.setUTCHours(23, 59, 59, 999)
+
+    const allEvents = (await this.getGoogleEvents(
+      userId,
+      rangeStart.toISOString(),
+      rangeEnd.toISOString(),
+    )) as Array<{ start?: any; end?: any }>
+
+    const totalWorkMinutesPerDay = (workEndHour - workStartHour) * 60
+
+    const days: Array<{
+      date: string
+      totalFreeMinutes: number
+      totalBusyMinutes: number
+      longestFreeBlock: number
+      freeSlots: Array<{ start: string; end: string; durationMinutes: number }>
+      eventCount: number
+    }> = []
+
+    // Iterate over each day in the range
+    const current = new Date(start)
+    while (current <= end) {
+      const dateStr = current.toISOString().split('T')[0]!
+      const dayStart = new Date(`${dateStr}T${String(workStartHour).padStart(2, '0')}:00:00Z`)
+      const dayEnd = new Date(`${dateStr}T${String(workEndHour).padStart(2, '0')}:00:00Z`)
+
+      // Filter events that overlap with this day's working hours
+      const dayEvents = allEvents
+        .filter((e) => e.start && e.end)
+        .map((e) => {
+          const eStart = new Date(typeof e.start === 'string' ? e.start : e.start.dateTime || e.start.date)
+          const eEnd = new Date(typeof e.end === 'string' ? e.end : e.end.dateTime || e.end.date)
+          return {
+            start: eStart < dayStart ? dayStart : eStart,
+            end: eEnd > dayEnd ? dayEnd : eEnd,
+          }
+        })
+        .filter((e) => e.start < dayEnd && e.end > dayStart)
+        .sort((a, b) => a.start.getTime() - b.start.getTime())
+
+      // Merge overlapping events
+      const merged: Array<{ start: Date; end: Date }> = []
+      for (const ev of dayEvents) {
+        const last = merged[merged.length - 1]
+        if (last && ev.start <= last.end) {
+          last.end = ev.end > last.end ? ev.end : last.end
+        } else {
+          merged.push({ start: new Date(ev.start), end: new Date(ev.end) })
+        }
+      }
+
+      // Calculate free slots from gaps between merged events
+      const freeSlots: Array<{ start: string; end: string; durationMinutes: number }> = []
+      let cursor = dayStart
+      let longestFreeBlock = 0
+
+      for (const occupied of merged) {
+        if (cursor < occupied.start) {
+          const durationMinutes = Math.floor((occupied.start.getTime() - cursor.getTime()) / 60000)
+          freeSlots.push({
+            start: cursor.toISOString(),
+            end: occupied.start.toISOString(),
+            durationMinutes,
+          })
+          if (durationMinutes > longestFreeBlock) longestFreeBlock = durationMinutes
+        }
+        cursor = new Date(Math.max(cursor.getTime(), occupied.end.getTime()))
+      }
+
+      // Gap after last event
+      if (cursor < dayEnd) {
+        const durationMinutes = Math.floor((dayEnd.getTime() - cursor.getTime()) / 60000)
+        freeSlots.push({
+          start: cursor.toISOString(),
+          end: dayEnd.toISOString(),
+          durationMinutes,
+        })
+        if (durationMinutes > longestFreeBlock) longestFreeBlock = durationMinutes
+      }
+
+      const totalFreeMinutes = freeSlots.reduce((sum, s) => sum + s.durationMinutes, 0)
+
+      days.push({
+        date: dateStr,
+        totalFreeMinutes,
+        totalBusyMinutes: totalWorkMinutesPerDay - totalFreeMinutes,
+        longestFreeBlock,
+        freeSlots,
+        eventCount: dayEvents.length,
+      })
+
+      current.setDate(current.getDate() + 1)
+    }
+
+    // Build summary
+    const avgFreeMinutesPerDay = days.length > 0
+      ? Math.round(days.reduce((s, d) => s + d.totalFreeMinutes, 0) / days.length)
+      : 0
+
+    let busiestDay = days[0]?.date ?? startDate
+    let freestDay = days[0]?.date ?? startDate
+    let minFree = days[0]?.totalFreeMinutes ?? 0
+    let maxFree = days[0]?.totalFreeMinutes ?? 0
+
+    for (const d of days) {
+      if (d.totalFreeMinutes < minFree) { minFree = d.totalFreeMinutes; busiestDay = d.date }
+      if (d.totalFreeMinutes > maxFree) { maxFree = d.totalFreeMinutes; freestDay = d.date }
+    }
+
+    const totalFreeHours = Math.round(days.reduce((s, d) => s + d.totalFreeMinutes, 0) / 60 * 10) / 10
+
+    return {
+      days,
+      summary: { avgFreeMinutesPerDay, busiestDay, freestDay, totalFreeHours },
+    }
+  }
+
+  async createTimeBlock(
+    userId: string,
+    input: { title: string; date: string; startTime: string; endTime: string; description?: string; color?: string },
+  ): Promise<{ success: boolean; eventId?: string; error?: string }> {
+    // Get the user's primary Google Calendar account
+    const accounts = await calendarRepo.findGoogleAccountsWithSyncCalendars(userId)
+    if (!accounts.length) return { success: false, error: 'no_google_account' }
+
+    const account = accounts[0]!
+    let accessToken = account.accessToken
+
+    // Refresh token if needed
+    const acct = account as any
+    if (acct.tokenExpiresAt && new Date() >= acct.tokenExpiresAt && account.refreshToken) {
+      const refreshed = await this.refreshGoogleToken(account.refreshToken)
+      if (refreshed) {
+        accessToken = refreshed.access_token
+        await calendarRepo.updateAccount(account.id, {
+          accessToken: refreshed.access_token,
+          tokenExpiresAt: new Date(Date.now() + refreshed.expires_in * 1000),
+        })
+      }
+    }
+
+    // Find primary calendar
+    const primaryCal = account.calendars.find((c: any) => c.isPrimary) || account.calendars[0]
+    if (!primaryCal) return { success: false, error: 'no_calendar' }
+
+    const calAny = primaryCal as any
+    const calendarId = calAny.externalId || calAny.providerCalendarId
+
+    // Create the event
+    const startDateTime = `${input.date}T${input.startTime}:00`
+    const endDateTime = `${input.date}T${input.endTime}:00`
+
+    const eventBody = {
+      summary: input.title,
+      description: input.description || 'Time block created by ThePrimeWay',
+      start: { dateTime: startDateTime, timeZone: 'UTC' },
+      end: { dateTime: endDateTime, timeZone: 'UTC' },
+      colorId: input.color || '9', // Blueberry
+    }
+
+    try {
+      const res = await fetch(
+        `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(eventBody),
+        },
+      )
+
+      if (!res.ok) {
+        const error = await res.text()
+        console.error('[TIME_BLOCK] Failed to create event:', error)
+        return { success: false, error: 'event_creation_failed' }
+      }
+
+      const event = (await res.json()) as { id: string }
+      return { success: true, eventId: event.id }
+    } catch (err) {
+      console.error('[TIME_BLOCK] Error:', err)
+      return { success: false, error: 'event_creation_failed' }
+    }
+  }
+
+  async createHabitBlock(
+    userId: string,
+    input: {
+      habitId: string
+      habitName: string
+      startTime: string
+      endTime: string
+      frequencyType: string
+      weekDays?: string[]
+      description?: string
+      color?: string
+    },
+  ): Promise<{ success: boolean; eventId?: string; error?: string }> {
+    // Get the user's primary Google Calendar account
+    const accounts = await calendarRepo.findGoogleAccountsWithSyncCalendars(userId)
+    if (!accounts.length) return { success: false, error: 'no_google_account' }
+
+    const account = accounts[0]!
+    let accessToken = account.accessToken
+
+    // Refresh token if needed
+    const acct = account as any
+    if (acct.tokenExpiresAt && new Date() >= acct.tokenExpiresAt && account.refreshToken) {
+      const refreshed = await this.refreshGoogleToken(account.refreshToken)
+      if (refreshed) {
+        accessToken = refreshed.access_token
+        await calendarRepo.updateAccount(account.id, {
+          accessToken: refreshed.access_token,
+          tokenExpiresAt: new Date(Date.now() + refreshed.expires_in * 1000),
+        })
+      }
+    }
+
+    // Find primary calendar
+    const primaryCal = account.calendars.find((c: any) => c.isPrimary) || account.calendars[0]
+    if (!primaryCal) return { success: false, error: 'no_calendar' }
+
+    const calAny = primaryCal as any
+    const calendarId = calAny.externalId || calAny.providerCalendarId
+
+    // Build RRULE based on frequency
+    let rrule = ''
+    if (input.frequencyType === 'daily') {
+      rrule = 'RRULE:FREQ=DAILY'
+    } else if (input.frequencyType === 'weekly' && input.weekDays?.length) {
+      rrule = `RRULE:FREQ=WEEKLY;BYDAY=${input.weekDays.join(',')}`
+    } else {
+      rrule = 'RRULE:FREQ=DAILY'
+    }
+
+    // Start from tomorrow
+    const tomorrow = new Date()
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    const dateStr = tomorrow.toISOString().split('T')[0]
+
+    const colorMap: Record<string, string> = {
+      tomato: '11', flamingo: '4', tangerine: '6', banana: '5',
+      sage: '2', basil: '10', peacock: '7', blueberry: '9',
+      lavender: '1', grape: '3', graphite: '8',
+    }
+
+    const eventBody: Record<string, unknown> = {
+      summary: `🔄 ${input.habitName}`,
+      description: input.description || `Habit: ${input.habitName}`,
+      start: { dateTime: `${dateStr}T${input.startTime}:00`, timeZone: 'America/New_York' },
+      end: { dateTime: `${dateStr}T${input.endTime}:00`, timeZone: 'America/New_York' },
+      recurrence: [rrule],
+      reminders: { useDefault: false, overrides: [{ method: 'popup', minutes: 5 }] },
+    }
+
+    if (input.color && colorMap[input.color]) {
+      eventBody.colorId = colorMap[input.color]
+    }
+
+    try {
+      const res = await fetch(
+        `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(eventBody),
+        },
+      )
+
+      if (!res.ok) {
+        const error = await res.text()
+        console.error('[CALENDAR_HABIT_BLOCK] Failed to create recurring event:', error)
+        return { success: false, error: 'event_creation_failed' }
+      }
+
+      const event = (await res.json()) as { id: string }
+      return { success: true, eventId: event.id }
+    } catch (err) {
+      console.error('[CALENDAR_HABIT_BLOCK] Error:', err)
+      return { success: false, error: 'event_creation_failed' }
+    }
+  }
+
+  async generateTimeBlocks(userId: string, date: string) {
+    // 1. Fetch user's work preferences for scheduling bounds
+    const workPrefs = await prisma.userWorkPreferences.findFirst({
+      where: { userId },
+    })
+
+    const workStartHour = workPrefs?.workStartHour ?? 9
+    const workEndHour = workPrefs?.workEndHour ?? 17
+
+    // 2. Fetch pending/in-progress tasks for the date (scheduled or due)
+    const dayStart = new Date(`${date}T00:00:00.000Z`)
+    const dayEnd = new Date(`${date}T23:59:59.999Z`)
+
+    const allOpenTasks = await tasksRepository.findMany(userId, {
+      status: 'open',
+      archivedAt: null,
+    })
+
+    // Include tasks scheduled for this date, due on this date, or unscheduled
+    const candidateTasks = allOpenTasks.filter((t: any) => {
+      const scheduled = t.scheduledDate ? new Date(t.scheduledDate) : null
+      const due = t.dueDate ? new Date(t.dueDate) : null
+
+      if (scheduled && scheduled >= dayStart && scheduled <= dayEnd) return true
+      if (due && due >= dayStart && due <= dayEnd) return true
+      if (!scheduled && !due) return true // backlog tasks are candidates
+      return false
+    })
+
+    // 3. Fetch existing Google Calendar events for the date
+    const existingEvents = await this.getGoogleEvents(
+      userId,
+      dayStart.toISOString(),
+      dayEnd.toISOString(),
+    )
+
+    const eventsText = (existingEvents as any[])
+      .filter((e) => e.start && e.end)
+      .map((e: any) => {
+        const start = typeof e.start === 'string' ? e.start : e.start?.dateTime || e.start?.date
+        const end = typeof e.end === 'string' ? e.end : e.end?.dateTime || e.end?.date
+        return `- "${e.summary || 'Untitled'}" from ${start} to ${end}`
+      })
+      .join('\n')
+
+    const tasksText = candidateTasks
+      .map((t: any) => {
+        const duration = t.estimatedDurationMinutes ?? 30
+        const tags = Array.isArray(t.tags) ? (t.tags as string[]).join(', ') : ''
+        return `- [${t.id}] "${t.title}" | priority: ${t.priority || 'medium'} | estimated: ${duration} min | tags: ${tags || 'none'} | due: ${t.dueDate ? new Date(t.dueDate).toISOString().split('T')[0] : 'none'}`
+      })
+      .join('\n')
+
+    if (!candidateTasks.length) {
+      return { blocks: [], unscheduled: [] }
+    }
+
+    // 4. AI generates optimal time-block schedule
+    const timeBlockSchema = z.object({
+      blocks: z.array(
+        z.object({
+          taskId: z.string().describe('Exact task ID from the list'),
+          taskTitle: z.string().describe('Task title for display'),
+          startTime: z.string().describe('Start time in HH:MM format (24h)'),
+          endTime: z.string().describe('End time in HH:MM format (24h)'),
+          reason: z.string().describe('Brief reason for this time slot'),
+        }),
+      ).describe('Scheduled time blocks for the day'),
+      unscheduled: z.array(
+        z.object({
+          taskId: z.string().describe('Exact task ID from the list'),
+          taskTitle: z.string().describe('Task title for display'),
+          reason: z.string().describe('Why this task could not be scheduled'),
+        }),
+      ).describe('Tasks that could not fit into the schedule'),
+    })
+
+    const result = await generateObject({
+      model: anthropic('claude-sonnet-4-6'),
+      schema: timeBlockSchema,
+      prompt: `You are a productivity scheduling assistant for ThePrimeWay. Analyze the user's tasks and existing calendar events, then generate an optimal time-block schedule for the day.
+
+DATE: ${date}
+WORK HOURS: ${String(workStartHour).padStart(2, '0')}:00 to ${String(workEndHour).padStart(2, '0')}:00
+
+EXISTING CALENDAR EVENTS (do NOT overlap with these):
+${eventsText || '(No existing events)'}
+
+TASKS TO SCHEDULE:
+${tasksText}
+
+SCHEDULING RULES:
+1. NEVER overlap with existing calendar events.
+2. Place high-priority tasks in morning slots when energy is highest.
+3. Group tasks with similar tags/topics together when possible.
+4. Include 5-10 minute breaks between blocks.
+5. Respect the estimated duration of each task (use 30 min if not specified).
+6. If a task cannot fit in the remaining available time, add it to the unscheduled list with a reason.
+7. Use 24-hour HH:MM format for all times (e.g., "09:00", "14:30").
+8. Return the EXACT task IDs from the list — do not invent new ones.
+9. Order blocks chronologically from earliest to latest.
+10. Leave buffer time around existing events (at least 5 minutes).`,
+    })
+
+    return result.object
+  }
+
+  async findSmartSlots(userId: string, taskId: string, date: string) {
+    // 1. Fetch the task details
+    const task = await tasksRepository.findById(userId, taskId)
+    if (!task) {
+      return { error: 'task_not_found' as const }
+    }
+
+    // 2. Fetch Google Calendar events for the date
+    const dayStart = new Date(`${date}T00:00:00.000Z`)
+    const dayEnd = new Date(`${date}T23:59:59.999Z`)
+    const events = await this.getGoogleEvents(userId, dayStart.toISOString(), dayEnd.toISOString())
+
+    const eventsText = (events as any[])
+      .filter((e) => e.start && e.end)
+      .map((e: any) => {
+        const start = typeof e.start === 'string' ? e.start : e.start?.dateTime || e.start?.date
+        const end = typeof e.end === 'string' ? e.end : e.end?.dateTime || e.end?.date
+        return `- "${e.summary || 'Untitled'}" from ${start} to ${end}`
+      })
+      .join('\n')
+
+    // 3. Fetch user's recent completed tasks with actualStart for productivity patterns
+    const completedTasks = await tasksRepository.findCompletedWithActualStart(userId, 50)
+
+    const productivityData = completedTasks
+      .filter((t) => t.actualStart)
+      .map((t) => {
+        const startHour = new Date(t.actualStart!).getUTCHours()
+        const duration = t.actualDurationMinutes ?? t.estimatedDurationMinutes ?? 30
+        return { hour: startHour, priority: t.priority, tags: t.tags, duration }
+      })
+
+    // Build hour-frequency map for productivity pattern summary
+    const hourCounts: Record<number, number> = {}
+    for (const entry of productivityData) {
+      hourCounts[entry.hour] = (hourCounts[entry.hour] || 0) + 1
+    }
+    const sortedHours = Object.entries(hourCounts)
+      .sort(([, a], [, b]) => b - a)
+      .map(([hour, count]) => `${String(hour).padStart(2, '0')}:00 (${count} tasks)`)
+      .slice(0, 5)
+
+    const productivitySummary = sortedHours.length > 0
+      ? `Most productive hours (by completed task count): ${sortedHours.join(', ')}`
+      : 'No historical productivity data available.'
+
+    // 4. Fetch work preferences for scheduling bounds
+    const workPrefs = await prisma.userWorkPreferences.findFirst({
+      where: { userId },
+    })
+    const workStartHour = workPrefs?.workStartHour ?? 9
+    const workEndHour = workPrefs?.workEndHour ?? 17
+
+    // 5. Build task info
+    const taskDuration = (task as any).estimatedDurationMinutes ?? 30
+    const taskTags = Array.isArray((task as any).tags) ? ((task as any).tags as string[]).join(', ') : ''
+
+    // 6. AI generates smart slot suggestions
+    const smartSlotsSchema = z.object({
+      slots: z.array(
+        z.object({
+          startTime: z.string().describe('Start time in ISO 8601 format (e.g., 2026-04-14T09:00:00Z)'),
+          endTime: z.string().describe('End time in ISO 8601 format (e.g., 2026-04-14T10:00:00Z)'),
+          score: z.number().min(0).max(100).describe('Score from 0-100 indicating how optimal this slot is'),
+          reason: z.string().describe('Brief explanation of why this slot is recommended'),
+        }),
+      ).describe('Ranked time slot suggestions, best first'),
+      bestSlot: z.object({
+        startTime: z.string().describe('Start time in ISO 8601 format'),
+        endTime: z.string().describe('End time in ISO 8601 format'),
+        reason: z.string().describe('Why this is the best slot for this task'),
+      }).describe('The single best recommended slot'),
+    })
+
+    const result = await generateObject({
+      model: anthropic('claude-sonnet-4-6'),
+      schema: smartSlotsSchema,
+      prompt: `You are a smart scheduling assistant for ThePrimeWay. Find the optimal time slots for a specific task based on calendar availability, task characteristics, and the user's historical productivity patterns.
+
+DATE: ${date}
+WORK HOURS: ${String(workStartHour).padStart(2, '0')}:00 to ${String(workEndHour).padStart(2, '0')}:00
+
+TASK TO SCHEDULE:
+- Title: "${task.title}"
+- Priority: ${(task as any).priority || 'medium'}
+- Estimated duration: ${taskDuration} minutes
+- Tags: ${taskTags || 'none'}
+
+EXISTING CALENDAR EVENTS (must NOT overlap):
+${eventsText || '(No existing events)'}
+
+USER PRODUCTIVITY PATTERNS:
+${productivitySummary}
+Total completed tasks analyzed: ${productivityData.length}
+
+SCHEDULING GUIDELINES:
+1. Find 3-5 available time slots that fit the task's duration within work hours.
+2. Score each slot from 0-100 based on:
+   - Calendar availability (no overlaps with existing events)
+   - Task priority: high-priority tasks score better in morning slots when focus is highest
+   - Creative/deep-work tasks: score better in mid-morning or early afternoon
+   - Routine/administrative tasks: can go in any slot, slightly prefer afternoon
+   - User's historical patterns: slots during the user's most productive hours score higher
+   - Buffer time: slots with natural breaks before/after events score slightly higher
+3. Rank slots from highest to lowest score.
+4. The bestSlot should be the slot with the highest score.
+5. Use ISO 8601 datetime format for all times (e.g., "${date}T09:00:00Z").
+6. Each slot must accommodate the full estimated duration of ${taskDuration} minutes.
+7. Leave at least 5 minutes buffer around existing events.
+8. Do not suggest slots outside work hours.`,
+    })
+
+    return result.object
   }
 
   private async refreshGoogleToken(

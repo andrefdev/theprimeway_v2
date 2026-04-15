@@ -12,6 +12,19 @@ interface ListResponse<T> {
   count: number
 }
 
+export interface RankThreshold {
+  minXp: number
+  minLevel: number
+  minStreak: number
+}
+
+export interface RankInfo {
+  currentRank: string
+  nextRank: string | null
+  thresholds: Record<string, RankThreshold>
+  progress: { xp: number; level: number; streak: number }
+}
+
 export const gamificationApi = {
   getProfile: (date?: string) =>
     api.get<{ data: GamificationProfile }>('/gamification/profile', {
@@ -51,4 +64,26 @@ export const gamificationApi = {
       challengeId,
       increment: increment ?? 1,
     }).then((r) => r.data),
+
+  getAchievementsByCategory: (locale?: string) =>
+    api.get<{ data: any }>(`/gamification/achievements/categories`, {
+      params: locale ? { locale } : undefined,
+    }).then((r) => r.data),
+
+  getRankInfo: () =>
+    api.get<{ data: RankInfo }>('/gamification/rank-info').then((r) => r.data),
+
+  detectFatigue: () =>
+    api.get<{ data: any }>('/gamification/fatigue').then((r) => r.data),
+
+  getLevelEvents: () =>
+    api
+      .get<{
+        data: Array<{
+          type: 'level_up' | 'rank_up'
+          data: Record<string, unknown>
+          timestamp: number
+        }>
+      }>('/gamification/level-events')
+      .then((r) => r.data),
 }

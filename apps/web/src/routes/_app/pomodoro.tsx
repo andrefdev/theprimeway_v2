@@ -1,19 +1,19 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { SectionHeader } from '@/components/SectionHeader'
 import {
   pomodoroQueries,
   useCreateSession,
   useUpdateSession,
 } from '../../features/pomodoro/queries'
-import { PomodoroModeSelector, MODE_MINUTES, MODE_LABEL_KEYS, type TimerMode } from '../../features/pomodoro/components/PomodoroModeSelector'
+import { PomodoroModeSelector, MODE_LABEL_KEYS } from '../../features/pomodoro/components/PomodoroModeSelector'
+import { usePomodoroStore, MODE_MINUTES, type TimerMode } from '@/stores/pomodoro.store'
 import { PomodoroTimer } from '../../features/pomodoro/components/PomodoroTimer'
 import { PomodoroControls } from '../../features/pomodoro/components/PomodoroControls'
 import { PomodoroStats } from '../../features/pomodoro/components/PomodoroStats'
 import { PomodoroSessionList } from '../../features/pomodoro/components/PomodoroSessionList'
 import { toast } from 'sonner'
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useEffect, useCallback } from 'react'
 
 export const Route = createFileRoute('/_app/pomodoro')({
   component: PomodoroPage,
@@ -31,26 +31,19 @@ function PomodoroPage() {
   const sessionsQuery = useQuery(pomodoroQueries.sessions())
   const createSession = useCreateSession()
   const updateSession = useUpdateSession()
-  const [mode, setMode] = useState<TimerMode>('focus')
-  const [timeLeft, setTimeLeft] = useState(MODE_MINUTES.focus * 60)
-  const [isRunning, setIsRunning] = useState(false)
-  const [activeSessionId, setActiveSessionId] = useState<string | null>(null)
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const {
+    mode,
+    timeLeft,
+    isRunning,
+    activeSessionId,
+    setMode: setStoreMode,
+    setIsRunning,
+    setActiveSessionId,
+    reset,
+  } = usePomodoroStore()
 
   const modeMinutes = MODE_MINUTES[mode]
   const modeColor = MODE_COLORS[mode]
-
-  // Timer countdown
-  useEffect(() => {
-    if (isRunning && timeLeft > 0) {
-      intervalRef.current = setInterval(() => {
-        setTimeLeft((prev) => prev - 1)
-      }, 1000)
-    }
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current)
-    }
-  }, [isRunning, timeLeft])
 
   // Timer finished
   useEffect(() => {
@@ -61,9 +54,7 @@ function PomodoroPage() {
 
   function switchMode(newMode: TimerMode) {
     if (isRunning) return
-    setMode(newMode)
-    setTimeLeft(MODE_MINUTES[newMode] * 60)
-    setActiveSessionId(null)
+    setStoreMode(newMode)
   }
 
   async function handleStart() {
@@ -89,16 +80,17 @@ function PomodoroPage() {
   }
 
   const handleComplete = useCallback(async () => {
+    const { activeSessionId: currentSessionId, mode: currentMode, timeLeft: currentTimeLeft } = usePomodoroStore.getState()
     setIsRunning(false)
-    if (activeSessionId) {
+    if (currentSessionId) {
       try {
-        const modeLabel = t(MODE_LABEL_KEYS[mode])
+        const modeLabel = t(MODE_LABEL_KEYS[currentMode])
         await updateSession.mutateAsync({
-          id: activeSessionId,
+          id: currentSessionId,
           data: {
             isCompleted: true,
             endedAt: new Date().toISOString(),
-            actualDuration: modeMinutes * 60 - timeLeft,
+            actualDuration: MODE_MINUTES[currentMode] * 60 - currentTimeLeft,
           },
         })
         toast.success(`${modeLabel} ${t('sessionCompleted')}`)
@@ -108,19 +100,15 @@ function PomodoroPage() {
     }
     setActiveSessionId(null)
     // Auto-switch: after focus go to break, after break go to focus
-    if (mode === 'focus') {
-      setMode('short_break')
-      setTimeLeft(MODE_MINUTES.short_break * 60)
+    if (currentMode === 'focus') {
+      setStoreMode('short_break')
     } else {
-      setMode('focus')
-      setTimeLeft(MODE_MINUTES.focus * 60)
+      setStoreMode('focus')
     }
-  }, [activeSessionId, modeMinutes, mode, timeLeft, updateSession, t])
+  }, [updateSession, t, setIsRunning, setActiveSessionId, setStoreMode])
 
   function handleReset() {
-    setIsRunning(false)
-    setTimeLeft(modeMinutes * 60)
-    setActiveSessionId(null)
+    reset()
   }
 
   const minutes = Math.floor(timeLeft / 60)

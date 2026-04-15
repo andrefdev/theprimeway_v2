@@ -60,6 +60,29 @@ export const tasksQueries = {
       queryFn: () => tasksApi.getTaskInsight(taskId),
       staleTime: CACHE_TIMES.long,
     }),
+
+  nextTask: () =>
+    queryOptions({
+      queryKey: [...tasksQueries.all(), 'next'],
+      queryFn: () => tasksApi.suggestNextTask(),
+      staleTime: 0,
+    }),
+
+  completionImpact: (taskId: string) =>
+    queryOptions({
+      queryKey: [...tasksQueries.all(), 'completion-impact', taskId],
+      queryFn: () => tasksApi.getCompletionImpact(taskId),
+      staleTime: CACHE_TIMES.standard,
+      enabled: !!taskId,
+    }),
+
+  scheduleConflicts: (date: string) =>
+    queryOptions({
+      queryKey: [...tasksQueries.all(), 'schedule-conflicts', date],
+      queryFn: () => tasksApi.getScheduleConflicts(date),
+      staleTime: CACHE_TIMES.standard,
+      enabled: !!date,
+    }),
 }
 
 export function useCreateTask() {
@@ -107,5 +130,25 @@ export function useScheduleTask() {
   return useMutation({
     mutationFn: ({ taskId, duration }: { taskId: string; duration?: number }) =>
       tasksApi.scheduleTask(taskId, duration),
+  })
+}
+
+export function useStartTimer() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (taskId: string) => tasksApi.startTimer(taskId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: tasksQueries.all() })
+    },
+  })
+}
+
+export function useStopTimer() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (taskId: string) => tasksApi.stopTimer(taskId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: tasksQueries.all() })
+    },
   })
 }

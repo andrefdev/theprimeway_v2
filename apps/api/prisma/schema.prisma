@@ -490,6 +490,10 @@ model Task {
   lastReminderSentAt       DateTime? @map("last_reminder_sent_at")         // Prevent duplicate reminders
   aiTimebox                Int?      @map("ai_timebox")                    // AI-suggested timebox in minutes
   aiInsightJson            Json?     @map("ai_insight_json")               // AI-generated insights for task
+  isRecurring              Boolean   @default(false) @map("is_recurring")
+  recurrenceRule           String?   @map("recurrence_rule")               // "daily", "weekly", "monthly", "weekdays", "custom:MO,WE,FR"
+  recurringParentId        String?   @map("recurring_parent_id")           // If this task is an instance generated from a recurring parent
+  recurrenceEndDate        DateTime? @map("recurrence_end_date")
   createdAt   DateTime? @default(now()) @map("created_at")
   updatedAt   DateTime? @default(now()) @map("updated_at")
 
@@ -497,11 +501,14 @@ model Task {
   focusTaskLinks FocusTaskLink[]
   calendarBindings TaskCalendarBinding[]
   weeklyGoal WeeklyGoal? @relation(fields: [weeklyGoalId], references: [id], onDelete: SetNull)
+  recurringParent    Task?     @relation("RecurringInstances", fields: [recurringParentId], references: [id], onDelete: SetNull)
+  recurringInstances Task[]    @relation("RecurringInstances")
 
   @@index([userId])
   @@index([userId, status])
   @@index([userId, scheduledDate])
   @@index([weeklyGoalId])
+  @@index([recurringParentId])
   @@map("tasks")
 }
 

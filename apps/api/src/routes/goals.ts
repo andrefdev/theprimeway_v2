@@ -13,6 +13,7 @@ import { authMiddleware } from '../middleware/auth'
 import { goalsService } from '../services/goals.service'
 import { LimitExceededError } from '../lib/limits'
 import { parsePaginationLimit, parsePaginationOffset } from '../lib/utils'
+import { GOAL_TEMPLATES, GOAL_TEMPLATE_CATEGORIES } from '@repo/shared/constants'
 
 export const goalsRoutes = new OpenAPIHono<AppEnv>()
 goalsRoutes.use('*', authMiddleware)
@@ -110,6 +111,35 @@ goalsRoutes.openapi(createGoalRoute, (async (c: any) => {
 }) as any)
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// DASHBOARD SUMMARY
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// GET /goals/dashboard-summary
+const getDashboardSummaryRoute = createRoute({
+  method: 'get',
+  path: '/dashboard-summary',
+  tags: ['Goals'],
+  summary: 'Get high-level goal progress overview',
+  security: [{ Bearer: [] }],
+  responses: {
+    200: { content: { 'application/json': { schema: genericData } }, description: 'Dashboard summary' },
+    500: { content: { 'application/json': { schema: errorResponse } }, description: 'Server error' },
+  },
+})
+
+goalsRoutes.openapi(getDashboardSummaryRoute, async (c) => {
+  const { userId } = c.get('user')
+
+  try {
+    const summary = await goalsService.getDashboardSummary(userId)
+    return c.json(summary, 200)
+  } catch (error) {
+    console.error('[GOALS_DASHBOARD_SUMMARY]', error)
+    return c.json({ error: 'Internal server error' }, 500)
+  }
+})
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // GOAL TREE
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -143,6 +173,51 @@ goalsRoutes.openapi(getGoalTreeRoute, async (c) => {
     console.error('[GOALS_TREE_GET]', error)
     return c.json({ error: 'Internal server error' }, 500)
   }
+})
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TEMPLATES (OBJ-F09)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// GET /goals/templates
+const listTemplatesRoute = createRoute({
+  method: 'get',
+  path: '/templates',
+  tags: ['Goals - Templates'],
+  summary: 'List all goal templates',
+  security: [{ Bearer: [] }],
+  responses: {
+    200: { content: { 'application/json': { schema: z.object({ categories: z.array(z.string()), templates: z.array(genericData) }) } }, description: 'All templates' },
+  },
+})
+
+goalsRoutes.openapi(listTemplatesRoute, async (c) => {
+  return c.json({ categories: [...GOAL_TEMPLATE_CATEGORIES], templates: GOAL_TEMPLATES }, 200)
+})
+
+// GET /goals/templates/:category
+const listTemplatesByCategoryRoute = createRoute({
+  method: 'get',
+  path: '/templates/:category',
+  tags: ['Goals - Templates'],
+  summary: 'List goal templates by category',
+  security: [{ Bearer: [] }],
+  request: {
+    params: z.object({ category: z.string() }),
+  },
+  responses: {
+    200: { content: { 'application/json': { schema: z.object({ category: z.string(), templates: z.array(genericData) }) } }, description: 'Templates for category' },
+    404: { content: { 'application/json': { schema: errorResponse } }, description: 'Category not found' },
+  },
+})
+
+goalsRoutes.openapi(listTemplatesByCategoryRoute, async (c) => {
+  const { category } = c.req.valid('param')
+  if (!GOAL_TEMPLATE_CATEGORIES.includes(category as any)) {
+    return c.json({ error: `Unknown category: ${category}` }, 404)
+  }
+  const templates = GOAL_TEMPLATES.filter((t) => t.category === category)
+  return c.json({ category, templates }, 200)
 })
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1197,6 +1272,58 @@ goalsRoutes.openapi(deleteFocusFinanceLinkRoute, async (c) => {
 })
 
 // ---------------------------------------------------------------------------
+// GET /api/goals/ai/child-suggestions
+// ---------------------------------------------------------------------------
+const childSuggestionsRoute = createRoute({
+  method: 'get',
+  path: '/ai/child-suggestions',
+  tags: ['Goals', 'AI'],
+  summary: 'AI suggests sub-goals, tasks, and habits for a goal',
+  security: [{ Bearer: [] }],
+  request: {
+    query: z.object({
+      goalId: z.string(),
+      level: z.enum(['ThreeYearGoal', 'AnnualGoal', 'QuarterlyGoal', 'WeeklyGoal']),
+    }),
+  },
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            suggestions: z.array(
+              z.object({
+                title: z.string(),
+                description: z.string(),
+                type: z.enum(['AnnualGoal', 'QuarterlyGoal', 'WeeklyGoal', 'Task', 'Habit']),
+              }),
+            ),
+          }),
+        },
+      },
+      description: 'Child suggestions',
+    },
+    404: { content: { 'application/json': { schema: errorResponse } }, description: 'Goal not found' },
+    400: { content: { 'application/json': { schema: errorResponse } }, description: 'Failed to generate suggestions' },
+  },
+})
+
+goalsRoutes.openapi(childSuggestionsRoute, (async (c: any) => {
+  const userId = c.get('user').userId
+  const { goalId, level } = c.req.valid('query')
+
+  try {
+    const suggestions = await goalsService.generateChildSuggestions(userId, goalId, level)
+    return c.json({ suggestions }, 200)
+  } catch (err: any) {
+    if (err?.message === 'Goal not found') {
+      return c.json({ error: 'Goal not found' }, 404)
+    }
+    return c.json({ error: 'Failed to generate suggestions' }, 400)
+  }
+}) as any)
+
+// ---------------------------------------------------------------------------
 // POST /api/goals/ai/suggest
 // ---------------------------------------------------------------------------
 const suggestSubGoalsRoute = createRoute({
@@ -1292,6 +1419,62 @@ goalsRoutes.openapi(quarterlyReviewRoute, (async (c: any) => {
     return c.json(result, 200)
   } catch (err) {
     return c.json({ error: 'Failed to generate review' }, 400)
+  }
+}) as any)
+
+// ---------------------------------------------------------------------------
+// GET /api/goals/ai/conflicts
+// ---------------------------------------------------------------------------
+const conflictsRoute = createRoute({
+  method: 'get',
+  path: '/ai/conflicts',
+  tags: ['Goals', 'AI'],
+  summary: 'Detect goal conflicts and overcommitment',
+  security: [{ Bearer: [] }],
+  responses: {
+    200: { content: { 'application/json': { schema: z.object({ data: z.any() }) } }, description: 'Conflict analysis' },
+    400: { content: { 'application/json': { schema: errorResponse } }, description: 'Failed' },
+  },
+})
+
+goalsRoutes.openapi(conflictsRoute, (async (c: any) => {
+  const userId = c.get('user').userId
+  try {
+    const data = await goalsService.detectConflicts(userId)
+    return c.json({ data }, 200)
+  } catch (err) {
+    return c.json({ error: 'Failed to detect conflicts' }, 400)
+  }
+}) as any)
+
+// ---------------------------------------------------------------------------
+// GET /api/goals/ai/inactive
+// ---------------------------------------------------------------------------
+const inactiveRoute = createRoute({
+  method: 'get',
+  path: '/ai/inactive',
+  tags: ['Goals', 'AI'],
+  summary: 'Detect inactive goals (no activity in N days)',
+  security: [{ Bearer: [] }],
+  request: {
+    query: z.object({
+      days: z.coerce.number().int().min(1).optional(),
+    }),
+  },
+  responses: {
+    200: { content: { 'application/json': { schema: z.object({ data: z.any() }) } }, description: 'Inactive goals' },
+    400: { content: { 'application/json': { schema: errorResponse } }, description: 'Failed' },
+  },
+})
+
+goalsRoutes.openapi(inactiveRoute, (async (c: any) => {
+  const userId = c.get('user').userId
+  const { days } = c.req.valid('query')
+  try {
+    const data = await goalsService.detectInactiveGoals(userId, days || 14)
+    return c.json({ data }, 200)
+  } catch (err) {
+    return c.json({ error: 'Failed to detect inactive goals' }, 400)
   }
 }) as any)
 

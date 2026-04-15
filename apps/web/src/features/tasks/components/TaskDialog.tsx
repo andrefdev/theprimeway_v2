@@ -31,6 +31,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import { tasksQueries } from '../queries'
+import { goalsQueries } from '../../goals/queries'
 import { ChevronRightIcon } from '@/components/Icons'
 
 interface TaskDialogProps {
@@ -63,6 +64,10 @@ export function TaskDialog({ open, onClose, task, defaultDate }: TaskDialogProps
     enabled: isEdit && showInsights && !!task,
   })
 
+  const { data: weeklyGoalsData = [] } = useQuery({
+    ...goalsQueries.weeklyGoals(),
+  })
+
   const form = useForm<CreateTaskInput>({
     resolver: zodResolver(createTaskSchema),
     defaultValues: {
@@ -72,6 +77,7 @@ export function TaskDialog({ open, onClose, task, defaultDate }: TaskDialogProps
       scheduledDate: defaultDate,
       estimatedDuration: undefined,
       tags: [],
+      weeklyGoalId: undefined,
     },
   })
 
@@ -96,6 +102,7 @@ export function TaskDialog({ open, onClose, task, defaultDate }: TaskDialogProps
         scheduledEnd: task.scheduledEnd ?? undefined,
         estimatedDuration: task.estimatedDuration ?? undefined,
         tags: task.tags ?? [],
+        weeklyGoalId: (task as any).weeklyGoalId ?? undefined,
       })
     } else {
       console.log('🗂️ TaskDialog - Resetting form with defaultDate:', defaultDate)
@@ -366,6 +373,28 @@ export function TaskDialog({ open, onClose, task, defaultDate }: TaskDialogProps
               />
             </div>
 
+            {/* Weekly Goal */}
+            <div className="space-y-1.5">
+              <Label>{t('weeklyGoal', { defaultValue: 'Weekly Goal (optional)' })}</Label>
+              <Select
+                value={form.watch('weeklyGoalId') ?? 'none'}
+                onValueChange={(v) => form.setValue('weeklyGoalId', v !== 'none' ? v : undefined)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a weekly goal" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  {Array.isArray(weeklyGoalsData) &&
+                    weeklyGoalsData.map((goal: any) => (
+                      <SelectItem key={goal.id} value={goal.id}>
+                        {goal.title}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* AI Insights (for edit only) */}
             {isEdit && (
               <div className="space-y-1.5 border-t pt-4">
@@ -419,6 +448,23 @@ export function TaskDialog({ open, onClose, task, defaultDate }: TaskDialogProps
                                 <li key={i} className="text-xs">• {tip}</li>
                               ))}
                             </ul>
+                          </div>
+                        )}
+                        {insight.suggestedGoalTitle && (
+                          <div>
+                            <p className="text-xs font-semibold text-muted-foreground mb-1">Suggested Goal</p>
+                            <div className="flex items-center gap-2">
+                              <p className="text-xs flex-1">{insight.suggestedGoalTitle}</p>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                className="text-xs h-6 px-2"
+                                onClick={() => form.setValue('weeklyGoalId', insight.suggestedGoalId)}
+                              >
+                                Apply
+                              </Button>
+                            </div>
                           </div>
                         )}
                       </div>

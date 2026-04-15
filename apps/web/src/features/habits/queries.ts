@@ -55,6 +55,27 @@ export const habitsQueries = {
       queryFn: () => habitsApi.suggestGoalsForHabit(id),
       staleTime: CACHE_TIMES.standard,
     }),
+
+  aiSuggestions: () =>
+    queryOptions({
+      queryKey: [...habitsQueries.all(), 'aiSuggestions'],
+      queryFn: () => habitsApi.suggestHabitsForGoals(),
+      staleTime: CACHE_TIMES.long,
+    }),
+
+  habitStacking: () =>
+    queryOptions({
+      queryKey: [...habitsQueries.all(), 'habitStacking'],
+      queryFn: () => habitsApi.suggestHabitStacking(),
+      staleTime: CACHE_TIMES.long,
+    }),
+
+  correlations: () =>
+    queryOptions({
+      queryKey: [...habitsQueries.all(), 'correlations'],
+      queryFn: () => habitsApi.analyzeCorrelations(),
+      staleTime: CACHE_TIMES.long,
+    }),
 }
 
 export function useCreateHabit() {
@@ -115,6 +136,10 @@ export function useOptimalReminderTime(habitId: string) {
 
 export function useGoalSuggestions(habitId: string) {
   return useQuery(habitsQueries.goalSuggestions(habitId))
+}
+
+export function useHabitCorrelations() {
+  return useQuery(habitsQueries.correlations())
 }
 
 export function useLinkHabitToGoal() {

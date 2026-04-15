@@ -21,6 +21,8 @@ const errorResponse = z.object({ error: z.string() })
 notificationRoutes.use('/register', authMiddleware)
 notificationRoutes.use('/preferences', authMiddleware)
 notificationRoutes.use('/aggregated', authMiddleware)
+notificationRoutes.use('/batched', authMiddleware)
+notificationRoutes.use('/smart-reminders', authMiddleware)
 
 // ---------------------------------------------------------------------------
 // POST /register
@@ -118,6 +120,29 @@ notificationRoutes.openapi(updatePrefsRoute, async (c) => {
 })
 
 // ---------------------------------------------------------------------------
+// GET /batched
+// ---------------------------------------------------------------------------
+const batchedRoute = createRoute({
+  method: 'get',
+  path: '/batched',
+  tags: ['Notifications'],
+  summary: 'Get batched/grouped notifications',
+  security: [{ Bearer: [] }],
+  responses: {
+    200: {
+      content: { 'application/json': { schema: z.object({ data: z.any() }) } },
+      description: 'Batched notifications',
+    },
+  },
+})
+
+notificationRoutes.openapi(batchedRoute, async (c) => {
+  const userId = c.get('user').userId
+  const data = await notificationsService.getBatchedNotifications(userId)
+  return c.json({ data }, 200)
+})
+
+// ---------------------------------------------------------------------------
 // GET /aggregated
 // ---------------------------------------------------------------------------
 const aggregatedRoute = createRoute({
@@ -135,6 +160,26 @@ notificationRoutes.openapi(aggregatedRoute, async (c) => {
   const userId = c.get('user').userId
   const notifications = await notificationsService.getAggregated(userId)
   return c.json({ data: notifications, count: notifications.length }, 200)
+})
+
+// ---------------------------------------------------------------------------
+// GET /smart-reminders
+// ---------------------------------------------------------------------------
+const smartRemindersRoute = createRoute({
+  method: 'get',
+  path: '/smart-reminders',
+  tags: ['Notifications'],
+  summary: 'Get smart habit reminders based on streaks and calendar density',
+  security: [{ Bearer: [] }],
+  responses: {
+    200: { content: { 'application/json': { schema: z.object({ data: z.array(z.any()) }) } }, description: 'Smart reminders' },
+  },
+})
+
+notificationRoutes.openapi(smartRemindersRoute, async (c) => {
+  const userId = c.get('user').userId
+  const reminders = await notificationsService.generateSmartReminders(userId)
+  return c.json({ data: reminders }, 200)
 })
 
 // ---------------------------------------------------------------------------

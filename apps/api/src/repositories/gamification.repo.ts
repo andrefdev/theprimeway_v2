@@ -83,6 +83,29 @@ class GamificationRepository {
   async updateDailyChallenge(id: string, data: Record<string, unknown>) {
     return prisma.dailyChallenge.update({ where: { id }, data })
   }
+
+  async aggregateWeeklyXpBySource(userId: string, weekStart: string, weekEnd: string) {
+    return prisma.xpEvent.groupBy({
+      by: ['source'],
+      where: {
+        userId,
+        earnedDate: { gte: weekStart, lte: weekEnd },
+      },
+      _sum: { amount: true },
+      _count: true,
+    })
+  }
+
+  async sumWeeklyXp(userId: string, weekStart: string, weekEnd: string) {
+    return prisma.xpEvent.aggregate({
+      where: {
+        userId,
+        earnedDate: { gte: weekStart, lte: weekEnd },
+      },
+      _sum: { amount: true },
+      _count: true,
+    })
+  }
 }
 
 export const gamificationRepo = new GamificationRepository()

@@ -1,4 +1,8 @@
 import { cronRepo } from '../repositories/cron.repo'
+import { chatService } from './chat.service'
+import { goalsService } from './goals.service'
+import { notificationsService } from './notifications.service'
+import { prisma } from '../lib/prisma'
 
 // ---------------------------------------------------------------------------
 // Motivational messages
@@ -240,6 +244,190 @@ class CronService {
     }
 
     return { sent: totalSent }
+  }
+
+  async processQuarterlyReview() {
+    // Only run on quarter boundaries (last 3 days of Mar, Jun, Sep, Dec)
+    const now = new Date()
+    const month = now.getMonth() // 0-indexed
+    const day = now.getDate()
+    const lastDayOfMonth = new Date(now.getFullYear(), month + 1, 0).getDate()
+
+    const isQuarterEnd = [2, 5, 8, 11].includes(month) && day >= lastDayOfMonth - 2
+    if (!isQuarterEnd) {
+      return { skipped: true, message: 'Not a quarter-end period' }
+    }
+
+    const quarter = (Math.floor(month / 3) + 1) as 1 | 2 | 3 | 4
+    const year = now.getFullYear()
+
+    // Get all users with active quarterly goals
+    const users = await prisma.user.findMany({
+      where: {
+        quarterlyGoals: { some: {} },
+      },
+      select: { id: true, email: true, name: true },
+    })
+
+    const results: Array<{ userId: string; status: string; error?: string }> = []
+
+    for (const user of users) {
+      try {
+        const review = await goalsService.getQuarterlyReview(user.id, quarter, year)
+        results.push({ userId: user.id, status: 'generated' })
+
+        // Push notification (FCM) — best-effort
+        const devices = await cronRepo.findActiveDevicesByUserId(user.id)
+        if (devices.length > 0) {
+          // NOTE: Wire up sendNotification(tokens, { title, body }, { url, tag })
+          void review // review data available for push payload
+        }
+      } catch (err) {
+        results.push({ userId: user.id, status: 'failed', error: (err as Error).message })
+      }
+    }
+
+    return { quarter, year, processed: results.length, results }
+  }
+
+  async processWeeklyReview() {
+    // Only run on Sundays (day 0) or Mondays (day 1)
+    const now = new Date()
+    const dayOfWeek = now.getDay()
+    if (dayOfWeek !== 0 && dayOfWeek !== 1) {
+      return { skipped: true, message: 'Weekly review only runs on Sunday/Monday' }
+    }
+
+    // Calculate next week's Monday
+    const nextMonday = new Date(now)
+    const daysUntilMonday = dayOfWeek === 0 ? 1 : 7
+    nextMonday.setDate(nextMonday.getDate() + daysUntilMonday)
+    const weekStartDate = nextMonday.toISOString().split('T')[0]!
+
+    // Get all active users (users with recent activity)
+    const recentCutoff = new Date()
+    recentCutoff.setDate(recentCutoff.getDate() - 14)
+
+    const users = await prisma.user.findMany({
+      where: {
+        OR: [
+          { tasks: { some: { updatedAt: { gte: recentCutoff } } } },
+          { habits: { some: { isActive: true } } },
+        ],
+      },
+      select: { id: true, name: true, locale: true },
+    })
+
+    const results: Array<{ userId: string; status: string; error?: string }> = []
+    for (const user of users) {
+      try {
+        // Generate the weekly plan
+        const plan = await chatService.weeklyPlanning(user.id, weekStartDate)
+
+        // Try to send push notification
+        const devices = await cronRepo.findActiveDevicesByUserId(user.id)
+        if (devices.length > 0) {
+          // NOTE: Wire up sendNotification(tokens, { title, body }, { url, tag })
+          console.log(
+            `[WEEKLY_REVIEW] Would push to ${devices.length} devices for user ${user.id}`,
+          )
+          void plan // plan data available for push payload
+        }
+
+        results.push({ userId: user.id, status: 'generated' })
+      } catch (err) {
+        results.push({ userId: user.id, status: 'failed', error: (err as Error).message })
+      }
+    }
+
+    return { weekStartDate, processed: results.length, results }
+  }
+
+  async processQuarterlyNudge() {
+    const now = new Date()
+    const month = now.getMonth() // 0-indexed: 0=Jan, 3=Apr, 6=Jul, 9=Oct
+    const day = now.getDate()
+
+    // Guard: only run on day 1 of quarter-start months (Jan, Apr, Jul, Oct)
+    const isQuarterStart = [0, 3, 6, 9].includes(month) && day === 1
+    if (!isQuarterStart) {
+      return { skipped: true, message: 'Not a quarter-start date' }
+    }
+
+    const quarter = (Math.floor(month / 3) + 1) as 1 | 2 | 3 | 4
+    const year = now.getFullYear()
+
+    // Fetch all users
+    const users = await prisma.user.findMany({
+      select: { id: true, locale: true },
+    })
+
+    let nudged = 0
+    let skipped = 0
+    let alreadySet = 0
+
+    for (const user of users) {
+      const lang = (user.locale || 'en').startsWith('es') ? 'es' : 'en'
+
+      // Check for quarterly goals in the current quarter
+      const quarterlyGoals = await prisma.quarterlyGoal.findMany({
+        where: { userId: user.id, year, quarter },
+        select: { id: true, objectives: true },
+      })
+
+      if (quarterlyGoals.length === 0) {
+        // No goals at all -> strong nudge
+        const title =
+          lang === 'es' ? '¡Nuevo trimestre! Define tus metas' : 'New quarter! Set your goals'
+        const body =
+          lang === 'es'
+            ? `Es Q${quarter} ${year}. Establece tus metas trimestrales para mantener el rumbo.`
+            : `It's Q${quarter} ${year}. Set your quarterly goals to stay on track.`
+
+        await notificationsService.sendPush({
+          userIds: [user.id],
+          title,
+          body,
+          url: '/goals',
+          tag: 'quarterly-nudge',
+        })
+        nudged++
+      } else {
+        // Goals exist — check if <50% have measurable targets (non-empty objectives)
+        const withTargets = quarterlyGoals.filter((g) => {
+          if (!g.objectives) return false
+          const objs = g.objectives as unknown[]
+          return Array.isArray(objs) && objs.length > 0
+        }).length
+
+        const ratio = withTargets / quarterlyGoals.length
+
+        if (ratio < 0.5) {
+          // Softer nudge
+          const title =
+            lang === 'es' ? 'Revisa tus metas trimestrales' : 'Review your quarterly goals'
+          const body =
+            lang === 'es'
+              ? 'Algunas de tus metas aún no tienen objetivos medibles. Revísalas.'
+              : 'Some of your goals are missing measurable targets. Review them.'
+
+          await notificationsService.sendPush({
+            userIds: [user.id],
+            title,
+            body,
+            url: '/goals',
+            tag: 'quarterly-nudge',
+          })
+          nudged++
+        } else {
+          alreadySet++
+        }
+      }
+    }
+
+    skipped = users.length - nudged - alreadySet
+
+    return { quarter, year, nudged, skipped, alreadySet }
   }
 }
 

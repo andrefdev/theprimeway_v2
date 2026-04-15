@@ -122,4 +122,26 @@ export const goalsApi = {
         }
       }>('/goals/ai/quarterly-review', { params: { quarter: String(quarter), year: String(year) } })
       .then((r) => r.data.data),
+
+  detectConflicts: () =>
+    api.get<{ data: any }>('/goals/ai/conflicts').then((r) => r.data.data),
+
+  detectInactive: (days?: number) =>
+    api
+      .get<{
+        data: {
+          inactive: Array<{
+            goalId: string
+            title: string
+            progress: number
+            lastActivity: string
+            daysSinceActivity: number
+            weeklyGoalCount: number
+            urgency: 'high' | 'medium' | 'low'
+          }>
+          count: number
+          threshold: number
+        }
+      }>('/goals/ai/inactive', { params: days ? { days: String(days) } : undefined })
+      .then((r) => r.data.data),
 }

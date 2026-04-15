@@ -22,6 +22,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { PanelLeftOpen, LogOut, Settings, User } from 'lucide-react'
+import { NotificationBell } from '@/features/notifications/components/NotificationBell'
+import { PomodoroMiniTimer } from '@/components/PomodoroMiniTimer'
 
 // Route segment to i18n key mapping
 const ROUTE_LABELS: Record<string, string> = {
@@ -140,6 +142,11 @@ export function Header() {
 
       {/* Right side: user profile */}
       <div className="ml-auto flex items-center gap-1">
+        {/* Pomodoro mini-timer */}
+        <PomodoroMiniTimer />
+        {/* Notification bell */}
+        <NotificationBell />
+
         {/* User avatar dropdown */}
         {user && (
           <DropdownMenu>

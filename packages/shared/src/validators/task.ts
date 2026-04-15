@@ -8,8 +8,13 @@ export const createTaskSchema = z.object({
   scheduledDate: z.string().optional(),
   scheduledStart: z.string().optional(),
   scheduledEnd: z.string().optional(),
+  isAllDay: z.boolean().optional(),
   estimatedDuration: z.number().optional(),
   tags: z.array(z.string()).optional().default([]),
+  weeklyGoalId: z.string().optional(),
+  isRecurring: z.boolean().optional(),
+  recurrenceRule: z.string().optional(),
+  recurrenceEndDate: z.string().optional(),
 })
 
 export const updateTaskSchema = createTaskSchema.partial().extend({

@@ -1,5 +1,5 @@
 import { api } from '../../lib/api-client'
-import type { NotificationPreferences } from '@repo/shared/types'
+import type { NotificationPreferences, AppNotification, SmartReminder, BatchedNotificationsResponse } from '@repo/shared/types'
 
 export const notificationsApi = {
   getPreferences: () =>
@@ -13,4 +13,13 @@ export const notificationsApi = {
 
   unregisterDevice: (token: string) =>
     api.delete('/notifications/register', { params: { token } }).then((r) => r.data),
+
+  getAggregated: () =>
+    api.get<{ data: AppNotification[] }>('/notifications/aggregated').then((r) => r.data),
+
+  getSmartReminders: () =>
+    api.get<{ data: SmartReminder[] }>('/notifications/smart-reminders').then((r) => r.data),
+
+  getBatched: () =>
+    api.get<{ data: BatchedNotificationsResponse }>('/notifications/batched').then((r) => r.data),
 }

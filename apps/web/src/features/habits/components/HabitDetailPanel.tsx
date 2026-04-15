@@ -10,6 +10,11 @@ import { toast } from 'sonner'
 import { habitsQueries, useLinkHabitToGoal } from '../queries'
 import { HabitAIInsights } from './habitAiInsights'
 import type { Habit } from '@repo/shared/types'
+import { LIFE_PILLARS, CATEGORY_TO_PILLAR } from '@repo/shared/constants'
+
+// Map pillar id to i18n key: health_body -> pillarHealthBody
+const pillarI18nKey = (id: string) =>
+  'pillar' + id.split('_').map(w => w[0]!.toUpperCase() + w.slice(1)).join('')
 
 interface HabitDetailPanelProps {
   habit: Habit
@@ -66,12 +71,24 @@ export function HabitDetailPanel({ habit, onClose }: HabitDetailPanelProps) {
           <CardTitle className="text-sm">Details</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
-          {habit.category && (
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Category</span>
-              <Badge variant="outline">{habit.category}</Badge>
-            </div>
-          )}
+          {habit.category && (() => {
+            const pillarId = CATEGORY_TO_PILLAR[habit.category] || habit.category
+            const pillar = LIFE_PILLARS.find(p => p.id === pillarId)
+            return (
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">{t('lifePillar', { ns: 'habits' })}</span>
+                <Badge variant="outline" className="gap-1.5">
+                  {pillar && (
+                    <span
+                      className="inline-block h-2 w-2 rounded-full"
+                      style={{ backgroundColor: pillar.color }}
+                    />
+                  )}
+                  {t(pillarI18nKey(pillarId) as any, { ns: 'habits' })}
+                </Badge>
+              </div>
+            )
+          })()}
 
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">Frequency</span>

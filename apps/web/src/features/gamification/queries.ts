@@ -40,10 +40,39 @@ export const gamificationQueries = {
       staleTime: CACHE_TIMES.standard,
     }),
 
+  achievementsByCategory: (locale?: string) =>
+    queryOptions({
+      queryKey: [...gamificationQueries.all(), 'achievements-by-category', locale],
+      queryFn: () => gamificationApi.getAchievementsByCategory(locale),
+      staleTime: CACHE_TIMES.standard,
+    }),
+
   challenges: (date?: string) =>
     queryOptions({
       queryKey: [...gamificationQueries.all(), 'challenges', date],
       queryFn: () => gamificationApi.getChallenges(date),
       staleTime: CACHE_TIMES.short,
+    }),
+
+  rankInfo: () =>
+    queryOptions({
+      queryKey: [...gamificationQueries.all(), 'rank-info'],
+      queryFn: () => gamificationApi.getRankInfo(),
+      staleTime: CACHE_TIMES.standard,
+    }),
+
+  fatigue: () =>
+    queryOptions({
+      queryKey: [...gamificationQueries.all(), 'fatigue'],
+      queryFn: () => gamificationApi.detectFatigue(),
+      staleTime: CACHE_TIMES.standard,
+    }),
+
+  levelEvents: () =>
+    queryOptions({
+      queryKey: [...gamificationQueries.all(), 'level-events'],
+      queryFn: () => gamificationApi.getLevelEvents(),
+      staleTime: CACHE_TIMES.short,
+      refetchInterval: 30 * 1000, // Poll every 30s while app is active
     }),
 }

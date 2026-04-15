@@ -69,6 +69,46 @@ gamificationRoutes.openapi(updateSettingsRoute, async (c) => {
 })
 
 // ---------------------------------------------------------------------------
+// GET /rank-info
+// ---------------------------------------------------------------------------
+const getRankInfoRoute = createRoute({
+  method: 'get',
+  path: '/rank-info',
+  tags: ['Gamification'],
+  summary: 'Get rank progression info and thresholds',
+  security: [{ Bearer: [] }],
+  responses: {
+    200: { content: { 'application/json': { schema: z.object({ data: z.any() }) } }, description: 'Rank info' },
+  },
+})
+
+gamificationRoutes.openapi(getRankInfoRoute, async (c) => {
+  const userId = c.get('user').userId
+  const data = await gamificationService.getRankInfo(userId)
+  return c.json({ data }, 200)
+})
+
+// ---------------------------------------------------------------------------
+// GET /fatigue
+// ---------------------------------------------------------------------------
+const fatigueRoute = createRoute({
+  method: 'get',
+  path: '/fatigue',
+  tags: ['Gamification'],
+  summary: 'Detect productivity fatigue indicators',
+  security: [{ Bearer: [] }],
+  responses: {
+    200: { content: { 'application/json': { schema: z.object({ data: z.any() }) } }, description: 'Fatigue analysis' },
+  },
+})
+
+gamificationRoutes.openapi(fatigueRoute, async (c) => {
+  const userId = c.get('user').userId
+  const data = await gamificationService.detectFatigue(userId)
+  return c.json({ data }, 200)
+})
+
+// ---------------------------------------------------------------------------
 // POST /xp
 // ---------------------------------------------------------------------------
 const awardXpRoute = createRoute({
@@ -88,6 +128,29 @@ gamificationRoutes.openapi(awardXpRoute, async (c) => {
   const body = c.req.valid('json')
   const xpEvent = await gamificationService.awardXp(userId, body)
   return c.json({ data: xpEvent }, 200)
+})
+
+// ---------------------------------------------------------------------------
+// GET /level-events
+// ---------------------------------------------------------------------------
+const levelEventsRoute = createRoute({
+  method: 'get',
+  path: '/level-events',
+  tags: ['Gamification'],
+  summary: 'Get recent level-up and rank-up events (clears after reading)',
+  security: [{ Bearer: [] }],
+  responses: {
+    200: {
+      content: { 'application/json': { schema: z.object({ data: z.any() }) } },
+      description: 'Level events',
+    },
+  },
+})
+
+gamificationRoutes.openapi(levelEventsRoute, async (c) => {
+  const userId = c.get('user').userId
+  const data = gamificationService.getLevelUpEvents(userId)
+  return c.json({ data }, 200)
 })
 
 // ---------------------------------------------------------------------------
@@ -141,6 +204,46 @@ gamificationRoutes.openapi(xpHistoryRoute, async (c) => {
 })
 
 // ---------------------------------------------------------------------------
+// GET /xp/weekly
+// ---------------------------------------------------------------------------
+const weeklyXpRoute = createRoute({
+  method: 'get',
+  path: '/xp/weekly',
+  tags: ['Gamification'],
+  summary: 'Get weekly XP summary with breakdown by source',
+  security: [{ Bearer: [] }],
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            data: z.object({
+              weekStart: z.string(),
+              weekEnd: z.string(),
+              totalXp: z.number(),
+              totalEvents: z.number(),
+              breakdown: z.array(z.object({
+                source: z.string(),
+                xp: z.number(),
+                count: z.number(),
+              })),
+            }),
+          }),
+        },
+      },
+      description: 'Weekly XP summary',
+    },
+  },
+})
+
+gamificationRoutes.openapi(weeklyXpRoute, async (c) => {
+  const userId = c.get('user').userId
+  const weekStart = c.req.query('weekStart') || undefined
+  const data = await gamificationService.getWeeklyXpSummary(userId, weekStart)
+  return c.json({ data }, 200)
+})
+
+// ---------------------------------------------------------------------------
 // GET /streak
 // ---------------------------------------------------------------------------
 const getStreakRoute = createRoute({
@@ -179,6 +282,27 @@ gamificationRoutes.openapi(checkInStreakRoute, async (c) => {
   const userId = c.get('user').userId
   const body = c.req.valid('json')
   const data = await gamificationService.checkInStreak(userId, body.date)
+  return c.json({ data }, 200)
+})
+
+// ---------------------------------------------------------------------------
+// GET /achievements/categories
+// ---------------------------------------------------------------------------
+const achievementCategoriesRoute = createRoute({
+  method: 'get',
+  path: '/achievements/categories',
+  tags: ['Gamification'],
+  summary: 'Get achievements grouped by category',
+  security: [{ Bearer: [] }],
+  responses: {
+    200: { content: { 'application/json': { schema: z.object({ data: z.any() }) } }, description: 'Achievements by category' },
+  },
+})
+
+gamificationRoutes.openapi(achievementCategoriesRoute, async (c) => {
+  const userId = c.get('user').userId
+  const locale = c.req.query('locale') || 'en'
+  const data = await gamificationService.getAchievementsByCategory(userId, locale)
   return c.json({ data }, 200)
 })
 
@@ -286,5 +410,6 @@ const seedRoute = createRoute({
 })
 
 gamificationRoutes.openapi(seedRoute, async (c) => {
-  return c.json({ data: { success: true, message: 'Achievements seed endpoint ready' } }, 200)
+  const result = await gamificationService.seedAchievements()
+  return c.json({ data: result }, 200)
 })

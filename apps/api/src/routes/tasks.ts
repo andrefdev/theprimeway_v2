@@ -45,12 +45,19 @@ const createTaskSchema = z.object({
   source: z.string().optional(),
   tags: z.array(z.string()).optional(),
   weeklyGoalId: z.string().optional(),
+  isRecurring: z.boolean().optional(),
+  recurrenceRule: z.string().optional(),
+  recurrenceEndDate: z.string().optional(),
 })
 
 const updateTaskSchema = createTaskSchema.partial().extend({
   status: z.enum(['open', 'completed']).optional(),
   archivedAt: z.string().nullable().optional(),
   orderInDay: z.number().optional(),
+  actualStart: z.string().nullable().optional(),
+  actualEnd: z.string().nullable().optional(),
+  actualDurationMinutes: z.number().optional(),
+  actualDurationSeconds: z.number().optional(),
 })
 
 // ---------------------------------------------------------------------------
@@ -193,6 +200,227 @@ taskRoutes.openapi(scheduleRoute, (async (c: any) => {
 }) as any)
 
 // ---------------------------------------------------------------------------
+// POST /api/tasks/auto-archive
+// ---------------------------------------------------------------------------
+const autoArchiveRoute = createRoute({
+  method: 'post',
+  path: '/auto-archive',
+  tags: ['Tasks'],
+  summary: 'Auto-archive completed tasks older than N days',
+  security: [{ Bearer: [] }],
+  request: {
+    body: {
+      content: {
+        'application/json': {
+          schema: z.object({ daysOld: z.number().int().min(1).max(90).default(7) }),
+        },
+      },
+    },
+  },
+  responses: {
+    200: { content: { 'application/json': { schema: z.object({ data: z.object({ archived: z.number() }) }) } }, description: 'Archived count' },
+  },
+})
+
+taskRoutes.openapi(autoArchiveRoute, (async (c: any) => {
+  const { userId } = c.get('user')
+  const { daysOld } = c.req.valid('json')
+  const result = await tasksService.autoArchiveCompleted(userId, daysOld)
+  return c.json({ data: result }, 200)
+}) as any)
+
+// ---------------------------------------------------------------------------
+// POST /api/tasks/recurring/generate
+// ---------------------------------------------------------------------------
+const recurringGenerateRoute = createRoute({
+  method: 'post',
+  path: '/recurring/generate',
+  tags: ['Tasks'],
+  summary: 'Generate recurring task instances for today',
+  security: [{ Bearer: [] }],
+  responses: {
+    200: { content: { 'application/json': { schema: z.object({ data: z.object({ generated: z.array(taskSchema) }) }) } }, description: 'Generated recurring instances' },
+  },
+})
+
+taskRoutes.openapi(recurringGenerateRoute, (async (c: any) => {
+  const { userId } = c.get('user')
+  try {
+    const result = await tasksService.processRecurringTasks(userId)
+    return c.json({ data: result }, 200)
+  } catch (err: any) {
+    return c.json({ error: err.message || 'Failed to generate recurring tasks' }, 500)
+  }
+}) as any)
+
+// ---------------------------------------------------------------------------
+// GET /api/tasks/stats
+// ---------------------------------------------------------------------------
+const statsRoute = createRoute({
+  method: 'get',
+  path: '/stats',
+  tags: ['Tasks'],
+  summary: 'Get task statistics',
+  security: [{ Bearer: [] }],
+  responses: {
+    200: { content: { 'application/json': { schema: z.object({ data: z.any() }) } }, description: 'Task statistics' },
+  },
+})
+
+taskRoutes.openapi(statsRoute, (async (c: any) => {
+  const { userId } = c.get('user')
+  const days = parseInt(c.req.query('days') || '30', 10)
+  const data = await tasksService.getStatistics(userId, days)
+  return c.json({ data }, 200)
+}) as any)
+
+// ---------------------------------------------------------------------------
+// GET /api/tasks/schedule-conflicts
+// ---------------------------------------------------------------------------
+const scheduleConflictsRoute = createRoute({
+  method: 'get',
+  path: '/schedule-conflicts',
+  tags: ['Tasks'],
+  summary: 'Detect schedule conflicts for a date',
+  security: [{ Bearer: [] }],
+  responses: {
+    200: { content: { 'application/json': { schema: z.object({ data: z.any() }) } }, description: 'Conflicts and suggestions' },
+  },
+})
+
+taskRoutes.openapi(scheduleConflictsRoute, (async (c: any) => {
+  const { userId } = c.get('user')
+  const date = c.req.query('date') || new Date().toISOString().split('T')[0]
+  const data = await tasksService.detectScheduleConflicts(userId, date)
+  return c.json({ data }, 200)
+}) as any)
+
+// ---------------------------------------------------------------------------
+// GET /api/tasks/views/calendar?start=YYYY-MM-DD&end=YYYY-MM-DD
+// ---------------------------------------------------------------------------
+const calendarViewRoute = createRoute({
+  method: 'get',
+  path: '/views/calendar',
+  tags: ['Tasks'],
+  summary: 'Get calendar view of tasks grouped by date',
+  security: [{ Bearer: [] }],
+  responses: {
+    200: { content: { 'application/json': { schema: z.object({ data: z.any() }) } }, description: 'Calendar view' },
+    400: { content: { 'application/json': { schema: errorResponse } }, description: 'Invalid request' },
+  },
+})
+
+taskRoutes.openapi(calendarViewRoute, (async (c: any) => {
+  const { userId } = c.get('user')
+  const start = c.req.query('start')
+  const end = c.req.query('end')
+
+  if (!start || !end) {
+    return c.json({ error: 'start and end query params are required (YYYY-MM-DD)' }, 400)
+  }
+
+  const data = await tasksService.getCalendarView(userId, start, end)
+  return c.json({ data }, 200)
+}) as any)
+
+// ---------------------------------------------------------------------------
+// GET /api/tasks/views/timeline?start=YYYY-MM-DD&end=YYYY-MM-DD
+// ---------------------------------------------------------------------------
+const timelineViewRoute = createRoute({
+  method: 'get',
+  path: '/views/timeline',
+  tags: ['Tasks'],
+  summary: 'Get timeline view of tasks with free-time gaps',
+  security: [{ Bearer: [] }],
+  responses: {
+    200: { content: { 'application/json': { schema: z.object({ data: z.any() }) } }, description: 'Timeline view' },
+    400: { content: { 'application/json': { schema: errorResponse } }, description: 'Invalid request' },
+  },
+})
+
+taskRoutes.openapi(timelineViewRoute, (async (c: any) => {
+  const { userId } = c.get('user')
+  const start = c.req.query('start')
+  const end = c.req.query('end')
+
+  if (!start || !end) {
+    return c.json({ error: 'start and end query params are required (YYYY-MM-DD)' }, 400)
+  }
+
+  const data = await tasksService.getTimelineView(userId, start, end)
+  return c.json({ data }, 200)
+}) as any)
+
+// ---------------------------------------------------------------------------
+// POST /api/tasks/:id/timer/start
+// ---------------------------------------------------------------------------
+const startTimerRoute = createRoute({
+  method: 'post',
+  path: '/:id/timer/start',
+  tags: ['Tasks'],
+  summary: 'Start time tracking for a task',
+  security: [{ Bearer: [] }],
+  responses: {
+    200: { content: { 'application/json': { schema: z.object({ data: taskSchema }) } }, description: 'Timer started' },
+    404: { content: { 'application/json': { schema: errorResponse } }, description: 'Not found' },
+  },
+})
+
+taskRoutes.openapi(startTimerRoute, (async (c: any) => {
+  const { userId } = c.get('user')
+  const taskId = c.req.param('id')
+  const task = await tasksService.startTaskTimer(userId, taskId)
+  if (!task) return c.json({ error: 'Task not found' }, 404)
+  return c.json({ data: task }, 200)
+}) as any)
+
+// ---------------------------------------------------------------------------
+// POST /api/tasks/:id/timer/stop
+// ---------------------------------------------------------------------------
+const stopTimerRoute = createRoute({
+  method: 'post',
+  path: '/:id/timer/stop',
+  tags: ['Tasks'],
+  summary: 'Stop time tracking for a task',
+  security: [{ Bearer: [] }],
+  responses: {
+    200: { content: { 'application/json': { schema: z.object({ data: taskSchema }) } }, description: 'Timer stopped' },
+    404: { content: { 'application/json': { schema: errorResponse } }, description: 'Not found or not started' },
+  },
+})
+
+taskRoutes.openapi(stopTimerRoute, (async (c: any) => {
+  const { userId } = c.get('user')
+  const taskId = c.req.param('id')
+  const task = await tasksService.stopTaskTimer(userId, taskId)
+  if (!task) return c.json({ error: 'Task not found or timer not started' }, 404)
+  return c.json({ data: task }, 200)
+}) as any)
+
+// ---------------------------------------------------------------------------
+// GET /api/tasks/:id/impact
+// ---------------------------------------------------------------------------
+const impactRoute = createRoute({
+  method: 'get',
+  path: '/:id/impact',
+  tags: ['Tasks'],
+  summary: 'Get completion impact for a task',
+  security: [{ Bearer: [] }],
+  responses: {
+    200: { content: { 'application/json': { schema: z.object({ data: z.any() }) } }, description: 'Completion impact' },
+    404: { content: { 'application/json': { schema: errorResponse } }, description: 'Not found or not completed' },
+  },
+})
+
+taskRoutes.openapi(impactRoute, (async (c: any) => {
+  const { userId } = c.get('user')
+  const taskId = c.req.param('id')
+  const data = await tasksService.getCompletionImpact(userId, taskId)
+  if (!data) return c.json({ error: 'Task not found or not completed' }, 404)
+  return c.json({ data }, 200)
+}) as any)
+
+// ---------------------------------------------------------------------------
 // GET /api/tasks/:id
 // ---------------------------------------------------------------------------
 const getRoute = createRoute({
@@ -264,6 +492,60 @@ taskRoutes.openapi(deleteRoute, async (c) => {
   if (!deleted) return c.json({ error: 'Task not found' }, 404)
   return c.json({ success: true }, 200)
 })
+
+// ---------------------------------------------------------------------------
+// GET /api/tasks/ai/timebox — Suggest timebox from similar past tasks
+// ---------------------------------------------------------------------------
+const suggestTimeboxRoute = createRoute({
+  method: 'get',
+  path: '/ai/timebox',
+  tags: ['Tasks', 'AI'],
+  summary: 'Suggest time estimate based on similar completed tasks',
+  security: [{ Bearer: [] }],
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            data: z.object({
+              suggestedMinutes: z.number(),
+              confidence: z.enum(['high', 'medium', 'low']),
+              reasoning: z.string(),
+              similarTasks: z.array(z.object({
+                title: z.string(),
+                actual: z.number(),
+                estimated: z.number().nullable(),
+              })),
+            }),
+          }),
+        },
+      },
+      description: 'Timebox suggestion',
+    },
+    400: { content: { 'application/json': { schema: errorResponse } }, description: 'Missing taskId' },
+    404: { content: { 'application/json': { schema: errorResponse } }, description: 'Task not found' },
+  },
+})
+
+taskRoutes.openapi(suggestTimeboxRoute, (async (c: any) => {
+  const { userId } = c.get('user')
+  const taskId = c.req.query('taskId')
+
+  if (!taskId) {
+    return c.json({ error: 'taskId query param is required' }, 400)
+  }
+
+  try {
+    const result = await tasksService.suggestTimebox(userId, taskId)
+    return c.json({ data: result }, 200)
+  } catch (err: any) {
+    if (err.message === 'Task not found') {
+      return c.json({ error: 'Task not found' }, 404)
+    }
+    console.error('[SUGGEST_TIMEBOX_ERROR]', err)
+    return c.json({ error: 'Failed to suggest timebox', details: err.message }, 400)
+  }
+}) as any)
 
 // ---------------------------------------------------------------------------
 // POST /api/tasks/ai/timebox
@@ -411,5 +693,96 @@ taskRoutes.openapi(insightRoute, (async (c: any) => {
     return c.json(result, 200)
   } catch (err) {
     return c.json({ error: 'Failed to generate insights' }, 400)
+  }
+}) as any)
+
+// ---------------------------------------------------------------------------
+// GET /api/tasks/ai/insights?taskId=xxx
+// ---------------------------------------------------------------------------
+const insightsRoute = createRoute({
+  method: 'get',
+  path: '/ai/insights',
+  tags: ['Tasks', 'AI'],
+  summary: 'Generate contextual insights for a task (context brief, subtasks, tips, focus blocks)',
+  security: [{ Bearer: [] }],
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            data: z.object({
+              contextBrief: z.string(),
+              suggestedSubtasks: z.array(z.string()),
+              tips: z.array(z.string()),
+              estimatedFocusBlocks: z.number(),
+            }),
+          }),
+        },
+      },
+      description: 'Task insights with context brief, subtasks, tips, and focus blocks',
+    },
+    400: { content: { 'application/json': { schema: errorResponse } }, description: 'Missing taskId or failed to generate' },
+    404: { content: { 'application/json': { schema: errorResponse } }, description: 'Task not found' },
+  },
+})
+
+taskRoutes.openapi(insightsRoute, (async (c: any) => {
+  const { userId } = c.get('user')
+  const taskId = c.req.query('taskId')
+
+  if (!taskId) {
+    return c.json({ error: 'taskId query param is required' }, 400)
+  }
+
+  try {
+    const result = await tasksService.generateTaskInsights(userId, taskId)
+    if (!result.contextBrief && result.suggestedSubtasks.length === 0) {
+      return c.json({ error: 'Task not found' }, 404)
+    }
+    return c.json({ data: result }, 200)
+  } catch (err) {
+    console.error('[TASK_INSIGHTS_ERROR]', err)
+    return c.json({ error: 'Failed to generate task insights' }, 400)
+  }
+}) as any)
+
+// ---------------------------------------------------------------------------
+// GET /api/tasks/ai/next
+// ---------------------------------------------------------------------------
+const nextTaskRoute = createRoute({
+  method: 'get',
+  path: '/ai/next',
+  tags: ['Tasks', 'AI'],
+  summary: 'Get AI recommendation for next task to work on',
+  security: [{ Bearer: [] }],
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            data: z.object({
+              taskId: z.string(),
+              title: z.string(),
+              reason: z.string(),
+              confidence: z.number(),
+            }).nullable(),
+          }),
+        },
+      },
+      description: 'Next task recommendation',
+    },
+    400: { content: { 'application/json': { schema: errorResponse } }, description: 'Failed to suggest' },
+  },
+})
+
+taskRoutes.openapi(nextTaskRoute, (async (c: any) => {
+  const { userId } = c.get('user')
+
+  try {
+    const result = await tasksService.suggestNextTask(userId)
+    return c.json({ data: result }, 200)
+  } catch (err) {
+    console.error('[NEXT_TASK_ERROR]', err)
+    return c.json({ error: 'Failed to suggest next task' }, 400)
   }
 }) as any)

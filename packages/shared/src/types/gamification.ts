@@ -9,6 +9,9 @@ export interface GamificationProfile {
   lastActiveDate: string | null
   dailyGoal: number
   title: string | null
+  xpForCurrentLevel: number
+  xpForNextLevel: number
+  dailyXp: number
 }
 
 export interface XpEvent {

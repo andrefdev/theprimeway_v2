@@ -6,6 +6,10 @@ import { SkeletonList } from '@/components/ui/skeleton-list'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { HabitHeatMap } from './HabitHeatMap'
+import { HabitCorrelations } from './HabitCorrelations'
+import { HabitAiSuggestions } from './HabitAiSuggestions'
+import { HabitStacking } from './HabitStacking'
 
 const PERIOD_OPTIONS = [
   { value: 'week', label: '7 days' },
@@ -68,6 +72,9 @@ export function HabitsStats() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Heat map */}
+      <HabitHeatMap data={stats.dailyProgress ?? []} />
 
       {/* Completion rate chart */}
       {chartData.length > 0 && (
@@ -135,6 +142,11 @@ export function HabitsStats() {
           </CardContent>
         </Card>
       )}
+
+      {/* AI Insights */}
+      <HabitCorrelations />
+      <HabitAiSuggestions />
+      <HabitStacking />
     </div>
   )
 }

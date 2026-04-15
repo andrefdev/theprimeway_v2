@@ -1,9 +1,10 @@
 import { chatRepo } from '../repositories/chat.repo'
 import { prisma } from '../lib/prisma'
-import { generateObject } from 'ai'
+import { generateObject, generateText, tool } from 'ai'
 import { anthropic } from '@ai-sdk/anthropic'
 import { z } from 'zod'
 import { calendarService } from './calendar.service'
+import { tasksRepository } from '../repositories/tasks.repo'
 
 // ---------------------------------------------------------------------------
 // Rate limiter (simple in-memory)
@@ -52,17 +53,169 @@ class ChatService {
   }
 
   async chat(
-    _userId: string,
-    body: { messages?: unknown[]; model?: string; locale?: string },
+    userId: string,
+    body: { messages: { role: 'user' | 'assistant'; content: string }[]; locale?: string },
   ) {
-    // Simplified: return a placeholder response
-    return {
-      error: 'Chat streaming not yet implemented in Hono API. Use the PWA endpoint for now.',
-      _meta: {
-        model: body.model || 'gpt-4o',
-        locale: body.locale || 'es',
-        messageCount: Array.isArray(body.messages) ? body.messages.length : 0,
+    const locale = body.locale || 'en'
+
+    // Fetch user context for the system prompt
+    const [openTasks, activeHabits] = await Promise.all([
+      chatRepo.findOpenTasks(userId, 20),
+      chatRepo.findActiveHabits(userId),
+    ])
+
+    const taskContext = openTasks
+      .map((t) => `- [${t.id}] "${t.title}" (priority: ${t.priority}, due: ${t.dueDate || 'none'})`)
+      .join('\n')
+
+    const habitContext = activeHabits
+      .map((h: any) => `- [${h.id}] "${h.name}" (frequency: ${h.frequencyType || 'daily'}, target: ${h.targetFrequency || 1})`)
+      .join('\n')
+
+    const systemPrompt = `You are a productivity assistant for ThePrimeWay, a personal productivity app.
+You help the user manage their tasks and habits. Be concise, actionable, and encouraging.
+Respond in ${locale === 'es' ? 'Spanish' : 'English'}.
+
+Current date: ${new Date().toISOString().split('T')[0]}
+
+User's open tasks:
+${taskContext || '(no open tasks)'}
+
+User's active habits:
+${habitContext || '(no active habits)'}
+
+When the user asks you to create, complete, or list tasks or habits, use the available tools.
+After using a tool, summarize what you did in your response.
+Do NOT invent task or habit IDs — only reference IDs from the context above or from tool results.`
+
+    const result = await generateText({
+      model: anthropic('claude-sonnet-4-6'),
+      system: systemPrompt,
+      messages: body.messages.map((m) => ({
+        role: m.role as 'user' | 'assistant',
+        content: m.content,
+      })),
+      tools: {
+        createTask: tool({
+          description: 'Create a new task for the user',
+          parameters: z.object({
+            title: z.string().describe('Task title'),
+            description: z.string().optional().describe('Task description'),
+            priority: z.enum(['low', 'medium', 'high', 'urgent']).optional().describe('Task priority'),
+            dueDate: z.string().optional().describe('Due date in YYYY-MM-DD format'),
+            scheduledDate: z.string().optional().describe('Scheduled date in YYYY-MM-DD format'),
+          }),
+          execute: async ({ title, description, priority, dueDate, scheduledDate }) => {
+            const task = await tasksRepository.create(userId, {
+              title,
+              description,
+              priority: priority || 'medium',
+              dueDate,
+              scheduledDate,
+            })
+            return { success: true, task: { id: task.id, title: task.title, status: task.status } }
+          },
+        }),
+
+        completeTask: tool({
+          description: 'Mark an existing task as completed',
+          parameters: z.object({
+            taskId: z.string().describe('The ID of the task to complete'),
+          }),
+          execute: async ({ taskId }) => {
+            const task = await tasksRepository.update(userId, taskId, { status: 'completed' })
+            if (!task) return { success: false, error: 'Task not found' }
+            return { success: true, task: { id: task.id, title: task.title, status: task.status } }
+          },
+        }),
+
+        listTasks: tool({
+          description: 'List the user\'s open tasks',
+          parameters: z.object({
+            limit: z.number().optional().describe('Max number of tasks to return (default 10)'),
+          }),
+          execute: async ({ limit }) => {
+            const tasks = await chatRepo.findOpenTasks(userId, limit || 10)
+            return {
+              tasks: tasks.map((t) => ({
+                id: t.id,
+                title: t.title,
+                priority: t.priority,
+                dueDate: t.dueDate,
+                status: t.status,
+              })),
+            }
+          },
+        }),
+
+        createHabit: tool({
+          description: 'Create a new habit for the user',
+          parameters: z.object({
+            name: z.string().describe('Habit name'),
+            description: z.string().optional().describe('Habit description'),
+            frequencyType: z.enum(['daily', 'weekly']).optional().describe('How often the habit should be done'),
+            targetFrequency: z.number().optional().describe('Target times per frequency period'),
+          }),
+          execute: async ({ name, description, frequencyType, targetFrequency }) => {
+            const habit = await prisma.habit.create({
+              data: {
+                userId,
+                name,
+                description,
+                frequencyType: frequencyType || 'daily',
+                targetFrequency: targetFrequency || 1,
+                isActive: true,
+              },
+            })
+            return { success: true, habit: { id: habit.id, name: habit.name } }
+          },
+        }),
+
+        logHabit: tool({
+          description: 'Log a habit completion for today',
+          parameters: z.object({
+            habitId: z.string().describe('The ID of the habit to log'),
+            notes: z.string().optional().describe('Optional notes for the log entry'),
+          }),
+          execute: async ({ habitId, notes }) => {
+            // Verify the habit belongs to the user
+            const habit = await prisma.habit.findFirst({
+              where: { id: habitId, userId },
+            })
+            if (!habit) return { success: false, error: 'Habit not found' }
+
+            const today = new Date()
+            today.setHours(0, 0, 0, 0)
+
+            const log = await prisma.habitLog.upsert({
+              where: { habitId_date: { habitId, date: today } },
+              create: {
+                habitId,
+                userId,
+                date: today,
+                completedCount: 1,
+                notes,
+              },
+              update: {
+                completedCount: { increment: 1 },
+                notes,
+              },
+            })
+            return { success: true, log: { id: log.id, habitName: habit.name, completedCount: log.completedCount } }
+          },
+        }),
       },
+      maxSteps: 5,
+    })
+
+    // Collect tool results from all steps
+    const toolResults = result.steps
+      .flatMap((step) => step.toolResults)
+      .filter(Boolean)
+
+    return {
+      response: result.text,
+      toolResults: toolResults.length > 0 ? toolResults : undefined,
     }
   }
 

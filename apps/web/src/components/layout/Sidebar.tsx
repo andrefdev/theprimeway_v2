@@ -1,5 +1,5 @@
 import { Link, useRouterState } from '@tanstack/react-router'
-import logoSvg from '@/assets/logo.svg'
+import logoSvg from '@/assets/logo_full.svg'
 import { useTranslation } from 'react-i18next'
 import { sidebarIcons } from '@/components/ui/minimal-icon'
 import {
@@ -122,7 +122,7 @@ export function AppSidebar() {
           <SidebarMenuItem className="relative">
             <SidebarMenuButton size="lg" asChild>
               <Link to={'/dashboard' as const}>
-                <img src={logoSvg} alt="ThePrimeWay" className="h-8 w-8 shrink-0 rounded-lg" />
+                <img src={logoSvg} alt="ThePrimeWay" className="h-8 w-8 shrink-0 rounded-md" />
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold text-foreground">
                     ThePrimeWay

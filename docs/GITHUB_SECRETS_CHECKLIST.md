@@ -34,7 +34,7 @@ Repeat for all 29 secrets.
   - Example: `deploy`
   - Type: Plain text
 
-- [ ] **SSH_PRIVATE_KEY**
+- [x] **SSH_PRIVATE_KEY**
   - Description: Private SSH key (multi-line PEM)
   - Example: `-----BEGIN OPENSSH PRIVATE KEY-----\n...content...\n-----END OPENSSH PRIVATE KEY-----`
   - Type: Secret
@@ -44,7 +44,7 @@ Repeat for all 29 secrets.
 
 ### Database (1 secret)
 
-- [ ] **DATABASE_URL**
+- [x] **DATABASE_URL**
   - Description: PostgreSQL connection string
   - Example: `postgresql://appuser:SecurePassword123@db.example.com:5432/theprimeway`
   - Type: Secret
@@ -55,19 +55,19 @@ Repeat for all 29 secrets.
 
 ### Authentication - JWT (3 secrets)
 
-- [ ] **JWT_SECRET**
+- [x] **JWT_SECRET**
   - Description: Secret key for signing JWTs
   - Example: `your-super-secret-jwt-key-here-minimum-32-characters`
   - Type: Secret
   - **Length**: Minimum 32 characters
   - **Generation**: `openssl rand -base64 32`
 
-- [ ] **JWT_ACCESS_EXPIRY**
+- [x] **JWT_ACCESS_EXPIRY**
   - Description: Access token expiration time in seconds
   - Example: `900` (15 minutes)
   - Type: Plain text
 
-- [ ] **JWT_REFRESH_EXPIRY**
+- [x] **JWT_REFRESH_EXPIRY**
   - Description: Refresh token expiration time in seconds
   - Example: `604800` (7 days)
   - Type: Plain text
@@ -137,27 +137,27 @@ These are injected at **Docker build time**, not secrets (visible in bundle), bu
 
 ### Email (5 secrets)
 
-- [ ] **SMTP_HOST**
+- [x] **SMTP_HOST**
   - Description: SMTP server hostname
   - Example: `smtp.gmail.com`
   - Type: Plain text
 
-- [ ] **SMTP_PORT**
+- [x] **SMTP_PORT**
   - Description: SMTP port (usually 587 for TLS, 465 for SSL)
   - Example: `587`
   - Type: Plain text
 
-- [ ] **SMTP_USER**
+- [x] **SMTP_USER**
   - Description: SMTP username (usually email address)
   - Example: `noreply@example.com`
   - Type: Secret
 
-- [ ] **SMTP_PASS**
+- [x] **SMTP_PASS**
   - Description: SMTP password or app-specific password
   - Example: `app-specific-password` (for Gmail, generate at https://myaccount.google.com/apppasswords)
   - Type: Secret
 
-- [ ] **SMTP_FROM**
+- [x] **SMTP_FROM**
   - Description: From address for outgoing emails
   - Example: `noreply@example.com`
   - Type: Plain text
@@ -186,18 +186,18 @@ These are injected at **Docker build time**, not secrets (visible in bundle), bu
 
 ### Firebase (3 secrets)
 
-- [ ] **FIREBASE_PROJECT_ID**
+- [x] **FIREBASE_PROJECT_ID**
   - Description: Firebase project ID
   - Example: `theprimeway-prod`
   - Type: Plain text
   - **Source**: [Firebase Console](https://console.firebase.google.com/)
 
-- [ ] **FIREBASE_CLIENT_EMAIL**
+- [x] **FIREBASE_CLIENT_EMAIL**
   - Description: Service account email
   - Example: `firebase-adminsdk-xxxxx@theprimeway-prod.iam.gserviceaccount.com`
   - Type: Secret
 
-- [ ] **FIREBASE_PRIVATE_KEY**
+- [x] **FIREBASE_PRIVATE_KEY**
   - Description: Service account private key (PEM format)
   - Example: `-----BEGIN PRIVATE KEY-----\nMIIEvQIBA....\n-----END PRIVATE KEY-----\n`
   - Type: Secret
@@ -210,13 +210,13 @@ These are injected at **Docker build time**, not secrets (visible in bundle), bu
 
 ### Image Hosting - Cloudinary (2 secrets)
 
-- [ ] **CLOUDINARY_CLOUD_NAME**
+- [x] **CLOUDINARY_CLOUD_NAME**
   - Description: Cloudinary cloud name (account ID)
   - Example: `yourcloudname`
   - Type: Plain text
   - **Source**: [Cloudinary Dashboard](https://cloudinary.com/console/)
 
-- [ ] **CLOUDINARY_UPLOAD_PRESET**
+- [x] **CLOUDINARY_UPLOAD_PRESET**
   - Description: Unsigned upload preset for frontend uploads
   - Example: `unsigned_preset_name`
   - Type: Plain text
@@ -225,7 +225,7 @@ These are injected at **Docker build time**, not secrets (visible in bundle), bu
 
 ### External API - RapidAPI (1 secret)
 
-- [ ] **RAPIDAPI_KEY**
+- [x] **RAPIDAPI_KEY**
   - Description: RapidAPI key for third-party API access
   - Example: `xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`
   - Type: Secret

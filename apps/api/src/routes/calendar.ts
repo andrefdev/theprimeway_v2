@@ -67,6 +67,213 @@ calendarRoutes.openapi(deleteAccountRoute, async (c) => {
 })
 
 // ---------------------------------------------------------------------------
+// GET /free-time — Analyze free time across a date range
+// ---------------------------------------------------------------------------
+const freeTimeRoute = createRoute({
+  method: 'get',
+  path: '/free-time',
+  tags: ['Calendar'],
+  summary: 'Analyze free time slots across a date range',
+  security: [{ Bearer: [] }],
+  request: {
+    query: z.object({
+      start: z.string().optional().describe('Start date YYYY-MM-DD (defaults to today)'),
+      end: z.string().optional().describe('End date YYYY-MM-DD (defaults to end of week)'),
+    }),
+  },
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            days: z.array(
+              z.object({
+                date: z.string(),
+                totalFreeMinutes: z.number(),
+                totalBusyMinutes: z.number(),
+                longestFreeBlock: z.number(),
+                freeSlots: z.array(
+                  z.object({
+                    start: z.string(),
+                    end: z.string(),
+                    durationMinutes: z.number(),
+                  }),
+                ),
+                eventCount: z.number(),
+              }),
+            ),
+            summary: z.object({
+              avgFreeMinutesPerDay: z.number(),
+              busiestDay: z.string(),
+              freestDay: z.string(),
+              totalFreeHours: z.number(),
+            }),
+          }),
+        },
+      },
+      description: 'Free time analysis',
+    },
+    400: { content: { 'application/json': { schema: errorResponse } }, description: 'Invalid date' },
+  },
+})
+
+calendarRoutes.openapi(freeTimeRoute, async (c) => {
+  const userId = c.get('user').userId
+  let { start, end } = c.req.valid('query')
+
+  // Default: today through end of current week (Sunday)
+  if (!start) {
+    start = new Date().toISOString().split('T')[0]!
+  }
+  if (!end) {
+    const today = new Date()
+    const daysUntilSunday = 7 - today.getDay()
+    const sunday = new Date(today)
+    sunday.setDate(today.getDate() + daysUntilSunday)
+    end = sunday.toISOString().split('T')[0]!
+  }
+
+  // Validate date formats
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/
+  if (!dateRegex.test(start) || !dateRegex.test(end)) {
+    return c.json({ error: 'Invalid date format. Use YYYY-MM-DD' }, 400)
+  }
+
+  if (new Date(start) > new Date(end)) {
+    return c.json({ error: 'Start date must be before or equal to end date' }, 400)
+  }
+
+  const result = await calendarService.analyzeFreeTime(userId, start, end)
+  return c.json(result, 200)
+})
+
+// ---------------------------------------------------------------------------
+// GET /ai/time-blocks — AI-generated time-block suggestions for the day
+// ---------------------------------------------------------------------------
+const aiTimeBlocksRoute = createRoute({
+  method: 'get',
+  path: '/ai/time-blocks',
+  tags: ['Calendar'],
+  summary: 'AI generates optimal time-block suggestions for scheduling tasks into the day',
+  security: [{ Bearer: [] }],
+  request: {
+    query: z.object({
+      date: z.string().describe('Date in YYYY-MM-DD format'),
+    }),
+  },
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            data: z.object({
+              blocks: z.array(
+                z.object({
+                  taskId: z.string(),
+                  taskTitle: z.string(),
+                  startTime: z.string(),
+                  endTime: z.string(),
+                  reason: z.string(),
+                }),
+              ),
+              unscheduled: z.array(
+                z.object({
+                  taskId: z.string(),
+                  taskTitle: z.string(),
+                  reason: z.string(),
+                }),
+              ),
+            }),
+          }),
+        },
+      },
+      description: 'AI-generated time-block suggestions',
+    },
+    400: { content: { 'application/json': { schema: errorResponse } }, description: 'Invalid date format' },
+  },
+})
+
+calendarRoutes.openapi(aiTimeBlocksRoute, async (c) => {
+  const userId = c.get('user').userId
+  const { date } = c.req.valid('query')
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return c.json({ error: 'Invalid date format. Use YYYY-MM-DD' }, 400)
+  }
+
+  const result = await calendarService.generateTimeBlocks(userId, date)
+  return c.json({ data: result }, 200)
+})
+
+// ---------------------------------------------------------------------------
+// GET /ai/smart-slots — AI suggests optimal time slots for a task
+// ---------------------------------------------------------------------------
+const aiSmartSlotsRoute = createRoute({
+  method: 'get',
+  path: '/ai/smart-slots',
+  tags: ['Calendar'],
+  summary: 'AI suggests optimal time slots for a task based on calendar, task type, and energy patterns',
+  security: [{ Bearer: [] }],
+  request: {
+    query: z.object({
+      taskId: z.string().describe('Task ID to find slots for'),
+      date: z.string().describe('Date in YYYY-MM-DD format'),
+    }),
+  },
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            data: z.object({
+              slots: z.array(
+                z.object({
+                  startTime: z.string(),
+                  endTime: z.string(),
+                  score: z.number(),
+                  reason: z.string(),
+                }),
+              ),
+              bestSlot: z.object({
+                startTime: z.string(),
+                endTime: z.string(),
+                reason: z.string(),
+              }),
+            }),
+          }),
+        },
+      },
+      description: 'AI-suggested optimal time slots',
+    },
+    400: { content: { 'application/json': { schema: errorResponse } }, description: 'Invalid input' },
+    404: { content: { 'application/json': { schema: errorResponse } }, description: 'Task not found' },
+  },
+})
+
+calendarRoutes.openapi(aiSmartSlotsRoute, (async (c: any) => {
+  const userId = c.get('user').userId
+  const { taskId, date } = c.req.valid('query')
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return c.json({ error: 'Invalid date format. Use YYYY-MM-DD' }, 400)
+  }
+
+  if (!taskId) {
+    return c.json({ error: 'Missing taskId parameter' }, 400)
+  }
+
+  const result = await calendarService.findSmartSlots(userId, taskId, date)
+
+  if ('error' in result) {
+    if (result.error === 'task_not_found') {
+      return c.json({ error: 'Task not found' }, 404)
+    }
+  }
+
+  return c.json({ data: result }, 200)
+}) as any)
+
+// ---------------------------------------------------------------------------
 // PATCH /calendars/:id
 // ---------------------------------------------------------------------------
 const updateCalendarRoute = createRoute({
@@ -218,6 +425,128 @@ calendarRoutes.openapi(syncRoute, async (c) => {
   const result = await calendarService.syncCalendars(userId, calendarId)
   return c.json(result, 200)
 })
+
+// ---------------------------------------------------------------------------
+// POST /time-block — Create a time block in Google Calendar
+// ---------------------------------------------------------------------------
+const timeBlockRoute = createRoute({
+  method: 'post',
+  path: '/time-block',
+  tags: ['Calendar'],
+  summary: 'Create a time block in Google Calendar for a task or habit',
+  security: [{ Bearer: [] }],
+  request: {
+    body: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            title: z.string().min(1),
+            date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD'),
+            startTime: z.string().regex(/^\d{2}:\d{2}$/, 'Time must be HH:MM'),
+            endTime: z.string().regex(/^\d{2}:\d{2}$/, 'Time must be HH:MM'),
+            description: z.string().optional(),
+            color: z.string().optional(),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    201: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            data: z.object({
+              success: z.boolean(),
+              eventId: z.string().optional(),
+            }),
+          }),
+        },
+      },
+      description: 'Time block created',
+    },
+    400: { content: { 'application/json': { schema: errorResponse } }, description: 'Invalid input' },
+    404: { content: { 'application/json': { schema: errorResponse } }, description: 'No Google Calendar connected' },
+  },
+})
+
+calendarRoutes.openapi(timeBlockRoute, (async (c: any) => {
+  const userId = c.get('user').userId
+  const body = c.req.valid('json')
+
+  const result = await calendarService.createTimeBlock(userId, body)
+
+  if (!result.success) {
+    if (result.error === 'no_google_account' || result.error === 'no_calendar') {
+      return c.json({ error: 'No Google Calendar connected' }, 404)
+    }
+    return c.json({ error: result.error || 'Failed to create time block' }, 400)
+  }
+
+  return c.json({ data: { success: true, eventId: result.eventId } }, 201)
+}) as any)
+
+// ---------------------------------------------------------------------------
+// POST /habit-block — Create a recurring calendar block for a habit
+// ---------------------------------------------------------------------------
+const habitBlockRoute = createRoute({
+  method: 'post',
+  path: '/habit-block',
+  tags: ['Calendar'],
+  summary: 'Create recurring calendar block for a habit',
+  security: [{ Bearer: [] }],
+  request: {
+    body: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            habitId: z.string(),
+            habitName: z.string(),
+            startTime: z.string().regex(/^\d{2}:\d{2}$/, 'Time must be HH:MM'),
+            endTime: z.string().regex(/^\d{2}:\d{2}$/, 'Time must be HH:MM'),
+            frequencyType: z.enum(['daily', 'weekly']),
+            weekDays: z.array(z.string()).optional(),
+            description: z.string().optional(),
+            color: z.string().optional(),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    201: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            data: z.object({
+              success: z.boolean(),
+              eventId: z.string().optional(),
+            }),
+          }),
+        },
+      },
+      description: 'Habit block created',
+    },
+    400: { content: { 'application/json': { schema: errorResponse } }, description: 'Invalid input' },
+    404: { content: { 'application/json': { schema: errorResponse } }, description: 'No Google Calendar connected' },
+  },
+})
+
+calendarRoutes.openapi(habitBlockRoute, (async (c: any) => {
+  const userId = c.get('user').userId
+  const body = c.req.valid('json')
+
+  const result = await calendarService.createHabitBlock(userId, body)
+
+  if (!result.success) {
+    if (result.error === 'no_google_account' || result.error === 'no_calendar') {
+      return c.json({ error: 'No Google Calendar connected' }, 404)
+    }
+    return c.json({ error: result.error || 'Failed to create habit block' }, 400)
+  }
+
+  return c.json({ data: { success: true, eventId: result.eventId } }, 201)
+}) as any)
 
 // ---------------------------------------------------------------------------
 // GET /free-slots
