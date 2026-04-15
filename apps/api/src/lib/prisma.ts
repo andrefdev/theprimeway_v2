@@ -1,4 +1,6 @@
-import { PrismaClient } from '@prisma/client'
+// Default import works with CJS modules in Node ESM (named imports don't)
+import PrismaClientPkg from '@prisma/client'
+const { PrismaClient } = PrismaClientPkg
 import { Pool as PgPool } from 'pg'
 import { PrismaPg } from '@prisma/adapter-pg'
 
