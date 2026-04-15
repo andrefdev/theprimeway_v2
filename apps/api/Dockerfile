@@ -41,19 +41,16 @@ WORKDIR /app
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 hono
 
-# Copy built API bundle, Prisma schema + migrations, and Prisma config
+# Copy built API bundle, Prisma schema + migrations, and config
 COPY --from=builder --chown=hono:nodejs /repo/apps/api/dist ./dist
 COPY --from=builder --chown=hono:nodejs /repo/apps/api/prisma ./prisma
 COPY --from=builder --chown=hono:nodejs /repo/apps/api/prisma.config.ts ./prisma.config.ts
 COPY --from=builder --chown=hono:nodejs /runtime-package.json ./package.json
 
-# Install production deps with npm (flat node_modules — no pnpm complexity)
-RUN npm install --omit=dev 2>&1 | tail -5
+# Install production deps with npm (flat node_modules)
+RUN npm install --omit=dev
 
-# Generate Prisma client in the flat node_modules (correct .prisma location)
-RUN DATABASE_URL="postgresql://build:build@localhost:5432/build" \
-    npx prisma generate --schema=./prisma/schema.prisma
-
+# Set ownership
 RUN chown -R hono:nodejs /app
 
 USER hono
@@ -62,4 +59,6 @@ EXPOSE 3001
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
   CMD node -e "fetch('http://localhost:3001/api/health').then(r=>r.ok?process.exit(0):process.exit(1)).catch(()=>process.exit(1))"
 
-CMD ["node", "dist/index.js"]
+# Generate Prisma client at startup (creates .prisma/client in correct location
+# for the actual runtime node_modules layout), then start the API
+CMD ["sh", "-c", "npx prisma generate && exec node dist/index.js"]
