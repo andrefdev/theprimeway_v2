@@ -270,7 +270,12 @@ jobs:
             docker compose -f docker-compose.prod.yml pull --ignore-buildable || true
 
             # Start containers (runs migrations automatically, creates volumes, etc.)
-            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+            # If migrate fails, dump its logs before exiting
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans || {
+              echo "=== migrate container logs ==="
+              docker compose -f docker-compose.prod.yml logs migrate
+              exit 1
+            }
 
       - name: Health check - API
         run: |
