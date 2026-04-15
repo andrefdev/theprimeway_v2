@@ -15,8 +15,12 @@ interface FeatureOverrideRowProps {
 // Friendly names for features
 const FEATURE_NAMES: Record<FeatureKey, string> = {
   AI_ASSISTANT: 'AI Assistant',
+  READING_MODULE: 'Reading Module',
+  FINANCES_MODULE: 'Finances Module',
+  NOTES_MODULE: 'Notes Module',
   HEALTH_MODULE: 'Health Module',
   ADVANCED_ANALYTICS: 'Advanced Analytics',
+  CUSTOM_THEME_CREATION: 'Custom Theme Creation',
   CUSTOM_THEMES: 'Custom Themes',
   EXPORT_DATA: 'Export Data',
   PRIORITY_SUPPORT: 'Priority Support',

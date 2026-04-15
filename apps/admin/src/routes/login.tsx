@@ -14,7 +14,7 @@ import {
   Button,
   Form,
   FormControl,
-  FormField,
+  FormFieldRoot as FormField,
   FormItem,
   FormLabel,
   FormMessage,

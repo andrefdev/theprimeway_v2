@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { Slot } from '@radix-ui/react-slot'
-import { Controller, FieldPath, FieldValues, FormProvider, useFormContext } from 'react-hook-form'
+import { Controller, ControllerProps, FieldPath, FieldValues, FormProvider, useFormContext } from 'react-hook-form'
 
 import { cn } from '../lib/utils'
 
@@ -17,15 +17,16 @@ const FormFieldContext = React.createContext<FormFieldContextValue>({
   name: '' as const,
 })
 
-const FormField = React.forwardRef<
-  React.ElementRef<typeof Controller>,
-  React.ComponentPropsWithoutRef<typeof Controller>
->(({ ...props }, ref) => (
-  <FormFieldContext.Provider value={{ name: props.name }}>
-    <Controller {...props} ref={ref} />
-  </FormFieldContext.Provider>
-))
-FormField.displayName = 'FormField'
+function FormField<
+  TFieldValues extends FieldValues = FieldValues,
+  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
+>(props: ControllerProps<TFieldValues, TName>) {
+  return (
+    <FormFieldContext.Provider value={{ name: props.name }}>
+      <Controller {...props} />
+    </FormFieldContext.Provider>
+  )
+}
 
 const useFormField = () => {
   const fieldContext = React.useContext(FormFieldContext)
