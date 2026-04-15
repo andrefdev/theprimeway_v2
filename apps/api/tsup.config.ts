@@ -6,4 +6,6 @@ export default defineConfig({
   dts: true,
   // Bundle workspace package so it's not needed at runtime
   noExternal: ["@repo/shared"],
+  // Keep dotenv as external — it's CJS and uses require('fs') which breaks in ESM bundle
+  external: ["dotenv"],
 });
