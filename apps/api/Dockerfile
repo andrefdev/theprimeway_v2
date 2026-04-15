@@ -47,8 +47,13 @@ COPY --from=builder --chown=hono:nodejs /deploy .
 COPY --from=builder --chown=hono:nodejs /repo/apps/api/prisma ./prisma
 
 # Install Prisma CLI for runtime migrations (prisma migrate deploy)
-# This is a devDependency stripped by pnpm deploy --prod, but needed at deploy time
-RUN npm install --no-save prisma@7 && chown -R hono:nodejs node_modules/prisma node_modules/@prisma
+# Installed in /prisma-cli to avoid npm choking on workspace:* in package.json
+RUN cd /tmp && npm init -y > /dev/null 2>&1 && npm install prisma@7 && \
+    cp -r node_modules/prisma /app/node_modules/prisma && \
+    cp -r node_modules/@prisma /tmp/@prisma && \
+    cp -r /tmp/@prisma/* /app/node_modules/@prisma/ && \
+    chown -R hono:nodejs /app/node_modules/prisma /app/node_modules/@prisma && \
+    rm -rf /tmp/node_modules /tmp/package.json /tmp/package-lock.json /tmp/@prisma
 
 # Use the non-root user
 USER hono
