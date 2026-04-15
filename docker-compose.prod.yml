@@ -9,8 +9,8 @@ services:
     image: ghcr.io/${DOCKER_REGISTRY}/theprimeway-api:latest
     command: >-
       sh -c "
-        node node_modules/prisma/build/index.js migrate resolve --applied add_task_all_day 2>/dev/null || true;
-        node node_modules/prisma/build/index.js migrate deploy
+        npx prisma migrate resolve --applied add_task_all_day 2>/dev/null || true;
+        npx prisma migrate deploy
       "
     env_file: .env
     environment:

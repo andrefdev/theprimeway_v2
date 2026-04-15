@@ -30,6 +30,7 @@ RUN node -e " \
   const deps = { ...pkg.dependencies }; \
   delete deps['@repo/shared']; \
   deps['prisma'] = pkg.devDependencies['prisma'] || '^7.6.0'; \
+  deps['dotenv'] = pkg.devDependencies['dotenv'] || '^16.4.0'; \
   const out = { name: 'theprimeway-api', type: 'module', dependencies: deps }; \
   fs.writeFileSync('/runtime-package.json', JSON.stringify(out, null, 2));"
 
@@ -40,9 +41,10 @@ WORKDIR /app
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 hono
 
-# Copy built API bundle and Prisma schema + migrations
+# Copy built API bundle, Prisma schema + migrations, and Prisma config
 COPY --from=builder --chown=hono:nodejs /repo/apps/api/dist ./dist
 COPY --from=builder --chown=hono:nodejs /repo/apps/api/prisma ./prisma
+COPY --from=builder --chown=hono:nodejs /repo/apps/api/prisma.config.ts ./prisma.config.ts
 COPY --from=builder --chown=hono:nodejs /runtime-package.json ./package.json
 
 # Install production deps with npm (flat node_modules — no pnpm complexity)
