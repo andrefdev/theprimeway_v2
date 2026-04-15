@@ -22,7 +22,8 @@ RUN pnpm --filter @repo/api build
 
 # Generate Prisma client (needed at runtime)
 # This generates the client at node_modules/.prisma/client/
-RUN pnpm --filter @repo/api exec prisma generate
+# Dummy DATABASE_URL satisfies prisma.config.ts validation — generate only needs the provider, not a real connection
+RUN DATABASE_URL="postgresql://build:build@localhost:5432/build" pnpm --filter @repo/api exec prisma generate
 
 # Create a standalone production deployment with pnpm deploy
 # This creates /deploy with:

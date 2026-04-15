@@ -781,6 +781,31 @@
 - [x] Migration file: `add_task_all_day/migration.sql` (redundant with existing, safe to skip)
 - [x] i18n: allDay, allDayTask, noSpecificTime (en/es)
 
+### Part AK: Goal Templates (OBJ-F09) ✅
+- [x] Constants: `packages/shared/src/constants/goal-templates.ts` — 6 categories, 2-3 templates each (fitness, career, finance, learning, relationships, wellness)
+- [x] Routes: `GET /api/goals/templates` and `GET /api/goals/templates/:category`
+- [x] i18n: goalTemplates, useTemplate, templateCategories + all template title/description keys (en/es)
+
+### Part AL: Calendar + Timeline Task Views (TSK-F12) ✅
+- [x] Repository: `findByDateRange(userId, start, end)` — tasks by scheduledDate/dueDate range
+- [x] Service: `getCalendarView(userId, start, end)` — grouped by date with allDay/timed split
+- [x] Service: `getTimelineView(userId, start, end)` — chronological with gap events
+- [x] Routes: `GET /api/tasks/views/calendar` and `GET /api/tasks/views/timeline`
+- [x] i18n: calendarView, timelineView, allDayTasks, timedTasks, noTasksThisDay, freeTime (en/es)
+
+### Part AM: Smart Slot Finding (CAL-F03) ✅
+- [x] Repository: `findCompletedWithActualStart(userId, limit)` — productivity pattern data
+- [x] Service: `calendarService.findSmartSlots(userId, taskId, date)` — AI ranks time slots by availability + energy patterns
+  - Returns scored slots with reasons + bestSlot recommendation
+- [x] Route: `GET /api/calendar/ai/smart-slots?taskId=xxx&date=YYYY-MM-DD`
+- [x] i18n: smartSlots, bestTimeSlot, slotScore, findBestTime, productivityPattern (en/es)
+
+### Part AN: Quarterly Nudge (NOT-F06) ✅
+- [x] Service: `cronService.processQuarterlyNudge()` — day 1 of quarter guard, checks existing goals, sends push
+  - No goals → strong nudge, <50% measurable → soft nudge, else skip
+- [x] Route: `POST /api/cron/quarterly-nudge`
+- [x] i18n: quarterlyNudge, newQuarter, setQuarterlyGoals, reviewQuarterlyGoals (en/es)
+
 ---
 
 ## Future Enhancement Candidates (Phase 5+)
