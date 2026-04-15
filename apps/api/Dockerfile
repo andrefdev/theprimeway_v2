@@ -46,14 +46,14 @@ COPY --from=builder --chown=hono:nodejs /deploy .
 # Copy Prisma schema and migrations (needed for runtime migrations)
 COPY --from=builder --chown=hono:nodejs /repo/apps/api/prisma ./prisma
 
-# Install Prisma CLI for runtime migrations (prisma migrate deploy)
-# Installed in /prisma-cli to avoid npm choking on workspace:* in package.json
+# Install Prisma CLI + all transitive deps for runtime migrations
+# npm install in /tmp to avoid workspace:* in the deploy package.json,
+# then merge into /app/node_modules (preserves existing .prisma client)
 RUN cd /tmp && npm init -y > /dev/null 2>&1 && npm install prisma@7 && \
-    cp -r node_modules/prisma /app/node_modules/prisma && \
-    cp -r node_modules/@prisma /tmp/@prisma && \
-    cp -r /tmp/@prisma/* /app/node_modules/@prisma/ && \
-    chown -R hono:nodejs /app/node_modules/prisma /app/node_modules/@prisma && \
-    rm -rf /tmp/node_modules /tmp/package.json /tmp/package-lock.json /tmp/@prisma
+    cp -rn /tmp/node_modules/* /app/node_modules/ && \
+    cp -r /tmp/node_modules/@prisma/* /app/node_modules/@prisma/ && \
+    chown -R hono:nodejs /app/node_modules && \
+    rm -rf /tmp/node_modules /tmp/package.json /tmp/package-lock.json
 
 # Use the non-root user
 USER hono
