@@ -8,10 +8,7 @@ services:
   migrate:
     image: ghcr.io/${DOCKER_REGISTRY}/theprimeway-api:latest
     command: >-
-      sh -c "
-        echo 'DROP SCHEMA public CASCADE; CREATE SCHEMA public;' | npx prisma db execute --stdin &&
-        npx prisma migrate deploy
-      "
+      sh -c "npx prisma migrate deploy"
     env_file: .env
     environment:
       NODE_ENV: production
