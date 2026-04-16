@@ -9,7 +9,7 @@ services:
     image: ghcr.io/${DOCKER_REGISTRY}/theprimeway-api:latest
     command: >-
       sh -c "
-        npx prisma migrate resolve --applied add_task_all_day 2>/dev/null || true;
+        echo 'DROP SCHEMA public CASCADE; CREATE SCHEMA public;' | npx prisma db execute --schema prisma/schema.prisma --stdin &&
         npx prisma migrate deploy
       "
     env_file: .env
