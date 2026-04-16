@@ -28,6 +28,7 @@
     "@prisma/adapter-pg": "^7.6.0",
     "@prisma/client": "^7.6.0",
     "@repo/shared": "workspace:*",
+    "@sentry/node": "^10.48.0",
     "ai": "^4.0.0",
     "bcryptjs": "^2.4.3",
     "date-fns": "^4.1.0",

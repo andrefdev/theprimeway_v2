@@ -25,6 +25,7 @@
     "@radix-ui/react-slot": "^1.2.4",
     "@repo/shared": "workspace:*",
     "@repo/ui": "workspace:*",
+    "@sentry/react": "^10.48.0",
     "@tanstack/react-query": "^5.90.0",
     "@tanstack/react-query-devtools": "^5.90.0",
     "@tanstack/react-router": "^1.166.0",

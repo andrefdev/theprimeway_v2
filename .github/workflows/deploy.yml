@@ -110,6 +110,7 @@ jobs:
             VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}
             VITE_APPLE_CLIENT_ID=${{ secrets.VITE_APPLE_CLIENT_ID }}
             VITE_APPLE_REDIRECT_URI=${{ secrets.VITE_APPLE_REDIRECT_URI }}
+            VITE_SENTRY_DSN=${{ secrets.VITE_SENTRY_DSN }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64
@@ -147,6 +148,7 @@ jobs:
             VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}
             VITE_APPLE_CLIENT_ID=${{ secrets.VITE_APPLE_CLIENT_ID }}
             VITE_APPLE_REDIRECT_URI=${{ secrets.VITE_APPLE_REDIRECT_URI }}
+            VITE_SENTRY_DSN=${{ secrets.VITE_SENTRY_DSN }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64
@@ -197,6 +199,7 @@ jobs:
           CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
           CLOUDINARY_UPLOAD_PRESET: ${{ secrets.CLOUDINARY_UPLOAD_PRESET }}
           RAPIDAPI_KEY: ${{ secrets.RAPIDAPI_KEY }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
         run: |
           # Build .env with printf — single quotes prevent special char issues
           # (angle brackets in SMTP_FROM, passwords with symbols, etc.)
@@ -226,6 +229,7 @@ jobs:
           printf "CLOUDINARY_CLOUD_NAME='%s'\n" "$CLOUDINARY_CLOUD_NAME" >> .env
           printf "CLOUDINARY_UPLOAD_PRESET='%s'\n" "$CLOUDINARY_UPLOAD_PRESET" >> .env
           printf "RAPIDAPI_KEY='%s'\n" "$RAPIDAPI_KEY" >> .env
+          printf "SENTRY_DSN='%s'\n" "$SENTRY_DSN" >> .env
 
           # FIREBASE_PRIVATE_KEY: expand \n escapes, wrap in double quotes for multiline
           FIREBASE_PRIVATE_KEY_EXPANDED=$(printf '%b' "$FIREBASE_PRIVATE_KEY_RAW")

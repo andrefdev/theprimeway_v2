@@ -1,5 +1,6 @@
 import type { ErrorHandler } from 'hono'
 import { ZodError } from 'zod'
+import * as Sentry from '@sentry/node'
 
 export const errorHandler: ErrorHandler = (err, c) => {
   console.error(`[API Error] ${err.message}`, err.stack)
@@ -16,6 +17,8 @@ export const errorHandler: ErrorHandler = (err, c) => {
       400,
     )
   }
+
+  Sentry.captureException(err)
 
   return c.json(
     {

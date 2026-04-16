@@ -1,4 +1,5 @@
 import 'dotenv/config'
+import './lib/sentry'
 import { serve } from '@hono/node-server'
 import { app } from './app'
 
