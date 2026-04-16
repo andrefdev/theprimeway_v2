@@ -806,6 +806,71 @@
 - [x] Route: `POST /api/cron/quarterly-nudge`
 - [x] i18n: quarterlyNudge, newQuarter, setQuarterlyGoals, reviewQuarterlyGoals (en/es)
 
+### Part AO: UX Improvements & Functional Gap Closure ✅
+
+#### Date Locale Consistency ✅
+- [x] Created shared `formatDate`, `formatTime`, `formatMonth` in `apps/web/src/i18n/format.ts`
+  - Uses `LOCALE_TO_INTL` mapping (en→en-US, es→es-ES) as single source of truth
+  - Replaced 26+ scattered `toLocaleDateString`/`toLocaleTimeString` calls across 18 files
+  - All date/time formatting now locale-aware via `useLocale()` hook
+
+#### Font & Asset Optimization ✅
+- [x] Removed unused Nunito Google Font from `index.html` (preconnect + stylesheet)
+- [x] Converted auth logo from PNG (200KB) to WebP (13KB) — `logo_full_text.webp`
+
+#### Error Handling ✅
+- [x] Added global `MutationCache` error handler in `main.tsx` — all mutation errors show toast automatically
+- [x] Fixed silent `.catch(() => {})` in `settings.tsx` — now shows error toast
+- [x] Added finances empty state when no accounts/transactions
+
+#### Scroll Restoration ✅
+- [x] Enabled `scrollRestoration: true` on TanStack Router
+
+#### AI Chat Fix & Floating Chat (AI-F11) ✅
+- [x] Fixed chat API response format: `reply` → `response` field to match backend
+- [x] Created `ChatPanel.tsx` — floating chat panel accessible from any page via FAB button
+  - Uses Sheet component, only renders when AI feature flag enabled
+  - Same tool-calling chat capabilities as /ai route
+- [x] Added `ChatPanel` to `_app.tsx` layout
+- [x] Removed AI from sidebar navigation (now transversal via floating chat)
+
+#### Simplified Navigation (WEB-F06) ✅
+- [x] Sidebar: split into core items (Dashboard, Tasks, Habits, Goals, Pomodoro) + collapsible "More" (Calendar, Finances, Notes, Reading)
+  - Secondary items filtered by feature flags
+- [x] MobileBottomNav: 4 main tabs (Dashboard, Tasks, Habits, Goals) + More sheet
+- [x] Added `navMore` translation key (en/es)
+
+#### Connect Orphan Backend Endpoints ✅
+- [x] `NextTaskCard` — dashboard card for `GET /tasks/ai/next` (AI suggested next task)
+- [x] `WeeklyXpBreakdown` — gamification widget for `GET /gamification/xp/weekly` (XP by source)
+- [x] `QuarterlyReviewCard` — goals quarterly tab for `GET /goals/ai/quarterly-review` (on-demand AI review)
+- [x] `WeeklyPlanCard` — dashboard card for `POST /chat/weekly-plan` (AI weekly planning)
+- [x] Added gamification API method + query for weekly XP
+- [x] Added AI API method for weekly plan
+
+#### Weekly Goal Health Snapshots (OBJ-F14) ✅
+- [x] `processWeeklyReview` cron now auto-creates `GoalHealthSnapshot` per quarterly goal
+  - Uses `upsert` with unique (quarterlyGoalId, weekStart) constraint
+  - Momentum score = current goal progress, status derived from thresholds (≥75→positive, ≥40→neutral, <40→negative)
+
+#### Quarterly Achievement Trigger (GAM-F03) ✅
+- [x] `processQuarterlyReview` cron now calls `checkAchievements(userId)` after review generation
+- [x] `updateQuarterlyGoal` service now triggers `checkAchievements` when progress changes
+  - Fires async (non-blocking) to avoid slowing down the update
+
+#### Habit Archive/Restore Toggle (HAB-F10) ✅
+- [x] Archive button added to HabitCard (list view) — sets `isActive: false`
+- [x] Collapsible "archived habits" section at bottom of list tab with restore button
+- [x] Queries archived habits via `habitsQueries.list({ isActive: 'false' })`
+- [x] i18n: habitArchived, habitRestored, archivedHabits, archive, restore (en/es)
+
+#### Task Backlog View (TSK-F18) ✅
+- [x] Created `/tasks/backlog` route — shows unscheduled tasks (API `?filter=backlog`)
+  - "Today" button per task for quick scheduling to current date
+  - Search filter, completion impact on toggle
+- [x] Added "Backlog" tab to `TasksNav.tsx`
+- [x] i18n: backlog (en/es common.json)
+
 ---
 
 ## Future Enhancement Candidates (Phase 5+)
