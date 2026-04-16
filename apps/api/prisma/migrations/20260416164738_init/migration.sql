@@ -1,6 +1,3 @@
--- CreateSchema
-CREATE SCHEMA IF NOT EXISTS "public";
-
 -- CreateEnum
 CREATE TYPE "PillarArea" AS ENUM ('finances', 'career', 'health', 'relationships', 'mindset', 'lifestyle');
 
@@ -1691,4 +1688,3 @@ ALTER TABLE "user_achievements" ADD CONSTRAINT "user_achievements_achievement_id
 
 -- AddForeignKey
 ALTER TABLE "daily_challenges" ADD CONSTRAINT "daily_challenges_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
