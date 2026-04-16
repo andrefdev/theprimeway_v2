@@ -59,6 +59,5 @@ EXPOSE 3001
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
   CMD node -e "fetch('http://localhost:3001/api/health').then(r=>r.ok?process.exit(0):process.exit(1)).catch(()=>process.exit(1))"
 
-# Generate Prisma client at startup (creates .prisma/client in correct location
-# for the actual runtime node_modules layout), then start the API
-CMD ["sh", "-c", "npx prisma generate && exec node dist/index.js"]
+# Generate Prisma client, apply pending migrations, then start the API
+CMD ["sh", "-c", "npx prisma generate && npx prisma migrate deploy && exec node dist/index.js"]

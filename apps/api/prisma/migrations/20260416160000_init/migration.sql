@@ -1,3 +1,6 @@
+-- CreateSchema
+CREATE SCHEMA IF NOT EXISTS "public";
+
 -- CreateEnum
 CREATE TYPE "PillarArea" AS ENUM ('finances', 'career', 'health', 'relationships', 'mindset', 'lifestyle');
 
@@ -244,9 +247,11 @@ CREATE TABLE "subscription_plans" (
     "max_tasks" INTEGER DEFAULT 20,
     "max_pomodoro_sessions_daily" INTEGER DEFAULT 10,
     "has_ai_assistant" BOOLEAN DEFAULT false,
-    "has_health_module" BOOLEAN DEFAULT false,
+    "has_reading_module" BOOLEAN DEFAULT false,
+    "has_finances_module" BOOLEAN DEFAULT false,
+    "has_notes_module" BOOLEAN DEFAULT false,
     "has_advanced_analytics" BOOLEAN DEFAULT false,
-    "has_custom_themes" BOOLEAN DEFAULT false,
+    "has_custom_theme_creation" BOOLEAN DEFAULT false,
     "has_export_data" BOOLEAN DEFAULT false,
     "has_priority_support" BOOLEAN DEFAULT false,
     "is_active" BOOLEAN DEFAULT true,
@@ -269,6 +274,7 @@ CREATE TABLE "habits" (
     "frequency_type" TEXT,
     "week_days" JSONB,
     "is_active" BOOLEAN DEFAULT true,
+    "goal_id" TEXT,
     "created_at" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
 
@@ -395,6 +401,12 @@ CREATE TABLE "tasks" (
     "locked_time" BOOLEAN DEFAULT false,
     "sync_to_calendar" BOOLEAN DEFAULT false,
     "last_reminder_sent_at" TIMESTAMP(3),
+    "ai_timebox" INTEGER,
+    "ai_insight_json" JSONB,
+    "is_recurring" BOOLEAN NOT NULL DEFAULT false,
+    "recurrence_rule" TEXT,
+    "recurring_parent_id" TEXT,
+    "recurrence_end_date" TIMESTAMP(3),
     "created_at" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
 
@@ -654,7 +666,7 @@ CREATE TABLE "prime_visions" (
 );
 
 -- CreateTable
-CREATE TABLE "prime_pillars" (
+CREATE TABLE "three_year_goals" (
     "id" TEXT NOT NULL,
     "user_id" TEXT,
     "vision_id" TEXT,
@@ -664,14 +676,14 @@ CREATE TABLE "prime_pillars" (
     "created_at" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT "prime_pillars_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "three_year_goals_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "prime_outcomes" (
+CREATE TABLE "annual_goals" (
     "id" TEXT NOT NULL,
     "user_id" TEXT,
-    "pillar_id" TEXT,
+    "three_year_goal_id" TEXT,
     "title" TEXT NOT NULL,
     "description" TEXT,
     "targetMetrics" JSONB,
@@ -680,14 +692,14 @@ CREATE TABLE "prime_outcomes" (
     "created_at" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT "prime_outcomes_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "annual_goals_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "prime_quarter_focuses" (
+CREATE TABLE "quarterly_goals" (
     "id" TEXT NOT NULL,
     "user_id" TEXT,
-    "outcome_id" TEXT,
+    "annual_goal_id" TEXT,
     "year" INTEGER NOT NULL,
     "quarter" INTEGER NOT NULL,
     "title" TEXT NOT NULL,
@@ -698,13 +710,13 @@ CREATE TABLE "prime_quarter_focuses" (
     "created_at" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT "prime_quarter_focuses_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "quarterly_goals_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "focus_task_links" (
     "id" TEXT NOT NULL,
-    "focus_id" TEXT NOT NULL,
+    "quarterly_goal_id" TEXT NOT NULL,
     "task_id" TEXT NOT NULL,
     "weight" DECIMAL(65,30) DEFAULT 1,
     "created_at" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
@@ -715,7 +727,7 @@ CREATE TABLE "focus_task_links" (
 -- CreateTable
 CREATE TABLE "focus_habit_links" (
     "id" TEXT NOT NULL,
-    "focus_id" TEXT NOT NULL,
+    "quarterly_goal_id" TEXT NOT NULL,
     "habit_id" TEXT NOT NULL,
     "weight" DECIMAL(65,30) DEFAULT 1,
     "created_at" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
@@ -726,7 +738,7 @@ CREATE TABLE "focus_habit_links" (
 -- CreateTable
 CREATE TABLE "focus_finance_links" (
     "id" TEXT NOT NULL,
-    "focus_id" TEXT NOT NULL,
+    "quarterly_goal_id" TEXT NOT NULL,
     "savings_goal_id" TEXT,
     "budget_id" TEXT,
     "type" TEXT NOT NULL DEFAULT 'saving',
@@ -740,7 +752,7 @@ CREATE TABLE "focus_finance_links" (
 CREATE TABLE "goal_health_snapshots" (
     "id" TEXT NOT NULL,
     "user_id" TEXT,
-    "focus_id" TEXT NOT NULL,
+    "quarterly_goal_id" TEXT NOT NULL,
     "week_start" TIMESTAMP(3) NOT NULL,
     "momentumScore" INTEGER NOT NULL DEFAULT 0,
     "status" TEXT NOT NULL DEFAULT 'neutral',
@@ -802,12 +814,13 @@ CREATE TABLE "task_calendar_bindings" (
 CREATE TABLE "weekly_goals" (
     "id" TEXT NOT NULL,
     "user_id" TEXT,
-    "quarter_focus_id" TEXT,
+    "quarterly_goal_id" TEXT,
     "week_start_date" TIMESTAMP(3) NOT NULL,
     "title" TEXT NOT NULL,
     "description" TEXT,
     "status" TEXT NOT NULL DEFAULT 'planned',
     "order" INTEGER NOT NULL DEFAULT 0,
+    "parent_goal_id" TEXT,
     "created_at" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
 
@@ -1137,6 +1150,9 @@ CREATE INDEX "habits_user_id_idx" ON "habits"("user_id");
 CREATE INDEX "habits_user_id_is_active_idx" ON "habits"("user_id", "is_active");
 
 -- CreateIndex
+CREATE INDEX "habits_goal_id_idx" ON "habits"("goal_id");
+
+-- CreateIndex
 CREATE INDEX "habit_logs_user_id_idx" ON "habit_logs"("user_id");
 
 -- CreateIndex
@@ -1180,6 +1196,9 @@ CREATE INDEX "tasks_user_id_scheduled_date_idx" ON "tasks"("user_id", "scheduled
 
 -- CreateIndex
 CREATE INDEX "tasks_weekly_goal_id_idx" ON "tasks"("weekly_goal_id");
+
+-- CreateIndex
+CREATE INDEX "tasks_recurring_parent_id_idx" ON "tasks"("recurring_parent_id");
 
 -- CreateIndex
 CREATE INDEX "goals_user_id_idx" ON "goals"("user_id");
@@ -1263,40 +1282,40 @@ CREATE INDEX "chat_messages_thread_id_idx" ON "chat_messages"("thread_id");
 CREATE INDEX "prime_visions_user_id_idx" ON "prime_visions"("user_id");
 
 -- CreateIndex
-CREATE INDEX "prime_pillars_user_id_idx" ON "prime_pillars"("user_id");
+CREATE INDEX "three_year_goals_user_id_idx" ON "three_year_goals"("user_id");
 
 -- CreateIndex
-CREATE INDEX "prime_pillars_vision_id_idx" ON "prime_pillars"("vision_id");
+CREATE INDEX "three_year_goals_vision_id_idx" ON "three_year_goals"("vision_id");
 
 -- CreateIndex
-CREATE INDEX "prime_outcomes_user_id_idx" ON "prime_outcomes"("user_id");
+CREATE INDEX "annual_goals_user_id_idx" ON "annual_goals"("user_id");
 
 -- CreateIndex
-CREATE INDEX "prime_outcomes_pillar_id_idx" ON "prime_outcomes"("pillar_id");
+CREATE INDEX "annual_goals_three_year_goal_id_idx" ON "annual_goals"("three_year_goal_id");
 
 -- CreateIndex
-CREATE INDEX "prime_quarter_focuses_user_id_idx" ON "prime_quarter_focuses"("user_id");
+CREATE INDEX "quarterly_goals_user_id_idx" ON "quarterly_goals"("user_id");
 
 -- CreateIndex
-CREATE INDEX "prime_quarter_focuses_outcome_id_idx" ON "prime_quarter_focuses"("outcome_id");
+CREATE INDEX "quarterly_goals_annual_goal_id_idx" ON "quarterly_goals"("annual_goal_id");
 
 -- CreateIndex
-CREATE INDEX "prime_quarter_focuses_year_quarter_idx" ON "prime_quarter_focuses"("year", "quarter");
+CREATE INDEX "quarterly_goals_year_quarter_idx" ON "quarterly_goals"("year", "quarter");
 
 -- CreateIndex
-CREATE INDEX "focus_task_links_focus_id_idx" ON "focus_task_links"("focus_id");
+CREATE INDEX "focus_task_links_quarterly_goal_id_idx" ON "focus_task_links"("quarterly_goal_id");
 
 -- CreateIndex
 CREATE INDEX "focus_task_links_task_id_idx" ON "focus_task_links"("task_id");
 
 -- CreateIndex
-CREATE INDEX "focus_habit_links_focus_id_idx" ON "focus_habit_links"("focus_id");
+CREATE INDEX "focus_habit_links_quarterly_goal_id_idx" ON "focus_habit_links"("quarterly_goal_id");
 
 -- CreateIndex
 CREATE INDEX "focus_habit_links_habit_id_idx" ON "focus_habit_links"("habit_id");
 
 -- CreateIndex
-CREATE INDEX "focus_finance_links_focus_id_idx" ON "focus_finance_links"("focus_id");
+CREATE INDEX "focus_finance_links_quarterly_goal_id_idx" ON "focus_finance_links"("quarterly_goal_id");
 
 -- CreateIndex
 CREATE INDEX "focus_finance_links_savings_goal_id_idx" ON "focus_finance_links"("savings_goal_id");
@@ -1308,7 +1327,7 @@ CREATE INDEX "focus_finance_links_budget_id_idx" ON "focus_finance_links"("budge
 CREATE INDEX "goal_health_snapshots_user_id_idx" ON "goal_health_snapshots"("user_id");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "goal_health_snapshots_focus_id_week_start_key" ON "goal_health_snapshots"("focus_id", "week_start");
+CREATE UNIQUE INDEX "goal_health_snapshots_quarterly_goal_id_week_start_key" ON "goal_health_snapshots"("quarterly_goal_id", "week_start");
 
 -- CreateIndex
 CREATE INDEX "calendar_accounts_user_id_idx" ON "calendar_accounts"("user_id");
@@ -1329,10 +1348,13 @@ CREATE INDEX "task_calendar_bindings_externalEventId_idx" ON "task_calendar_bind
 CREATE INDEX "weekly_goals_user_id_idx" ON "weekly_goals"("user_id");
 
 -- CreateIndex
-CREATE INDEX "weekly_goals_quarter_focus_id_idx" ON "weekly_goals"("quarter_focus_id");
+CREATE INDEX "weekly_goals_quarterly_goal_id_idx" ON "weekly_goals"("quarterly_goal_id");
 
 -- CreateIndex
 CREATE INDEX "weekly_goals_week_start_date_idx" ON "weekly_goals"("week_start_date");
+
+-- CreateIndex
+CREATE INDEX "weekly_goals_parent_goal_id_idx" ON "weekly_goals"("parent_goal_id");
 
 -- CreateIndex
 CREATE INDEX "user_work_preferences_user_id_idx" ON "user_work_preferences"("user_id");
@@ -1527,6 +1549,9 @@ ALTER TABLE "tasks" ADD CONSTRAINT "tasks_user_id_fkey" FOREIGN KEY ("user_id") 
 ALTER TABLE "tasks" ADD CONSTRAINT "tasks_weekly_goal_id_fkey" FOREIGN KEY ("weekly_goal_id") REFERENCES "weekly_goals"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "tasks" ADD CONSTRAINT "tasks_recurring_parent_id_fkey" FOREIGN KEY ("recurring_parent_id") REFERENCES "tasks"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "goals" ADD CONSTRAINT "goals_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -1572,31 +1597,31 @@ ALTER TABLE "chat_messages" ADD CONSTRAINT "chat_messages_thread_id_fkey" FOREIG
 ALTER TABLE "prime_visions" ADD CONSTRAINT "prime_visions_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "prime_pillars" ADD CONSTRAINT "prime_pillars_vision_id_fkey" FOREIGN KEY ("vision_id") REFERENCES "prime_visions"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "three_year_goals" ADD CONSTRAINT "three_year_goals_vision_id_fkey" FOREIGN KEY ("vision_id") REFERENCES "prime_visions"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "prime_outcomes" ADD CONSTRAINT "prime_outcomes_pillar_id_fkey" FOREIGN KEY ("pillar_id") REFERENCES "prime_pillars"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "annual_goals" ADD CONSTRAINT "annual_goals_three_year_goal_id_fkey" FOREIGN KEY ("three_year_goal_id") REFERENCES "three_year_goals"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "prime_quarter_focuses" ADD CONSTRAINT "prime_quarter_focuses_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "quarterly_goals" ADD CONSTRAINT "quarterly_goals_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "prime_quarter_focuses" ADD CONSTRAINT "prime_quarter_focuses_outcome_id_fkey" FOREIGN KEY ("outcome_id") REFERENCES "prime_outcomes"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "quarterly_goals" ADD CONSTRAINT "quarterly_goals_annual_goal_id_fkey" FOREIGN KEY ("annual_goal_id") REFERENCES "annual_goals"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "focus_task_links" ADD CONSTRAINT "focus_task_links_focus_id_fkey" FOREIGN KEY ("focus_id") REFERENCES "prime_quarter_focuses"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "focus_task_links" ADD CONSTRAINT "focus_task_links_quarterly_goal_id_fkey" FOREIGN KEY ("quarterly_goal_id") REFERENCES "quarterly_goals"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "focus_task_links" ADD CONSTRAINT "focus_task_links_task_id_fkey" FOREIGN KEY ("task_id") REFERENCES "tasks"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "focus_habit_links" ADD CONSTRAINT "focus_habit_links_focus_id_fkey" FOREIGN KEY ("focus_id") REFERENCES "prime_quarter_focuses"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "focus_habit_links" ADD CONSTRAINT "focus_habit_links_quarterly_goal_id_fkey" FOREIGN KEY ("quarterly_goal_id") REFERENCES "quarterly_goals"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "focus_habit_links" ADD CONSTRAINT "focus_habit_links_habit_id_fkey" FOREIGN KEY ("habit_id") REFERENCES "habits"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "focus_finance_links" ADD CONSTRAINT "focus_finance_links_focus_id_fkey" FOREIGN KEY ("focus_id") REFERENCES "prime_quarter_focuses"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "focus_finance_links" ADD CONSTRAINT "focus_finance_links_quarterly_goal_id_fkey" FOREIGN KEY ("quarterly_goal_id") REFERENCES "quarterly_goals"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "focus_finance_links" ADD CONSTRAINT "focus_finance_links_savings_goal_id_fkey" FOREIGN KEY ("savings_goal_id") REFERENCES "savings_goals"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -1608,7 +1633,7 @@ ALTER TABLE "focus_finance_links" ADD CONSTRAINT "focus_finance_links_budget_id_
 ALTER TABLE "goal_health_snapshots" ADD CONSTRAINT "goal_health_snapshots_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "goal_health_snapshots" ADD CONSTRAINT "goal_health_snapshots_focus_id_fkey" FOREIGN KEY ("focus_id") REFERENCES "prime_quarter_focuses"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "goal_health_snapshots" ADD CONSTRAINT "goal_health_snapshots_quarterly_goal_id_fkey" FOREIGN KEY ("quarterly_goal_id") REFERENCES "quarterly_goals"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "calendar_accounts" ADD CONSTRAINT "calendar_accounts_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -1626,7 +1651,7 @@ ALTER TABLE "task_calendar_bindings" ADD CONSTRAINT "task_calendar_bindings_cale
 ALTER TABLE "weekly_goals" ADD CONSTRAINT "weekly_goals_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "weekly_goals" ADD CONSTRAINT "weekly_goals_quarter_focus_id_fkey" FOREIGN KEY ("quarter_focus_id") REFERENCES "prime_quarter_focuses"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "weekly_goals" ADD CONSTRAINT "weekly_goals_quarterly_goal_id_fkey" FOREIGN KEY ("quarterly_goal_id") REFERENCES "quarterly_goals"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "user_work_preferences" ADD CONSTRAINT "user_work_preferences_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -1666,3 +1691,4 @@ ALTER TABLE "user_achievements" ADD CONSTRAINT "user_achievements_achievement_id
 
 -- AddForeignKey
 ALTER TABLE "daily_challenges" ADD CONSTRAINT "daily_challenges_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
