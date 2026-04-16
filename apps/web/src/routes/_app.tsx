@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
 import { useAuthStore } from '../stores/auth.store'
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
@@ -7,6 +8,7 @@ import { Header } from '../components/layout/Topbar'
 import { MobileBottomNav } from '../components/layout/MobileBottomNav'
 import { ErrorBoundary } from '../components/ErrorBoundary'
 import { useLocaleSync } from '../i18n/useLocaleSync'
+import { RouteLoadingSkeleton } from '../components/RouteLoadingSkeleton'
 
 export const Route = createFileRoute('/_app')({
   beforeLoad: () => {
@@ -28,7 +30,9 @@ function AppLayout() {
           <Header />
           <main id="app-scroll-region" className="flex-1 overflow-y-auto">
             <ErrorBoundary>
-              <Outlet />
+              <Suspense fallback={<RouteLoadingSkeleton />}>
+                <Outlet />
+              </Suspense>
             </ErrorBoundary>
           </main>
           <MobileBottomNav />

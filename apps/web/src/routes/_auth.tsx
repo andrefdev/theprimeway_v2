@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
 import { useAuthStore } from '../stores/auth.store'
 
@@ -15,7 +16,9 @@ function AuthLayout() {
   return (
     <div className="flex min-h-dvh items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
-        <Outlet />
+        <Suspense fallback={<div className="h-96" />}>
+          <Outlet />
+        </Suspense>
       </div>
     </div>
   )
