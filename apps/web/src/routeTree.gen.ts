@@ -36,6 +36,7 @@ import { Route as AppTasksTodayRouteImport } from './routes/_app/tasks/today'
 import { Route as AppTasksTimelineRouteImport } from './routes/_app/tasks/timeline'
 import { Route as AppTasksStatsRouteImport } from './routes/_app/tasks/stats'
 import { Route as AppTasksCalendarRouteImport } from './routes/_app/tasks/calendar'
+import { Route as AppTasksBacklogRouteImport } from './routes/_app/tasks/backlog'
 import { Route as AppTasksAllRouteImport } from './routes/_app/tasks/all'
 import { Route as AppReadingLibraryRouteImport } from './routes/_app/reading/library'
 import { Route as AppNotesTrashRouteImport } from './routes/_app/notes/trash'
@@ -182,6 +183,11 @@ const AppTasksCalendarRoute = AppTasksCalendarRouteImport.update({
   path: '/tasks/calendar',
   getParentRoute: () => AppRoute,
 } as any)
+const AppTasksBacklogRoute = AppTasksBacklogRouteImport.update({
+  id: '/tasks/backlog',
+  path: '/tasks/backlog',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppTasksAllRoute = AppTasksAllRouteImport.update({
   id: '/tasks/all',
   path: '/tasks/all',
@@ -272,6 +278,7 @@ export interface FileRoutesByFullPath {
   '/notes/trash': typeof AppNotesTrashRoute
   '/reading/library': typeof AppReadingLibraryRoute
   '/tasks/all': typeof AppTasksAllRoute
+  '/tasks/backlog': typeof AppTasksBacklogRoute
   '/tasks/calendar': typeof AppTasksCalendarRoute
   '/tasks/stats': typeof AppTasksStatsRoute
   '/tasks/timeline': typeof AppTasksTimelineRoute
@@ -311,6 +318,7 @@ export interface FileRoutesByTo {
   '/notes/trash': typeof AppNotesTrashRoute
   '/reading/library': typeof AppReadingLibraryRoute
   '/tasks/all': typeof AppTasksAllRoute
+  '/tasks/backlog': typeof AppTasksBacklogRoute
   '/tasks/calendar': typeof AppTasksCalendarRoute
   '/tasks/stats': typeof AppTasksStatsRoute
   '/tasks/timeline': typeof AppTasksTimelineRoute
@@ -353,6 +361,7 @@ export interface FileRoutesById {
   '/_app/notes/trash': typeof AppNotesTrashRoute
   '/_app/reading/library': typeof AppReadingLibraryRoute
   '/_app/tasks/all': typeof AppTasksAllRoute
+  '/_app/tasks/backlog': typeof AppTasksBacklogRoute
   '/_app/tasks/calendar': typeof AppTasksCalendarRoute
   '/_app/tasks/stats': typeof AppTasksStatsRoute
   '/_app/tasks/timeline': typeof AppTasksTimelineRoute
@@ -394,6 +403,7 @@ export interface FileRouteTypes {
     | '/notes/trash'
     | '/reading/library'
     | '/tasks/all'
+    | '/tasks/backlog'
     | '/tasks/calendar'
     | '/tasks/stats'
     | '/tasks/timeline'
@@ -433,6 +443,7 @@ export interface FileRouteTypes {
     | '/notes/trash'
     | '/reading/library'
     | '/tasks/all'
+    | '/tasks/backlog'
     | '/tasks/calendar'
     | '/tasks/stats'
     | '/tasks/timeline'
@@ -474,6 +485,7 @@ export interface FileRouteTypes {
     | '/_app/notes/trash'
     | '/_app/reading/library'
     | '/_app/tasks/all'
+    | '/_app/tasks/backlog'
     | '/_app/tasks/calendar'
     | '/_app/tasks/stats'
     | '/_app/tasks/timeline'
@@ -682,6 +694,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTasksCalendarRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/tasks/backlog': {
+      id: '/_app/tasks/backlog'
+      path: '/tasks/backlog'
+      fullPath: '/tasks/backlog'
+      preLoaderRoute: typeof AppTasksBacklogRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/tasks/all': {
       id: '/_app/tasks/all'
       path: '/tasks/all'
@@ -793,6 +812,7 @@ interface AppRouteChildren {
   AppNotesTrashRoute: typeof AppNotesTrashRoute
   AppReadingLibraryRoute: typeof AppReadingLibraryRoute
   AppTasksAllRoute: typeof AppTasksAllRoute
+  AppTasksBacklogRoute: typeof AppTasksBacklogRoute
   AppTasksCalendarRoute: typeof AppTasksCalendarRoute
   AppTasksStatsRoute: typeof AppTasksStatsRoute
   AppTasksTimelineRoute: typeof AppTasksTimelineRoute
@@ -828,6 +848,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppNotesTrashRoute: AppNotesTrashRoute,
   AppReadingLibraryRoute: AppReadingLibraryRoute,
   AppTasksAllRoute: AppTasksAllRoute,
+  AppTasksBacklogRoute: AppTasksBacklogRoute,
   AppTasksCalendarRoute: AppTasksCalendarRoute,
   AppTasksStatsRoute: AppTasksStatsRoute,
   AppTasksTimelineRoute: AppTasksTimelineRoute,

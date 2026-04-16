@@ -8,6 +8,8 @@ import { Button } from '@/shared/components/ui/button'
 import { SkeletonList } from '@/shared/components/ui/skeleton-list'
 import { toast } from 'sonner'
 import { subscriptionQueries } from '@/features/subscriptions/queries'
+import { useLocale } from '@/i18n/useLocale'
+import { formatDate } from '@/i18n/format'
 import { subscriptionsApi } from '@/features/subscriptions/api'
 import { PlanCard } from '@/features/subscriptions/components/PlanCard'
 import type { SubscriptionPlan, SubscriptionStatus } from '@repo/shared/types'
@@ -18,6 +20,7 @@ export const Route = createFileRoute('/_app/subscription')({
 
 function SubscriptionPage() {
   const { t } = useTranslation('subscriptions')
+  const { locale } = useLocale()
   const queryClient = useQueryClient()
   const [loading, setLoading] = useState(false)
 
@@ -79,7 +82,7 @@ function SubscriptionPage() {
                   </Badge>
                   {status.tier === 'trial' && status.trialEndsAt && (
                     <span className="text-xs text-muted-foreground">
-                      {t('trialEnds', { date: new Date(status.trialEndsAt).toLocaleDateString() })}
+                      {t('trialEnds', { date: formatDate(status.trialEndsAt, locale) })}
                     </span>
                   )}
                   {status.cancelAtPeriodEnd && (

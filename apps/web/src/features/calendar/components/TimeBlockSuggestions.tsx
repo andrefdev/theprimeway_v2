@@ -6,9 +6,12 @@ import { Button } from '@/shared/components/ui/button'
 import { useTranslation } from 'react-i18next'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
+import { useLocale } from '@/i18n/useLocale'
+import { formatTime } from '@/i18n/format'
 
 export function TimeBlockSuggestions() {
   const { t } = useTranslation('common')
+  const { locale } = useLocale()
   const today = format(new Date(), 'yyyy-MM-dd')
   const [loading, setLoading] = useState(false)
   const [blocks, setBlocks] = useState<any[] | null>(null)
@@ -59,7 +62,7 @@ export function TimeBlockSuggestions() {
             {blocks.map((block: any, i: number) => (
               <div key={i} className="flex items-center gap-2 rounded border border-border/50 p-2 text-xs">
                 <span className="text-muted-foreground font-mono w-24 shrink-0">
-                  {formatTime(block.start ?? block.startTime)} - {formatTime(block.end ?? block.endTime)}
+                  {formatTime(block.start ?? block.startTime, locale)} - {formatTime(block.end ?? block.endTime, locale)}
                 </span>
                 <span className="text-foreground flex-1 truncate">{block.taskTitle ?? block.title}</span>
                 {block.reason && (
@@ -77,10 +80,3 @@ export function TimeBlockSuggestions() {
   )
 }
 
-function formatTime(iso: string) {
-  try {
-    return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-  } catch {
-    return iso
-  }
-}

@@ -8,6 +8,7 @@ import { DangerZone } from '@/features/settings/components/DangerZone'
 import { NotificationsPreferences } from '@/features/notifications/components/NotificationsPreferences'
 import { useFeature } from '@/features/feature-flags/hooks'
 import { FEATURES } from '@repo/shared/constants'
+import { toast } from 'sonner'
 
 export const Route = createFileRoute('/_app/settings')({
   component: SettingsPage,
@@ -24,7 +25,7 @@ function SettingsPage() {
     settingsApi
       .getSettings()
       .then((r) => setSettings(r.data.data))
-      .catch(() => {})
+      .catch(() => toast.error(t('loadSettingsFailed', { defaultValue: 'Failed to load settings' })))
   }, [])
 
   function update(key: keyof UserSettings, value: string) {

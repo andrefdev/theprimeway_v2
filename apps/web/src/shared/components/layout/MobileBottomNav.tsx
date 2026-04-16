@@ -38,28 +38,13 @@ export function MobileBottomNav() {
       label: t('navHabits'),
     },
     {
-      href: '/finances',
-      icon: sidebarIcons.finances('h-5 w-5', {}),
-      label: t('navFinances'),
-    },
-  ]
-
-  const moreItems = [
-    {
       href: '/goals',
       icon: sidebarIcons.goals('h-5 w-5', {}),
       label: t('navGoals'),
     },
-    {
-      href: '/reading',
-      icon: sidebarIcons.reading('h-5 w-5', {}),
-      label: t('navReading'),
-    },
-    {
-      href: '/notes',
-      icon: sidebarIcons.notes('h-5 w-5', {}),
-      label: t('navNotes'),
-    },
+  ]
+
+  const moreItems = [
     {
       href: '/pomodoro',
       icon: sidebarIcons.pomodoro('h-5 w-5', {}),
@@ -71,9 +56,19 @@ export function MobileBottomNav() {
       label: t('navCalendar'),
     },
     {
-      href: '/ai',
-      icon: sidebarIcons.alebot('h-5 w-5', {}),
-      label: t('navAI'),
+      href: '/finances',
+      icon: sidebarIcons.finances('h-5 w-5', {}),
+      label: t('navFinances'),
+    },
+    {
+      href: '/notes',
+      icon: sidebarIcons.notes('h-5 w-5', {}),
+      label: t('navNotes'),
+    },
+    {
+      href: '/reading',
+      icon: sidebarIcons.reading('h-5 w-5', {}),
+      label: t('navReading'),
     },
   ]
 

@@ -5,6 +5,7 @@ import { Badge } from '@/shared/components/ui/badge'
 import { useTranslation } from 'react-i18next'
 import { format, addDays } from 'date-fns'
 import { useLocale } from '@/i18n/useLocale'
+import { formatTime } from '@/i18n/format'
 
 const PRIORITY_COLORS: Record<string, string> = {
   high: 'border-l-red-500',
@@ -14,7 +15,7 @@ const PRIORITY_COLORS: Record<string, string> = {
 
 export function TaskTimelineView() {
   const { t } = useTranslation('tasks')
-  const { dateFnsLocale } = useLocale()
+  const { locale, dateFnsLocale } = useLocale()
 
   const start = format(new Date(), 'yyyy-MM-dd')
   const end = format(addDays(new Date(), 7), 'yyyy-MM-dd')
@@ -71,9 +72,9 @@ export function TaskTimelineView() {
               <div className="flex items-center gap-2 mt-1 text-[11px] text-muted-foreground">
                 {task.scheduledStart && (
                   <span>
-                    {new Date(task.scheduledStart).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {formatTime(task.scheduledStart, locale)}
                     {task.scheduledEnd && (
-                      <> - {new Date(task.scheduledEnd).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</>
+                      <> - {formatTime(task.scheduledEnd, locale)}</>
                     )}
                   </span>
                 )}

@@ -16,6 +16,8 @@ import { useCurrency } from '@/features/finances/hooks/use-currency'
 import { FeatureGate } from '@/features/feature-flags/FeatureGate'
 import { FEATURES } from '@repo/shared/constants'
 import { UpgradePrompt } from '@/features/subscriptions/components/UpgradePrompt'
+import { useLocale } from '@/i18n/useLocale'
+import { formatDate } from '@/i18n/format'
 import { Button } from '@/shared/components/ui/button'
 import { Card, CardContent } from '@/shared/components/ui/card'
 import { Input } from '@/shared/components/ui/input'
@@ -35,6 +37,7 @@ export const Route = createFileRoute('/_app/finances/savings')({
 
 function SavingsPage() {
   const { t } = useTranslation('finances')
+  const { locale } = useLocale()
   const { formatCurrency } = useCurrency()
   const savingsQuery = useQuery(financesQueries.savingsGoals())
   const deleteSavings = useDeleteSavingsGoal()
@@ -159,7 +162,7 @@ function SavingsPage() {
                         {goal.targetDate ? (
                           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                             <CalendarDays className="h-3.5 w-3.5" />
-                            {new Date(goal.targetDate).toLocaleDateString()}
+                            {formatDate(goal.targetDate, locale)}
                           </div>
                         ) : (
                           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">

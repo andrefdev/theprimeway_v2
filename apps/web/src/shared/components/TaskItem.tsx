@@ -3,6 +3,8 @@ import { CompletionToggle } from './CompletionToggle'
 import { EditButton, DeleteButton } from './ActionButtons'
 import { TaskTimerButton } from '@/features/tasks/components/TaskTimerButton'
 import type { Task } from '@repo/shared/types'
+import { useLocale } from '@/i18n/useLocale'
+import { formatDate } from '@/i18n/format'
 
 interface TaskItemProps {
   task: Task
@@ -21,6 +23,7 @@ const PRIORITY_COLOR: Record<string, { bg: string; text: string }> = {
 }
 
 export function TaskItem({ task, onToggle, onEdit, onDelete, size = 'md', showDate, dragHandle }: TaskItemProps) {
+  const { locale } = useLocale()
   const isCompleted = task.status === 'completed'
   const paddingClass = size === 'sm' ? 'px-3 py-2' : 'px-4 py-3'
   const priorityStyle = PRIORITY_COLOR[task.priority] || { bg: 'bg-slate-100 dark:bg-slate-800', text: 'text-slate-600 dark:text-slate-400' }
@@ -93,7 +96,7 @@ export function TaskItem({ task, onToggle, onEdit, onDelete, size = 'md', showDa
         <div className="flex items-center gap-2 mt-1 flex-wrap">
           {showDate && task.scheduledDate && (
             <span className="text-[11px] text-muted-foreground">
-              {new Date(task.scheduledDate).toLocaleDateString()}
+              {formatDate(task.scheduledDate, locale)}
             </span>
           )}
           {task.estimatedDuration && (

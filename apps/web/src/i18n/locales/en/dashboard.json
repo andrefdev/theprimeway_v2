@@ -27,5 +27,6 @@
   "days": "{{count}} days",
   "startFocus": "Start Focus",
   "addTransaction": "Add Transaction",
-  "addNote": "Add Note"
+  "addNote": "Add Note",
+  "nextTaskSuggestion": "AI Suggested Next Task"
 }

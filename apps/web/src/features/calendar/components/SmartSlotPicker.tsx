@@ -6,6 +6,8 @@ import { Button } from '@/shared/components/ui/button'
 import { useTranslation } from 'react-i18next'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
+import { useLocale } from '@/i18n/useLocale'
+import { formatTime } from '@/i18n/format'
 
 interface SmartSlotPickerProps {
   taskId: string
@@ -16,6 +18,7 @@ interface SmartSlotPickerProps {
 
 export function SmartSlotPicker({ taskId, taskTitle, date, onScheduled }: SmartSlotPickerProps) {
   const { t } = useTranslation('common')
+  const { locale } = useLocale()
   const targetDate = date ?? format(new Date(), 'yyyy-MM-dd')
   const [loading, setLoading] = useState(false)
   const [slots, setSlots] = useState<any[] | null>(null)
@@ -77,7 +80,7 @@ export function SmartSlotPicker({ taskId, taskTitle, date, onScheduled }: SmartS
                   }`}
                 >
                   <span className="font-mono text-muted-foreground">
-                    {formatTime(slot.start ?? slot.startTime)} - {formatTime(slot.end ?? slot.endTime)}
+                    {formatTime(slot.start ?? slot.startTime, locale)} - {formatTime(slot.end ?? slot.endTime, locale)}
                   </span>
                   {slot.score && (
                     <Badge variant="outline" className="text-[9px]">{Math.round(slot.score * 100)}%</Badge>
@@ -94,10 +97,3 @@ export function SmartSlotPicker({ taskId, taskTitle, date, onScheduled }: SmartS
   )
 }
 
-function formatTime(iso: string) {
-  try {
-    return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-  } catch {
-    return iso
-  }
-}

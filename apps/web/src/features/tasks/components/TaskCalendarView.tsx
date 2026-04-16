@@ -6,6 +6,7 @@ import { Button } from '@/shared/components/ui/button'
 import { useTranslation } from 'react-i18next'
 import { format, addMonths, startOfMonth, endOfMonth, eachDayOfInterval, getDay } from 'date-fns'
 import { useLocale } from '@/i18n/useLocale'
+import { formatTime } from '@/i18n/format'
 
 const PRIORITY_DOT: Record<string, string> = {
   high: 'bg-red-500',
@@ -15,7 +16,7 @@ const PRIORITY_DOT: Record<string, string> = {
 
 export function TaskCalendarView() {
   const { t } = useTranslation('tasks')
-  const { dateFnsLocale } = useLocale()
+  const { locale, dateFnsLocale } = useLocale()
   const [monthOffset, setMonthOffset] = useState(0)
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
 
@@ -126,7 +127,7 @@ export function TaskCalendarView() {
                   </span>
                   {task.scheduledStart && (
                     <span className="text-muted-foreground ml-auto">
-                      {new Date(task.scheduledStart).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {formatTime(task.scheduledStart, locale)}
                     </span>
                   )}
                 </div>

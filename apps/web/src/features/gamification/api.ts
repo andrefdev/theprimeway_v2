@@ -86,4 +86,17 @@ export const gamificationApi = {
         }>
       }>('/gamification/level-events')
       .then((r) => r.data),
+
+  getWeeklyXpSummary: (weekStart?: string) =>
+    api
+      .get<{
+        data: {
+          weekStart: string
+          weekEnd: string
+          totalXp: number
+          totalEvents: number
+          breakdown: Array<{ source: string; xp: number; count: number }>
+        }
+      }>('/gamification/xp/weekly', { params: weekStart ? { weekStart } : undefined })
+      .then((r) => r.data),
 }

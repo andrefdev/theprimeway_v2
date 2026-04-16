@@ -4,6 +4,8 @@ import { Card, CardContent } from '@/shared/components/ui/card'
 import { Progress } from '@/shared/components/ui/progress'
 import { Badge } from '@/shared/components/ui/badge'
 import { useTranslation } from 'react-i18next'
+import { useLocale } from '@/i18n/useLocale'
+import { formatDate } from '@/i18n/format'
 
 const LEVEL_KEYS: Record<string, string> = {
   vision: 'levelVision',
@@ -23,6 +25,7 @@ const LEVEL_DEFAULTS: Record<string, string> = {
 
 export function GoalsSummaryCard() {
   const { t } = useTranslation('common')
+  const { locale } = useLocale()
   const { data, isLoading } = useQuery(goalsQueries.dashboardSummary())
 
   if (isLoading) {
@@ -92,7 +95,7 @@ export function GoalsSummaryCard() {
                   <div className="flex items-center gap-1.5 shrink-0 ml-2">
                     <Badge variant="outline" className="text-[10px]">{d.level}</Badge>
                     <span className="text-muted-foreground">
-                      {new Date(d.endDate).toLocaleDateString()}
+                      {formatDate(d.endDate, locale)}
                     </span>
                   </div>
                 </div>

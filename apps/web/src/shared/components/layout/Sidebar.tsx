@@ -7,6 +7,7 @@ import {
   SidebarHeader,
   SidebarContent,
   SidebarGroup,
+  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
@@ -14,7 +15,8 @@ import {
   SidebarRail,
   useSidebar,
 } from '@/shared/components/ui/sidebar'
-import { PanelLeftClose, HelpCircle } from 'lucide-react'
+import { PanelLeftClose, HelpCircle, ChevronDown } from 'lucide-react'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/shared/components/ui/collapsible'
 import { useFeatures } from '@/features/feature-flags/hooks'
 import { FEATURES } from '@repo/shared/constants'
 import type { FeatureKey } from '@repo/shared/constants'
@@ -26,10 +28,10 @@ interface NavItem {
   requiredFeature?: FeatureKey
 }
 
-function useNavItems() {
+function useCoreNavItems() {
   const { t } = useTranslation('common')
 
-  const navItems: NavItem[] = [
+  return [
     {
       title: t('navDashboard'),
       to: '/dashboard',
@@ -51,6 +53,24 @@ function useNavItems() {
       icon: sidebarIcons.goals(undefined, { size: 20 }),
     },
     {
+      title: t('navPomodoro'),
+      to: '/pomodoro',
+      icon: sidebarIcons.pomodoro(undefined, { size: 20 }),
+    },
+  ] satisfies NavItem[]
+}
+
+function useSecondaryNavItems() {
+  const { t } = useTranslation('common')
+  const { features } = useFeatures()
+
+  const items: NavItem[] = [
+    {
+      title: t('navCalendar'),
+      to: '/calendar',
+      icon: sidebarIcons.weekPlanning(undefined, { size: 20 }),
+    },
+    {
       title: t('navFinances'),
       to: '/finances',
       icon: sidebarIcons.finances(undefined, { size: 20 }),
@@ -68,32 +88,9 @@ function useNavItems() {
       icon: sidebarIcons.reading(undefined, { size: 20 }),
       requiredFeature: FEATURES.READING_MODULE,
     },
-    {
-      title: t('navPomodoro'),
-      to: '/pomodoro',
-      icon: sidebarIcons.pomodoro(undefined, { size: 20 }),
-    },
-    {
-      title: t('navCalendar'),
-      to: '/calendar',
-      icon: sidebarIcons.weekPlanning(undefined, { size: 20 }),
-    },
-    {
-      title: t('navAI'),
-      to: '/ai',
-      icon: sidebarIcons.alebot(undefined, { size: 20 }),
-      requiredFeature: FEATURES.AI_ASSISTANT,
-    },
   ]
 
-  return navItems
-}
-
-function useVisibleNavItems() {
-  const navItems = useNavItems()
-  const { features } = useFeatures()
-
-  return navItems.filter((item) => {
+  return items.filter((item) => {
     if (!item.requiredFeature) return true
     return features?.[item.requiredFeature]?.enabled ?? false
   })
@@ -103,13 +100,13 @@ export function AppSidebar() {
   const { t } = useTranslation('common')
   const location = useRouterState({ select: (s) => s.location })
   const { toggleSidebar } = useSidebar()
-  const navItems = useVisibleNavItems()
+  const coreItems = useCoreNavItems()
+  const secondaryItems = useSecondaryNavItems()
 
   function isActive(to: string) {
     if (to === '/dashboard') {
       return location.pathname === '/' || location.pathname === '/dashboard'
     }
-    // Match section root (e.g. /tasks/today highlights for any /tasks/* route)
     const section = '/' + to.split('/')[1]
     return location.pathname.startsWith(section + '/') || location.pathname === section
   }
@@ -130,7 +127,6 @@ export function AppSidebar() {
                 </div>
               </Link>
             </SidebarMenuButton>
-            {/* Collapse button — visible on sidebar hover */}
             <button
               onClick={toggleSidebar}
               className="absolute right-2 top-3 z-50 flex h-6 w-6 items-center justify-center rounded-md opacity-0 transition-all duration-200 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground group-hover/sidebar:opacity-100"
@@ -144,9 +140,10 @@ export function AppSidebar() {
 
       {/* Navigation */}
       <SidebarContent>
+        {/* Core modules */}
         <SidebarGroup>
           <SidebarMenu>
-            {navItems.map((item) => (
+            {coreItems.map((item) => (
               <SidebarMenuItem key={item.to}>
                 <SidebarMenuButton asChild isActive={isActive(item.to)}>
                   <Link to={item.to as '/'}>
@@ -158,6 +155,34 @@ export function AppSidebar() {
             ))}
           </SidebarMenu>
         </SidebarGroup>
+
+        {/* Secondary modules — collapsible */}
+        {secondaryItems.length > 0 && (
+          <Collapsible defaultOpen={false} className="group/collapsible">
+            <SidebarGroup>
+              <CollapsibleTrigger asChild>
+                <SidebarGroupLabel className="cursor-pointer select-none">
+                  {t('navMore')}
+                  <ChevronDown className="ml-auto size-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
+                </SidebarGroupLabel>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <SidebarMenu>
+                  {secondaryItems.map((item) => (
+                    <SidebarMenuItem key={item.to}>
+                      <SidebarMenuButton asChild isActive={isActive(item.to)}>
+                        <Link to={item.to as '/'}>
+                          {item.icon}
+                          <span className="text-sm">{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </CollapsibleContent>
+            </SidebarGroup>
+          </Collapsible>
+        )}
       </SidebarContent>
 
       {/* Footer */}

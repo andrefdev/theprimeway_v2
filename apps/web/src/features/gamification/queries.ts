@@ -75,4 +75,11 @@ export const gamificationQueries = {
       staleTime: CACHE_TIMES.short,
       refetchInterval: 30 * 1000, // Poll every 30s while app is active
     }),
+
+  weeklyXp: (weekStart?: string) =>
+    queryOptions({
+      queryKey: [...gamificationQueries.all(), 'weekly-xp', weekStart],
+      queryFn: () => gamificationApi.getWeeklyXpSummary(weekStart),
+      staleTime: CACHE_TIMES.standard,
+    }),
 }

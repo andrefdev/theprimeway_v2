@@ -11,6 +11,8 @@ import {
   useGoalDetail,
 } from '../queries'
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card'
+import { useLocale } from '@/i18n/useLocale'
+import { formatDate } from '@/i18n/format'
 import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
 import { Textarea } from '@/shared/components/ui/textarea'
@@ -28,6 +30,7 @@ interface GoalDetailPanelProps {
 type GoalType = 'goal' | 'three-year' | 'annual' | 'quarterly' | 'vision'
 
 export function GoalDetailPanel({ goalId, onClose }: GoalDetailPanelProps) {
+  const { locale } = useLocale()
   const [isEditing, setIsEditing] = useState(false)
   const [editedTitle, setEditedTitle] = useState('')
   const [editedDescription, setEditedDescription] = useState('')
@@ -212,7 +215,7 @@ export function GoalDetailPanel({ goalId, onClose }: GoalDetailPanelProps) {
         <div className="space-y-1.5 text-xs">
           <Label className="text-xs">Created</Label>
           <p className="text-muted-foreground">
-            {new Date(goal.createdAt).toLocaleDateString()}
+            {formatDate(goal.createdAt, locale)}
           </p>
         </div>
 

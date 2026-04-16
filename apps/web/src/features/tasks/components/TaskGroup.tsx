@@ -4,6 +4,9 @@ import { Badge } from '@/shared/components/ui/badge'
 import { ChevronRightIcon } from '@/shared/components/Icons'
 import type { Task } from '@repo/shared/types'
 import { useTranslation } from 'react-i18next'
+import { useLocale } from '@/i18n/useLocale'
+import { formatDate } from '@/i18n/format'
+import type { SupportedLocale } from '@/i18n/config'
 
 interface TaskGroupProps {
   dateKey: string
@@ -23,9 +26,10 @@ export function TaskGroup({
   defaultOpen = true,
 }: TaskGroupProps) {
   const { t } = useTranslation('tasks')
+  const { locale } = useLocale()
   const [open, setOpen] = useState(defaultOpen)
   const openCount = tasks.filter((t) => t.status === 'open').length
-  const label = formatDateKey(dateKey, t)
+  const label = formatDateKey(dateKey, t, locale)
 
   return (
     <div className="space-y-1">
@@ -64,7 +68,7 @@ export function TaskGroup({
   )
 }
 
-function formatDateKey(key: string, t: (k: string) => string): string {
+function formatDateKey(key: string, t: (k: string) => string, locale: SupportedLocale): string {
   if (key === 'today') return t('groupToday')
   if (key === 'tomorrow') return t('groupTomorrow')
   if (key === 'overdue') return t('groupOverdue')
@@ -73,11 +77,9 @@ function formatDateKey(key: string, t: (k: string) => string): string {
 
   // Fallback: assume it's a date string (YYYY-MM-DD)
   try {
-    // Parse as local timezone date, not UTC
     const [year, month, day] = key.split('-').map(Number) as [number, number, number]
     const date = new Date(year, month - 1, day)
-    const formatted = date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
-    return formatted
+    return formatDate(date, locale, { weekday: 'short', month: 'short', day: 'numeric' })
   } catch {
     return key
   }

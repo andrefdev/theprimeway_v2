@@ -7,6 +7,7 @@
  * - NO Prisma queries, NO HTTP concerns
  */
 import { goalsRepository } from '../repositories/goals.repo'
+import { gamificationService } from './gamification.service'
 import { prisma } from '../lib/prisma'
 import { validateLimit } from '../lib/limits'
 import { FEATURES } from '@repo/shared/constants'
@@ -161,7 +162,12 @@ class GoalsService {
   }
 
   async updateQuarterlyGoal(userId: string, id: string, data: Record<string, unknown>) {
-    return goalsRepository.updateQuarterlyGoal(userId, id, data)
+    const result = await goalsRepository.updateQuarterlyGoal(userId, id, data)
+    // Check quarterly milestone achievements when progress changes
+    if ('progress' in data) {
+      gamificationService.checkAchievements(userId).catch(() => {})
+    }
+    return result
   }
 
   async deleteQuarterlyGoal(userId: string, id: string) {

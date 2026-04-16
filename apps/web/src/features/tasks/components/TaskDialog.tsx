@@ -34,6 +34,7 @@ import { tasksQueries } from '../queries'
 import { goalsQueries } from '@/features/goals/queries'
 import { ChevronRightIcon } from '@/shared/components/Icons'
 import { useLocale } from '@/i18n/useLocale'
+import { formatTime } from '@/i18n/format'
 
 interface TaskDialogProps {
   open: boolean
@@ -310,9 +311,9 @@ export function TaskDialog({ open, onClose, task, defaultDate }: TaskDialogProps
               <div className="space-y-1.5 p-3 rounded-lg bg-success/10 border border-success/30">
                 <p className="text-xs font-semibold text-foreground">{t('suggestedTimeLabel')}</p>
                 <p className="text-sm text-foreground">
-                  {new Date(showScheduleResult.start).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}
+                  {formatTime(showScheduleResult.start, locale)}
                   {' '}-{' '}
-                  {new Date(showScheduleResult.end).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}
+                  {formatTime(showScheduleResult.end, locale)}
                 </p>
               </div>
             )}
@@ -327,9 +328,9 @@ export function TaskDialog({ open, onClose, task, defaultDate }: TaskDialogProps
                 {scheduleSuggestion ? (
                   <div className="text-sm">
                     <p className="text-foreground font-medium">
-                      {new Date(scheduleSuggestion.start).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}
+                      {formatTime(scheduleSuggestion.start, locale)}
                       {' '}-{' '}
-                      {new Date(scheduleSuggestion.end).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}
+                      {formatTime(scheduleSuggestion.end, locale)}
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
                       {t('basedOnCalendar')}

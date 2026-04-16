@@ -18,6 +18,8 @@ import { DataGridCellWrapper } from './DataGridCellWrapper'
 import { Badge } from '@/shared/components/ui/badge'
 import { Button } from '@/shared/components/ui/button'
 import { Calendar } from '@/shared/components/ui/calendar'
+import { useLocale } from '@/i18n/useLocale'
+import { formatDate } from '@/i18n/format'
 import { Checkbox } from '@/shared/components/ui/checkbox'
 import {
   Command,
@@ -1303,11 +1305,11 @@ export function MultiSelectCell<TData>({
   )
 }
 
-function formatDateForDisplay(dateStr: string) {
+function formatDateForDisplay(dateStr: string, locale: import('@/i18n/config').SupportedLocale) {
   if (!dateStr) return ''
   const dateOnly = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr
   const date = new Date(dateOnly + 'T00:00:00')
-  return date.toLocaleDateString()
+  return formatDate(date, locale)
 }
 
 export function DateCell<TData>({
@@ -1320,6 +1322,7 @@ export function DateCell<TData>({
   isSelected,
   readOnly,
 }: CellVariantProps<TData>) {
+  const { locale } = useLocale()
   const initialValue = cell.getValue() as string
   const [value, setValue] = React.useState(initialValue ?? '')
   const containerRef = React.useRef<HTMLDivElement>(null)
@@ -1393,7 +1396,7 @@ export function DateCell<TData>({
       <Popover open={isEditing} onOpenChange={onOpenChange}>
         <PopoverAnchor asChild>
           <span data-slot="grid-cell-content">
-            {formatDateForDisplay(value)}
+            {formatDateForDisplay(value, locale)}
           </span>
         </PopoverAnchor>
         {isEditing && (

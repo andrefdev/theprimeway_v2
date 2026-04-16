@@ -8,6 +8,8 @@ import { DashboardQuickActions } from '@/features/dashboard/components/Dashboard
 import { TodayTasksList } from '@/features/dashboard/components/TodayTasksList'
 import { SectionHeader } from '@/shared/components/SectionHeader'
 import { BriefingCard } from '@/features/ai/components/BriefingCard'
+import { NextTaskCard } from '@/features/dashboard/components/NextTaskCard'
+import { WeeklyPlanCard } from '@/features/ai/components/WeeklyPlanCard'
 import { GamificationWidget } from '@/features/gamification/components/GamificationWidget'
 import { GoalsSummaryCard } from '@/features/goals/components/GoalsSummaryCard'
 import { format } from 'date-fns'
@@ -46,9 +48,11 @@ function DashboardPage() {
       <div className="mx-auto max-w-5xl px-6 pb-6 space-y-6">
         <DashboardStats summary={summary} />
         <OverdueTasksBanner summary={summary} />
+        <NextTaskCard />
         <DashboardQuickActions />
         <TodayTasksList tasks={tasks} tasksQuery={tasksQuery} />
         <GoalsSummaryCard />
+        <WeeklyPlanCard />
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <BriefingCard />
           <GamificationWidget />

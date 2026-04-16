@@ -4,6 +4,8 @@ import { Badge } from '@/shared/components/ui/badge'
 import { Target } from 'lucide-react'
 import { CurrencyAmount } from '@/shared/components/CurrencyAmount'
 import { useTranslation } from 'react-i18next'
+import { useLocale } from '@/i18n/useLocale'
+import { formatDate } from '@/i18n/format'
 import type { SavingsGoal } from '../../api'
 
 interface SavingsGoalsProgressProps {
@@ -18,6 +20,7 @@ export function SavingsGoalsProgress({
   currencyRates,
 }: SavingsGoalsProgressProps) {
   const { t } = useTranslation('finances')
+  const { locale } = useLocale()
 
   if (goals.length === 0) return null
 
@@ -71,7 +74,7 @@ export function SavingsGoalsProgress({
               {goal.targetDate && (
                 <p className="text-muted-foreground text-xs">
                   {t('target')}:{' '}
-                  {new Date(goal.targetDate).toLocaleDateString()}
+                  {formatDate(goal.targetDate, locale)}
                 </p>
               )}
             </div>

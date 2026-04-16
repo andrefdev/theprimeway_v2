@@ -2,8 +2,8 @@ import { api } from '@/shared/lib/api-client'
 import type { Briefing } from '@repo/shared/types'
 
 interface ChatResponse {
-  reply: string
-  threadId?: string
+  response: string
+  toolResults?: Array<{ toolName: string; result: unknown }>
 }
 
 interface ChatMessagePayload {
@@ -13,11 +13,14 @@ interface ChatMessagePayload {
 
 export const aiApi = {
   sendMessage: (messages: ChatMessagePayload[], locale?: string) =>
-    api.post<{ data: ChatResponse }>('/chat', { messages, locale }).then((r) => r.data),
+    api.post<ChatResponse>('/chat', { messages, locale }).then((r) => r.data),
 
   getBriefing: () =>
     api.get<{ data: Briefing }>('/chat/briefing').then((r) => r.data),
 
   getFinanceInsight: () =>
     api.get<{ data: { insight: string } }>('/chat/finance-insight').then((r) => r.data),
+
+  getWeeklyPlan: (weekStartDate: string) =>
+    api.post<{ data: any }>('/chat/weekly-plan', { weekStartDate }).then((r) => r.data),
 }

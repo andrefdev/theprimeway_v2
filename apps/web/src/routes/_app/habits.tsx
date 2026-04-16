@@ -15,6 +15,7 @@ import { HabitDetailPanel } from '@/features/habits/components/HabitDetailPanel'
 import { QueryError } from '@/shared/components/QueryError'
 import { PlusIcon, CheckIcon } from '@/shared/components/Icons'
 import { EditButton, DeleteButton } from '@/shared/components/ActionButtons'
+import { Archive, ArchiveRestore } from 'lucide-react'
 import { Button } from '@/shared/components/ui/button'
 import { Badge } from '@/shared/components/ui/badge'
 import { Card, CardContent } from '@/shared/components/ui/card'
@@ -72,8 +73,10 @@ function HabitsPage() {
   const { dateFnsLocale } = useLocale()
   const today = format(new Date(), 'yyyy-MM-dd')
   const habitsQuery = useQuery(habitsQueries.todayWithLogs(today))
+  const archivedQuery = useQuery(habitsQueries.list({ isActive: 'false' }))
   const toggleLog = useToggleHabitLog()
   const deleteHabit = useDeleteHabit()
+  const updateHabit = useUpdateHabit()
 
   const [tab, setTab] = useState<Tab>('tracker')
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -81,8 +84,10 @@ function HabitsPage() {
   const [selectedHabit, setSelectedHabit] = useState<Habit | null>(null)
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
+  const [showArchived, setShowArchived] = useState(false)
 
   const habits = habitsQuery.data?.data ?? []
+  const archivedHabits = archivedQuery.data?.data ?? []
   const totalHabits = habits.length
   const completedToday = habits.filter((h) => {
     const todayLog = h.logs?.find((l) => l.date.startsWith(today))
@@ -126,6 +131,24 @@ function HabitsPage() {
       if (newCount >= habit.targetFrequency) {
         toast.success(t('habitCompletedToast', { name: habit.name }))
       }
+    } catch {
+      toast.error(t('failedToUpdate'))
+    }
+  }
+
+  async function handleArchive(habit: Habit) {
+    try {
+      await updateHabit.mutateAsync({ id: habit.id, data: { isActive: false } })
+      toast.success(t('habitArchived'))
+    } catch {
+      toast.error(t('failedToUpdate'))
+    }
+  }
+
+  async function handleRestore(habit: Habit) {
+    try {
+      await updateHabit.mutateAsync({ id: habit.id, data: { isActive: true } })
+      toast.success(t('habitRestored'))
     } catch {
       toast.error(t('failedToUpdate'))
     }
@@ -222,12 +245,47 @@ function HabitsPage() {
                         onToggle={() => handleToggle(habit)}
                         onEdit={() => openEdit(habit)}
                         onDelete={() => handleDelete(habit)}
+                        onArchive={() => handleArchive(habit)}
                         onView={() => setSelectedHabit(habit)}
                       />
                     ))}
                   </div>
                 ) : (
                   <EmptyState title={t('noHabitsYet')} description={t('noHabitsDescription')} />
+                )}
+
+                {/* Archived habits */}
+                {archivedHabits.length > 0 && (
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => setShowArchived(!showArchived)}
+                      className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <Archive className="size-3.5" />
+                      {t('archivedHabits', { count: archivedHabits.length })}
+                    </button>
+                    {showArchived && (
+                      <div className="mt-2 space-y-2 opacity-60">
+                        {archivedHabits.map((habit) => (
+                          <Card key={habit.id} className="overflow-hidden">
+                            <CardContent className="flex items-center justify-between p-3">
+                              <span className="text-sm text-muted-foreground">{habit.name}</span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleRestore(habit)}
+                                className="text-xs"
+                              >
+                                <ArchiveRestore className="size-3.5 mr-1" />
+                                {t('restore')}
+                              </Button>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 )}
               </>
             )}
@@ -268,6 +326,7 @@ function HabitCard({
   onToggle,
   onEdit,
   onDelete,
+  onArchive,
   onView,
 }: {
   habit: Habit
@@ -275,6 +334,7 @@ function HabitCard({
   onToggle: () => void
   onEdit: () => void
   onDelete: () => void
+  onArchive: () => void
   onView: () => void
 }) {
   const { t } = useTranslation('habits')
@@ -329,6 +389,14 @@ function HabitCard({
                 onClick={(e) => e.stopPropagation()}
               >
                 <EditButton onClick={onEdit} />
+                <button
+                  type="button"
+                  onClick={onArchive}
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground opacity-0 transition-all hover:bg-muted hover:text-foreground group-hover:opacity-100"
+                  title={t('archive')}
+                >
+                  <Archive className="size-3.5" />
+                </button>
                 <DeleteButton onClick={onDelete} />
               </div>
             </div>

@@ -21,6 +21,8 @@ import { useCurrency } from '@/features/finances/hooks/use-currency'
 import { FeatureGate } from '@/features/feature-flags/FeatureGate'
 import { FEATURES } from '@repo/shared/constants'
 import { UpgradePrompt } from '@/features/subscriptions/components/UpgradePrompt'
+import { useLocale } from '@/i18n/useLocale'
+import { formatDate } from '@/i18n/format'
 import { Button } from '@/shared/components/ui/button'
 import { Badge } from '@/shared/components/ui/badge'
 import { Card, CardContent } from '@/shared/components/ui/card'
@@ -148,6 +150,7 @@ function DebtCard({
   onDelete: () => void
   t: (key: string) => string
 }) {
+  const { locale } = useLocale()
   const [expanded, setExpanded] = useState(false)
 
   const remaining = debt.totalAmount - debt.paidAmount
@@ -230,7 +233,7 @@ function DebtCard({
               </p>
               <p className="text-[10px] text-muted-foreground">
                 {t('remaining')} &middot;{' '}
-                {new Date(debt.dueDate).toLocaleDateString()}
+                {formatDate(debt.dueDate, locale)}
               </p>
             </div>
           )}

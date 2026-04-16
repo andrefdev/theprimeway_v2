@@ -11,6 +11,8 @@ import { PlusIcon } from '@/shared/components/Icons'
 import { DeleteButton } from '@/shared/components/ActionButtons'
 import { FinancesNav } from '@/features/finances/components/FinancesNav'
 import { useCurrency } from '@/features/finances/hooks/use-currency'
+import { useLocale } from '@/i18n/useLocale'
+import { formatDate } from '@/i18n/format'
 import { Button } from '@/shared/components/ui/button'
 import { Badge } from '@/shared/components/ui/badge'
 import { Card, CardContent } from '@/shared/components/ui/card'
@@ -83,6 +85,7 @@ function TransactionIcon({ type }: { type: string }) {
 
 function TransactionHistoryPage() {
   const { t } = useTranslation('finances')
+  const { locale } = useLocale()
   const { formatCurrency } = useCurrency()
   const [typeFilter, setTypeFilter] = useState('')
   const [search, setSearch] = useState('')
@@ -214,7 +217,7 @@ function TransactionHistoryPage() {
                             </Badge>
                           )}
                           <span className="text-[11px] text-muted-foreground">
-                            {new Date(tx.date).toLocaleDateString(undefined, {
+                            {formatDate(tx.date, locale, {
                               month: 'short',
                               day: 'numeric',
                               year: 'numeric',

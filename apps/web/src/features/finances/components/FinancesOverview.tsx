@@ -10,6 +10,8 @@ import {
   AlertCircle,
 } from 'lucide-react'
 import { SectionHeader } from '@/shared/components/SectionHeader'
+import { useLocale } from '@/i18n/useLocale'
+import { formatDate } from '@/i18n/format'
 import { financesQueries } from '@/features/finances/queries'
 import { FinancesNav } from '@/features/finances/components/FinancesNav'
 import { FinancialSummaryCards } from '@/features/finances/components/overview/FinancialSummaryCards'
@@ -41,6 +43,7 @@ function getAccountColorClass(type: string) {
 
 export function FinancesOverview() {
   const { t } = useTranslation('finances')
+  const { locale } = useLocale()
   const { formatCurrency, currency: baseCurrency } = useCurrency()
   const accountsQuery = useQuery(financesQueries.accounts())
   const transactionsQuery = useQuery(
@@ -80,6 +83,23 @@ export function FinancesOverview() {
         <div className="mx-auto max-w-4xl space-y-8 px-4 pb-8">
         {isLoading ? (
           <SkeletonList lines={8} />
+        ) : accounts.length === 0 && transactions.length === 0 ? (
+          <Card>
+            <CardContent className="flex flex-col items-center gap-4 py-12 text-center">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+                <Wallet className="h-7 w-7 text-primary" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-lg font-semibold">{t('emptyStateTitle', { defaultValue: 'No finances yet' })}</h3>
+                <p className="text-sm text-muted-foreground max-w-xs">
+                  {t('emptyStateDescription', { defaultValue: 'Add an account to start tracking your finances.' })}
+                </p>
+              </div>
+              <Button asChild>
+                <Link to="/finances/accounts">{t('addAccount', { defaultValue: 'Add Account' })}</Link>
+              </Button>
+            </CardContent>
+          </Card>
         ) : (
           <>
             <FinancialSummaryCards
@@ -237,7 +257,7 @@ export function FinancesOverview() {
                             {tx.description || tx.category || t('transaction')}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {new Date(tx.date).toLocaleDateString()}
+                            {formatDate(tx.date, locale)}
                           </p>
                         </div>
                         <p

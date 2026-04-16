@@ -1,20 +1,15 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { useTranslation } from 'react-i18next'
-import { SectionHeader } from '@/shared/components/SectionHeader'
 import { useState, useRef, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/shared/components/ui/sheet'
 import { ScrollArea } from '@/shared/components/ui/scroll-area'
+import { Button } from '@/shared/components/ui/button'
+import { ChatMessage } from './ChatMessage'
+import { ChatInput } from './ChatInput'
+import { aiApi } from '../api'
 import { toast } from 'sonner'
-import { ChatMessage } from '@/features/ai/components/ChatMessage'
-import { ChatInput } from '@/features/ai/components/ChatInput'
-import { BriefingCard } from '@/features/ai/components/BriefingCard'
-import { aiApi } from '@/features/ai/api'
-import { FeatureGate } from '@/features/feature-flags/FeatureGate'
-import { UpgradePrompt } from '@/features/subscriptions/components/UpgradePrompt'
+import { useFeature } from '@/features/feature-flags/hooks'
 import { FEATURES } from '@repo/shared/constants'
-
-export const Route = createFileRoute('/_app/ai')({
-  component: AiPage,
-})
+import { BotMessageSquareIcon } from 'lucide-react'
 
 interface Message {
   id: string
@@ -22,8 +17,10 @@ interface Message {
   content: string
 }
 
-function AiPage() {
+export function ChatPanel() {
   const { t, i18n } = useTranslation('ai')
+  const aiFeature = useFeature(FEATURES.AI_ASSISTANT)
+  const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -33,6 +30,8 @@ function AiPage() {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
   }, [messages])
+
+  if (!aiFeature.enabled) return null
 
   async function handleSend(content: string) {
     const userMsg: Message = { id: crypto.randomUUID(), role: 'user', content }
@@ -63,36 +62,41 @@ function AiPage() {
   }
 
   return (
-    <FeatureGate
-      feature={FEATURES.AI_ASSISTANT}
-      fallback={<UpgradePrompt featureKey={FEATURES.AI_ASSISTANT} />}
-    >
-      <div className="flex h-[calc(100vh-4rem)] flex-col">
-        {/* Header */}
-        <div className="border-b px-6 py-3">
-          <SectionHeader sectionId="ai" title={t('title')} description={t('subtitle')} />
-        </div>
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>
+        <Button
+          size="icon"
+          className="fixed bottom-20 right-4 z-50 h-12 w-12 rounded-full shadow-lg lg:bottom-6"
+          aria-label={t('title')}
+        >
+          <BotMessageSquareIcon className="size-5" />
+        </Button>
+      </SheetTrigger>
+      <SheetContent side="right" className="flex w-full flex-col p-0 sm:max-w-md">
+        <SheetHeader className="border-b px-4 py-3">
+          <SheetTitle className="flex items-center gap-2 text-base">
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-violet-500/15 text-xs font-bold text-violet-500">
+              AI
+            </div>
+            {t('title')}
+          </SheetTitle>
+        </SheetHeader>
 
-        {/* Messages area */}
-        <ScrollArea className="flex-1 px-6" ref={scrollRef}>
-          <div className="mx-auto max-w-2xl space-y-4 py-6">
+        <ScrollArea className="flex-1 px-4" ref={scrollRef}>
+          <div className="space-y-4 py-4">
             {messages.length === 0 && (
-              <div className="space-y-4">
-                <BriefingCard />
-                <div className="text-center py-8">
-                  <div className="text-4xl mb-3">&#x1F916;</div>
-                  <p className="text-sm text-muted-foreground">{t('emptyState')}</p>
-                  <div className="mt-4 flex flex-wrap justify-center gap-2">
-                    {[t('suggestion1'), t('suggestion2'), t('suggestion3')].map((s) => (
-                      <button
-                        key={s}
-                        onClick={() => handleSend(s)}
-                        className="rounded-full border px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                      >
-                        {s}
-                      </button>
-                    ))}
-                  </div>
+              <div className="text-center py-8">
+                <p className="text-sm text-muted-foreground mb-4">{t('emptyState')}</p>
+                <div className="flex flex-wrap justify-center gap-2">
+                  {[t('suggestion1'), t('suggestion2'), t('suggestion3')].map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => handleSend(s)}
+                      className="rounded-full border px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    >
+                      {s}
+                    </button>
+                  ))}
                 </div>
               </div>
             )}
@@ -118,13 +122,10 @@ function AiPage() {
           </div>
         </ScrollArea>
 
-        {/* Input */}
-        <div className="border-t px-6 py-3">
-          <div className="mx-auto max-w-2xl">
-            <ChatInput onSend={handleSend} disabled={isLoading} />
-          </div>
+        <div className="border-t px-4 py-3">
+          <ChatInput onSend={handleSend} disabled={isLoading} />
         </div>
-      </div>
-    </FeatureGate>
+      </SheetContent>
+    </Sheet>
   )
 }

@@ -6,6 +6,8 @@ import { CheckIcon } from '@/shared/components/Icons'
 import { MODE_LABEL_KEYS, type TimerMode } from './PomodoroModeSelector'
 import type { PomodoroSession } from '@repo/shared/types'
 import { UseQueryResult } from '@tanstack/react-query'
+import { useLocale } from '@/i18n/useLocale'
+import { formatTime } from '@/i18n/format'
 
 interface PomodoroSessionListProps {
   recentSessions: PomodoroSession[]
@@ -14,6 +16,7 @@ interface PomodoroSessionListProps {
 
 export function PomodoroSessionList({ recentSessions, sessionsQuery }: PomodoroSessionListProps) {
   const { t } = useTranslation('pomodoro')
+  const { locale } = useLocale()
 
   return (
     <div>
@@ -46,8 +49,8 @@ export function PomodoroSessionList({ recentSessions, sessionsQuery }: PomodoroS
                       {t(MODE_LABEL_KEYS[session.sessionType as TimerMode] ?? session.sessionType)}
                     </p>
                     <p className="text-[10px] text-muted-foreground">
-                      {new Date(session.startedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      {session.endedAt && ` - ${new Date(session.endedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                      {formatTime(session.startedAt, locale)}
+                      {session.endedAt && ` - ${formatTime(session.endedAt, locale)}`}
                     </p>
                   </div>
                 </div>

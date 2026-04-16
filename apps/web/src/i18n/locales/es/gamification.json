@@ -57,5 +57,6 @@
   "reachedLevel": "Alcanzaste el nivel {{level}}",
   "rankUp": "¡Nuevo rango!",
   "reachedRank": "Alcanzaste el rango {{rank}}",
-  "congratulations": "¡Felicidades!"
+  "congratulations": "¡Felicidades!",
+  "weeklyXpTitle": "XP de esta semana"
 }

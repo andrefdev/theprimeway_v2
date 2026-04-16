@@ -4,6 +4,8 @@ import type { SavingsGoal } from '../api'
 import { useCurrencySettings } from '@/features/settings/hooks/use-currency-settings'
 import { useTranslation } from 'react-i18next'
 import { useExchangeRates } from './use-exchange-rates'
+import { useLocale } from '@/i18n/useLocale'
+import { formatMonth } from '@/i18n/format'
 
 interface AnalyticsTransaction extends Transaction {
   budgetId?: string | null
@@ -23,6 +25,7 @@ export function useFinancialAnalytics({
   targetMonth,
 }: UseFinancialAnalyticsProps) {
   const { t } = useTranslation('finances')
+  const { locale } = useLocale()
   const { settings } = useCurrencySettings()
   const baseCurrency = settings?.baseCurrency || 'USD'
   const { data: rates = [] } = useExchangeRates()
@@ -101,7 +104,7 @@ export function useFinancialAnalytics({
         )
 
       return {
-        month: date.toLocaleDateString('en-US', { month: 'short' }),
+        month: formatMonth(date, locale),
         income,
         expenses,
         net: income - expenses,

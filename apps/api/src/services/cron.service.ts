@@ -1,6 +1,7 @@
 import { cronRepo } from '../repositories/cron.repo'
 import { chatService } from './chat.service'
 import { goalsService } from './goals.service'
+import { gamificationService } from './gamification.service'
 import { notificationsService } from './notifications.service'
 import { prisma } from '../lib/prisma'
 
@@ -274,6 +275,10 @@ class CronService {
     for (const user of users) {
       try {
         const review = await goalsService.getQuarterlyReview(user.id, quarter, year)
+
+        // Check quarterly milestone achievements
+        await gamificationService.checkAchievements(user.id)
+
         results.push({ userId: user.id, status: 'generated' })
 
         // Push notification (FCM) — best-effort
@@ -318,11 +323,29 @@ class CronService {
       select: { id: true, name: true, locale: true },
     })
 
+    // Calculate the week start (Monday) for snapshots
+    const snapshotWeekStart = new Date(weekStartDate)
+
     const results: Array<{ userId: string; status: string; error?: string }> = []
     for (const user of users) {
       try {
         // Generate the weekly plan
         const plan = await chatService.weeklyPlanning(user.id, weekStartDate)
+
+        // Auto-create health snapshots for each quarterly goal
+        const quarterlyGoals = await prisma.quarterlyGoal.findMany({
+          where: { userId: user.id, status: { not: 'completed' } },
+          select: { id: true, progress: true },
+        })
+        for (const qg of quarterlyGoals) {
+          const momentum = qg.progress ?? 0
+          const status = momentum >= 75 ? 'positive' : momentum >= 40 ? 'neutral' : 'negative'
+          await prisma.goalHealthSnapshot.upsert({
+            where: { quarterlyGoalId_weekStart: { quarterlyGoalId: qg.id, weekStart: snapshotWeekStart } },
+            update: { momentumScore: momentum, status },
+            create: { userId: user.id, quarterlyGoalId: qg.id, weekStart: snapshotWeekStart, momentumScore: momentum, status },
+          })
+        }
 
         // Try to send push notification
         const devices = await cronRepo.findActiveDevicesByUserId(user.id)

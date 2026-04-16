@@ -27,5 +27,6 @@
   "days": "{{count}} días",
   "startFocus": "Iniciar enfoque",
   "addTransaction": "Agregar transacción",
-  "addNote": "Agregar nota"
+  "addNote": "Agregar nota",
+  "nextTaskSuggestion": "Siguiente tarea sugerida por IA"
 }

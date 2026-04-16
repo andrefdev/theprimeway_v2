@@ -15,7 +15,10 @@ import { GoalTreeView } from '@/features/goals/components/GoalTreeView'
 import { InactiveGoalsAlert } from '@/features/goals/components/InactiveGoalsAlert'
 import { GoalConflictsPanel } from '@/features/goals/components/GoalConflictsPanel'
 import { GoalTemplatePicker } from '@/features/goals/components/GoalTemplatePicker'
+import { QuarterlyReviewCard } from '@/features/goals/components/QuarterlyReviewCard'
 import { QueryError } from '@/shared/components/QueryError'
+import { useLocale } from '@/i18n/useLocale'
+import { formatDate } from '@/i18n/format'
 import { PlusIcon, TargetIcon } from '@/shared/components/Icons'
 import { EditButton, DeleteButton } from '@/shared/components/ActionButtons'
 import { Button } from '@/shared/components/ui/button'
@@ -110,7 +113,12 @@ function GoalsPage() {
 
         {tab === 'roadmap' && <RoadmapTab />}
         {tab === 'tree' && <GoalTreeView />}
-        {tab === 'quarterly' && <QuarterlyGoals />}
+        {tab === 'quarterly' && (
+          <>
+            <QuarterlyReviewCard />
+            <QuarterlyGoals />
+          </>
+        )}
         {tab === 'weekly' && <WeeklyGoalsList />}
         {tab === 'journey' && <JourneyView />}
 
@@ -150,6 +158,7 @@ function GoalsTab({
   onTemplates?: () => void
 }) {
   const { t } = useTranslation('goals')
+  const { locale } = useLocale()
   const params = statusFilter !== 'all' ? { status: statusFilter } : undefined
   const goalsQuery = useQuery(goalsQueries.list(params))
   const updateGoal = useUpdateGoal()
@@ -228,7 +237,7 @@ function GoalsTab({
                     )}
                     {goal.deadline && (
                       <p className="mt-1 text-[10px] text-muted-foreground">
-                        {t('duePrefix')} {new Date(goal.deadline).toLocaleDateString()}
+                        {t('duePrefix')} {formatDate(goal.deadline, locale)}
                       </p>
                     )}
                   </div>
@@ -273,6 +282,7 @@ function GoalsTab({
 // ---------------------------------------------------------------------------
 function RoadmapTab() {
   const { t } = useTranslation('goals')
+  const { locale } = useLocale()
   const visionsQuery = useQuery(goalsQueries.visions())
   const threeYearGoalsQuery = useQuery(goalsQueries.threeYearGoals())
   const annualGoalsQuery = useQuery(goalsQueries.annualGoals())
@@ -411,7 +421,7 @@ function RoadmapTab() {
                                 )}
                                 {annualGoal.targetDate && (
                                   <span className="text-muted-foreground">
-                                    {t('byPrefix')} {new Date(annualGoal.targetDate).toLocaleDateString()}
+                                    {t('byPrefix')} {formatDate(annualGoal.targetDate, locale)}
                                   </span>
                                 )}
                               </div>
