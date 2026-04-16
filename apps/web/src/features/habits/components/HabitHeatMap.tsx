@@ -1,12 +1,12 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent } from '@/shared/components/ui/card'
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip'
+} from '@/shared/components/ui/tooltip'
 
 interface DailyData {
   date: string

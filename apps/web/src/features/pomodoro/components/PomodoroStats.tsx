@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { Card } from '@/components/ui/card'
+import { Card } from '@/shared/components/ui/card'
 import type { PomodoroStats } from '@repo/shared/types'
 
 interface PomodoroStatsProps {

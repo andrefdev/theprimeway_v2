@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { notificationQueries } from '../queries'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { ScrollArea } from '@/components/ui/scroll-area'
+import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover'
+import { ScrollArea } from '@/shared/components/ui/scroll-area'
 import {
   Bell,
   Clock,

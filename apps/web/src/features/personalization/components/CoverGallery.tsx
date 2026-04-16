@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
-import { ScrollArea } from '@/components/ui/scroll-area'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/shared/components/ui/dialog'
+import { Button } from '@/shared/components/ui/button'
+import { ScrollArea } from '@/shared/components/ui/scroll-area'
 import { ImageIcon, XIcon } from 'lucide-react'
 import { COVER_GALLERY, type GalleryCategory } from '../model/constants'
-import { cn } from '@/lib/utils'
+import { cn } from '@/shared/lib/utils'
 
 const CATEGORIES: Array<{ key: GalleryCategory | 'all'; label: string }> = [
   { key: 'all', label: 'All' },

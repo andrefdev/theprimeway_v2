@@ -14,10 +14,10 @@ import {
 } from '@dnd-kit/sortable'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { TaskItem } from '@/components/TaskItem'
-import { Button } from '@/components/ui/button'
-import { PlusIcon } from '@/components/Icons'
-import { ScrollArea } from '@/components/ui/scroll-area'
+import { TaskItem } from '@/shared/components/TaskItem'
+import { Button } from '@/shared/components/ui/button'
+import { PlusIcon } from '@/shared/components/Icons'
+import { ScrollArea } from '@/shared/components/ui/scroll-area'
 import type { Task } from '@repo/shared/types'
 import { useTranslation } from 'react-i18next'
 
@@ -58,7 +58,6 @@ export function DayPlanner({
     const sched: Task[] = []
     const unsched: Task[] = []
     for (const task of tasks) {
-      console.log('📅 DayPlanner task:', task.title, 'scheduledStart:', task.scheduledStart, 'scheduledEnd:', task.scheduledEnd)
       if (task.scheduledStart && task.scheduledEnd) {
         sched.push(task)
       } else {

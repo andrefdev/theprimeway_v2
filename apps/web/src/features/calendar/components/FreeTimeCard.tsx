@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { calendarQueries } from '../queries'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent } from '@/shared/components/ui/card'
 import { useTranslation } from 'react-i18next'
 import { format, addDays } from 'date-fns'
 

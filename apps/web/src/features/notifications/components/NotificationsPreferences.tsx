@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent } from '@/shared/components/ui/card'
 import { toast } from 'sonner'
 import { useState } from 'react'
 import { notificationQueries } from '../queries'

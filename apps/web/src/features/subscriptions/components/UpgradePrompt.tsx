@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { Link } from '@tanstack/react-router'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/shared/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card'
 import type { FeatureKey } from '@repo/shared/constants'
 
 interface UpgradePromptProps {

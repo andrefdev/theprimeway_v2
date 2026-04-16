@@ -1,4 +1,4 @@
-import { api } from '../../lib/api-client'
+import { api } from '@/shared/lib/api-client'
 import type { Habit, HabitLog, HabitStats } from '@repo/shared/types'
 import type { CreateHabitInput, UpdateHabitInput, UpsertHabitLogInput } from '@repo/shared/validators'
 

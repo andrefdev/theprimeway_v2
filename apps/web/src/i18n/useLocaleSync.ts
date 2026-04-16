@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useAuthStore } from '../stores/auth.store'
+import { useAuthStore } from '@/shared/stores/auth.store'
 import { SUPPORTED_LOCALES } from './config'
 import type { SupportedLocale } from './config'
 

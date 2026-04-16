@@ -1,12 +1,12 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { useState, useEffect } from 'react'
-import { settingsApi, type UserSettings } from '../../features/settings/api'
-import { PreferencesForm } from '../../features/settings/components/PreferencesForm'
-import { ChangePasswordForm } from '../../features/settings/components/ChangePasswordForm'
-import { DangerZone } from '../../features/settings/components/DangerZone'
-import { NotificationsPreferences } from '../../features/notifications/components/NotificationsPreferences'
-import { useFeature } from '../../features/feature-flags/hooks'
+import { settingsApi, type UserSettings } from '@/features/settings/api'
+import { PreferencesForm } from '@/features/settings/components/PreferencesForm'
+import { ChangePasswordForm } from '@/features/settings/components/ChangePasswordForm'
+import { DangerZone } from '@/features/settings/components/DangerZone'
+import { NotificationsPreferences } from '@/features/notifications/components/NotificationsPreferences'
+import { useFeature } from '@/features/feature-flags/hooks'
 import { FEATURES } from '@repo/shared/constants'
 
 export const Route = createFileRoute('/_app/settings')({

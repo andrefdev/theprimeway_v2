@@ -5,29 +5,29 @@ import {
   financesQueries,
   useCreateInvestment,
   useDeleteInvestment,
-} from '../../../features/finances/queries'
+} from '@/features/finances/queries'
 import type { InvestmentHolding } from '@/features/finances/api'
-import { QueryError } from '../../../components/QueryError'
-import { PlusIcon } from '../../../components/Icons'
-import { DeleteButton } from '../../../components/ActionButtons'
+import { QueryError } from '@/shared/components/QueryError'
+import { PlusIcon } from '@/shared/components/Icons'
+import { DeleteButton } from '@/shared/components/ActionButtons'
 import { FinancesNav } from '@/features/finances/components/FinancesNav'
 import { useCurrency } from '@/features/finances/hooks/use-currency'
 import { FeatureGate } from '@/features/feature-flags/FeatureGate'
 import { FEATURES } from '@repo/shared/constants'
 import { UpgradePrompt } from '@/features/subscriptions/components/UpgradePrompt'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+import { Button } from '@/shared/components/ui/button'
+import { Badge } from '@/shared/components/ui/badge'
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card'
+import { Input } from '@/shared/components/ui/input'
+import { Label } from '@/shared/components/ui/label'
+import { Textarea } from '@/shared/components/ui/textarea'
 import {
   Select,
   SelectTrigger,
   SelectValue,
   SelectContent,
   SelectItem,
-} from '@/components/ui/select'
+} from '@/shared/components/ui/select'
 import {
   Table,
   TableHeader,
@@ -35,21 +35,21 @@ import {
   TableHead,
   TableRow,
   TableCell,
-} from '@/components/ui/table'
-import { SkeletonList } from '@/components/ui/skeleton-list'
-import { EmptyState } from '@/components/ui/empty-state'
+} from '@/shared/components/ui/table'
+import { SkeletonList } from '@/shared/components/ui/skeleton-list'
+import { EmptyState } from '@/shared/components/ui/empty-state'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog'
+} from '@/shared/components/ui/dialog'
 import { TrendingUp, TrendingDown, DollarSign, Percent } from 'lucide-react'
 import { toast } from 'sonner'
 import { useState } from 'react'
-import { cn } from '@/lib/utils'
-import { CURRENCY_OPTIONS } from '../../../features/finances/constants'
+import { cn } from '@/shared/lib/utils'
+import { CURRENCY_OPTIONS } from '@/features/finances/constants'
 
 export const Route = createFileRoute('/_app/finances/investments')({
   component: InvestmentsPage,

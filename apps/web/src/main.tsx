@@ -1,4 +1,4 @@
-import './lib/sentry'
+import './shared/lib/sentry'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { RouterProvider, createRouter } from '@tanstack/react-router'

@@ -2,7 +2,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { authApi } from '../api'
-import { useAuthStore } from '../../../stores/auth.store'
+import { useAuthStore } from '@/shared/stores/auth.store'
 
 declare global {
   interface Window {

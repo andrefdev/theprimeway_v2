@@ -1,10 +1,10 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { tasksQueries } from '../queries'
-import { Badge } from '@/components/ui/badge'
+import { Badge } from '@/shared/components/ui/badge'
 import { useTranslation } from 'react-i18next'
 import { format, addDays } from 'date-fns'
-import { useLocale } from '../../../i18n/useLocale'
+import { useLocale } from '@/i18n/useLocale'
 
 const PRIORITY_COLORS: Record<string, string> = {
   high: 'border-l-red-500',

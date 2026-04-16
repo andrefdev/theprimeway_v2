@@ -5,22 +5,22 @@ import {
   useUpdateWeeklyGoal,
   useDeleteWeeklyGoal,
 } from '../queries'
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { Card, CardContent } from '@/shared/components/ui/card'
+import { Badge } from '@/shared/components/ui/badge'
+import { Button } from '@/shared/components/ui/button'
+import { Input } from '@/shared/components/ui/input'
+import { Label } from '@/shared/components/ui/label'
 import {
   Select,
   SelectTrigger,
   SelectContent,
   SelectItem,
-} from '@/components/ui/select'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
-import { SkeletonList } from '@/components/ui/skeleton-list'
-import { EmptyState } from '@/components/ui/empty-state'
-import { PlusIcon } from '@/components/Icons'
-import { DeleteButton } from '@/components/ActionButtons'
+} from '@/shared/components/ui/select'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/shared/components/ui/dialog'
+import { SkeletonList } from '@/shared/components/ui/skeleton-list'
+import { EmptyState } from '@/shared/components/ui/empty-state'
+import { PlusIcon } from '@/shared/components/Icons'
+import { DeleteButton } from '@/shared/components/ActionButtons'
 import { toast } from 'sonner'
 import { format, startOfWeek } from 'date-fns'
 import { useState } from 'react'

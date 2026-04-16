@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/shared/components/ui/button'
 import { useTranslation } from 'react-i18next'
 
 interface ChatInputProps {

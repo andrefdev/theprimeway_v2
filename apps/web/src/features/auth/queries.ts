@@ -1,8 +1,8 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
 import { authApi } from './api'
-import { useAuthStore } from '../../stores/auth.store'
-import { useFeaturesStore } from '../../stores/features.store'
-import { featureQueries } from '../feature-flags/queries'
+import { useAuthStore } from '@/shared/stores/auth.store'
+import { useFeaturesStore } from '@/shared/stores/features.store'
+import { featureQueries } from '@/features/feature-flags/queries'
 import type { LoginInput, RegisterInput } from '@repo/shared/validators'
 
 export const authQueries = {

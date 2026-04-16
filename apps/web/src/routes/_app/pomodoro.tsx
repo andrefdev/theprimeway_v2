@@ -5,13 +5,13 @@ import {
   pomodoroQueries,
   useCreateSession,
   useUpdateSession,
-} from '../../features/pomodoro/queries'
-import { PomodoroModeSelector, MODE_LABEL_KEYS } from '../../features/pomodoro/components/PomodoroModeSelector'
-import { usePomodoroStore, MODE_MINUTES, type TimerMode } from '@/stores/pomodoro.store'
-import { PomodoroTimer } from '../../features/pomodoro/components/PomodoroTimer'
-import { PomodoroControls } from '../../features/pomodoro/components/PomodoroControls'
-import { PomodoroStats } from '../../features/pomodoro/components/PomodoroStats'
-import { PomodoroSessionList } from '../../features/pomodoro/components/PomodoroSessionList'
+} from '@/features/pomodoro/queries'
+import { PomodoroModeSelector, MODE_LABEL_KEYS } from '@/features/pomodoro/components/PomodoroModeSelector'
+import { usePomodoroStore, MODE_MINUTES, type TimerMode } from '@/shared/stores/pomodoro.store'
+import { PomodoroTimer } from '@/features/pomodoro/components/PomodoroTimer'
+import { PomodoroControls } from '@/features/pomodoro/components/PomodoroControls'
+import { PomodoroStats } from '@/features/pomodoro/components/PomodoroStats'
+import { PomodoroSessionList } from '@/features/pomodoro/components/PomodoroSessionList'
 import { toast } from 'sonner'
 import { useEffect, useCallback } from 'react'
 

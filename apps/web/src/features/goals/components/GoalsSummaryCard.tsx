@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { goalsQueries } from '../queries'
-import { Card, CardContent } from '@/components/ui/card'
-import { Progress } from '@/components/ui/progress'
-import { Badge } from '@/components/ui/badge'
+import { Card, CardContent } from '@/shared/components/ui/card'
+import { Progress } from '@/shared/components/ui/progress'
+import { Badge } from '@/shared/components/ui/badge'
 import { useTranslation } from 'react-i18next'
 
 const LEVEL_KEYS: Record<string, string> = {

@@ -1,7 +1,7 @@
-import { TaskItem } from '@/components/TaskItem'
-import { Button } from '@/components/ui/button'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { EmptyState } from '@/components/ui/empty-state'
+import { TaskItem } from '@/shared/components/TaskItem'
+import { Button } from '@/shared/components/ui/button'
+import { ScrollArea } from '@/shared/components/ui/scroll-area'
+import { EmptyState } from '@/shared/components/ui/empty-state'
 import type { Task } from '@repo/shared/types'
 import { useTranslation } from 'react-i18next'
 

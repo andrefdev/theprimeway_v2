@@ -1,4 +1,4 @@
-import { api } from '../../lib/api-client'
+import { api } from '@/shared/lib/api-client'
 import type { Task } from '@repo/shared/types'
 import type { CreateTaskInput, UpdateTaskInput } from '@repo/shared/validators'
 

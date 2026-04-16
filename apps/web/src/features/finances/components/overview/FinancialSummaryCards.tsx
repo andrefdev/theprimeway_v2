@@ -1,13 +1,13 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card'
 import {
   CircleDollarSign,
   TrendingUp,
   TrendingDown,
   Target,
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn } from '@/shared/lib/utils'
 import { useTranslation } from 'react-i18next'
-import { CurrencyAmount } from '@/components/CurrencyAmount'
+import { CurrencyAmount } from '@/shared/components/CurrencyAmount'
 import { useCurrencySettings } from '@/features/settings/hooks/use-currency-settings'
 
 interface FinancialSummaryCardsProps {

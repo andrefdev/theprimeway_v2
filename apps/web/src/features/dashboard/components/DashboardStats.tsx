@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
-import { StatCard } from '../../../components/StatCard'
-import { useLocale } from '../../../i18n/useLocale'
-import { formatCurrency } from '../../../i18n/format'
+import { StatCard } from '@/shared/components/StatCard'
+import { useLocale } from '@/i18n/useLocale'
+import { formatCurrency } from '@/i18n/format'
 import type { DashboardSummary } from '../api'
 
 interface DashboardStatsProps {

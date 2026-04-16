@@ -1,8 +1,8 @@
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { gamificationQueries } from '../../gamification/queries'
+import { Card, CardContent } from '@/shared/components/ui/card'
+import { Badge } from '@/shared/components/ui/badge'
+import { gamificationQueries } from '@/features/gamification/queries'
 import { format } from 'date-fns'
 import type { GamificationProfile } from '@repo/shared/types'
 

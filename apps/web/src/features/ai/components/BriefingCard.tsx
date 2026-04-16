@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { aiQueries } from '../queries'
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { SkeletonList } from '@/components/ui/skeleton-list'
+import { Card, CardContent } from '@/shared/components/ui/card'
+import { Badge } from '@/shared/components/ui/badge'
+import { SkeletonList } from '@/shared/components/ui/skeleton-list'
 import { useTranslation } from 'react-i18next'
 import type { Briefing } from '@repo/shared/types'
 

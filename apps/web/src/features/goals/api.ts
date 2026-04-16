@@ -1,4 +1,4 @@
-import { api } from '../../lib/api-client'
+import { api } from '@/shared/lib/api-client'
 import type { Goal, PrimeVision, ThreeYearGoal, AnnualGoal, QuarterlyGoal, WeeklyGoal, FocusLink } from '@repo/shared/types'
 
 interface ListResponse<T> {

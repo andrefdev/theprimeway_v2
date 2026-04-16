@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { api } from '@/lib/api-client'
+import { api } from '@/shared/lib/api-client'
 
 interface SerializedExchangeRate {
   id: string

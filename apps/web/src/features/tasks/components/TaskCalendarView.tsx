@@ -1,11 +1,11 @@
 import { useState, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { tasksQueries } from '../queries'
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/shared/components/ui/card'
+import { Button } from '@/shared/components/ui/button'
 import { useTranslation } from 'react-i18next'
 import { format, addMonths, startOfMonth, endOfMonth, eachDayOfInterval, getDay } from 'date-fns'
-import { useLocale } from '../../../i18n/useLocale'
+import { useLocale } from '@/i18n/useLocale'
 
 const PRIORITY_DOT: Record<string, string> = {
   high: 'bg-red-500',

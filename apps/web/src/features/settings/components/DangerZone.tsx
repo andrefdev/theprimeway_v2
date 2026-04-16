@@ -1,8 +1,8 @@
 import { useTranslation } from 'react-i18next'
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/shared/components/ui/card'
+import { Button } from '@/shared/components/ui/button'
 import { toast } from 'sonner'
-import { useAuthStore } from '../../../stores/auth.store'
+import { useAuthStore } from '@/shared/stores/auth.store'
 
 export function DangerZone() {
   const { t } = useTranslation('settings')

@@ -3,10 +3,10 @@ import { createRootRouteWithContext, Outlet } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/router-devtools'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import type { QueryClient } from '@tanstack/react-query'
-import { ThemeProvider } from '../providers/theme-provider'
-import { Toaster } from '@/components/ui/sonner'
+import { ThemeProvider } from '@/shared/providers/theme-provider'
+import { Toaster } from '@/shared/components/ui/sonner'
 import '../i18n/config'
-import { useAuthStore } from '@/stores/auth.store'
+import { useAuthStore } from '@/shared/stores/auth.store'
 
 // Try to import Tauri API, but don't fail if not available
 let invoke: ((command: string, args?: Record<string, unknown>) => Promise<unknown>) | null = null

@@ -1,11 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
 import { gamificationQueries } from '../queries'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Progress } from '@/components/ui/progress'
-import { SkeletonList } from '@/components/ui/skeleton-list'
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card'
+import { Progress } from '@/shared/components/ui/progress'
+import { SkeletonList } from '@/shared/components/ui/skeleton-list'
 import { useTranslation } from 'react-i18next'
 import { Check } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn } from '@/shared/lib/utils'
 import type { RankInfo } from '../api'
 
 const RANKS = ['E', 'D', 'C', 'B', 'A', 'S'] as const

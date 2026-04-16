@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { tasksQueries } from '../queries'
-import { Card, CardContent } from '@/components/ui/card'
-import { Progress } from '@/components/ui/progress'
+import { Card, CardContent } from '@/shared/components/ui/card'
+import { Progress } from '@/shared/components/ui/progress'
 import { useTranslation } from 'react-i18next'
 
 const PRIORITY_COLORS: Record<string, string> = {

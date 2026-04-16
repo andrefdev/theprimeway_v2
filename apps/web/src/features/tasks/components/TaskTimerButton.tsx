@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/shared/components/ui/button'
 import { useStartTimer, useStopTimer } from '../queries'
 import type { Task } from '@repo/shared/types'
 

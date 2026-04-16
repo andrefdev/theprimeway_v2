@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 import { useCurrencySettings } from '@/features/settings/hooks/use-currency-settings'
-import { formatAmountWithSymbol } from '@/lib/currency'
+import { formatAmountWithSymbol } from '@/shared/lib/currency'
 
 export function useCurrency() {
   const { settings, loading } = useCurrencySettings()

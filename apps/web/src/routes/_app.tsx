@@ -1,14 +1,14 @@
 import { Suspense } from 'react'
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
-import { useAuthStore } from '../stores/auth.store'
-import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
-import { TooltipProvider } from '@/components/ui/tooltip'
-import { AppSidebar } from '../components/layout/Sidebar'
-import { Header } from '../components/layout/Topbar'
-import { MobileBottomNav } from '../components/layout/MobileBottomNav'
-import { ErrorBoundary } from '../components/ErrorBoundary'
-import { useLocaleSync } from '../i18n/useLocaleSync'
-import { RouteLoadingSkeleton } from '../components/RouteLoadingSkeleton'
+import { useAuthStore } from '@/shared/stores/auth.store'
+import { SidebarProvider, SidebarInset } from '@/shared/components/ui/sidebar'
+import { TooltipProvider } from '@/shared/components/ui/tooltip'
+import { AppSidebar } from '@/shared/components/layout/Sidebar'
+import { Header } from '@/shared/components/layout/Topbar'
+import { MobileBottomNav } from '@/shared/components/layout/MobileBottomNav'
+import { ErrorBoundary } from '@/shared/components/ErrorBoundary'
+import { useLocaleSync } from '@/i18n/useLocaleSync'
+import { RouteLoadingSkeleton } from '@/shared/components/RouteLoadingSkeleton'
 
 export const Route = createFileRoute('/_app')({
   beforeLoad: () => {

@@ -1,4 +1,4 @@
-import { api } from '../../lib/api-client'
+import { api } from '@/shared/lib/api-client'
 import type { FeaturesResponse } from '@repo/shared/types'
 
 export const featuresApi = {

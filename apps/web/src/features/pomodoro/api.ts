@@ -1,4 +1,4 @@
-import { api } from '../../lib/api-client'
+import { api } from '@/shared/lib/api-client'
 import type { PomodoroSession, PomodoroStats } from '@repo/shared/types'
 import type { CreatePomodoroSessionInput, UpdatePomodoroSessionInput } from '@repo/shared/validators'
 

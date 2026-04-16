@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/shared/components/ui/button'
 import { Plus, Play, Wallet, FileText } from 'lucide-react'
 
 export function DashboardQuickActions() {

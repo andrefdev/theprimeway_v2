@@ -1,5 +1,5 @@
-import { Checkbox } from '@/components/ui/checkbox'
-import { Label } from '@/components/ui/label'
+import { Checkbox } from '@/shared/components/ui/checkbox'
+import { Label } from '@/shared/components/ui/label'
 
 interface NotifToggleProps {
   id: string

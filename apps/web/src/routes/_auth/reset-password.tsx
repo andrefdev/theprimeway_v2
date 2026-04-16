@@ -1,11 +1,11 @@
 import { createFileRoute, Link, useSearch } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { Button } from '@/shared/components/ui/button'
+import { Input } from '@/shared/components/ui/input'
+import { Label } from '@/shared/components/ui/label'
 import { Loader2Icon, EyeIcon, EyeOffIcon } from 'lucide-react'
-import { authApi } from '../../features/auth/api'
+import { authApi } from '@/features/auth/api'
 import { z } from 'zod'
 
 const searchSchema = z.object({
@@ -130,6 +130,7 @@ function ResetPasswordPage() {
                     className="absolute top-1/2 right-1 -translate-y-1/2"
                     onClick={() => setShowPassword(!showPassword)}
                     tabIndex={-1}
+                    aria-label={t('togglePasswordVisibility')}
                   >
                     {showPassword ? <EyeOffIcon className="size-4" /> : <EyeIcon className="size-4" />}
                   </Button>

@@ -1,6 +1,6 @@
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
+import { Card, CardContent } from '@/shared/components/ui/card'
+import { Badge } from '@/shared/components/ui/badge'
+import { Progress } from '@/shared/components/ui/progress'
 import { useTranslation } from 'react-i18next'
 import type { Book } from '@repo/shared/types'
 

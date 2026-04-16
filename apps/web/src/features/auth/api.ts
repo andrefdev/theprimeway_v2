@@ -1,4 +1,4 @@
-import { api } from '../../lib/api-client'
+import { api } from '@/shared/lib/api-client'
 import type { LoginInput, RegisterInput, OAuthInput } from '@repo/shared/validators'
 
 export interface AuthResponse {

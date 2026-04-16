@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { tasksQueries } from '../../tasks/queries'
+import { tasksQueries } from '@/features/tasks/queries'
 import { calendarQueries } from '../queries'
 import { format, addMinutes, parseISO } from 'date-fns'
 import type { Task } from '@repo/shared/types'

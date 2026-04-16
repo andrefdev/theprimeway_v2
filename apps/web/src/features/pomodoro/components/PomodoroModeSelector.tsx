@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { type TimerMode, MODE_MINUTES } from '@/stores/pomodoro.store'
+import { type TimerMode, MODE_MINUTES } from '@/shared/stores/pomodoro.store'
 
 export type { TimerMode }
 export { MODE_MINUTES }

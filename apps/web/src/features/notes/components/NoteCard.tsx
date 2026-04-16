@@ -1,15 +1,15 @@
 import { Link } from '@tanstack/react-router'
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/shared/components/ui/card'
+import { Badge } from '@/shared/components/ui/badge'
+import { Button } from '@/shared/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { PinIcon, TrashIcon, MoreVerticalIcon } from '@/components/Icons'
+} from '@/shared/components/ui/dropdown-menu'
+import { PinIcon, TrashIcon, MoreVerticalIcon } from '@/shared/components/Icons'
 import { formatDistanceToNow } from 'date-fns'
 import { useTranslation } from 'react-i18next'
 import type { Note, NoteCategory } from '@repo/shared/types'

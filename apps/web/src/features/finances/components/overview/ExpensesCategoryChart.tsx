@@ -1,10 +1,10 @@
 import { useMemo } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card'
 import { PieChart } from 'lucide-react'
 import { PieChart as RechartsPieChart, Pie, Cell, Tooltip } from 'recharts'
-import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart'
+import { ChartContainer, ChartTooltipContent } from '@/shared/components/ui/chart'
 import { useTranslation } from 'react-i18next'
-import { CurrencyAmount } from '@/components/CurrencyAmount'
+import { CurrencyAmount } from '@/shared/components/CurrencyAmount'
 
 interface ExpensesCategoryChartProps {
   data: { name: string; value: number }[]

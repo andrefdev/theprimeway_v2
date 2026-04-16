@@ -1,6 +1,6 @@
 import { queryOptions } from '@tanstack/react-query'
 import { featuresApi } from './api'
-import { useFeaturesStore } from '../../stores/features.store'
+import { useFeaturesStore } from '@/shared/stores/features.store'
 import { CACHE_TIMES } from '@repo/shared/constants'
 
 export const featureQueries = {

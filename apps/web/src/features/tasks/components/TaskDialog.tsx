@@ -12,27 +12,28 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
+} from '@/shared/components/ui/dialog'
+import { Button } from '@/shared/components/ui/button'
+import { Input } from '@/shared/components/ui/input'
+import { Textarea } from '@/shared/components/ui/textarea'
+import { Label } from '@/shared/components/ui/label'
+import { Badge } from '@/shared/components/ui/badge'
 import {
   Select,
   SelectTrigger,
   SelectValue,
   SelectContent,
   SelectItem,
-} from '@/components/ui/select'
-import { DatePicker } from '@/components/ui/date-picker'
+} from '@/shared/components/ui/select'
+import { DatePicker } from '@/shared/components/ui/date-picker'
 import { toast } from 'sonner'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import { tasksQueries } from '../queries'
-import { goalsQueries } from '../../goals/queries'
-import { ChevronRightIcon } from '@/components/Icons'
+import { goalsQueries } from '@/features/goals/queries'
+import { ChevronRightIcon } from '@/shared/components/Icons'
+import { useLocale } from '@/i18n/useLocale'
 
 interface TaskDialogProps {
   open: boolean
@@ -51,6 +52,7 @@ const DURATION_PRESETS = [15, 30, 45, 60, 90, 120]
 
 export function TaskDialog({ open, onClose, task, defaultDate }: TaskDialogProps) {
   const { t } = useTranslation('tasks')
+  const { locale } = useLocale()
   const createTask = useCreateTask()
   const updateTask = useUpdateTask()
   const estimateTimebox = useEstimateTimebox()
@@ -91,7 +93,6 @@ export function TaskDialog({ open, onClose, task, defaultDate }: TaskDialogProps
   // Reset form when dialog opens with new task
   useEffect(() => {
     if (!open) return
-    console.log('🗂️ TaskDialog - open:', open, 'defaultDate:', defaultDate, 'task:', task)
     if (task) {
       form.reset({
         title: task.title,
@@ -105,7 +106,6 @@ export function TaskDialog({ open, onClose, task, defaultDate }: TaskDialogProps
         weeklyGoalId: (task as any).weeklyGoalId ?? undefined,
       })
     } else {
-      console.log('🗂️ TaskDialog - Resetting form with defaultDate:', defaultDate)
       form.reset({
         title: '',
         description: '',
@@ -118,7 +118,6 @@ export function TaskDialog({ open, onClose, task, defaultDate }: TaskDialogProps
   }, [open, task, defaultDate, form])
 
   async function onSubmit(data: CreateTaskInput) {
-    console.log('📤 TaskDialog - Submitting task data:', data)
     try {
       if (isEdit) {
         await updateTask.mutateAsync({ id: task.id, data })
@@ -214,21 +213,21 @@ export function TaskDialog({ open, onClose, task, defaultDate }: TaskDialogProps
                       const title = form.watch('title')
                       const description = form.watch('description')
                       if (!title) {
-                        toast.error('Please enter a task title first')
+                        toast.error(t('enterTitleFirst'))
                         return
                       }
                       try {
                         const result = await estimateTimebox.mutateAsync({ title, description })
                         form.setValue('estimatedDuration', result.minutes)
-                        toast.success(`Estimated: ${result.minutes} min - ${result.rationale}`)
+                        toast.success(t('estimatedResult', { minutes: result.minutes, rationale: result.rationale }))
                       } catch {
-                        toast.error('Failed to estimate duration')
+                        toast.error(t('failedToEstimate'))
                       }
                     }}
                     disabled={estimateTimebox.isPending}
                     className="text-xs"
                   >
-                    {estimateTimebox.isPending ? t('common:loading', { defaultValue: 'Loading...' }) : 'Suggest'}
+                    {estimateTimebox.isPending ? t('common:loading', { defaultValue: 'Loading...' }) : t('suggest')}
                   </Button>
                 </div>
                 <Select
@@ -274,18 +273,18 @@ export function TaskDialog({ open, onClose, task, defaultDate }: TaskDialogProps
                           form.setValue('scheduledDate', `${year}-${month}-${day}`)
                           form.setValue('scheduledStart', result.slot.start)
                           form.setValue('scheduledEnd', result.slot.end)
-                          toast.success('Found optimal time slot!')
+                          toast.success(t('foundOptimalSlot'))
                         } else {
-                          toast.error('No available time slots found')
+                          toast.error(t('noSlotsFound'))
                         }
                       } catch {
-                        toast.error('Failed to find time slot')
+                        toast.error(t('failedToFindSlot'))
                       }
                     }}
                     disabled={scheduleTask.isPending}
                     className="text-xs"
                   >
-                    {scheduleTask.isPending ? t('common:loading', { defaultValue: 'Loading...' }) : 'Find best time'}
+                    {scheduleTask.isPending ? t('common:loading', { defaultValue: 'Loading...' }) : t('findBestTime')}
                   </Button>
                 )}
               </div>
@@ -309,11 +308,11 @@ export function TaskDialog({ open, onClose, task, defaultDate }: TaskDialogProps
             {/* Schedule Result */}
             {showScheduleResult && (
               <div className="space-y-1.5 p-3 rounded-lg bg-success/10 border border-success/30">
-                <p className="text-xs font-semibold text-foreground">Suggested time:</p>
+                <p className="text-xs font-semibold text-foreground">{t('suggestedTimeLabel')}</p>
                 <p className="text-sm text-foreground">
-                  {new Date(showScheduleResult.start).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                  {new Date(showScheduleResult.start).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}
                   {' '}-{' '}
-                  {new Date(showScheduleResult.end).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                  {new Date(showScheduleResult.end).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}
                 </p>
               </div>
             )}
@@ -328,9 +327,9 @@ export function TaskDialog({ open, onClose, task, defaultDate }: TaskDialogProps
                 {scheduleSuggestion ? (
                   <div className="text-sm">
                     <p className="text-foreground font-medium">
-                      {new Date(scheduleSuggestion.start).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                      {new Date(scheduleSuggestion.start).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}
                       {' '}-{' '}
-                      {new Date(scheduleSuggestion.end).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                      {new Date(scheduleSuggestion.end).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
                       {t('basedOnCalendar')}
@@ -375,16 +374,16 @@ export function TaskDialog({ open, onClose, task, defaultDate }: TaskDialogProps
 
             {/* Weekly Goal */}
             <div className="space-y-1.5">
-              <Label>{t('weeklyGoal', { defaultValue: 'Weekly Goal (optional)' })}</Label>
+              <Label>{t('weeklyGoal')}</Label>
               <Select
                 value={form.watch('weeklyGoalId') ?? 'none'}
                 onValueChange={(v) => form.setValue('weeklyGoalId', v !== 'none' ? v : undefined)}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select a weekly goal" />
+                  <SelectValue placeholder={t('selectWeeklyGoal')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">None</SelectItem>
+                  <SelectItem value="none">{t('none')}</SelectItem>
                   {Array.isArray(weeklyGoalsData) &&
                     weeklyGoalsData.map((goal: any) => (
                       <SelectItem key={goal.id} value={goal.id}>
@@ -407,7 +406,7 @@ export function TaskDialog({ open, onClose, task, defaultDate }: TaskDialogProps
                     size={16}
                     className={`transition-transform ${showInsights ? 'rotate-90' : ''}`}
                   />
-                  AI Insights
+                  {t('aiInsights')}
                 </button>
                 {showInsights && (
                   <div className="space-y-2 p-3 rounded-lg bg-secondary/50 border border-border/30 text-sm">
@@ -416,12 +415,12 @@ export function TaskDialog({ open, onClose, task, defaultDate }: TaskDialogProps
                     ) : insight ? (
                       <div className="space-y-3">
                         <div>
-                          <p className="text-xs font-semibold text-muted-foreground mb-1">Context</p>
+                          <p className="text-xs font-semibold text-muted-foreground mb-1">{t('context')}</p>
                           <p className="text-xs">{insight.contextBrief}</p>
                         </div>
                         {insight.suggestedSubtasks.length > 0 && (
                           <div>
-                            <p className="text-xs font-semibold text-muted-foreground mb-1">Suggested Subtasks</p>
+                            <p className="text-xs font-semibold text-muted-foreground mb-1">{t('suggestedSubtasks')}</p>
                             <ul className="space-y-1">
                               {insight.suggestedSubtasks.map((subtask, i) => (
                                 <li key={i} className="text-xs flex items-start gap-2">
@@ -442,7 +441,7 @@ export function TaskDialog({ open, onClose, task, defaultDate }: TaskDialogProps
                         )}
                         {insight.tips.length > 0 && (
                           <div>
-                            <p className="text-xs font-semibold text-muted-foreground mb-1">Tips</p>
+                            <p className="text-xs font-semibold text-muted-foreground mb-1">{t('tips')}</p>
                             <ul className="space-y-1">
                               {insight.tips.map((tip, i) => (
                                 <li key={i} className="text-xs">• {tip}</li>
@@ -452,7 +451,7 @@ export function TaskDialog({ open, onClose, task, defaultDate }: TaskDialogProps
                         )}
                         {insight.suggestedGoalTitle && (
                           <div>
-                            <p className="text-xs font-semibold text-muted-foreground mb-1">Suggested Goal</p>
+                            <p className="text-xs font-semibold text-muted-foreground mb-1">{t('suggestedGoal')}</p>
                             <div className="flex items-center gap-2">
                               <p className="text-xs flex-1">{insight.suggestedGoalTitle}</p>
                               <Button
@@ -462,14 +461,14 @@ export function TaskDialog({ open, onClose, task, defaultDate }: TaskDialogProps
                                 className="text-xs h-6 px-2"
                                 onClick={() => form.setValue('weeklyGoalId', insight.suggestedGoalId)}
                               >
-                                Apply
+                                {t('apply')}
                               </Button>
                             </div>
                           </div>
                         )}
                       </div>
                     ) : (
-                      <p className="text-xs text-muted-foreground">No insights available</p>
+                      <p className="text-xs text-muted-foreground">{t('noInsightsAvailable')}</p>
                     )}
                   </div>
                 )}

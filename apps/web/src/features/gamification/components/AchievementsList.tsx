@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { gamificationQueries } from '../queries'
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { SkeletonList } from '@/components/ui/skeleton-list'
-import { EmptyState } from '@/components/ui/empty-state'
+import { Card, CardContent } from '@/shared/components/ui/card'
+import { Badge } from '@/shared/components/ui/badge'
+import { SkeletonList } from '@/shared/components/ui/skeleton-list'
+import { EmptyState } from '@/shared/components/ui/empty-state'
 import { useTranslation } from 'react-i18next'
 import type { Achievement } from '@repo/shared/types'
 

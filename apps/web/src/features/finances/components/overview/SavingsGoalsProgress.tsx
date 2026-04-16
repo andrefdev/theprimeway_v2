@@ -1,8 +1,8 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Progress } from '@/components/ui/progress'
-import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card'
+import { Progress } from '@/shared/components/ui/progress'
+import { Badge } from '@/shared/components/ui/badge'
 import { Target } from 'lucide-react'
-import { CurrencyAmount } from '@/components/CurrencyAmount'
+import { CurrencyAmount } from '@/shared/components/CurrencyAmount'
 import { useTranslation } from 'react-i18next'
 import type { SavingsGoal } from '../../api'
 

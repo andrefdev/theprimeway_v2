@@ -1,5 +1,5 @@
-import { Input } from '@/components/ui/input'
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
+import { Input } from '@/shared/components/ui/input'
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/shared/components/ui/select'
 import { useTranslation } from 'react-i18next'
 import { LIFE_PILLARS } from '@repo/shared/constants'
 

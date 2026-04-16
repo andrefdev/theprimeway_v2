@@ -10,13 +10,13 @@ import {
   useDeleteQuarterlyGoal,
   useGoalDetail,
 } from '../queries'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { Label } from '@/components/ui/label'
-import { Progress } from '@/components/ui/progress'
-import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card'
+import { Button } from '@/shared/components/ui/button'
+import { Input } from '@/shared/components/ui/input'
+import { Textarea } from '@/shared/components/ui/textarea'
+import { Label } from '@/shared/components/ui/label'
+import { Progress } from '@/shared/components/ui/progress'
+import { Badge } from '@/shared/components/ui/badge'
 import { X, Trash2, Edit2, Save } from 'lucide-react'
 import { toast } from 'sonner'
 

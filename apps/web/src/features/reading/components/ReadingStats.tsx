@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { readingQueries } from '../queries'
-import { Card, CardContent } from '@/components/ui/card'
-import { SkeletonList } from '@/components/ui/skeleton-list'
+import { Card, CardContent } from '@/shared/components/ui/card'
+import { SkeletonList } from '@/shared/components/ui/skeleton-list'
 import { useTranslation } from 'react-i18next'
 import type { ReadingStats as ReadingStatsType } from '@repo/shared/types'
 

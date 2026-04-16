@@ -1,8 +1,8 @@
 import { useTranslation } from 'react-i18next'
 import { Zap, Lightbulb } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Skeleton } from '@/components/ui/skeleton'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card'
+import { Badge } from '@/shared/components/ui/badge'
+import { Skeleton } from '@/shared/components/ui/skeleton'
 import { useHabitAnalysis } from '../queries'
 
 interface HabitAIInsightsProps {

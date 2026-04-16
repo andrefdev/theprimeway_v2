@@ -14,37 +14,37 @@ import {
   useCreateAccount,
   useDeleteAccount,
 } from '@/features/finances/queries'
-import { CURRENCY_OPTIONS } from '../../../features/finances/constants'
+import { CURRENCY_OPTIONS } from '@/features/finances/constants'
 import { FinancesNav } from '@/features/finances/components/FinancesNav'
 import { useCurrency } from '@/features/finances/hooks/use-currency'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { Button } from '@/shared/components/ui/button'
+import { Badge } from '@/shared/components/ui/badge'
+import { Card, CardContent } from '@/shared/components/ui/card'
+import { Input } from '@/shared/components/ui/input'
+import { Label } from '@/shared/components/ui/label'
 import {
   Select,
   SelectTrigger,
   SelectValue,
   SelectContent,
   SelectItem,
-} from '@/components/ui/select'
-import { SkeletonList } from '@/components/ui/skeleton-list'
-import { EmptyState } from '@/components/ui/empty-state'
+} from '@/shared/components/ui/select'
+import { SkeletonList } from '@/shared/components/ui/skeleton-list'
+import { EmptyState } from '@/shared/components/ui/empty-state'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog'
+} from '@/shared/components/ui/dialog'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+} from '@/shared/components/ui/dropdown-menu'
 import type { FinanceAccount } from '@repo/shared/types'
 import { FeatureGate } from '@/features/feature-flags/FeatureGate'
 import { UpgradePrompt } from '@/features/subscriptions/components/UpgradePrompt'

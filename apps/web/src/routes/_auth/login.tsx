@@ -8,14 +8,15 @@ import {
   type LoginInput,
   type RegisterInput,
 } from '@repo/shared/validators'
-import { useLogin, useRegister } from '../../features/auth/queries'
-import { OAuthButtons } from '../../features/auth/components/OAuthButtons'
+import { useLogin, useRegister } from '@/features/auth/queries'
+import { OAuthButtons } from '@/features/auth/components/OAuthButtons'
 import { useState } from 'react'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/components/ui/tabs'
+import { Button } from '@/shared/components/ui/button'
+import { Input } from '@/shared/components/ui/input'
+import { Label } from '@/shared/components/ui/label'
 import { EyeIcon, EyeOffIcon, Loader2Icon } from 'lucide-react'
+import logoSvg from '@/shared/assets/logo.svg'
 
 export const Route = createFileRoute('/_auth/login')({
   component: AuthPage,
@@ -25,47 +26,41 @@ function AuthPage() {
   const { t } = useTranslation('auth')
 
   return (
-    <div>
-      {/* Header */}
-      <div className="mb-8 text-center">
-        <div className="flex items-center justify-center pt-8 pb-4">
-          <img
-            src="/logo.svg"
-            alt="The Prime Way"
-            className="h-[100px] w-[100px] transition-transform duration-300 hover:scale-105"
-          />
-        </div>
-        <h1 className="mb-2 text-4xl font-bold text-foreground">
+    <div className="space-y-8">
+      {/* Brand — only visible on mobile (desktop shows left panel) */}
+      <div className="flex flex-col items-center gap-3 lg:hidden">
+        <img src={logoSvg} alt="The Prime Way" className="h-10 w-10" />
+        <h1 className="text-lg font-semibold tracking-tight text-foreground">
           The Prime Way
         </h1>
       </div>
 
-      {/* Card with Tabs */}
-      <div className="rounded-2xl border border-border/50 bg-card/50 p-6 shadow-sm backdrop-blur-xs">
-        <Tabs defaultValue="login" className="w-full">
-          <TabsList className="mb-6 grid w-full grid-cols-2 bg-muted/50">
-            <TabsTrigger
-              value="login"
-              className="data-[state=active]:bg-background"
-            >
-              {t('loginTitle')}
-            </TabsTrigger>
-            <TabsTrigger
-              value="register"
-              className="data-[state=active]:bg-background"
-            >
-              {t('registerTitle')}
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="login" className="mt-0">
-            <LoginForm />
-          </TabsContent>
-          <TabsContent value="register" className="mt-0">
-            <RegisterForm />
-          </TabsContent>
-        </Tabs>
+      {/* Desktop heading */}
+      <div className="hidden lg:block">
+        <h1 className="text-xl font-semibold tracking-tight text-foreground">
+          {t('loginTitle')}
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">{t('loginSubtitle')}</p>
       </div>
+
+      {/* Tabs */}
+      <Tabs defaultValue="login" className="w-full">
+        <TabsList className="mb-6 grid w-full grid-cols-2">
+          <TabsTrigger value="login" className="text-xs font-medium">
+            {t('loginTitle')}
+          </TabsTrigger>
+          <TabsTrigger value="register" className="text-xs font-medium">
+            {t('registerTitle')}
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="login" className="mt-0">
+          <LoginForm />
+        </TabsContent>
+        <TabsContent value="register" className="mt-0">
+          <RegisterForm />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
@@ -94,97 +89,99 @@ function LoginForm() {
 
   return (
     <div className="space-y-6">
-      {/* Title */}
-      <div className="text-center">
-        <h2 className="text-2xl font-semibold">{t('loginTitle')}</h2>
-        <p className="text-sm text-muted-foreground">{t('loginSubtitle')}</p>
+      <OAuthButtons />
+
+      {/* Divider */}
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-border" />
+        </div>
+        <div className="relative flex justify-center">
+          <span className="bg-background px-3 text-[11px] uppercase tracking-wider text-muted-foreground">
+            {t('oauthDivider')}
+          </span>
+        </div>
       </div>
 
-      {/* Error */}
       {error && (
         <div className="rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {error}
         </div>
       )}
 
-      {/* Form */}
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="login-email">{t('email')}</Label>
+        <div className="space-y-1.5">
+          <Label htmlFor="login-email" className="text-xs font-medium text-muted-foreground">
+            {t('email')}
+          </Label>
           <Input
             id="login-email"
             type="email"
             autoComplete="email"
             placeholder={t('emailPlaceholder')}
+            className="h-10"
+            aria-invalid={!!form.formState.errors.email}
+            aria-describedby={form.formState.errors.email ? 'login-email-error' : undefined}
             {...form.register('email')}
           />
           {form.formState.errors.email && (
-            <p className="text-xs text-destructive">
+            <p id="login-email-error" role="alert" className="text-[11px] text-destructive">
               {form.formState.errors.email.message}
             </p>
           )}
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="login-password">{t('password')}</Label>
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="login-password" className="text-xs font-medium text-muted-foreground">
+              {t('password')}
+            </Label>
+            <Link
+              to="/forgot-password"
+              className="text-[11px] text-muted-foreground hover:text-foreground"
+            >
+              {t('forgotPassword')}
+            </Link>
+          </div>
           <div className="relative">
             <Input
               id="login-password"
               type={showPassword ? 'text' : 'password'}
               autoComplete="current-password"
               placeholder={t('passwordPlaceholder')}
-              className="pr-10"
+              className="h-10 pr-10"
+              aria-invalid={!!form.formState.errors.password}
+              aria-describedby={form.formState.errors.password ? 'login-password-error' : undefined}
               {...form.register('password')}
             />
             <Button
               type="button"
               variant="ghost"
               size="icon"
-              className="absolute top-1/2 right-1 -translate-y-1/2"
+              className="absolute top-1/2 right-1 -translate-y-1/2 size-8 text-muted-foreground"
               onClick={() => setShowPassword(!showPassword)}
               tabIndex={-1}
+              aria-label={t('togglePasswordVisibility')}
             >
               {showPassword ? (
-                <EyeOffIcon className="size-4" />
+                <EyeOffIcon className="size-3.5" />
               ) : (
-                <EyeIcon className="size-4" />
+                <EyeIcon className="size-3.5" />
               )}
             </Button>
           </div>
           {form.formState.errors.password && (
-            <p className="text-xs text-destructive">
+            <p id="login-password-error" role="alert" className="text-[11px] text-destructive">
               {form.formState.errors.password.message}
             </p>
           )}
         </div>
 
-        <Button type="submit" className="w-full" disabled={login.isPending}>
-          {login.isPending && (
-            <Loader2Icon className="size-4 animate-spin" />
-          )}
-          {login.isPending ? t('signingIn') : t('signIn')}
+        <Button type="submit" className="w-full h-10" disabled={login.isPending}>
+          {login.isPending && <Loader2Icon className="mr-2 size-4 animate-spin" />}
+          {t('signIn')}
         </Button>
-
-        <div className="text-right">
-          <Link to="/forgot-password" className="text-xs text-muted-foreground hover:text-primary">
-            {t('forgotPassword')}
-          </Link>
-        </div>
       </form>
-
-      {/* OR Divider */}
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-border" />
-        </div>
-        <div className="relative flex justify-center text-xs">
-          <span className="bg-card/50 px-2 text-muted-foreground">
-            {t('oauthDivider')}
-          </span>
-        </div>
-      </div>
-
-      <OAuthButtons />
     </div>
   )
 }
@@ -213,113 +210,111 @@ function RegisterForm() {
 
   return (
     <div className="space-y-6">
-      {/* Title */}
-      <div className="text-center">
-        <h2 className="text-2xl font-semibold">{t('registerTitle')}</h2>
-        <p className="text-sm text-muted-foreground">
-          {t('registerSubtitle')}
-        </p>
+      <OAuthButtons />
+
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-border" />
+        </div>
+        <div className="relative flex justify-center">
+          <span className="bg-background px-3 text-[11px] uppercase tracking-wider text-muted-foreground">
+            {t('oauthDivider')}
+          </span>
+        </div>
       </div>
 
-      {/* Error */}
       {error && (
         <div className="rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {error}
         </div>
       )}
 
-      {/* Form */}
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="register-name">{t('name')}</Label>
+        <div className="space-y-1.5">
+          <Label htmlFor="register-name" className="text-xs font-medium text-muted-foreground">
+            {t('name')}
+          </Label>
           <Input
             id="register-name"
             type="text"
             autoComplete="name"
             placeholder={t('namePlaceholder')}
+            className="h-10"
+            aria-invalid={!!form.formState.errors.name}
+            aria-describedby={form.formState.errors.name ? 'register-name-error' : undefined}
             {...form.register('name')}
           />
           {form.formState.errors.name && (
-            <p className="text-xs text-destructive">
+            <p id="register-name-error" role="alert" className="text-[11px] text-destructive">
               {form.formState.errors.name.message}
             </p>
           )}
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="register-email">{t('email')}</Label>
+        <div className="space-y-1.5">
+          <Label htmlFor="register-email" className="text-xs font-medium text-muted-foreground">
+            {t('email')}
+          </Label>
           <Input
             id="register-email"
             type="email"
             autoComplete="email"
             placeholder={t('emailPlaceholder')}
+            className="h-10"
+            aria-invalid={!!form.formState.errors.email}
+            aria-describedby={form.formState.errors.email ? 'register-email-error' : undefined}
             {...form.register('email')}
           />
           {form.formState.errors.email && (
-            <p className="text-xs text-destructive">
+            <p id="register-email-error" role="alert" className="text-[11px] text-destructive">
               {form.formState.errors.email.message}
             </p>
           )}
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="register-password">{t('passwordNew')}</Label>
+        <div className="space-y-1.5">
+          <Label htmlFor="register-password" className="text-xs font-medium text-muted-foreground">
+            {t('passwordNew')}
+          </Label>
           <div className="relative">
             <Input
               id="register-password"
               type={showPassword ? 'text' : 'password'}
               autoComplete="new-password"
               placeholder={t('passwordNewPlaceholder')}
-              className="pr-10"
+              className="h-10 pr-10"
+              aria-invalid={!!form.formState.errors.password}
+              aria-describedby={form.formState.errors.password ? 'register-password-error' : undefined}
               {...form.register('password')}
             />
             <Button
               type="button"
               variant="ghost"
               size="icon"
-              className="absolute top-1/2 right-1 -translate-y-1/2"
+              className="absolute top-1/2 right-1 -translate-y-1/2 size-8 text-muted-foreground"
               onClick={() => setShowPassword(!showPassword)}
               tabIndex={-1}
+              aria-label={t('togglePasswordVisibility')}
             >
               {showPassword ? (
-                <EyeOffIcon className="size-4" />
+                <EyeOffIcon className="size-3.5" />
               ) : (
-                <EyeIcon className="size-4" />
+                <EyeIcon className="size-3.5" />
               )}
             </Button>
           </div>
           {form.formState.errors.password && (
-            <p className="text-xs text-destructive">
+            <p id="register-password-error" role="alert" className="text-[11px] text-destructive">
               {form.formState.errors.password.message}
             </p>
           )}
         </div>
 
-        <Button
-          type="submit"
-          className="w-full"
-          disabled={register.isPending}
-        >
-          {register.isPending && (
-            <Loader2Icon className="size-4 animate-spin" />
-          )}
-          {register.isPending ? t('creatingAccount') : t('createAccount')}
+        <Button type="submit" className="w-full h-10" disabled={register.isPending}>
+          {register.isPending && <Loader2Icon className="mr-2 size-4 animate-spin" />}
+          {t('createAccount')}
         </Button>
       </form>
-
-      {/* OR Divider */}
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-border" />
-        </div>
-        <div className="relative flex justify-center text-xs">
-          <span className="bg-card/50 px-2 text-muted-foreground">
-            {t('oauthDivider')}
-          </span>
-        </div>
-      </div>
-
-      <OAuthButtons />
     </div>
   )
 }

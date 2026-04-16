@@ -1,4 +1,4 @@
-import { SectionTabs } from '@/components/SectionTabs'
+import { SectionTabs } from '@/shared/components/SectionTabs'
 import { useTranslation } from 'react-i18next'
 
 export function NotesNav() {

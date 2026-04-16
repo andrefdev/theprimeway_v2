@@ -1,7 +1,7 @@
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { CheckIcon } from '@/components/Icons'
+import { Card, CardContent } from '@/shared/components/ui/card'
+import { Badge } from '@/shared/components/ui/badge'
+import { ScrollArea } from '@/shared/components/ui/scroll-area'
+import { CheckIcon } from '@/shared/components/Icons'
 import { useLocale } from '@/i18n/useLocale'
 import {
   format,

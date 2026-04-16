@@ -1,13 +1,13 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card'
 import { BarChart3 } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts'
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-} from '@/components/ui/chart'
+} from '@/shared/components/ui/chart'
 import { useTranslation } from 'react-i18next'
-import { CurrencyAmount } from '@/components/CurrencyAmount'
+import { CurrencyAmount } from '@/shared/components/CurrencyAmount'
 
 interface MonthlyTrendsChartProps {
   data: { month: string; income: number; expenses: number; net: number }[]

@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
-import { Button } from '@/components/ui/button'
+import { Popover, PopoverTrigger, PopoverContent } from '@/shared/components/ui/popover'
+import { Button } from '@/shared/components/ui/button'
 import { EMOJI_GRID } from '../model/constants'
-import { cn } from '@/lib/utils'
+import { cn } from '@/shared/lib/utils'
 
 interface IconPickerProps {
   currentEmoji: string

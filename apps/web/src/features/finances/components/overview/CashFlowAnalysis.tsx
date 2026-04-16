@@ -1,8 +1,8 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card'
 import { BarChart3 } from 'lucide-react'
-import { CurrencyAmount } from '@/components/CurrencyAmount'
+import { CurrencyAmount } from '@/shared/components/CurrencyAmount'
 import { useTranslation } from 'react-i18next'
-import { cn } from '@/lib/utils'
+import { cn } from '@/shared/lib/utils'
 
 interface CashFlowAnalysisProps {
   averageIncome: number

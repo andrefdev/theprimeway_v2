@@ -17,33 +17,33 @@ import {
 import { FinancesNav } from '@/features/finances/components/FinancesNav'
 import { useCurrency } from '@/features/finances/hooks/use-currency'
 import { useFinancialAnalytics } from '@/features/finances/hooks/use-financial-analytics'
-import { QueryError } from '@/components/QueryError'
-import { DeleteButton } from '@/components/ActionButtons'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
-import { SkeletonList } from '@/components/ui/skeleton-list'
-import { EmptyState } from '@/components/ui/empty-state'
-import { Progress } from '@/components/ui/progress'
+import { QueryError } from '@/shared/components/QueryError'
+import { DeleteButton } from '@/shared/components/ActionButtons'
+import { Button } from '@/shared/components/ui/button'
+import { Card, CardContent } from '@/shared/components/ui/card'
+import { Input } from '@/shared/components/ui/input'
+import { Label } from '@/shared/components/ui/label'
+import { Badge } from '@/shared/components/ui/badge'
+import { SkeletonList } from '@/shared/components/ui/skeleton-list'
+import { EmptyState } from '@/shared/components/ui/empty-state'
+import { Progress } from '@/shared/components/ui/progress'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog'
+} from '@/shared/components/ui/dialog'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { EXPENSE_CATEGORY_OPTIONS } from '../../../features/finances/constants'
+} from '@/shared/components/ui/select'
+import { EXPENSE_CATEGORY_OPTIONS } from '@/features/finances/constants'
 import { toast } from 'sonner'
-import { cn } from '@/lib/utils'
+import { cn } from '@/shared/lib/utils'
 import type { Budget } from '@repo/shared/types'
 import { FeatureGate } from '@/features/feature-flags/FeatureGate'
 import { UpgradePrompt } from '@/features/subscriptions/components/UpgradePrompt'

@@ -5,26 +5,26 @@ import {
   financesQueries,
   useCreateTransaction,
   useDeleteTransaction,
-} from '../../../features/finances/queries'
-import { QueryError } from '../../../components/QueryError'
-import { PlusIcon } from '../../../components/Icons'
-import { DeleteButton } from '../../../components/ActionButtons'
+} from '@/features/finances/queries'
+import { QueryError } from '@/shared/components/QueryError'
+import { PlusIcon } from '@/shared/components/Icons'
+import { DeleteButton } from '@/shared/components/ActionButtons'
 import { FinancesNav } from '@/features/finances/components/FinancesNav'
 import { useCurrency } from '@/features/finances/hooks/use-currency'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { Button } from '@/shared/components/ui/button'
+import { Badge } from '@/shared/components/ui/badge'
+import { Card, CardContent } from '@/shared/components/ui/card'
+import { Input } from '@/shared/components/ui/input'
+import { Label } from '@/shared/components/ui/label'
 import {
   Select,
   SelectTrigger,
   SelectValue,
   SelectContent,
   SelectItem,
-} from '@/components/ui/select'
-import { SkeletonList } from '@/components/ui/skeleton-list'
-import { EmptyState } from '@/components/ui/empty-state'
+} from '@/shared/components/ui/select'
+import { SkeletonList } from '@/shared/components/ui/skeleton-list'
+import { EmptyState } from '@/shared/components/ui/empty-state'
 import {
   Dialog,
   DialogContent,
@@ -32,12 +32,12 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog'
-import { EXPENSE_CATEGORY_OPTIONS } from '../../../features/finances/constants'
-import { DatePicker } from '@/components/ui/date-picker'
+} from '@/shared/components/ui/dialog'
+import { EXPENSE_CATEGORY_OPTIONS } from '@/features/finances/constants'
+import { DatePicker } from '@/shared/components/ui/date-picker'
 import { toast } from 'sonner'
 import { useState, useRef } from 'react'
-import { financesApi } from '../../../features/finances/api'
+import { financesApi } from '@/features/finances/api'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   TrendingUp,
@@ -46,7 +46,7 @@ import {
   Search,
   Loader2Icon,
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn } from '@/shared/lib/utils'
 import type { Transaction, FinanceAccount } from '@repo/shared/types'
 import { FeatureGate } from '@/features/feature-flags/FeatureGate'
 import { UpgradePrompt } from '@/features/subscriptions/components/UpgradePrompt'

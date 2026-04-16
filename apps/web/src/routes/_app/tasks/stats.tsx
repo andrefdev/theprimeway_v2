@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { SectionHeader } from '@/components/SectionHeader'
-import { TasksNav } from '../../../features/tasks/components/TasksNav'
-import { TaskStatsPanel } from '../../../features/tasks/components/TaskStatsPanel'
+import { SectionHeader } from '@/shared/components/SectionHeader'
+import { TasksNav } from '@/features/tasks/components/TasksNav'
+import { TaskStatsPanel } from '@/features/tasks/components/TaskStatsPanel'
 import { useTranslation } from 'react-i18next'
 
 export const Route = createFileRoute('/_app/tasks/stats')({

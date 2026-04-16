@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { toast } from 'sonner'
-import { api } from '@/lib/api-client'
-import { formatAmountWithSymbol } from '@/lib/currency'
+import { api } from '@/shared/lib/api-client'
+import { formatAmountWithSymbol } from '@/shared/lib/currency'
 
 export interface CurrencySettings {
   id?: string

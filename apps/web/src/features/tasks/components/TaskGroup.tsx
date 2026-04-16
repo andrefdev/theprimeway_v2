@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { TaskItem } from '@/components/TaskItem'
-import { Badge } from '@/components/ui/badge'
-import { ChevronRightIcon } from '@/components/Icons'
+import { TaskItem } from '@/shared/components/TaskItem'
+import { Badge } from '@/shared/components/ui/badge'
+import { ChevronRightIcon } from '@/shared/components/Icons'
 import type { Task } from '@repo/shared/types'
 import { useTranslation } from 'react-i18next'
 
@@ -77,7 +77,6 @@ function formatDateKey(key: string, t: (k: string) => string): string {
     const [year, month, day] = key.split('-').map(Number) as [number, number, number]
     const date = new Date(year, month - 1, day)
     const formatted = date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
-    console.log('📊 TaskGroup formatDateKey:', key, '→', formatted, 'date:', date)
     return formatted
   } catch {
     return key
