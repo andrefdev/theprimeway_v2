@@ -35,6 +35,7 @@ import { useTranslation } from 'react-i18next'
 import { useLocale } from '../../i18n/useLocale'
 import type { Habit } from '@repo/shared/types'
 import { LIFE_PILLARS, CATEGORY_TO_PILLAR } from '@repo/shared/constants'
+import { StreakProtectionAlert } from '../../features/habits/components/StreakProtectionAlert'
 
 export const Route = createFileRoute('/_app/habits')({
   component: HabitsPage,
@@ -148,6 +149,9 @@ function HabitsPage() {
         actions={<Button onClick={openCreate}><PlusIcon /> {t('newHabit')}</Button>}
       />
       <div className="mx-auto max-w-5xl px-6 pb-6 space-y-6">
+        {/* Streak Protection Alerts */}
+        <StreakProtectionAlert />
+
         {/* Progress bar */}
         {totalHabits > 0 && (
           <div>

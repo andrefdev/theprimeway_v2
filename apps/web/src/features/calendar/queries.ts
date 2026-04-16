@@ -18,6 +18,30 @@ export const calendarQueries = {
       queryFn: () => calendarApi.getGoogleEvents(params),
       staleTime: CACHE_TIMES.short,
     }),
+
+  freeTime: (start: string, end: string) =>
+    queryOptions({
+      queryKey: [...calendarQueries.all(), 'free-time', start, end],
+      queryFn: () => calendarApi.analyzeFreeTime(start, end),
+      staleTime: CACHE_TIMES.standard,
+      enabled: !!start && !!end,
+    }),
+
+  timeBlocks: (date: string) =>
+    queryOptions({
+      queryKey: [...calendarQueries.all(), 'time-blocks', date],
+      queryFn: () => calendarApi.getTimeBlocks(date),
+      staleTime: 0,
+      enabled: false, // manual trigger
+    }),
+
+  smartSlots: (taskId: string, date: string) =>
+    queryOptions({
+      queryKey: [...calendarQueries.all(), 'smart-slots', taskId, date],
+      queryFn: () => calendarApi.findSmartSlots(taskId, date),
+      staleTime: 0,
+      enabled: false, // manual trigger
+    }),
 }
 
 export function useDeleteCalendarAccount() {

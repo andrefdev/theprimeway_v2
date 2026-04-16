@@ -9,6 +9,7 @@ import { TodayTasksList } from '../../features/dashboard/components/TodayTasksLi
 import { SectionHeader } from '../../components/SectionHeader'
 import { BriefingCard } from '../../features/ai/components/BriefingCard'
 import { GamificationWidget } from '../../features/gamification/components/GamificationWidget'
+import { GoalsSummaryCard } from '../../features/goals/components/GoalsSummaryCard'
 import { format } from 'date-fns'
 import { useLocale } from '../../i18n/useLocale'
 import type { Task } from '@repo/shared/types'
@@ -47,6 +48,7 @@ function DashboardPage() {
         <OverdueTasksBanner summary={summary} />
         <DashboardQuickActions />
         <TodayTasksList tasks={tasks} tasksQuery={tasksQuery} />
+        <GoalsSummaryCard />
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <BriefingCard />
           <GamificationWidget />

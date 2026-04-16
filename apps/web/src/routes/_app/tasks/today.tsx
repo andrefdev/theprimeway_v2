@@ -15,6 +15,7 @@ import { format } from 'date-fns'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLocale } from '../../../i18n/useLocale'
+import { useCompletionImpact } from '../../../features/tasks/hooks/use-completion-impact'
 import type { Task } from '@repo/shared/types'
 
 export const Route = createFileRoute('/_app/tasks/today')({
@@ -31,6 +32,7 @@ function TasksTodayPage() {
   const tasksQuery = useQuery(tasksQueries.today(today))
   const updateTask = useUpdateTask()
   const deleteTask = useDeleteTask()
+  const showImpact = useCompletionImpact()
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
@@ -53,7 +55,11 @@ function TasksTodayPage() {
     const newStatus = task.status === 'completed' ? 'open' : 'completed'
     try {
       await updateTask.mutateAsync({ id: task.id, data: { status: newStatus } })
-      toast.success(newStatus === 'completed' ? t('taskCompleted') : t('taskReopened'))
+      if (newStatus === 'completed') {
+        showImpact(task.id)
+      } else {
+        toast.success(t('taskReopened'))
+      }
     } catch {
       toast.error(t('failedToUpdate'))
     }

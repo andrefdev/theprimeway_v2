@@ -76,6 +76,13 @@ export const habitsQueries = {
       queryFn: () => habitsApi.analyzeCorrelations(),
       staleTime: CACHE_TIMES.long,
     }),
+
+  streakProtection: () =>
+    queryOptions({
+      queryKey: [...habitsQueries.all(), 'streak-protection'],
+      queryFn: () => habitsApi.getStreakProtection(),
+      staleTime: 5 * 60 * 1000, // 5 min
+    }),
 }
 
 export function useCreateHabit() {

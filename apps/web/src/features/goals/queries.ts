@@ -93,6 +93,20 @@ export const goalsQueries = {
       queryFn: () => goalsApi.detectInactive(days),
       staleTime: CACHE_TIMES.long,
     }),
+
+  dashboardSummary: () =>
+    queryOptions({
+      queryKey: [...goalsQueries.all(), 'dashboard-summary'],
+      queryFn: () => goalsApi.getDashboardSummary(),
+      staleTime: CACHE_TIMES.standard,
+    }),
+
+  templates: (category?: string) =>
+    queryOptions({
+      queryKey: [...goalsQueries.all(), 'templates', category],
+      queryFn: () => goalsApi.getTemplates(category),
+      staleTime: CACHE_TIMES.long,
+    }),
 }
 
 export function useGoalDetail(goalId: string) {

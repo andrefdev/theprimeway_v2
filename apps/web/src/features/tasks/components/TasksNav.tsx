@@ -11,6 +11,9 @@ export function TasksNav() {
         { to: '/tasks/today', label: t('today') },
         { to: '/tasks/weekly', label: t('weekly') },
         { to: '/tasks/all', label: t('all') },
+        { to: '/tasks/calendar', label: t('calendarView', { defaultValue: 'Calendar' }) },
+        { to: '/tasks/timeline', label: t('timelineView', { defaultValue: 'Timeline' }) },
+        { to: '/tasks/stats', label: t('stats', { defaultValue: 'Stats' }) },
       ]}
     />
   )

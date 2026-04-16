@@ -71,4 +71,19 @@ export const calendarApi = {
         { params: { date, duration: String(duration) } },
       )
       .then((r) => r.data),
+
+  analyzeFreeTime: (start: string, end: string) =>
+    api
+      .get<{ data: any }>('/calendar/free-time', { params: { start, end } })
+      .then((r) => r.data.data),
+
+  getTimeBlocks: (date: string) =>
+    api
+      .get<{ data: any }>('/calendar/ai/time-blocks', { params: { date } })
+      .then((r) => r.data.data),
+
+  findSmartSlots: (taskId: string, date: string) =>
+    api
+      .get<{ data: any }>('/calendar/ai/smart-slots', { params: { taskId, date } })
+      .then((r) => r.data.data),
 }

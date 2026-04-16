@@ -83,6 +83,29 @@ export const tasksQueries = {
       staleTime: CACHE_TIMES.standard,
       enabled: !!date,
     }),
+
+  calendarView: (start: string, end: string) =>
+    queryOptions({
+      queryKey: [...tasksQueries.all(), 'calendar-view', start, end],
+      queryFn: () => tasksApi.getCalendarView(start, end),
+      staleTime: CACHE_TIMES.standard,
+      enabled: !!start && !!end,
+    }),
+
+  timelineView: (start: string, end: string) =>
+    queryOptions({
+      queryKey: [...tasksQueries.all(), 'timeline-view', start, end],
+      queryFn: () => tasksApi.getTimelineView(start, end),
+      staleTime: CACHE_TIMES.standard,
+      enabled: !!start && !!end,
+    }),
+
+  serverStats: (days?: number) =>
+    queryOptions({
+      queryKey: [...tasksQueries.all(), 'server-stats', days],
+      queryFn: () => tasksApi.getServerStats(days),
+      staleTime: CACHE_TIMES.standard,
+    }),
 }
 
 export function useCreateTask() {

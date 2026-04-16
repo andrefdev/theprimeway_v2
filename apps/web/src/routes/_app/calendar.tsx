@@ -9,6 +9,8 @@ import { MonthView } from '../../features/calendar/components/MonthView'
 import { WeekView } from '../../features/calendar/components/WeekView'
 import { DayDetail } from '../../features/calendar/components/DayDetail'
 import { useCalendarItems } from '../../features/calendar/hooks/use-calendar-items'
+import { FreeTimeCard } from '../../features/calendar/components/FreeTimeCard'
+import { TimeBlockSuggestions } from '../../features/calendar/components/TimeBlockSuggestions'
 import {
   format,
   startOfMonth,
@@ -146,6 +148,12 @@ function CalendarPage() {
             )}
           </>
         )}
+
+        {/* AI Calendar Features */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <FreeTimeCard />
+          <TimeBlockSuggestions />
+        </div>
       </div>
     </div>
   )

@@ -12,6 +12,9 @@ import { QuarterlyGoals } from '../../features/goals/components/QuarterlyGoals'
 import { WeeklyGoalsList } from '../../features/goals/components/WeeklyGoals'
 import { JourneyView } from '../../features/goals/components/JourneyView'
 import { GoalTreeView } from '../../features/goals/components/GoalTreeView'
+import { InactiveGoalsAlert } from '../../features/goals/components/InactiveGoalsAlert'
+import { GoalConflictsPanel } from '../../features/goals/components/GoalConflictsPanel'
+import { GoalTemplatePicker } from '../../features/goals/components/GoalTemplatePicker'
 import { QueryError } from '../../components/QueryError'
 import { PlusIcon, TargetIcon } from '../../components/Icons'
 import { EditButton, DeleteButton } from '../../components/ActionButtons'
@@ -58,6 +61,7 @@ function GoalsPage() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null)
+  const [templatePickerOpen, setTemplatePickerOpen] = useState(false)
 
   const TABS: { key: Tab; label: string }[] = [
     { key: 'goals', label: t('tabMyGoals') },
@@ -72,6 +76,10 @@ function GoalsPage() {
     <div>
       <SectionHeader sectionId="goals" title={t('pageTitle')} />
       <div className="mx-auto max-w-5xl px-6 pb-6 space-y-6">
+        {/* AI Alerts */}
+        <InactiveGoalsAlert />
+        <GoalConflictsPanel />
+
         {/* Tab bar */}
         <div className="flex gap-1 overflow-x-auto border-b border-border -mx-6 px-6">
           {TABS.map(({ key, label }) => (
@@ -96,6 +104,7 @@ function GoalsPage() {
             setStatusFilter={setStatusFilter}
             onNew={() => { setEditingGoal(null); setDialogOpen(true) }}
             onEdit={(g) => { setEditingGoal(g); setDialogOpen(true) }}
+            onTemplates={() => setTemplatePickerOpen(true)}
           />
         )}
 
@@ -110,6 +119,15 @@ function GoalsPage() {
           onClose={() => setDialogOpen(false)}
           goal={editingGoal}
         />
+
+        <GoalTemplatePicker
+          open={templatePickerOpen}
+          onClose={() => setTemplatePickerOpen(false)}
+          onSelectTemplate={(_tmpl) => {
+            setTemplatePickerOpen(false)
+            toast.success(t('goalCreated'))
+          }}
+        />
       </div>
     </div>
   )
@@ -123,11 +141,13 @@ function GoalsTab({
   setStatusFilter,
   onNew,
   onEdit,
+  onTemplates,
 }: {
   statusFilter: string
   setStatusFilter: (v: string) => void
   onNew: () => void
   onEdit: (g: Goal) => void
+  onTemplates?: () => void
 }) {
   const { t } = useTranslation('goals')
   const params = statusFilter !== 'all' ? { status: statusFilter } : undefined
@@ -175,9 +195,16 @@ function GoalsTab({
             ))}
           </SelectContent>
         </Select>
-        <Button onClick={onNew}>
-          <PlusIcon /> {t('newGoal')}
-        </Button>
+        <div className="flex gap-2">
+          {onTemplates && (
+            <Button variant="outline" onClick={onTemplates}>
+              {t('goalTemplates', { ns: 'common', defaultValue: 'Templates' })}
+            </Button>
+          )}
+          <Button onClick={onNew}>
+            <PlusIcon /> {t('newGoal')}
+          </Button>
+        </div>
       </div>
 
       {goalsQuery.isLoading && <SkeletonList lines={4} />}

@@ -16,6 +16,9 @@ export interface Task {
   completedAt: string | null
   isArchived: boolean
   tags: string[]
+  actualStart: string | null
+  actualEnd: string | null
+  actualDurationSeconds: number | null
   createdAt: string
   updatedAt: string
 }

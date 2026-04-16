@@ -124,4 +124,18 @@ export const habitsApi = {
         }
       }>('/habits/ai/correlations')
       .then((r) => r.data.data),
+
+  getStreakProtection: () =>
+    api
+      .get<{
+        data: Array<{
+          habitId: string
+          habitName: string
+          currentStreak: number
+          urgency: 'none' | 'gentle' | 'urgent' | 'critical' | 'minimal'
+          hoursRemaining: number
+          message: string
+        }>
+      }>('/habits/streak-protection')
+      .then((r) => r.data.data),
 }

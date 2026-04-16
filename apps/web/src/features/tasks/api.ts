@@ -176,4 +176,19 @@ export const tasksApi = {
 
   stopTimer: (taskId: string) =>
     api.post<TaskResponse>(`/tasks/${taskId}/timer/stop`).then((r) => r.data),
+
+  getCalendarView: (start: string, end: string) =>
+    api
+      .get<{ data: any }>('/tasks/views/calendar', { params: { start, end } })
+      .then((r) => r.data.data),
+
+  getTimelineView: (start: string, end: string) =>
+    api
+      .get<{ data: any }>('/tasks/views/timeline', { params: { start, end } })
+      .then((r) => r.data.data),
+
+  getServerStats: (days?: number) =>
+    api
+      .get<{ data: any }>('/tasks/stats', { params: days ? { days: String(days) } : undefined })
+      .then((r) => r.data.data),
 }

@@ -144,4 +144,23 @@ export const goalsApi = {
         }
       }>('/goals/ai/inactive', { params: days ? { days: String(days) } : undefined })
       .then((r) => r.data.data),
+
+  getDashboardSummary: () =>
+    api
+      .get<{
+        data: {
+          levels: Record<
+            string,
+            { total: number; avgProgress: number; health: { green: number; yellow: number; red: number } }
+          >
+          upcomingDeadlines: Array<{ id: string; title: string; level: string; endDate: string }>
+          recentlyCompleted: Array<{ id: string; title: string; level: string }>
+        }
+      }>('/goals/dashboard-summary')
+      .then((r) => r.data.data),
+
+  getTemplates: (category?: string) =>
+    api
+      .get<{ data: any }>(`/goals/templates${category ? `/${category}` : ''}`)
+      .then((r) => r.data.data),
 }

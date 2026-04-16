@@ -16,6 +16,7 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { toast } from 'sonner'
 import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useCompletionImpact } from '../../../features/tasks/hooks/use-completion-impact'
 import type { Task } from '@repo/shared/types'
 
 export const Route = createFileRoute('/_app/tasks/all')({
@@ -30,6 +31,7 @@ function TasksAllPage() {
   const groupedQuery = useQuery(tasksQueries.grouped(today))
   const updateTask = useUpdateTask()
   const deleteTask = useDeleteTask()
+  const showImpact = useCompletionImpact()
 
   const [statusFilter, setStatusFilter] = useState('all')
   const [search, setSearch] = useState('')
@@ -75,7 +77,11 @@ function TasksAllPage() {
     const newStatus = task.status === 'completed' ? 'open' : 'completed'
     try {
       await updateTask.mutateAsync({ id: task.id, data: { status: newStatus } })
-      toast.success(newStatus === 'completed' ? t('taskCompleted') : t('taskReopened'))
+      if (newStatus === 'completed') {
+        showImpact(task.id)
+      } else {
+        toast.success(t('taskReopened'))
+      }
     } catch {
       toast.error(t('failedToUpdate'))
     }

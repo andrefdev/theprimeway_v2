@@ -1,6 +1,7 @@
 import { Badge } from '@/components/ui/badge'
 import { CompletionToggle } from './CompletionToggle'
 import { EditButton, DeleteButton } from './ActionButtons'
+import { TaskTimerButton } from '../features/tasks/components/TaskTimerButton'
 import type { Task } from '@repo/shared/types'
 
 interface TaskItemProps {
@@ -67,6 +68,7 @@ export function TaskItem({ task, onToggle, onEdit, onDelete, size = 'md', showDa
           <div className="flex items-center justify-between pt-2 border-t border-border/30">
             <CompletionToggle completed={isCompleted} onClick={onToggle} size="sm" />
             <div className="flex items-center gap-1">
+              <TaskTimerButton task={task} />
               {onEdit && <EditButton onClick={onEdit} />}
               {onDelete && <DeleteButton onClick={onDelete} />}
             </div>
@@ -110,6 +112,7 @@ export function TaskItem({ task, onToggle, onEdit, onDelete, size = 'md', showDa
       </div>
 
       <div className="flex items-center gap-0.5">
+        <TaskTimerButton task={task} />
         {onEdit && <EditButton onClick={onEdit} />}
         {onDelete && <DeleteButton onClick={onDelete} />}
       </div>
