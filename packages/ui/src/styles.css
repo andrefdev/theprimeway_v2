@@ -1,5 +1,10 @@
 /* @repo/ui — animations and base UI styles */
 
+/* Tell Tailwind v4 to scan @repo/ui component sources so their utility
+   classes are emitted when this stylesheet is imported by a consuming app. */
+@source "./components/**/*.{ts,tsx}";
+@source "./lib/**/*.{ts,tsx}";
+
 @keyframes slide-in-from-right {
   from { transform: translateX(100%); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }

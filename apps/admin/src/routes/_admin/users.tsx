@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 import { useUsers } from '@/features/users/queries'
 import {
@@ -23,6 +23,7 @@ function UsersPage() {
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
   const { data, isLoading } = useUsers(page, 20)
+  const navigate = useNavigate()
 
   const users = data?.data || []
   const total = data?.total || 0
@@ -86,27 +87,34 @@ function UsersPage() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  users.map((user: any) => (
-                    <TableRow key={user.id}>
-                      <TableCell className="font-medium">{user.email}</TableCell>
-                      <TableCell>{user.name}</TableCell>
-                      <TableCell>
-                        <span className="rounded-full bg-secondary px-2 py-1 text-xs font-medium">
-                          {user.role}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {new Date(user.createdAt).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        <Link to={`/users/$userId`} params={{ userId: user.id }}>
-                          <Button variant="ghost" size="sm">
+                  users.map((user: any) => {
+                    const created = user.createdAt ? new Date(user.createdAt) : null
+                    const createdLabel =
+                      created && !isNaN(created.getTime()) ? created.toLocaleDateString() : '—'
+                    return (
+                      <TableRow
+                        key={user.id}
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => navigate({ to: '/users/$userId', params: { userId: user.id } })}
+                      >
+                        <TableCell className="font-medium">{user.email}</TableCell>
+                        <TableCell>{user.name}</TableCell>
+                        <TableCell>
+                          <span className="rounded-full bg-secondary px-2 py-1 text-xs font-medium">
+                            {user.role}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {createdLabel}
+                        </TableCell>
+                        <TableCell>
+                          <Button variant="ghost" size="sm" tabIndex={-1}>
                             <ChevronRight className="h-4 w-4" />
                           </Button>
-                        </Link>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })
                 )}
               </TableBody>
             </Table>
