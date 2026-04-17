@@ -559,24 +559,49 @@ Do NOT invent task or habit IDs — only reference IDs from the context above or
     const todayEnd = new Date()
     todayEnd.setHours(23, 59, 59, 999)
 
-    const [tasks, habits, habitLogs, transactions] = await Promise.all([
-      chatRepo.findOpenTasks(userId, 10),
+    const [openTasks, completedTasksToday, habits, habitLogs] = await Promise.all([
+      chatRepo.findOpenTasks(userId, 20),
+      prisma.task.count({
+        where: {
+          userId,
+          status: 'completed',
+          updatedAt: { gte: todayStart, lte: todayEnd },
+        },
+      }),
       chatRepo.findActiveHabits(userId),
       chatRepo.findHabitLogsByDate(userId, todayStart, todayEnd),
-      chatRepo.findPendingTransactions(userId, 10),
     ])
 
-    const completedToday = habitLogs.filter((l) => (l.completedCount ?? 0) > 0).length
+    const habitsCompleted = habitLogs.filter((l) => (l.completedCount ?? 0) > 0).length
+    const tasksToday = openTasks.length + completedTasksToday
+    const habitsToday = habits.length
+
+    let summary = ''
+    try {
+      const res = await generateText({
+        model: chatModel,
+        prompt: `Write a friendly one-sentence daily briefing for a productivity app user.
+Today: ${todayStart.toISOString().split('T')[0]}
+Open tasks: ${openTasks.length}
+Tasks completed today: ${completedTasksToday}
+Active habits: ${habitsToday}
+Habits completed today: ${habitsCompleted}
+
+Keep it under 30 words. Be concrete and encouraging. No emojis.`,
+      })
+      summary = res.text.trim()
+    } catch {
+      summary = ''
+    }
 
     return {
-      briefing: null,
-      stats: {
-        tasksToday: tasks.length,
-        habitsCompleted: completedToday,
-        totalHabits: habits.length,
-        pendingTransactions: transactions.length,
-      },
-      _note: 'AI-generated briefing text requires OpenAI integration. Stats are live.',
+      summary,
+      tasksCompleted: completedTasksToday,
+      tasksToday,
+      habitsCompleted,
+      habitsToday,
+      upcomingEvents: 0,
+      streak: 0,
     }
   }
 
@@ -688,7 +713,7 @@ Return a coherent week plan with tasks/habits distributed by day. Include time b
       `,
     })
 
-    return result
+    return result.object
   }
 }
 
