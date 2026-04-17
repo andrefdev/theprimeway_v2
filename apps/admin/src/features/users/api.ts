@@ -55,24 +55,24 @@ export async function getUsers(page = 1, limit = 20) {
  * Get single user details
  */
 export async function getUser(userId: string) {
-  const { data } = await api.get(`/admin/users/${userId}`)
-  return data as User
+  const { data } = await api.get<{ data: User }>(`/admin/users/${userId}`)
+  return data.data
 }
 
 /**
  * Get user subscription details
  */
 export async function getUserSubscription(userId: string) {
-  const { data } = await api.get(`/admin/users/${userId}/subscription`)
-  return data as UserSubscription
+  const { data } = await api.get<{ data: UserSubscription }>(`/admin/users/${userId}/subscription`)
+  return data.data
 }
 
 /**
  * Get all feature overrides for a user
  */
 export async function getUserFeatureOverrides(userId: string) {
-  const { data } = await api.get(`/admin/users/${userId}/features`)
-  return data as FeatureOverride[]
+  const { data } = await api.get<{ data: FeatureOverride[] }>(`/admin/users/${userId}/features`)
+  return data.data
 }
 
 /**

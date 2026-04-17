@@ -17,6 +17,21 @@ class CalendarService {
     return true
   }
 
+  async updateAccountSettings(
+    userId: string,
+    id: string,
+    body: { defaultTargetCalendarId?: string | null },
+  ) {
+    const account = await calendarRepo.findAccountById(id)
+    if (!account || account.userId !== userId) return null
+    const updateData: Record<string, unknown> = {}
+    if (body.defaultTargetCalendarId !== undefined) {
+      updateData.defaultTargetCalendarId = body.defaultTargetCalendarId
+    }
+    if (!Object.keys(updateData).length) return account
+    return calendarRepo.updateAccount(id, updateData)
+  }
+
   async updateCalendar(
     userId: string,
     id: string,
@@ -134,9 +149,10 @@ class CalendarService {
       items?: Array<{ id: string; summary: string; primary?: boolean; backgroundColor?: string }>
     }
 
+    const upsertedCalendars: Array<{ id: string; isSelectedForSync: boolean | null | undefined }> = []
     if (calendarList.items) {
       for (const cal of calendarList.items) {
-        await calendarRepo.upsertCalendar(
+        const upserted = await calendarRepo.upsertCalendar(
           account.id,
           cal.id,
           { name: cal.summary, color: cal.backgroundColor },
@@ -148,6 +164,16 @@ class CalendarService {
             isPrimary: cal.primary || false,
             isSelectedForSync: cal.primary || false,
           },
+        )
+        upsertedCalendars.push({ id: upserted.id, isSelectedForSync: upserted.isSelectedForSync })
+      }
+    }
+
+    // Subscribe push-notification watch channels for synced calendars (fire-and-forget)
+    for (const cal of upsertedCalendars) {
+      if (cal.isSelectedForSync) {
+        this.subscribeWatchChannel(cal.id).catch((err) =>
+          console.error('[CAL_WATCH] subscribe on connect failed', err),
         )
       }
     }
@@ -824,6 +850,205 @@ SCHEDULING GUIDELINES:
     return result.object
   }
 
+  // ---- Task ↔ Google Calendar bidirectional sync --------------------------
+
+  /**
+   * Ensure we have a fresh access token for the given account.
+   * Mutates the DB if a refresh happens.
+   */
+  private async ensureAccessToken(accountId: string): Promise<string | null> {
+    const account = await prisma.calendarAccount.findUnique({ where: { id: accountId } })
+    if (!account?.accessToken) return null
+
+    const expired = account.expiresAt && new Date() >= account.expiresAt
+    if (!expired) return account.accessToken
+    if (!account.refreshToken) return account.accessToken // best-effort
+
+    const refreshed = await this.refreshGoogleToken(account.refreshToken)
+    if (!refreshed) return account.accessToken
+
+    await prisma.calendarAccount.update({
+      where: { id: accountId },
+      data: {
+        accessToken: refreshed.access_token,
+        expiresAt: new Date(Date.now() + refreshed.expires_in * 1000),
+      },
+    })
+    return refreshed.access_token
+  }
+
+  private buildEventBody(task: {
+    title: string
+    description?: string | null
+    scheduledStart?: Date | null
+    scheduledEnd?: Date | null
+    scheduledDate?: Date | null
+    isAllDay?: boolean | null
+  }) {
+    const body: Record<string, unknown> = {
+      summary: task.title,
+      description: task.description || 'Task synced from ThePrimeWay',
+    }
+
+    if (task.isAllDay && task.scheduledDate) {
+      const date = task.scheduledDate.toISOString().split('T')[0]!
+      const next = new Date(task.scheduledDate)
+      next.setUTCDate(next.getUTCDate() + 1)
+      const nextDate = next.toISOString().split('T')[0]!
+      body.start = { date }
+      body.end = { date: nextDate }
+    } else if (task.scheduledStart && task.scheduledEnd) {
+      body.start = { dateTime: task.scheduledStart.toISOString(), timeZone: 'UTC' }
+      body.end = { dateTime: task.scheduledEnd.toISOString(), timeZone: 'UTC' }
+    } else {
+      return null // no valid schedule
+    }
+    return body
+  }
+
+  /** Create a Google Calendar event for a task, persist TaskCalendarBinding. */
+  async createEventForTask(
+    userId: string,
+    task: {
+      id: string
+      title: string
+      description?: string | null
+      scheduledStart?: Date | null
+      scheduledEnd?: Date | null
+      scheduledDate?: Date | null
+      isAllDay?: boolean | null
+    },
+  ): Promise<{ ok: true; eventId: string } | { ok: false; reason: string }> {
+    const target = await calendarRepo.findTargetCalendarForUser(userId)
+    if (!target) return { ok: false, reason: 'no_target_calendar' }
+
+    const body = this.buildEventBody(task)
+    if (!body) return { ok: false, reason: 'no_schedule' }
+
+    const accessToken = await this.ensureAccessToken(target.account.id)
+    if (!accessToken) return { ok: false, reason: 'no_access_token' }
+
+    const providerCalId = (target.calendar as any).providerCalendarId
+    try {
+      const res = await fetch(
+        `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(providerCalId)}/events`,
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        },
+      )
+      if (!res.ok) {
+        console.error('[CAL_SYNC] createEventForTask failed', await res.text())
+        return { ok: false, reason: 'api_error' }
+      }
+      const event = (await res.json()) as { id: string }
+      await calendarRepo.upsertTaskBinding({
+        taskId: task.id,
+        calendarId: target.calendar.id,
+        calendarProvider: 'google',
+        externalEventId: event.id,
+        direction: 'app_to_google',
+      })
+      return { ok: true, eventId: event.id }
+    } catch (err) {
+      console.error('[CAL_SYNC] createEventForTask error', err)
+      return { ok: false, reason: 'network_error' }
+    }
+  }
+
+  /** Update the Google Calendar event linked to a task. */
+  async updateEventForTask(
+    userId: string,
+    task: {
+      id: string
+      title: string
+      description?: string | null
+      scheduledStart?: Date | null
+      scheduledEnd?: Date | null
+      scheduledDate?: Date | null
+      isAllDay?: boolean | null
+    },
+  ): Promise<{ ok: true } | { ok: false; reason: string }> {
+    const binding = await calendarRepo.findBindingByTaskId(task.id)
+    if (!binding || !binding.externalEventId) {
+      // No existing binding: treat as create
+      const res = await this.createEventForTask(userId, task)
+      return res.ok ? { ok: true } : { ok: false, reason: res.reason }
+    }
+
+    const body = this.buildEventBody(task)
+    if (!body) {
+      // Task lost schedule: delete the event + binding
+      return this.deleteEventForTask(userId, task.id)
+    }
+
+    const accessToken = await this.ensureAccessToken(binding.calendar.account.id)
+    if (!accessToken) return { ok: false, reason: 'no_access_token' }
+
+    const providerCalId = (binding.calendar as any).providerCalendarId
+    try {
+      const res = await fetch(
+        `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(providerCalId)}/events/${encodeURIComponent(binding.externalEventId)}`,
+        {
+          method: 'PATCH',
+          headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        },
+      )
+      if (!res.ok) {
+        console.error('[CAL_SYNC] updateEventForTask failed', await res.text())
+        return { ok: false, reason: 'api_error' }
+      }
+      await prisma.taskCalendarBinding.update({
+        where: { id: binding.id },
+        data: { lastSyncedAt: new Date(), lastSyncDirection: 'app_to_google' },
+      })
+      return { ok: true }
+    } catch (err) {
+      console.error('[CAL_SYNC] updateEventForTask error', err)
+      return { ok: false, reason: 'network_error' }
+    }
+  }
+
+  /** Delete the Google Calendar event + binding for a task. */
+  async deleteEventForTask(
+    _userId: string,
+    taskId: string,
+  ): Promise<{ ok: true } | { ok: false; reason: string }> {
+    const binding = await calendarRepo.findBindingByTaskId(taskId)
+    if (!binding || !binding.externalEventId) return { ok: true }
+
+    const accessToken = await this.ensureAccessToken(binding.calendar.account.id)
+    if (!accessToken) {
+      await calendarRepo.deleteBindingByTaskId(taskId)
+      return { ok: false, reason: 'no_access_token' }
+    }
+
+    const providerCalId = (binding.calendar as any).providerCalendarId
+    try {
+      const res = await fetch(
+        `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(providerCalId)}/events/${encodeURIComponent(binding.externalEventId)}`,
+        {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${accessToken}` },
+        },
+      )
+      // 404/410 are acceptable — event already gone
+      if (!res.ok && res.status !== 404 && res.status !== 410) {
+        console.error('[CAL_SYNC] deleteEventForTask failed', await res.text())
+        // still remove local binding so we don't keep retrying a broken link
+      }
+    } catch (err) {
+      console.error('[CAL_SYNC] deleteEventForTask error', err)
+    }
+
+    await calendarRepo.deleteBindingByTaskId(taskId)
+    return { ok: true }
+  }
+
+  // -------------------------------------------------------------------------
+
   private async refreshGoogleToken(
     refreshToken: string,
   ): Promise<{ access_token: string; expires_in: number } | null> {
@@ -844,6 +1069,166 @@ SCHEDULING GUIDELINES:
     } catch {
       return null
     }
+  }
+
+  // --- Watch channels (Google push notifications) --------------------------
+
+  /** Subscribe to push notifications for a given calendar. */
+  async subscribeWatchChannel(calendarId: string): Promise<{ ok: boolean; reason?: string }> {
+    const calendar = await calendarRepo.findCalendarById(calendarId)
+    if (!calendar) return { ok: false, reason: 'calendar_not_found' }
+    const account = await calendarRepo.findAccountByCalendarAccountId(calendar.calendarAccountId)
+    if (!account) return { ok: false, reason: 'account_not_found' }
+
+    const accessToken = await this.ensureAccessToken(account.id)
+    if (!accessToken) return { ok: false, reason: 'no_access_token' }
+
+    const webhookBase = process.env.GOOGLE_CALENDAR_WEBHOOK_URL || process.env.API_BASE_URL
+    if (!webhookBase) return { ok: false, reason: 'no_webhook_url' }
+
+    const channelId = crypto.randomUUID()
+    const token = crypto.randomUUID()
+    const providerCalId = (calendar as any).providerCalendarId || (calendar as any).externalId
+
+    try {
+      const res = await fetch(
+        `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(providerCalId)}/events/watch`,
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: channelId,
+            type: 'web_hook',
+            address: `${webhookBase.replace(/\/$/, '')}/api/calendar/google/webhook`,
+            token,
+          }),
+        },
+      )
+      if (!res.ok) {
+        const txt = await res.text().catch(() => '')
+        return { ok: false, reason: `watch_failed:${res.status}:${txt.slice(0, 120)}` }
+      }
+      const body = (await res.json()) as { resourceId: string; expiration: string }
+      await (prisma as any).calendarWatchChannel.create({
+        data: {
+          calendarId: calendar.id,
+          channelId,
+          resourceId: body.resourceId,
+          token,
+          expiresAt: new Date(Number(body.expiration)),
+        },
+      })
+      return { ok: true }
+    } catch (err) {
+      console.error('[CAL_WATCH] subscribe error', err)
+      return { ok: false, reason: 'exception' }
+    }
+  }
+
+  /** Handle an incoming webhook notification from Google. */
+  async handleWatchNotification(headers: {
+    channelId?: string
+    resourceId?: string
+    resourceState?: string
+    token?: string
+  }): Promise<{ ok: boolean; reason?: string }> {
+    if (!headers.channelId) return { ok: false, reason: 'no_channel' }
+    if (headers.resourceState === 'sync') return { ok: true } // initial handshake
+
+    const channel = await (prisma as any).calendarWatchChannel.findUnique({
+      where: { channelId: headers.channelId },
+      include: { calendar: { include: { account: true } } },
+    })
+    if (!channel) return { ok: false, reason: 'channel_not_found' }
+    if (channel.token && headers.token !== channel.token) return { ok: false, reason: 'bad_token' }
+
+    const accessToken = await this.ensureAccessToken(channel.calendar.account.id)
+    if (!accessToken) return { ok: false, reason: 'no_access_token' }
+
+    const providerCalId =
+      (channel.calendar as any).providerCalendarId || (channel.calendar as any).externalId
+    const params = new URLSearchParams()
+    if (channel.syncToken) params.set('syncToken', channel.syncToken)
+    else params.set('timeMin', new Date(Date.now() - 24 * 3600 * 1000).toISOString())
+    params.set('showDeleted', 'true')
+    params.set('maxResults', '100')
+
+    try {
+      const res = await fetch(
+        `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(providerCalId)}/events?${params.toString()}`,
+        { headers: { Authorization: `Bearer ${accessToken}` } },
+      )
+      if (!res.ok) return { ok: false, reason: `list_failed:${res.status}` }
+      const body = (await res.json()) as {
+        items?: Array<any>
+        nextSyncToken?: string
+      }
+
+      for (const evt of body.items || []) {
+        await this.applyGoogleEventToTask(evt).catch((e) =>
+          console.error('[CAL_WATCH] apply event error', e),
+        )
+      }
+      if (body.nextSyncToken) {
+        await (prisma as any).calendarWatchChannel.update({
+          where: { id: channel.id },
+          data: { syncToken: body.nextSyncToken },
+        })
+      }
+      return { ok: true }
+    } catch (err) {
+      console.error('[CAL_WATCH] notification error', err)
+      return { ok: false, reason: 'exception' }
+    }
+  }
+
+  private async applyGoogleEventToTask(evt: any) {
+    if (!evt?.id) return
+    const binding = await calendarRepo.findBindingByExternalEventId(evt.id)
+    if (!binding) return // Unbound events ignored in v1
+
+    if (evt.status === 'cancelled') {
+      await prisma.task.update({
+        where: { id: binding.taskId },
+        data: { scheduledStart: null, scheduledEnd: null, scheduledDate: null },
+      })
+      await calendarRepo.deleteBindingByTaskId(binding.taskId)
+      return
+    }
+
+    const start = evt.start?.dateTime ? new Date(evt.start.dateTime) : null
+    const end = evt.end?.dateTime ? new Date(evt.end.dateTime) : null
+    const title = evt.summary
+    const updateData: Record<string, unknown> = {}
+    if (title) updateData.title = title
+    if (start) {
+      updateData.scheduledStart = start
+      updateData.scheduledDate = new Date(start.toISOString().slice(0, 10))
+    }
+    if (end) updateData.scheduledEnd = end
+    if (Object.keys(updateData).length) {
+      await prisma.task.update({ where: { id: binding.taskId }, data: updateData as any })
+    }
+  }
+
+  /** Renew watch channels expiring within 24h. */
+  async renewExpiringWatchChannels(): Promise<{ renewed: number; failed: number }> {
+    const soon = new Date(Date.now() + 24 * 3600 * 1000)
+    const channels = await (prisma as any).calendarWatchChannel.findMany({
+      where: { expiresAt: { lte: soon } },
+    })
+    let renewed = 0
+    let failed = 0
+    for (const ch of channels) {
+      const res = await this.subscribeWatchChannel(ch.calendarId)
+      if (res.ok) {
+        await (prisma as any).calendarWatchChannel.delete({ where: { id: ch.id } })
+        renewed++
+      } else {
+        failed++
+      }
+    }
+    return { renewed, failed }
   }
 }
 

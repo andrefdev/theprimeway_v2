@@ -8,6 +8,7 @@ import { Header } from '@/shared/components/layout/Topbar'
 import { MobileBottomNav } from '@/shared/components/layout/MobileBottomNav'
 import { ErrorBoundary } from '@/shared/components/ErrorBoundary'
 import { useLocaleSync } from '@/i18n/useLocaleSync'
+import { useSyncSocket } from '@/shared/hooks/use-sync-socket'
 import { RouteLoadingSkeleton } from '@/shared/components/RouteLoadingSkeleton'
 import { ChatPanel } from '@/features/ai/components/ChatPanel'
 
@@ -23,6 +24,7 @@ export const Route = createFileRoute('/_app')({
 
 function AppLayout() {
   useLocaleSync()
+  useSyncSocket()
   return (
     <TooltipProvider>
       <SidebarProvider className="h-dvh! min-h-0!">

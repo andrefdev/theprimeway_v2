@@ -29,6 +29,9 @@ export const calendarApi = {
   deleteAccount: (id: string) =>
     api.delete(`/calendar/accounts/${id}`).then((r) => r.data),
 
+  updateAccount: (id: string, body: { defaultTargetCalendarId?: string | null }) =>
+    api.patch<{ data: any }>(`/calendar/accounts/${id}`, body).then((r) => r.data.data),
+
   getGoogleConnectUrl: () =>
     api.get<{ data: { url: string } }>('/calendar/google/connect').then((r) => r.data),
 

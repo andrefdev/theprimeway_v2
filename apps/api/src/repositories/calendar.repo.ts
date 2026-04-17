@@ -99,6 +99,89 @@ class CalendarRepository {
       include: { calendars: true },
     })
   }
+
+  // ---- Task ↔ Calendar bindings -------------------------------------------
+
+  async findBindingByTaskId(taskId: string) {
+    return prisma.taskCalendarBinding.findFirst({
+      where: { taskId, isActive: true },
+      include: { calendar: { include: { account: true } } },
+    })
+  }
+
+  async findBindingByExternalEventId(externalEventId: string) {
+    return prisma.taskCalendarBinding.findFirst({
+      where: { externalEventId, isActive: true },
+    })
+  }
+
+  async upsertTaskBinding(data: {
+    taskId: string
+    calendarId: string
+    calendarProvider: string
+    externalEventId: string
+    direction: 'app_to_google' | 'google_to_app'
+  }) {
+    const existing = await prisma.taskCalendarBinding.findFirst({
+      where: { taskId: data.taskId },
+    })
+
+    if (existing) {
+      return prisma.taskCalendarBinding.update({
+        where: { id: existing.id },
+        data: {
+          calendarId: data.calendarId,
+          calendarProvider: data.calendarProvider,
+          externalEventId: data.externalEventId,
+          lastSyncedAt: new Date(),
+          lastSyncDirection: data.direction,
+          isActive: true,
+        },
+      })
+    }
+
+    return prisma.taskCalendarBinding.create({
+      data: {
+        taskId: data.taskId,
+        calendarId: data.calendarId,
+        calendarProvider: data.calendarProvider,
+        externalEventId: data.externalEventId,
+        lastSyncedAt: new Date(),
+        lastSyncDirection: data.direction,
+        isActive: true,
+      },
+    })
+  }
+
+  async deleteBindingByTaskId(taskId: string) {
+    await prisma.taskCalendarBinding.deleteMany({ where: { taskId } })
+  }
+
+  async findTargetCalendarForUser(userId: string) {
+    // Prefer the account.defaultTargetCalendarId if set; else fall back to primary
+    // isSelectedForSync calendar of the first Google account.
+    const accounts = await prisma.calendarAccount.findMany({
+      where: { userId, provider: 'google' },
+      include: { calendars: true },
+    })
+    if (!accounts.length) return null
+
+    for (const acc of accounts) {
+      const target = (acc as any).defaultTargetCalendarId
+        ? acc.calendars.find((c: any) => c.id === (acc as any).defaultTargetCalendarId)
+        : null
+      if (target) return { account: acc, calendar: target }
+    }
+
+    for (const acc of accounts) {
+      const primary = acc.calendars.find((c: any) => c.isPrimary && c.isSelectedForSync)
+      if (primary) return { account: acc, calendar: primary }
+      const anySync = acc.calendars.find((c: any) => c.isSelectedForSync)
+      if (anySync) return { account: acc, calendar: anySync }
+    }
+
+    return null
+  }
 }
 
 export const calendarRepo = new CalendarRepository()

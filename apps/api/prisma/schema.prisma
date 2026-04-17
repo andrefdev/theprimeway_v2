@@ -1028,6 +1028,7 @@ model CalendarAccount {
   expiresAt    DateTime?
   scopes       Json?
   isPrimary    Boolean?  @default(false)
+  defaultTargetCalendarId String? @map("default_target_calendar_id")
   createdAt    DateTime? @default(now()) @map("created_at")
   updatedAt    DateTime? @default(now()) @map("updated_at")
 
@@ -1050,9 +1051,28 @@ model Calendar {
 
   account CalendarAccount @relation(fields: [calendarAccountId], references: [id], onDelete: Cascade)
   bindings TaskCalendarBinding[]
+  watchChannels CalendarWatchChannel[]
 
   @@index([calendarAccountId])
   @@map("calendars")
+}
+
+model CalendarWatchChannel {
+  id         String   @id @default(uuid())
+  calendarId String   @map("calendar_id")
+  channelId  String   @unique @map("channel_id")
+  resourceId String   @map("resource_id")
+  token      String?
+  syncToken  String?  @map("sync_token")
+  expiresAt  DateTime @map("expires_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at")
+
+  calendar Calendar @relation(fields: [calendarId], references: [id], onDelete: Cascade)
+
+  @@index([calendarId])
+  @@index([expiresAt])
+  @@map("calendar_watch_channels")
 }
 
 model TaskCalendarBinding {

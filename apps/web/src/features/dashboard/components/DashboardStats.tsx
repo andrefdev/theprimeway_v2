@@ -1,7 +1,5 @@
 import { useTranslation } from 'react-i18next'
 import { StatCard } from '@/shared/components/StatCard'
-import { useLocale } from '@/i18n/useLocale'
-import { formatCurrency } from '@/i18n/format'
 import type { DashboardSummary } from '../api'
 
 interface DashboardStatsProps {
@@ -10,10 +8,9 @@ interface DashboardStatsProps {
 
 export function DashboardStats({ summary }: DashboardStatsProps) {
   const { t } = useTranslation('dashboard')
-  const { locale } = useLocale()
 
   return (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
       <StatCard
         title={t('tasksToday')}
         value={summary ? `${summary.tasks.todayCompleted}/${summary.tasks.todayTotal}` : '—'}
@@ -34,12 +31,6 @@ export function DashboardStats({ summary }: DashboardStatsProps) {
         title={t('streak')}
         value={summary ? t('days', { count: summary.gamification.currentStreak }) : '—'}
         subtitle={t('keepItGoing')}
-      />
-      <StatCard
-        title={t('finances')}
-        value={summary ? formatCurrency(summary.finances.totalBalance, locale) : '—'}
-        subtitle={summary ? t('accounts', { count: summary.finances.accountCount }) : ''}
-        to="/finances"
       />
     </div>
   )

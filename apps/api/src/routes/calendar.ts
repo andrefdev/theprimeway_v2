@@ -15,6 +15,21 @@ import type { AppEnv } from '../types/env'
 
 export const calendarRoutes = new OpenAPIHono<AppEnv>()
 
+// --- Unauthenticated Google push webhook (must be registered before authMiddleware) ---
+calendarRoutes.post('/google/webhook', async (c) => {
+  const channelId = c.req.header('x-goog-channel-id') || c.req.header('X-Goog-Channel-ID')
+  const resourceId = c.req.header('x-goog-resource-id') || c.req.header('X-Goog-Resource-ID')
+  const resourceState =
+    c.req.header('x-goog-resource-state') || c.req.header('X-Goog-Resource-State')
+  const token = c.req.header('x-goog-channel-token') || c.req.header('X-Goog-Channel-Token')
+
+  await calendarService
+    .handleWatchNotification({ channelId, resourceId, resourceState, token })
+    .catch((err) => console.error('[CAL_WEBHOOK]', err))
+
+  return c.body(null, 200)
+})
+
 calendarRoutes.use('*', authMiddleware)
 
 const errorResponse = z.object({ error: z.string() })
@@ -602,4 +617,17 @@ calendarRoutes.openapi(freeSlotsRoute, async (c) => {
   }
 
   return c.json(result, 200)
+})
+
+// ---------------------------------------------------------------------------
+// PATCH /accounts/:id — update account (e.g. defaultTargetCalendarId)
+// ---------------------------------------------------------------------------
+calendarRoutes.patch('/accounts/:id', async (c: any) => {
+  const userId = c.get('user').userId
+  const id = c.req.param('id')
+  const body = await c.req.json().catch(() => ({}))
+
+  const account = await calendarService.updateAccountSettings(userId, id, body)
+  if (!account) return c.json({ error: 'Not found or unauthorized' }, 404)
+  return c.json({ data: account }, 200)
 })
