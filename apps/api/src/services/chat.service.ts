@@ -1,9 +1,13 @@
 import { chatRepo } from '../repositories/chat.repo'
 import { prisma } from '../lib/prisma'
-import { generateObject, generateText, tool } from 'ai'
-import { anthropic } from '@ai-sdk/anthropic'
+import { generateObject, generateText, streamText, tool } from 'ai'
+import type { CoreMessage } from 'ai'
+import { chatModel, taskModel } from '../lib/ai-models'
 import { z } from 'zod'
 import { calendarService } from './calendar.service'
+import { habitsService } from './habits.service'
+import { goalsService } from './goals.service'
+import { notesService } from './notes.service'
 import { tasksRepository } from '../repositories/tasks.repo'
 
 // ---------------------------------------------------------------------------
@@ -52,6 +56,336 @@ class ChatService {
     return userSettings?.aiDataSharing ?? true
   }
 
+  async buildSystemPrompt(userId: string, locale: string) {
+    const [openTasks, activeHabits] = await Promise.all([
+      chatRepo.findOpenTasks(userId, 20),
+      chatRepo.findActiveHabits(userId),
+    ])
+
+    const taskContext = openTasks
+      .map((t) => `- [${t.id}] "${t.title}" (priority: ${t.priority}, due: ${t.dueDate || 'none'})`)
+      .join('\n')
+
+    const habitContext = activeHabits
+      .map((h: any) => `- [${h.id}] "${h.name}" (frequency: ${h.frequencyType || 'daily'}, target: ${h.targetFrequency || 1})`)
+      .join('\n')
+
+    return `You are a productivity assistant for ThePrimeWay, a personal productivity app.
+You help the user manage their tasks and habits. Be concise, actionable, and encouraging.
+Respond in ${locale === 'es' ? 'Spanish' : 'English'}.
+
+Current date: ${new Date().toISOString().split('T')[0]}
+
+User's open tasks:
+${taskContext || '(no open tasks)'}
+
+User's active habits:
+${habitContext || '(no active habits)'}
+
+Available tools span tasks, habits, goals, notes, calendar, and pomodoro.
+
+Read tools (run automatically, no confirmation): listTasks, listHabits, listGoals, listNotes, listCalendarEvents, findFreeSlots.
+Write tools (require user approval in UI): createTask, updateTask, deleteTask, completeTask, createHabit, updateHabit, logHabit, createGoal, updateGoalProgress, createTimeBlock, createNote, updateNote, deleteNote, startPomodoro.
+
+Workflow:
+1. If you need current data (list of habits, goals, notes, events, free slots), call a read tool first — do NOT guess IDs.
+2. Propose writes only after you have the relevant IDs. The user will accept or reject; summarize the outcome afterward.
+3. Do NOT invent IDs. Use IDs from context above or from tool results.`
+  }
+
+  /**
+   * Streaming chat for the agentic UI. Read-only tools execute on the server;
+   * destructive tools are declared without an execute function so the client
+   * can render a confirmation UI and call the corresponding REST endpoint
+   * only when the user accepts.
+   */
+  async chatStream(
+    userId: string,
+    body: { messages: CoreMessage[]; locale?: string },
+  ) {
+    const locale = body.locale || 'en'
+    const system = await this.buildSystemPrompt(userId, locale)
+
+    return streamText({
+      model: chatModel,
+      system,
+      messages: body.messages,
+      tools: {
+        // Read-only — safe to execute without confirmation
+        listTasks: tool({
+          description: "List the user's open tasks",
+          parameters: z.object({
+            limit: z.number().optional().describe('Max number of tasks to return (default 10)'),
+          }),
+          execute: async ({ limit }) => {
+            const tasks = await chatRepo.findOpenTasks(userId, limit || 10)
+            return {
+              tasks: tasks.map((t) => ({
+                id: t.id,
+                title: t.title,
+                priority: t.priority,
+                dueDate: t.dueDate,
+                status: t.status,
+              })),
+            }
+          },
+        }),
+
+        // Client-side (no execute). The model proposes; the client shows a
+        // preview and either runs the mutation or rejects it.
+        createTask: tool({
+          description: 'Propose creating a new task. Requires user approval in the UI.',
+          parameters: z.object({
+            title: z.string().describe('Task title'),
+            description: z.string().optional(),
+            priority: z.enum(['low', 'medium', 'high', 'urgent']).optional(),
+            dueDate: z.string().optional().describe('YYYY-MM-DD'),
+            scheduledDate: z.string().optional().describe('YYYY-MM-DD'),
+          }),
+        }),
+
+        completeTask: tool({
+          description: 'Propose marking a task as completed. Requires user approval.',
+          parameters: z.object({
+            taskId: z.string(),
+            taskTitle: z.string().describe('Human-readable title to display in the confirmation UI'),
+          }),
+        }),
+
+        createHabit: tool({
+          description: 'Propose creating a new habit. Requires user approval.',
+          parameters: z.object({
+            name: z.string(),
+            description: z.string().optional(),
+            frequencyType: z.enum(['daily', 'weekly']).optional(),
+            targetFrequency: z.number().optional(),
+          }),
+        }),
+
+        logHabit: tool({
+          description: "Propose logging today's completion for a habit. Requires user approval.",
+          parameters: z.object({
+            habitId: z.string(),
+            habitName: z.string().describe('Human-readable name for the UI'),
+            notes: z.string().optional(),
+          }),
+        }),
+
+        // ── Read-only server-exec tools ─────────────────────────────────────
+        listHabits: tool({
+          description: "List the user's active habits",
+          parameters: z.object({
+            includeLogs: z.boolean().optional().describe('Include recent log history'),
+          }),
+          execute: async ({ includeLogs }) => {
+            const { data } = await habitsService.listHabits(userId, {
+              isActive: true,
+              includeLogs: includeLogs ?? false,
+              limit: 50,
+              offset: 0,
+            } as any)
+            return {
+              habits: data.map((h: any) => ({
+                id: h.id,
+                name: h.name,
+                frequencyType: h.frequencyType,
+                targetFrequency: h.targetFrequency,
+                category: h.category,
+              })),
+            }
+          },
+        }),
+
+        listGoals: tool({
+          description: "List the user's goals",
+          parameters: z.object({
+            limit: z.number().optional(),
+            status: z.string().optional().describe('Filter by status'),
+          }),
+          execute: async ({ limit, status }) => {
+            const res: any = await goalsService.listGoals(userId, {
+              status,
+              limit: limit ?? 20,
+              offset: 0,
+            } as any)
+            const goals = res.goals ?? res.data ?? res
+            return {
+              goals: (Array.isArray(goals) ? goals : []).map((g: any) => ({
+                id: g.id,
+                title: g.title,
+                progress: g.progress,
+                status: g.status,
+                deadline: g.deadline,
+                type: g.type,
+              })),
+            }
+          },
+        }),
+
+        listNotes: tool({
+          description: "List the user's recent notes",
+          parameters: z.object({
+            limit: z.number().optional(),
+            search: z.string().optional(),
+          }),
+          execute: async ({ limit, search }) => {
+            const { data } = await notesService.listNotes(userId, {
+              limit: limit ?? 20,
+              offset: 0,
+              search,
+            } as any)
+            return {
+              notes: data.map((n: any) => ({
+                id: n.id,
+                title: n.title,
+                snippet: typeof n.content === 'string' ? n.content.slice(0, 160) : undefined,
+                isPinned: n.isPinned,
+                updatedAt: n.updatedAt,
+              })),
+            }
+          },
+        }),
+
+        listCalendarEvents: tool({
+          description: 'List calendar events between two ISO timestamps',
+          parameters: z.object({
+            from: z.string().describe('Start ISO datetime'),
+            to: z.string().describe('End ISO datetime'),
+          }),
+          execute: async ({ from, to }) => {
+            try {
+              const events = await calendarService.getGoogleEvents(userId, from, to)
+              return {
+                events: (events as any[]).slice(0, 50).map((e) => ({
+                  title: e.summary ?? e.title,
+                  start: e.start?.dateTime ?? e.start?.date ?? e.start,
+                  end: e.end?.dateTime ?? e.end?.date ?? e.end,
+                  location: e.location,
+                })),
+              }
+            } catch (err: any) {
+              return { error: err?.message ?? 'Failed to fetch events', events: [] }
+            }
+          },
+        }),
+
+        findFreeSlots: tool({
+          description: 'Find free calendar slots on a given date that fit a minimum duration',
+          parameters: z.object({
+            date: z.string().describe('YYYY-MM-DD'),
+            durationMinutes: z.number().describe('Minimum slot length in minutes'),
+          }),
+          execute: async ({ date, durationMinutes }) => {
+            const res: any = await calendarService.getFreeSlots(userId, date, durationMinutes)
+            return res
+          },
+        }),
+
+        // ── Client-approval write tools (no execute) ────────────────────────
+        updateTask: tool({
+          description: 'Propose updating an existing task. Requires user approval.',
+          parameters: z.object({
+            taskId: z.string(),
+            taskTitle: z.string().describe('Current title for display'),
+            title: z.string().optional(),
+            description: z.string().optional(),
+            priority: z.enum(['low', 'medium', 'high', 'urgent']).optional(),
+            dueDate: z.string().optional(),
+            scheduledDate: z.string().optional(),
+          }),
+        }),
+
+        deleteTask: tool({
+          description: 'Propose deleting a task. Requires user approval.',
+          parameters: z.object({
+            taskId: z.string(),
+            taskTitle: z.string().describe('For display in the confirmation UI'),
+          }),
+        }),
+
+        updateHabit: tool({
+          description: 'Propose updating an existing habit. Requires user approval.',
+          parameters: z.object({
+            habitId: z.string(),
+            habitName: z.string().describe('Current name for display'),
+            name: z.string().optional(),
+            description: z.string().optional(),
+            targetFrequency: z.number().optional(),
+            frequencyType: z.enum(['daily', 'weekly']).optional(),
+            isActive: z.boolean().optional(),
+          }),
+        }),
+
+        createGoal: tool({
+          description: 'Propose creating a new goal. Requires user approval.',
+          parameters: z.object({
+            title: z.string(),
+            description: z.string().optional(),
+            deadline: z.string().optional().describe('YYYY-MM-DD'),
+            type: z.string().optional(),
+          }),
+        }),
+
+        updateGoalProgress: tool({
+          description: 'Propose updating a goal progress percentage. Requires user approval.',
+          parameters: z.object({
+            goalId: z.string(),
+            goalTitle: z.string().describe('For display'),
+            progress: z.number().min(0).max(100),
+          }),
+        }),
+
+        createTimeBlock: tool({
+          description: 'Propose creating a calendar time block. Requires user approval.',
+          parameters: z.object({
+            title: z.string(),
+            date: z.string().describe('YYYY-MM-DD'),
+            startTime: z.string().describe('HH:MM (24h)'),
+            endTime: z.string().describe('HH:MM (24h)'),
+            description: z.string().optional(),
+          }),
+        }),
+
+        createNote: tool({
+          description: 'Propose creating a new note. Requires user approval.',
+          parameters: z.object({
+            title: z.string(),
+            content: z.string(),
+            tags: z.array(z.string()).optional(),
+          }),
+        }),
+
+        updateNote: tool({
+          description: 'Propose updating a note. Requires user approval.',
+          parameters: z.object({
+            noteId: z.string(),
+            noteTitle: z.string().describe('Current title for display'),
+            title: z.string().optional(),
+            content: z.string().optional(),
+          }),
+        }),
+
+        deleteNote: tool({
+          description: 'Propose deleting a note. Requires user approval.',
+          parameters: z.object({
+            noteId: z.string(),
+            noteTitle: z.string().describe('For display'),
+          }),
+        }),
+
+        startPomodoro: tool({
+          description: 'Propose starting a pomodoro focus session. Requires user approval.',
+          parameters: z.object({
+            durationMinutes: z.number().describe('Session length in minutes'),
+            taskId: z.string().optional().describe('Optional linked task'),
+            taskTitle: z.string().optional().describe('For display'),
+          }),
+        }),
+      },
+      maxSteps: 5,
+    })
+  }
+
   async chat(
     userId: string,
     body: { messages: { role: 'user' | 'assistant'; content: string }[]; locale?: string },
@@ -89,7 +423,7 @@ After using a tool, summarize what you did in your response.
 Do NOT invent task or habit IDs — only reference IDs from the context above or from tool results.`
 
     const result = await generateText({
-      model: anthropic('claude-sonnet-4-6'),
+      model: chatModel,
       system: systemPrompt,
       messages: body.messages.map((m) => ({
         role: m.role as 'user' | 'assistant',
@@ -317,7 +651,7 @@ Do NOT invent task or habit IDs — only reference IDs from the context above or
       : '09:00 - 17:00'
 
     const result = await generateObject({
-      model: anthropic('claude-sonnet-4-6'),
+      model: taskModel,
       schema: z.object({
         plan: z.object({
           Monday: z.array(z.object({ title: z.string(), timeBlock: z.string().optional() })),

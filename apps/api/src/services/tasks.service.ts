@@ -16,7 +16,7 @@ import { FEATURES } from '@repo/shared/constants'
 import { prisma } from '../lib/prisma'
 import type { Task } from '@prisma/client'
 import { generateObject } from 'ai'
-import { anthropic } from '@ai-sdk/anthropic'
+import { taskModel } from '../lib/ai-models'
 import { z } from 'zod'
 
 type TaskModel = Task & { weeklyGoal?: unknown }
@@ -511,7 +511,7 @@ class TasksService {
       : '(No completed tasks with duration data)'
 
     const result = await generateObject({
-      model: anthropic('claude-sonnet-4-6'),
+      model: taskModel,
       schema: z.object({
         suggestedMinutes: z.number().int().positive().describe('Suggested duration in minutes'),
         confidence: z.enum(['high', 'medium', 'low']).describe('Confidence level based on data quality'),
@@ -562,7 +562,7 @@ Instructions:
       .join('\n')
 
     const result = await generateObject({
-      model: anthropic('claude-sonnet-4-6'),
+      model: taskModel,
       schema: z.object({
         minutes: z.number().int().positive().describe('Estimated duration in minutes'),
         rationale: z.string().describe('Brief explanation of the estimate'),
@@ -651,7 +651,7 @@ Provide a realistic estimate in minutes.
       .join('\n')
 
     const result = await generateObject({
-      model: anthropic('claude-sonnet-4-6'),
+      model: taskModel,
       schema: z.object({
         contextBrief: z.string().describe('Brief context about the task'),
         suggestedSubtasks: z.array(z.string()).describe('3-5 suggested subtasks'),
@@ -710,7 +710,7 @@ Provide:
     const goalsList = weeklyGoals.map(g => `- [${g.id}] ${g.title}`).join('\n')
 
     const result = await generateObject({
-      model: anthropic('claude-sonnet-4-6'),
+      model: taskModel,
       schema: z.object({
         taskId: z.string().describe('ID of the recommended task'),
         reason: z.string().describe('Brief explanation of why this task should be done next'),
@@ -1081,7 +1081,7 @@ Pick the single best task to do next. Return its exact ID from the list.
     }
 
     const result = await generateObject({
-      model: anthropic('claude-sonnet-4-6'),
+      model: taskModel,
       schema: z.object({
         contextBrief: z
           .string()

@@ -62,6 +62,11 @@ function useCoreNavItems() {
       to: '/calendar',
       icon: sidebarIcons.weekPlanning(undefined, { size: 20 }),
     },
+    {
+      title: t('navAi', { defaultValue: 'AI Assistant' }),
+      to: '/ai',
+      icon: sidebarIcons.chat(undefined, { size: 20 }),
+    },
   ] satisfies NavItem[]
 }
 
