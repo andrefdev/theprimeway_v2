@@ -1,7 +1,7 @@
 import { chatRepo } from '../repositories/chat.repo'
 import { prisma } from '../lib/prisma'
-import { generateObject, generateText, streamText, tool } from 'ai'
-import type { CoreMessage } from 'ai'
+import { generateObject, generateText, streamText, tool, stepCountIs, convertToModelMessages } from 'ai'
+import type { UIMessage } from 'ai'
 import { chatModel, taskModel } from '../lib/ai-models'
 import { z } from 'zod'
 import { calendarService } from './calendar.service'
@@ -101,7 +101,7 @@ Workflow:
    */
   async chatStream(
     userId: string,
-    body: { messages: CoreMessage[]; locale?: string },
+    body: { messages: UIMessage[]; locale?: string },
   ) {
     const locale = body.locale || 'en'
     const system = await this.buildSystemPrompt(userId, locale)
@@ -109,12 +109,12 @@ Workflow:
     return streamText({
       model: chatModel,
       system,
-      messages: body.messages,
+      messages: convertToModelMessages(body.messages),
       tools: {
         // Read-only — safe to execute without confirmation
         listTasks: tool({
           description: "List the user's open tasks",
-          parameters: z.object({
+          inputSchema: z.object({
             limit: z.number().optional().describe('Max number of tasks to return (default 10)'),
           }),
           execute: async ({ limit }) => {
@@ -135,7 +135,7 @@ Workflow:
         // preview and either runs the mutation or rejects it.
         createTask: tool({
           description: 'Propose creating a new task. Requires user approval in the UI.',
-          parameters: z.object({
+          inputSchema: z.object({
             title: z.string().describe('Task title'),
             description: z.string().optional(),
             priority: z.enum(['low', 'medium', 'high', 'urgent']).optional(),
@@ -146,7 +146,7 @@ Workflow:
 
         completeTask: tool({
           description: 'Propose marking a task as completed. Requires user approval.',
-          parameters: z.object({
+          inputSchema: z.object({
             taskId: z.string(),
             taskTitle: z.string().describe('Human-readable title to display in the confirmation UI'),
           }),
@@ -154,7 +154,7 @@ Workflow:
 
         createHabit: tool({
           description: 'Propose creating a new habit. Requires user approval.',
-          parameters: z.object({
+          inputSchema: z.object({
             name: z.string(),
             description: z.string().optional(),
             frequencyType: z.enum(['daily', 'weekly']).optional(),
@@ -164,7 +164,7 @@ Workflow:
 
         logHabit: tool({
           description: "Propose logging today's completion for a habit. Requires user approval.",
-          parameters: z.object({
+          inputSchema: z.object({
             habitId: z.string(),
             habitName: z.string().describe('Human-readable name for the UI'),
             notes: z.string().optional(),
@@ -174,7 +174,7 @@ Workflow:
         // ── Read-only server-exec tools ─────────────────────────────────────
         listHabits: tool({
           description: "List the user's active habits",
-          parameters: z.object({
+          inputSchema: z.object({
             includeLogs: z.boolean().optional().describe('Include recent log history'),
           }),
           execute: async ({ includeLogs }) => {
@@ -198,7 +198,7 @@ Workflow:
 
         listGoals: tool({
           description: "List the user's goals",
-          parameters: z.object({
+          inputSchema: z.object({
             limit: z.number().optional(),
             status: z.string().optional().describe('Filter by status'),
           }),
@@ -224,7 +224,7 @@ Workflow:
 
         listNotes: tool({
           description: "List the user's recent notes",
-          parameters: z.object({
+          inputSchema: z.object({
             limit: z.number().optional(),
             search: z.string().optional(),
           }),
@@ -248,7 +248,7 @@ Workflow:
 
         listCalendarEvents: tool({
           description: 'List calendar events between two ISO timestamps',
-          parameters: z.object({
+          inputSchema: z.object({
             from: z.string().describe('Start ISO datetime'),
             to: z.string().describe('End ISO datetime'),
           }),
@@ -271,7 +271,7 @@ Workflow:
 
         findFreeSlots: tool({
           description: 'Find free calendar slots on a given date that fit a minimum duration',
-          parameters: z.object({
+          inputSchema: z.object({
             date: z.string().describe('YYYY-MM-DD'),
             durationMinutes: z.number().describe('Minimum slot length in minutes'),
           }),
@@ -284,7 +284,7 @@ Workflow:
         // ── Client-approval write tools (no execute) ────────────────────────
         updateTask: tool({
           description: 'Propose updating an existing task. Requires user approval.',
-          parameters: z.object({
+          inputSchema: z.object({
             taskId: z.string(),
             taskTitle: z.string().describe('Current title for display'),
             title: z.string().optional(),
@@ -297,7 +297,7 @@ Workflow:
 
         deleteTask: tool({
           description: 'Propose deleting a task. Requires user approval.',
-          parameters: z.object({
+          inputSchema: z.object({
             taskId: z.string(),
             taskTitle: z.string().describe('For display in the confirmation UI'),
           }),
@@ -305,7 +305,7 @@ Workflow:
 
         updateHabit: tool({
           description: 'Propose updating an existing habit. Requires user approval.',
-          parameters: z.object({
+          inputSchema: z.object({
             habitId: z.string(),
             habitName: z.string().describe('Current name for display'),
             name: z.string().optional(),
@@ -318,7 +318,7 @@ Workflow:
 
         createGoal: tool({
           description: 'Propose creating a new goal. Requires user approval.',
-          parameters: z.object({
+          inputSchema: z.object({
             title: z.string(),
             description: z.string().optional(),
             deadline: z.string().optional().describe('YYYY-MM-DD'),
@@ -328,7 +328,7 @@ Workflow:
 
         updateGoalProgress: tool({
           description: 'Propose updating a goal progress percentage. Requires user approval.',
-          parameters: z.object({
+          inputSchema: z.object({
             goalId: z.string(),
             goalTitle: z.string().describe('For display'),
             progress: z.number().min(0).max(100),
@@ -337,7 +337,7 @@ Workflow:
 
         createTimeBlock: tool({
           description: 'Propose creating a calendar time block. Requires user approval.',
-          parameters: z.object({
+          inputSchema: z.object({
             title: z.string(),
             date: z.string().describe('YYYY-MM-DD'),
             startTime: z.string().describe('HH:MM (24h)'),
@@ -348,7 +348,7 @@ Workflow:
 
         createNote: tool({
           description: 'Propose creating a new note. Requires user approval.',
-          parameters: z.object({
+          inputSchema: z.object({
             title: z.string(),
             content: z.string(),
             tags: z.array(z.string()).optional(),
@@ -357,7 +357,7 @@ Workflow:
 
         updateNote: tool({
           description: 'Propose updating a note. Requires user approval.',
-          parameters: z.object({
+          inputSchema: z.object({
             noteId: z.string(),
             noteTitle: z.string().describe('Current title for display'),
             title: z.string().optional(),
@@ -367,7 +367,7 @@ Workflow:
 
         deleteNote: tool({
           description: 'Propose deleting a note. Requires user approval.',
-          parameters: z.object({
+          inputSchema: z.object({
             noteId: z.string(),
             noteTitle: z.string().describe('For display'),
           }),
@@ -375,14 +375,14 @@ Workflow:
 
         startPomodoro: tool({
           description: 'Propose starting a pomodoro focus session. Requires user approval.',
-          parameters: z.object({
+          inputSchema: z.object({
             durationMinutes: z.number().describe('Session length in minutes'),
             taskId: z.string().optional().describe('Optional linked task'),
             taskTitle: z.string().optional().describe('For display'),
           }),
         }),
       },
-      maxSteps: 5,
+      stopWhen: stepCountIs(5),
     })
   }
 
@@ -432,7 +432,7 @@ Do NOT invent task or habit IDs — only reference IDs from the context above or
       tools: {
         createTask: tool({
           description: 'Create a new task for the user',
-          parameters: z.object({
+          inputSchema: z.object({
             title: z.string().describe('Task title'),
             description: z.string().optional().describe('Task description'),
             priority: z.enum(['low', 'medium', 'high', 'urgent']).optional().describe('Task priority'),
@@ -453,7 +453,7 @@ Do NOT invent task or habit IDs — only reference IDs from the context above or
 
         completeTask: tool({
           description: 'Mark an existing task as completed',
-          parameters: z.object({
+          inputSchema: z.object({
             taskId: z.string().describe('The ID of the task to complete'),
           }),
           execute: async ({ taskId }) => {
@@ -465,7 +465,7 @@ Do NOT invent task or habit IDs — only reference IDs from the context above or
 
         listTasks: tool({
           description: 'List the user\'s open tasks',
-          parameters: z.object({
+          inputSchema: z.object({
             limit: z.number().optional().describe('Max number of tasks to return (default 10)'),
           }),
           execute: async ({ limit }) => {
@@ -484,7 +484,7 @@ Do NOT invent task or habit IDs — only reference IDs from the context above or
 
         createHabit: tool({
           description: 'Create a new habit for the user',
-          parameters: z.object({
+          inputSchema: z.object({
             name: z.string().describe('Habit name'),
             description: z.string().optional().describe('Habit description'),
             frequencyType: z.enum(['daily', 'weekly']).optional().describe('How often the habit should be done'),
@@ -507,7 +507,7 @@ Do NOT invent task or habit IDs — only reference IDs from the context above or
 
         logHabit: tool({
           description: 'Log a habit completion for today',
-          parameters: z.object({
+          inputSchema: z.object({
             habitId: z.string().describe('The ID of the habit to log'),
             notes: z.string().optional().describe('Optional notes for the log entry'),
           }),
@@ -539,7 +539,7 @@ Do NOT invent task or habit IDs — only reference IDs from the context above or
           },
         }),
       },
-      maxSteps: 5,
+      stopWhen: stepCountIs(5),
     })
 
     // Collect tool results from all steps

@@ -81,7 +81,7 @@ chatRoutes.post('/stream', async (c) => {
     locale: body.locale,
   })
 
-  return result.toDataStreamResponse()
+  return result.toUIMessageStreamResponse()
 })
 
 // ---------------------------------------------------------------------------
