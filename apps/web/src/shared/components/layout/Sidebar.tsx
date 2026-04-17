@@ -57,6 +57,11 @@ function useCoreNavItems() {
       to: '/pomodoro',
       icon: sidebarIcons.pomodoro(undefined, { size: 20 }),
     },
+    {
+      title: t('navCalendar'),
+      to: '/calendar',
+      icon: sidebarIcons.weekPlanning(undefined, { size: 20 }),
+    },
   ] satisfies NavItem[]
 }
 
@@ -65,11 +70,6 @@ function useSecondaryNavItems() {
   const { features } = useFeatures()
 
   const items: NavItem[] = [
-    {
-      title: t('navCalendar'),
-      to: '/calendar',
-      icon: sidebarIcons.weekPlanning(undefined, { size: 20 }),
-    },
     {
       title: t('navFinances'),
       to: '/finances',

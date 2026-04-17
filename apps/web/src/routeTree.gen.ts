@@ -33,9 +33,7 @@ import { Route as AppNotesIndexRouteImport } from './routes/_app/notes/index'
 import { Route as AppFinancesIndexRouteImport } from './routes/_app/finances/index'
 import { Route as AppTasksWeeklyRouteImport } from './routes/_app/tasks/weekly'
 import { Route as AppTasksTodayRouteImport } from './routes/_app/tasks/today'
-import { Route as AppTasksTimelineRouteImport } from './routes/_app/tasks/timeline'
 import { Route as AppTasksStatsRouteImport } from './routes/_app/tasks/stats'
-import { Route as AppTasksCalendarRouteImport } from './routes/_app/tasks/calendar'
 import { Route as AppTasksBacklogRouteImport } from './routes/_app/tasks/backlog'
 import { Route as AppTasksAllRouteImport } from './routes/_app/tasks/all'
 import { Route as AppReadingLibraryRouteImport } from './routes/_app/reading/library'
@@ -168,19 +166,9 @@ const AppTasksTodayRoute = AppTasksTodayRouteImport.update({
   path: '/tasks/today',
   getParentRoute: () => AppRoute,
 } as any)
-const AppTasksTimelineRoute = AppTasksTimelineRouteImport.update({
-  id: '/tasks/timeline',
-  path: '/tasks/timeline',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppTasksStatsRoute = AppTasksStatsRouteImport.update({
   id: '/tasks/stats',
   path: '/tasks/stats',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppTasksCalendarRoute = AppTasksCalendarRouteImport.update({
-  id: '/tasks/calendar',
-  path: '/tasks/calendar',
   getParentRoute: () => AppRoute,
 } as any)
 const AppTasksBacklogRoute = AppTasksBacklogRouteImport.update({
@@ -279,9 +267,7 @@ export interface FileRoutesByFullPath {
   '/reading/library': typeof AppReadingLibraryRoute
   '/tasks/all': typeof AppTasksAllRoute
   '/tasks/backlog': typeof AppTasksBacklogRoute
-  '/tasks/calendar': typeof AppTasksCalendarRoute
   '/tasks/stats': typeof AppTasksStatsRoute
-  '/tasks/timeline': typeof AppTasksTimelineRoute
   '/tasks/today': typeof AppTasksTodayRoute
   '/tasks/weekly': typeof AppTasksWeeklyRoute
   '/finances/': typeof AppFinancesIndexRoute
@@ -319,9 +305,7 @@ export interface FileRoutesByTo {
   '/reading/library': typeof AppReadingLibraryRoute
   '/tasks/all': typeof AppTasksAllRoute
   '/tasks/backlog': typeof AppTasksBacklogRoute
-  '/tasks/calendar': typeof AppTasksCalendarRoute
   '/tasks/stats': typeof AppTasksStatsRoute
-  '/tasks/timeline': typeof AppTasksTimelineRoute
   '/tasks/today': typeof AppTasksTodayRoute
   '/tasks/weekly': typeof AppTasksWeeklyRoute
   '/finances': typeof AppFinancesIndexRoute
@@ -362,9 +346,7 @@ export interface FileRoutesById {
   '/_app/reading/library': typeof AppReadingLibraryRoute
   '/_app/tasks/all': typeof AppTasksAllRoute
   '/_app/tasks/backlog': typeof AppTasksBacklogRoute
-  '/_app/tasks/calendar': typeof AppTasksCalendarRoute
   '/_app/tasks/stats': typeof AppTasksStatsRoute
-  '/_app/tasks/timeline': typeof AppTasksTimelineRoute
   '/_app/tasks/today': typeof AppTasksTodayRoute
   '/_app/tasks/weekly': typeof AppTasksWeeklyRoute
   '/_app/finances/': typeof AppFinancesIndexRoute
@@ -404,9 +386,7 @@ export interface FileRouteTypes {
     | '/reading/library'
     | '/tasks/all'
     | '/tasks/backlog'
-    | '/tasks/calendar'
     | '/tasks/stats'
-    | '/tasks/timeline'
     | '/tasks/today'
     | '/tasks/weekly'
     | '/finances/'
@@ -444,9 +424,7 @@ export interface FileRouteTypes {
     | '/reading/library'
     | '/tasks/all'
     | '/tasks/backlog'
-    | '/tasks/calendar'
     | '/tasks/stats'
-    | '/tasks/timeline'
     | '/tasks/today'
     | '/tasks/weekly'
     | '/finances'
@@ -486,9 +464,7 @@ export interface FileRouteTypes {
     | '/_app/reading/library'
     | '/_app/tasks/all'
     | '/_app/tasks/backlog'
-    | '/_app/tasks/calendar'
     | '/_app/tasks/stats'
-    | '/_app/tasks/timeline'
     | '/_app/tasks/today'
     | '/_app/tasks/weekly'
     | '/_app/finances/'
@@ -673,25 +649,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTasksTodayRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/tasks/timeline': {
-      id: '/_app/tasks/timeline'
-      path: '/tasks/timeline'
-      fullPath: '/tasks/timeline'
-      preLoaderRoute: typeof AppTasksTimelineRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/tasks/stats': {
       id: '/_app/tasks/stats'
       path: '/tasks/stats'
       fullPath: '/tasks/stats'
       preLoaderRoute: typeof AppTasksStatsRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/tasks/calendar': {
-      id: '/_app/tasks/calendar'
-      path: '/tasks/calendar'
-      fullPath: '/tasks/calendar'
-      preLoaderRoute: typeof AppTasksCalendarRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/tasks/backlog': {
@@ -813,9 +775,7 @@ interface AppRouteChildren {
   AppReadingLibraryRoute: typeof AppReadingLibraryRoute
   AppTasksAllRoute: typeof AppTasksAllRoute
   AppTasksBacklogRoute: typeof AppTasksBacklogRoute
-  AppTasksCalendarRoute: typeof AppTasksCalendarRoute
   AppTasksStatsRoute: typeof AppTasksStatsRoute
-  AppTasksTimelineRoute: typeof AppTasksTimelineRoute
   AppTasksTodayRoute: typeof AppTasksTodayRoute
   AppTasksWeeklyRoute: typeof AppTasksWeeklyRoute
   AppFinancesIndexRoute: typeof AppFinancesIndexRoute
@@ -849,9 +809,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppReadingLibraryRoute: AppReadingLibraryRoute,
   AppTasksAllRoute: AppTasksAllRoute,
   AppTasksBacklogRoute: AppTasksBacklogRoute,
-  AppTasksCalendarRoute: AppTasksCalendarRoute,
   AppTasksStatsRoute: AppTasksStatsRoute,
-  AppTasksTimelineRoute: AppTasksTimelineRoute,
   AppTasksTodayRoute: AppTasksTodayRoute,
   AppTasksWeeklyRoute: AppTasksWeeklyRoute,
   AppFinancesIndexRoute: AppFinancesIndexRoute,
