@@ -24,6 +24,7 @@ import {
 import { PanelLeftOpen, LogOut, Settings, User } from 'lucide-react'
 import { NotificationBell } from '@/features/notifications/components/NotificationBell'
 import { PomodoroMiniTimer } from '@/shared/components/PomodoroMiniTimer'
+import { ActiveTaskHeaderBadge } from '@/features/tasks/components/ActiveTaskHeaderBadge'
 
 // Route segment to i18n key mapping
 const ROUTE_LABELS: Record<string, string> = {
@@ -142,6 +143,8 @@ export function Header() {
 
       {/* Right side: user profile */}
       <div className="ml-auto flex items-center gap-1">
+        {/* Active task timer */}
+        <ActiveTaskHeaderBadge />
         {/* Pomodoro mini-timer */}
         <PomodoroMiniTimer />
         {/* Notification bell */}
