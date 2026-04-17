@@ -286,6 +286,11 @@ jobs:
               exit 1
             }
 
+            # Reload nginx so it re-resolves upstream container IPs
+            # (api/web/admin containers get new IPs when recreated; long-running
+            #  nginx caches stale ones until reload).
+            docker compose -f docker-compose.prod.yml exec -T nginx nginx -s reload || true
+
       - name: Health check - API
         run: |
           sleep 10
