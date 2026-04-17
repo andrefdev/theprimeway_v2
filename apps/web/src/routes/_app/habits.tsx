@@ -55,17 +55,6 @@ const COLOR_OPTIONS = [
 
 type Tab = 'tracker' | 'list' | 'stats'
 
-// Helper: Get color with alpha (supports hex and CSS vars)
-function getColorWithAlpha(color: string | null | undefined, alpha: string): string {
-  const c = color || '#3b82f6'
-  if (c.startsWith('var(')) {
-    // CSS variable — use rgba with opacity instead
-    return `rgba(59, 130, 246, ${parseInt(alpha, 16) / 255})`
-  }
-  // Hex color — append alpha digits
-  return c + alpha
-}
-
 // ---------------------------------------------------------------------------
 // Main page
 // ---------------------------------------------------------------------------
@@ -289,13 +278,8 @@ function HabitsPage() {
 
       {/* Detail sheet */}
       <Sheet open={!!selectedHabit} onOpenChange={(open) => { if (!open) setSelectedHabit(null) }}>
-        <SheetContent side="right" className="w-full sm:w-[400px] overflow-hidden flex flex-col">
-          {selectedHabit && (
-            <HabitDetailPanel
-              habit={selectedHabit}
-              onClose={() => setSelectedHabit(null)}
-            />
-          )}
+        <SheetContent side="right" className="w-full sm:w-[400px] sm:max-w-[400px]">
+          {selectedHabit && <HabitDetailPanel habit={selectedHabit} />}
         </SheetContent>
       </Sheet>
 
@@ -346,24 +330,20 @@ function HabitCard({
               e.stopPropagation()
               onToggle()
             }}
-            className="flex shrink-0 items-center justify-center w-14 transition-colors"
-            style={
-              isComplete
-                ? { backgroundColor: habit.color || '#3b82f6' }
-                : { backgroundColor: getColorWithAlpha(habit.color, '15') }
-            }
+            className="flex shrink-0 items-center justify-center w-14 transition-colors hover:bg-muted/50"
           >
             <div
-              className={`flex h-8 w-8 items-center justify-center rounded-full border-2 transition-all ${
+              className="flex h-8 w-8 items-center justify-center rounded-full border-2 transition-all"
+              style={
                 isComplete
-                  ? 'border-white bg-white/20 text-white'
-                  : 'border-white/30'
-              }`}
+                  ? { backgroundColor: habit.color || '#3b82f6', borderColor: habit.color || '#3b82f6', color: '#fff' }
+                  : { borderColor: habit.color || '#3b82f6', color: habit.color || '#3b82f6' }
+              }
             >
               {isComplete ? (
                 <CheckIcon size={16} />
               ) : habit.targetFrequency > 1 ? (
-                <span className="text-xs font-bold text-white">{completedCount}/{habit.targetFrequency}</span>
+                <span className="text-[10px] font-bold">{completedCount}/{habit.targetFrequency}</span>
               ) : null}
             </div>
           </button>

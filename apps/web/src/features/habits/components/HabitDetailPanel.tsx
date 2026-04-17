@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { X, Clock, Target, CheckCircle } from 'lucide-react'
+import { Clock, Target, CheckCircle } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/shared/components/ui/card'
 import { Button } from '@/shared/components/ui/button'
 import { Badge } from '@/shared/components/ui/badge'
@@ -18,10 +18,9 @@ const pillarI18nKey = (id: string) =>
 
 interface HabitDetailPanelProps {
   habit: Habit
-  onClose: () => void
 }
 
-export function HabitDetailPanel({ habit, onClose }: HabitDetailPanelProps) {
+export function HabitDetailPanel({ habit }: HabitDetailPanelProps) {
   const { t } = useTranslation(['habits', 'common'])
   const linkHabitToGoal = useLinkHabitToGoal()
 
@@ -47,22 +46,13 @@ export function HabitDetailPanel({ habit, onClose }: HabitDetailPanelProps) {
   }
 
   return (
-    <div className="space-y-4 max-h-[90vh] overflow-y-auto pr-4">
+    <div className="flex h-full flex-col gap-4 overflow-y-auto p-6">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4 sticky top-0 bg-background z-10 pb-2 -mx-4 px-4">
-        <div className="flex-1 min-w-0">
-          <h2 className="text-lg font-semibold">{habit.name}</h2>
-          {habit.description && (
-            <p className="text-sm text-muted-foreground mt-0.5">{habit.description}</p>
-          )}
-        </div>
-        <button
-          type="button"
-          onClick={onClose}
-          className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <X className="w-5 h-5" />
-        </button>
+      <div className="pr-8">
+        <h2 className="text-lg font-semibold">{habit.name}</h2>
+        {habit.description && (
+          <p className="text-sm text-muted-foreground mt-0.5">{habit.description}</p>
+        )}
       </div>
 
       {/* Basic Info */}
