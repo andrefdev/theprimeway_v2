@@ -1,7 +1,7 @@
 import { gamificationRepo } from '../repositories/gamification.repo'
 import { prisma } from '../lib/prisma'
 import { generateObject } from 'ai'
-import { anthropic } from '@ai-sdk/anthropic'
+import { taskModel } from '../lib/ai-models'
 import { z } from 'zod'
 
 const RANK_THRESHOLDS: Record<string, { minXp: number; minLevel: number; minStreak: number }> = {
@@ -491,7 +491,7 @@ class GamificationService {
 
     try {
       const result = await generateObject({
-        model: anthropic('claude-sonnet-4-6'),
+        model: taskModel,
         schema: z.object({
           challenges: z.array(z.object({
             type: z.string().describe('Challenge type identifier'),

@@ -2,7 +2,7 @@ import { calendarRepo } from '../repositories/calendar.repo'
 import { tasksRepository } from '../repositories/tasks.repo'
 import { prisma } from '../lib/prisma'
 import { generateObject } from 'ai'
-import { anthropic } from '@ai-sdk/anthropic'
+import { taskModel } from '../lib/ai-models'
 import { z } from 'zod'
 
 class CalendarService {
@@ -680,7 +680,7 @@ class CalendarService {
     })
 
     const result = await generateObject({
-      model: anthropic('claude-sonnet-4-6'),
+      model: taskModel,
       schema: timeBlockSchema,
       prompt: `You are a productivity scheduling assistant for ThePrimeWay. Analyze the user's tasks and existing calendar events, then generate an optimal time-block schedule for the day.
 
@@ -784,7 +784,7 @@ SCHEDULING RULES:
     })
 
     const result = await generateObject({
-      model: anthropic('claude-sonnet-4-6'),
+      model: taskModel,
       schema: smartSlotsSchema,
       prompt: `You are a smart scheduling assistant for ThePrimeWay. Find the optimal time slots for a specific task based on calendar availability, task characteristics, and the user's historical productivity patterns.
 

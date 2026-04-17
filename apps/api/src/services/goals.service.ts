@@ -12,7 +12,7 @@ import { prisma } from '../lib/prisma'
 import { validateLimit } from '../lib/limits'
 import { FEATURES } from '@repo/shared/constants'
 import { generateObject } from 'ai'
-import { anthropic } from '@ai-sdk/anthropic'
+import { taskModel } from '../lib/ai-models'
 import { z } from 'zod'
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -488,7 +488,7 @@ class GoalsService {
     })
 
     const result = await generateObject({
-      model: anthropic('claude-sonnet-4-6'),
+      model: taskModel,
       schema: suggestionSchema,
       prompt: `You are a personal productivity coach. A user has the following ${goalLevel}:
 
@@ -646,7 +646,7 @@ Rules:
     }
 
     const result = await generateObject({
-      model: anthropic('claude-sonnet-4-6'),
+      model: taskModel,
       schema: z.object({
         suggestions: z.array(
           z.object({
@@ -704,7 +704,7 @@ Make them specific, actionable, and aligned with the parent goal.
     const totalOpenTasks = await prisma.task.count({ where: { userId, status: 'open', archivedAt: null } })
 
     const result = await generateObject({
-      model: anthropic('claude-sonnet-4-6'),
+      model: taskModel,
       schema: z.object({
         conflicts: z.array(z.object({
           goalIds: z.array(z.string()),
@@ -769,7 +769,7 @@ Be constructive — suggest how to resolve each conflict.`,
       .join('\n')
 
     const result = await generateObject({
-      model: anthropic('claude-sonnet-4-6'),
+      model: taskModel,
       schema: z.object({
         summary: z.string().describe('Overall quarterly performance summary'),
         topAchievements: z.array(z.string()).describe('3-5 top achievements'),

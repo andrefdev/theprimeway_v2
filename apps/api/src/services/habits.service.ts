@@ -13,7 +13,7 @@ import { prisma } from '../lib/prisma'
 import { validateLimit } from '../lib/limits'
 import { FEATURES, CATEGORY_TO_PILLAR } from '@repo/shared/constants'
 import { generateObject } from 'ai'
-import { anthropic } from '@ai-sdk/anthropic'
+import { taskModel } from '../lib/ai-models'
 import { z } from 'zod'
 import type { Habit, HabitLog } from '@prisma/client'
 
@@ -705,7 +705,7 @@ class HabitsService {
 
     // Use AI to suggest relevant goals
     const result = await generateObject({
-      model: anthropic('claude-sonnet-4-6'),
+      model: taskModel,
       schema: z.object({
         suggestedGoalIds: z.array(z.string()).describe('IDs of suggested goals that align with this habit'),
         reasoning: z.string().describe('Brief explanation of why these goals align with the habit'),
@@ -766,7 +766,7 @@ Return only the goal IDs that make strong logical connections to the habit.
     // If no logs, use AI to suggest based on habit type
     if (logs.length === 0) {
       const result = await generateObject({
-        model: anthropic('claude-sonnet-4-6'),
+        model: taskModel,
         schema: z.object({
           hour: z.number().min(0).max(23),
           minute: z.number().min(0).max(59),
@@ -798,7 +798,7 @@ Consider typical patterns for ${habit.frequencyType} habits. Return the hour (0-
     const completionRate = (completedDays / 30) * 100
 
     const result = await generateObject({
-      model: anthropic('claude-sonnet-4-6'),
+      model: taskModel,
       schema: z.object({
         hour: z.number().min(0).max(23),
         minute: z.number().min(0).max(59),
@@ -852,7 +852,7 @@ Return the hour (0-23) and minute (0-59).
     if (!goalsList) return { suggestions: [] }
 
     const result = await generateObject({
-      model: anthropic('claude-sonnet-4-6'),
+      model: taskModel,
       schema: z.object({
         suggestions: z.array(z.object({
           name: z.string().describe('Habit name, concise'),
@@ -907,7 +907,7 @@ For each suggestion:
     ).join('\n')
 
     const result = await generateObject({
-      model: anthropic('claude-sonnet-4-6'),
+      model: taskModel,
       schema: z.object({
         stacks: z.array(z.object({
           anchorId: z.string().describe('ID of the anchor habit (high completion rate)'),
@@ -999,7 +999,7 @@ For each stack, use the exact anchor habit ID from the list.
     }
 
     const result = await generateObject({
-      model: anthropic('claude-sonnet-4-6'),
+      model: taskModel,
       schema: z.object({
         correlations: z.array(z.object({
           pattern: z.string().describe('Description of the correlation pattern'),

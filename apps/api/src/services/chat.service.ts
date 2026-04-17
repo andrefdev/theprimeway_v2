@@ -1,7 +1,7 @@
 import { chatRepo } from '../repositories/chat.repo'
 import { prisma } from '../lib/prisma'
 import { generateObject, generateText, tool } from 'ai'
-import { anthropic } from '@ai-sdk/anthropic'
+import { chatModel, taskModel } from '../lib/ai-models'
 import { z } from 'zod'
 import { calendarService } from './calendar.service'
 import { tasksRepository } from '../repositories/tasks.repo'
@@ -89,7 +89,7 @@ After using a tool, summarize what you did in your response.
 Do NOT invent task or habit IDs — only reference IDs from the context above or from tool results.`
 
     const result = await generateText({
-      model: anthropic('claude-sonnet-4-6'),
+      model: chatModel,
       system: systemPrompt,
       messages: body.messages.map((m) => ({
         role: m.role as 'user' | 'assistant',
@@ -317,7 +317,7 @@ Do NOT invent task or habit IDs — only reference IDs from the context above or
       : '09:00 - 17:00'
 
     const result = await generateObject({
-      model: anthropic('claude-sonnet-4-6'),
+      model: taskModel,
       schema: z.object({
         plan: z.object({
           Monday: z.array(z.object({ title: z.string(), timeBlock: z.string().optional() })),
