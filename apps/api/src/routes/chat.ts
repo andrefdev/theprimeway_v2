@@ -61,6 +61,30 @@ chatRoutes.openapi(chatRoute, async (c) => {
 })
 
 // ---------------------------------------------------------------------------
+// POST /stream — Vercel AI SDK data-stream protocol for useChat()
+// ---------------------------------------------------------------------------
+chatRoutes.post('/stream', async (c) => {
+  const userId = c.get('user').userId
+
+  if (!chatService.checkRateLimit(userId)) {
+    return c.json({ error: 'Too Many Requests' }, 429)
+  }
+
+  const aiAllowed = await chatService.checkAiDataSharing(userId)
+  if (!aiAllowed) {
+    return c.json({ error: 'AI Data Sharing is disabled.' }, 403)
+  }
+
+  const body = await c.req.json()
+  const result = await chatService.chatStream(userId, {
+    messages: body.messages,
+    locale: body.locale,
+  })
+
+  return result.toDataStreamResponse()
+})
+
+// ---------------------------------------------------------------------------
 // GET /briefing
 // ---------------------------------------------------------------------------
 const briefingRoute = createRoute({

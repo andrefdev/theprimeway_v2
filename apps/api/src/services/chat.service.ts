@@ -1,6 +1,7 @@
 import { chatRepo } from '../repositories/chat.repo'
 import { prisma } from '../lib/prisma'
-import { generateObject, generateText, tool } from 'ai'
+import { generateObject, generateText, streamText, tool } from 'ai'
+import type { CoreMessage } from 'ai'
 import { chatModel, taskModel } from '../lib/ai-models'
 import { z } from 'zod'
 import { calendarService } from './calendar.service'
@@ -50,6 +51,119 @@ class ChatService {
   async checkAiDataSharing(userId: string): Promise<boolean> {
     const userSettings = await chatRepo.findUserSettings(userId)
     return userSettings?.aiDataSharing ?? true
+  }
+
+  async buildSystemPrompt(userId: string, locale: string) {
+    const [openTasks, activeHabits] = await Promise.all([
+      chatRepo.findOpenTasks(userId, 20),
+      chatRepo.findActiveHabits(userId),
+    ])
+
+    const taskContext = openTasks
+      .map((t) => `- [${t.id}] "${t.title}" (priority: ${t.priority}, due: ${t.dueDate || 'none'})`)
+      .join('\n')
+
+    const habitContext = activeHabits
+      .map((h: any) => `- [${h.id}] "${h.name}" (frequency: ${h.frequencyType || 'daily'}, target: ${h.targetFrequency || 1})`)
+      .join('\n')
+
+    return `You are a productivity assistant for ThePrimeWay, a personal productivity app.
+You help the user manage their tasks and habits. Be concise, actionable, and encouraging.
+Respond in ${locale === 'es' ? 'Spanish' : 'English'}.
+
+Current date: ${new Date().toISOString().split('T')[0]}
+
+User's open tasks:
+${taskContext || '(no open tasks)'}
+
+User's active habits:
+${habitContext || '(no active habits)'}
+
+When the user asks you to create, complete, or list tasks or habits, use the available tools.
+Destructive tools (create/complete/log) require user confirmation — you propose the action and the user approves or rejects it in the UI. After the user's decision is applied, summarize the outcome.
+Do NOT invent task or habit IDs — only reference IDs from the context above or from tool results.`
+  }
+
+  /**
+   * Streaming chat for the agentic UI. Read-only tools execute on the server;
+   * destructive tools are declared without an execute function so the client
+   * can render a confirmation UI and call the corresponding REST endpoint
+   * only when the user accepts.
+   */
+  async chatStream(
+    userId: string,
+    body: { messages: CoreMessage[]; locale?: string },
+  ) {
+    const locale = body.locale || 'en'
+    const system = await this.buildSystemPrompt(userId, locale)
+
+    return streamText({
+      model: chatModel,
+      system,
+      messages: body.messages,
+      tools: {
+        // Read-only — safe to execute without confirmation
+        listTasks: tool({
+          description: "List the user's open tasks",
+          parameters: z.object({
+            limit: z.number().optional().describe('Max number of tasks to return (default 10)'),
+          }),
+          execute: async ({ limit }) => {
+            const tasks = await chatRepo.findOpenTasks(userId, limit || 10)
+            return {
+              tasks: tasks.map((t) => ({
+                id: t.id,
+                title: t.title,
+                priority: t.priority,
+                dueDate: t.dueDate,
+                status: t.status,
+              })),
+            }
+          },
+        }),
+
+        // Client-side (no execute). The model proposes; the client shows a
+        // preview and either runs the mutation or rejects it.
+        createTask: tool({
+          description: 'Propose creating a new task. Requires user approval in the UI.',
+          parameters: z.object({
+            title: z.string().describe('Task title'),
+            description: z.string().optional(),
+            priority: z.enum(['low', 'medium', 'high', 'urgent']).optional(),
+            dueDate: z.string().optional().describe('YYYY-MM-DD'),
+            scheduledDate: z.string().optional().describe('YYYY-MM-DD'),
+          }),
+        }),
+
+        completeTask: tool({
+          description: 'Propose marking a task as completed. Requires user approval.',
+          parameters: z.object({
+            taskId: z.string(),
+            taskTitle: z.string().describe('Human-readable title to display in the confirmation UI'),
+          }),
+        }),
+
+        createHabit: tool({
+          description: 'Propose creating a new habit. Requires user approval.',
+          parameters: z.object({
+            name: z.string(),
+            description: z.string().optional(),
+            frequencyType: z.enum(['daily', 'weekly']).optional(),
+            targetFrequency: z.number().optional(),
+          }),
+        }),
+
+        logHabit: tool({
+          description: "Propose logging today's completion for a habit. Requires user approval.",
+          parameters: z.object({
+            habitId: z.string(),
+            habitName: z.string().describe('Human-readable name for the UI'),
+            notes: z.string().optional(),
+          }),
+        }),
+      },
+      maxSteps: 5,
+    })
   }
 
   async chat(
