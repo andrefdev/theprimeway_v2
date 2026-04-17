@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { SectionHeader } from '@/shared/components/SectionHeader'
 import { useEffect, useRef, useState } from 'react'
 import { useChat } from '@ai-sdk/react'
+import { DefaultChatTransport } from 'ai'
 import { ScrollArea } from '@/shared/components/ui/scroll-area'
 import { Button } from '@/shared/components/ui/button'
 import { toast } from 'sonner'
@@ -38,11 +39,12 @@ function AiPage() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [busyToolCallId, setBusyToolCallId] = useState<string | null>(null)
 
-  const { messages, status, stop, append, addToolResult } = useChat({
-    api: '/api/chat/stream',
-    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-    body: { locale: i18n.language },
-    maxSteps: 5,
+  const { messages, status, stop, sendMessage, addToolResult } = useChat({
+    transport: new DefaultChatTransport({
+      api: '/api/chat/stream',
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      body: { locale: i18n.language },
+    }),
     onError: (err) => {
       const status = (err as any)?.status
       if (status === 403) toast.error(t('aiDisabled'))
@@ -60,6 +62,8 @@ function AiPage() {
   const isLoading = status === 'streaming' || status === 'submitted'
 
   async function executeTool(toolCallId: string, toolName: string, args: any) {
+    const addResult = (output: unknown) =>
+      addToolResult({ tool: toolName, toolCallId, output } as any)
     setBusyToolCallId(toolCallId)
     try {
       let result: unknown
@@ -212,16 +216,20 @@ function AiPage() {
         default:
           result = { error: `Unknown tool: ${toolName}` }
       }
-      addToolResult({ toolCallId, result })
+      addResult(result)
     } catch (e: any) {
-      addToolResult({ toolCallId, result: { error: e?.message ?? 'Failed to execute' } })
+      addResult({ error: e?.message ?? 'Failed to execute' })
     } finally {
       setBusyToolCallId(null)
     }
   }
 
-  function rejectTool(toolCallId: string) {
-    addToolResult({ toolCallId, result: { rejected: true, reason: 'User rejected the action' } })
+  function rejectTool(toolCallId: string, toolName: string) {
+    addToolResult({
+      tool: toolName,
+      toolCallId,
+      output: { rejected: true, reason: 'User rejected the action' },
+    } as any)
   }
 
   const suggestions = [t('suggestion1'), t('suggestion2'), t('suggestion3')]
@@ -248,7 +256,7 @@ function AiPage() {
                     {suggestions.map((s) => (
                       <button
                         key={s}
-                        onClick={() => append({ role: 'user', content: s })}
+                        onClick={() => sendMessage({ text: s })}
                         className="rounded-full border px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                       >
                         {s}
@@ -279,7 +287,7 @@ function AiPage() {
           <div className="mx-auto flex max-w-2xl items-end gap-2">
             <div className="flex-1">
               <ChatInput
-                onSend={(v) => append({ role: 'user', content: v })}
+                onSend={(v) => sendMessage({ text: v })}
                 disabled={isLoading}
               />
             </div>
@@ -303,11 +311,17 @@ function MessageBubble({
 }: {
   message: any
   onAcceptTool: (toolCallId: string, toolName: string, args: any) => void
-  onRejectTool: (toolCallId: string) => void
+  onRejectTool: (toolCallId: string, toolName: string) => void
   busyToolCallId: string | null
 }) {
   const isUser = message.role === 'user'
   const parts = (message.parts as any[]) ?? (message.content ? [{ type: 'text', text: message.content }] : [])
+
+  function mapToolState(s: string): 'call' | 'result' | 'partial-call' {
+    if (s === 'output-available' || s === 'output-error') return 'result'
+    if (s === 'input-streaming') return 'partial-call'
+    return 'call'
+  }
 
   return (
     <div className={`flex gap-3 ${isUser ? 'justify-end' : ''}`}>
@@ -332,18 +346,22 @@ function MessageBubble({
               </div>
             )
           }
-          if (part.type === 'tool-invocation') {
-            const inv = part.toolInvocation
+          if (typeof part.type === 'string' && part.type.startsWith('tool-') && part.type !== 'tool-error') {
+            const toolName: string = part.type.slice(5)
+            const toolCallId: string = part.toolCallId
+            const input = part.input ?? {}
+            const state = mapToolState(part.state)
+            const result = state === 'result' ? part.output : undefined
             return (
               <ToolCallCard
                 key={idx}
-                toolName={inv.toolName}
-                args={inv.args ?? {}}
-                state={inv.state}
-                result={inv.state === 'result' ? inv.result : undefined}
-                isBusy={busyToolCallId === inv.toolCallId}
-                onAccept={() => onAcceptTool(inv.toolCallId, inv.toolName, inv.args)}
-                onReject={() => onRejectTool(inv.toolCallId)}
+                toolName={toolName}
+                args={input}
+                state={state}
+                result={result}
+                isBusy={busyToolCallId === toolCallId}
+                onAccept={() => onAcceptTool(toolCallId, toolName, input)}
+                onReject={() => onRejectTool(toolCallId, toolName)}
               />
             )
           }
