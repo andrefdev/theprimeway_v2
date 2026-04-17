@@ -27,6 +27,7 @@ import { SkeletonList } from '@/shared/components/ui/skeleton-list'
 import { EmptyState } from '@/shared/components/ui/empty-state'
 import { Progress } from '@/shared/components/ui/progress'
 import { SectionHeader } from '@/shared/components/SectionHeader'
+import { SectionTabsLocal } from '@/shared/components/SectionTabsLocal'
 import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from '@/shared/components/ui/dialog'
 import { Sheet, SheetContent } from '@/shared/components/ui/sheet'
 import { toast } from 'sonner'
@@ -165,6 +166,15 @@ function HabitsPage() {
 
   return (
     <div>
+      <SectionTabsLocal
+        value={tab}
+        onChange={setTab}
+        items={[
+          { key: 'tracker', label: t('tabTracker') },
+          { key: 'list', label: t('tabList') },
+          { key: 'stats', label: t('tabStats') },
+        ]}
+      />
       <SectionHeader
         sectionId="habits"
         title={format(new Date(), 'EEEE, MMMM d', { locale: dateFnsLocale })}
@@ -185,24 +195,6 @@ function HabitsPage() {
             <Progress value={Math.round((completedToday / totalHabits) * 100)} />
           </div>
         )}
-
-        {/* Tab bar */}
-        <div className="flex items-center gap-4 border-b border-border">
-          {(['tracker', 'list', 'stats'] as const).map((t_) => (
-            <button
-              key={t_}
-              type="button"
-              onClick={() => setTab(t_)}
-              className={`border-b-2 pb-2 text-sm font-medium transition-colors ${
-                tab === t_
-                  ? 'border-foreground text-foreground'
-                  : 'border-transparent text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              {t_=== 'tracker' ? t('tabTracker') : t_ === 'list' ? t('tabList') : t('tabStats')}
-            </button>
-          ))}
-        </div>
 
         {/* Loading / Error */}
         {habitsQuery.isLoading && <SkeletonList lines={5} />}

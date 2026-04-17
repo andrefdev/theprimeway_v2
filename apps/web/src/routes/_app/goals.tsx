@@ -34,6 +34,7 @@ import { Progress } from '@/shared/components/ui/progress'
 import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from '@/shared/components/ui/dialog'
 import { DatePicker } from '@/shared/components/ui/date-picker'
 import { SectionHeader } from '@/shared/components/SectionHeader'
+import { SectionTabsLocal } from '@/shared/components/SectionTabsLocal'
 import { toast } from 'sonner'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -77,29 +78,12 @@ function GoalsPage() {
 
   return (
     <div>
+      <SectionTabsLocal value={tab} onChange={setTab} items={TABS.map(({ key, label }) => ({ key, label }))} />
       <SectionHeader sectionId="goals" title={t('pageTitle')} />
       <div className="mx-auto max-w-5xl px-6 pb-6 space-y-6">
         {/* AI Alerts */}
         <InactiveGoalsAlert />
         <GoalConflictsPanel />
-
-        {/* Tab bar */}
-        <div className="flex gap-1 overflow-x-auto border-b border-border -mx-6 px-6">
-          {TABS.map(({ key, label }) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setTab(key)}
-              className={`whitespace-nowrap border-b-2 px-4 py-2.5 text-sm font-medium transition-colors ${
-                tab === key
-                  ? 'border-foreground text-foreground'
-                  : 'border-transparent text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
 
         {tab === 'goals' && (
           <GoalsTab
