@@ -97,3 +97,28 @@ export async function setFeatureOverride(
 export async function deleteFeatureOverride(userId: string, featureKey: FeatureKey) {
   await api.delete(`/admin/users/${userId}/features/${featureKey}`)
 }
+
+export interface Plan {
+  id: string
+  name: string
+  displayName: string
+  price: number
+  currency: string
+  billingInterval: string
+}
+
+export async function getPlans() {
+  const { data } = await api.get<{ data: Plan[] }>('/admin/plans')
+  return data.data
+}
+
+export async function updateUserSubscription(
+  userId: string,
+  input: { planId: string | null; status?: string; endsAt?: string | null; reason?: string },
+) {
+  const { data } = await api.put(`/admin/users/${userId}/subscription`, {
+    status: 'active',
+    ...input,
+  })
+  return data.data
+}

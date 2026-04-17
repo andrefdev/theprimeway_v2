@@ -1,8 +1,13 @@
 import { Link } from '@tanstack/react-router'
-import { Users } from 'lucide-react'
+import { Users, BarChart3 } from 'lucide-react'
 import { cn } from '@repo/ui'
 
 const navItems = [
+  {
+    label: 'Analytics',
+    href: '/analytics',
+    icon: BarChart3,
+  },
   {
     label: 'Users',
     href: '/users',
