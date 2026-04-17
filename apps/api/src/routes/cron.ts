@@ -1,6 +1,7 @@
 import { OpenAPIHono } from '@hono/zod-openapi'
 import { createMiddleware } from 'hono/factory'
 import { cronService } from '../services/cron.service'
+import { calendarService } from '../services/calendar.service'
 
 export const cronRoutes = new OpenAPIHono()
 
@@ -82,6 +83,17 @@ cronRoutes.post('/weekly-review', async (c) => {
   } catch (err: any) {
     console.error('[CRON_WEEKLY_REVIEW]', err)
     return c.json({ error: err.message || 'Failed to process weekly review' }, 500)
+  }
+})
+
+// POST /calendar-watch-renew
+cronRoutes.post('/calendar-watch-renew', async (c) => {
+  try {
+    const result = await calendarService.renewExpiringWatchChannels()
+    return c.json({ data: result }, 200)
+  } catch (err: any) {
+    console.error('[CRON_CAL_WATCH_RENEW]', err)
+    return c.json({ error: err.message || 'Failed' }, 500)
   }
 })
 

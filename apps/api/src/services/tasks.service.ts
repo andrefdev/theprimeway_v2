@@ -10,6 +10,7 @@
 import { tasksRepository } from '../repositories/tasks.repo'
 import { calendarService } from './calendar.service'
 import { gamificationService } from './gamification.service'
+import { syncService } from './sync.service'
 import { scheduleOptimizer } from './schedule-optimizer'
 import { validateLimit } from '../lib/limits'
 import { FEATURES } from '@repo/shared/constants'
@@ -214,7 +215,18 @@ class TasksService {
     }
 
     console.log('📥 TasksService.createTask - data to be saved:', data)
-    return tasksRepository.create(userId, data)
+    const task = await tasksRepository.create(userId, data)
+
+    // Fire-and-forget Google Calendar sync when task has a schedule.
+    if (task && (task.scheduledStart || task.isAllDay) && task.scheduledDate) {
+      calendarService
+        .createEventForTask(userId, task as any)
+        .catch((err) => console.error('[CAL_SYNC] createTask sync error', err))
+    }
+
+    if (task) syncService.publish(userId, { type: 'task.created', payload: { id: task.id } })
+
+    return task
   }
 
   /** Update a task with business rules */
@@ -262,6 +274,22 @@ class TasksService {
 
     const updatedTask = await tasksRepository.update(userId, taskId, data)
 
+    // Fire-and-forget Google Calendar sync when scheduling fields change.
+    const scheduleTouched =
+      input.scheduledStart !== undefined ||
+      input.scheduledEnd !== undefined ||
+      input.scheduledDate !== undefined ||
+      input.isAllDay !== undefined ||
+      input.title !== undefined ||
+      input.description !== undefined
+    if (scheduleTouched && updatedTask) {
+      calendarService
+        .updateEventForTask(userId, updatedTask as any)
+        .catch((err) => console.error('[CAL_SYNC] updateTask sync error', err))
+    }
+
+    if (updatedTask) syncService.publish(userId, { type: 'task.updated', payload: { id: taskId } })
+
     // Auto-award XP if task is being completed for the first time
     if (input.status === 'completed' && currentTask.status !== 'completed' && updatedTask) {
       const xpAmount = currentTask.weeklyGoalId ? 40 : 15
@@ -305,7 +333,13 @@ class TasksService {
 
   /** Delete a task */
   async deleteTask(userId: string, taskId: string): Promise<boolean> {
-    return tasksRepository.delete(userId, taskId)
+    // Delete the linked Google Calendar event first (fire-and-forget on failure).
+    await calendarService
+      .deleteEventForTask(userId, taskId)
+      .catch((err) => console.error('[CAL_SYNC] deleteTask sync error', err))
+    const ok = await tasksRepository.delete(userId, taskId)
+    if (ok) syncService.publish(userId, { type: 'task.deleted', payload: { id: taskId } })
+    return ok
   }
 
   /** Get schedule suggestion based on calendar events and existing tasks */
