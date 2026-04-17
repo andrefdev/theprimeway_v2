@@ -13,9 +13,9 @@ function TasksStatsPage() {
 
   return (
     <div>
+      <TasksNav />
       <SectionHeader sectionId="tasks" title={t('pageTitle')} />
       <div className="mx-auto max-w-5xl px-6 pb-6 space-y-6">
-        <TasksNav />
         <TaskStatsPanel />
       </div>
     </div>
