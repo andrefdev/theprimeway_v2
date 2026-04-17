@@ -1,19 +1,14 @@
 import { Link } from '@tanstack/react-router'
-import { Users, Settings } from 'lucide-react'
+import { Users } from 'lucide-react'
 import { cn } from '@repo/ui'
 
 const navItems = [
   {
     label: 'Users',
-    href: '/_admin/users',
+    href: '/users',
     icon: Users,
   },
-  {
-    label: 'Settings',
-    href: '/_admin/settings',
-    icon: Settings,
-  },
-]
+] as const
 
 export function Sidebar() {
   return (

@@ -14,7 +14,7 @@ export function Card({ className = '', children, ...props }: CardProps) {
 
 export function CardHeader({ className = '', children, ...props }: CardProps) {
   return (
-    <div className={`flex items-center justify-between px-5 py-3.5 border-b border-border/40 ${className}`} {...props}>
+    <div className={`flex flex-col gap-1 px-5 py-3.5 border-b border-border/40 ${className}`} {...props}>
       {children}
     </div>
   )

@@ -50,6 +50,12 @@ function LoginPage() {
         password: values.password,
       })
 
+      if (data.user.role !== 'admin') {
+        toast.error('This account is not an admin')
+        setIsLoading(false)
+        return
+      }
+
       setAuth(data.token, {
         id: data.user.id,
         email: data.user.email,
@@ -57,7 +63,7 @@ function LoginPage() {
       })
 
       toast.success('Logged in successfully')
-      navigate({ to: '/_admin/users' as any })
+      navigate({ to: '/users' })
     } catch (error) {
       toast.error('Invalid credentials')
       console.error(error)

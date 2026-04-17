@@ -5,7 +5,7 @@ function IndexPage() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    navigate({ to: '/_admin/users' as any })
+    navigate({ to: '/users' })
   }, [navigate])
 
   return null

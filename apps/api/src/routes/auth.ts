@@ -27,6 +27,7 @@ const tokenResponse = z.object({
     email: z.string(),
     image: z.string().nullable(),
     emailVerified: z.string().nullable(),
+    role: z.string(),
   }),
 })
 

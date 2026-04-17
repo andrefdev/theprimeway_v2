@@ -51,6 +51,7 @@ const userSelectPublic = {
   email: true,
   image: true,
   emailVerified: true,
+  role: true,
 } as const
 
 // ---------------------------------------------------------------------------

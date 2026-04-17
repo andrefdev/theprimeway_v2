@@ -30,6 +30,7 @@ export interface AuthResult {
     email: string
     image: string | null
     emailVerified: string | null
+    role: string
   }
 }
 
@@ -46,13 +47,14 @@ interface OAuthUserInfo {
 const JWT_SECRET = () => new TextEncoder().encode(process.env.JWT_SECRET || 'dev-secret')
 const SALT_ROUNDS = 12
 
-function formatUser(user: { id: string; name: string | null; email: string | null; image: string | null; emailVerified: Date | null }) {
+function formatUser(user: { id: string; name: string | null; email: string | null; image: string | null; emailVerified: Date | null; role?: string }) {
   return {
     id: user.id,
     name: user.name,
     email: user.email!,
     image: user.image,
     emailVerified: user.emailVerified?.toISOString() ?? null,
+    role: user.role ?? 'user',
   }
 }
 
