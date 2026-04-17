@@ -73,12 +73,13 @@ This keeps all password hashing inside the API itself (no crypto ops on the serv
 3. Promote the user:
 
     ```sql
-    UPDATE users
+    -- NOTE: the User model has no @@map, so the table is "User" (PascalCase, quoted).
+    UPDATE "User"
     SET role = 'admin'
     WHERE email = 'admin@intellisoftinnovation.com';
 
     -- Verify:
-    SELECT id, email, role FROM users WHERE email = 'admin@intellisoftinnovation.com';
+    SELECT id, email, role FROM "User" WHERE email = 'admin@intellisoftinnovation.com';
     ```
 
 4. Log in at https://admin.theprimeway.app.
@@ -124,7 +125,7 @@ Log in to the admin account via the normal PWA and change the password there, or
 ## Revoking admin
 
 ```sql
-UPDATE users SET role = 'user' WHERE email = '<email>';
+UPDATE "User" SET role = 'user' WHERE email = '<email>';
 ```
 
 The user's existing JWT stays valid until it expires — no server-side revocation needed because the admin middleware (`apps/api/src/routes/admin.ts`) re-checks `role` from the DB on every request.
