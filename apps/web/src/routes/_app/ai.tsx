@@ -15,9 +15,17 @@ import { FEATURES } from '@repo/shared/constants'
 import { useAuthStore } from '@/shared/stores/auth.store'
 import { tasksApi } from '@/features/tasks/api'
 import { habitsApi } from '@/features/habits/api'
+import { goalsApi } from '@/features/goals/api'
+import { notesApi } from '@/features/notes/api'
+import { calendarApi } from '@/features/calendar/api'
+import { pomodoroApi } from '@/features/pomodoro/api'
 import { useQueryClient } from '@tanstack/react-query'
 import { tasksQueries } from '@/features/tasks/queries'
 import { habitsQueries } from '@/features/habits/queries'
+import { goalsQueries } from '@/features/goals/queries'
+import { notesQueries } from '@/features/notes/queries'
+import { calendarQueries } from '@/features/calendar/queries'
+import { pomodoroQueries } from '@/features/pomodoro/queries'
 
 export const Route = createFileRoute('/_app/ai')({
   component: AiPage,
@@ -98,6 +106,107 @@ function AiPage() {
           result = { success: true, log: { id: (log as any).id } }
           qc.invalidateQueries({ queryKey: habitsQueries.all() })
           toast.success(t('habitLogged', { ns: 'habits', defaultValue: 'Habit logged' }))
+          break
+        }
+        case 'updateTask': {
+          const patch: Record<string, unknown> = {}
+          for (const k of ['title', 'description', 'priority', 'dueDate', 'scheduledDate'] as const) {
+            if (args[k] !== undefined) patch[k] = args[k]
+          }
+          const task = await tasksApi.update(args.taskId, patch as any)
+          result = { success: true, task: { id: (task as any).id } }
+          qc.invalidateQueries({ queryKey: tasksQueries.all() })
+          toast.success(t('taskUpdated', { ns: 'tasks', defaultValue: 'Task updated' }))
+          break
+        }
+        case 'deleteTask': {
+          await tasksApi.delete(args.taskId)
+          result = { success: true, taskId: args.taskId }
+          qc.invalidateQueries({ queryKey: tasksQueries.all() })
+          toast.success(t('taskDeleted', { ns: 'tasks', defaultValue: 'Task deleted' }))
+          break
+        }
+        case 'updateHabit': {
+          const patch: Record<string, unknown> = {}
+          for (const k of ['name', 'description', 'targetFrequency', 'frequencyType', 'isActive'] as const) {
+            if (args[k] !== undefined) patch[k] = args[k]
+          }
+          const habit = await habitsApi.update(args.habitId, patch as any)
+          result = { success: true, habit: { id: (habit as any).id } }
+          qc.invalidateQueries({ queryKey: habitsQueries.all() })
+          toast.success(t('habitUpdated', { ns: 'habits', defaultValue: 'Habit updated' }))
+          break
+        }
+        case 'createGoal': {
+          const goal = await goalsApi.create({
+            title: args.title,
+            description: args.description,
+            deadline: args.deadline,
+            type: args.type,
+          })
+          result = { success: true, goal: { id: (goal as any).id, title: (goal as any).title } }
+          qc.invalidateQueries({ queryKey: goalsQueries.all() })
+          toast.success(t('goalCreated', { ns: 'goals', defaultValue: 'Goal created' }))
+          break
+        }
+        case 'updateGoalProgress': {
+          const goal = await goalsApi.update(args.goalId, { progress: args.progress })
+          result = { success: true, goal: { id: (goal as any).id, progress: (goal as any).progress } }
+          qc.invalidateQueries({ queryKey: goalsQueries.all() })
+          toast.success(t('goalUpdated', { ns: 'goals', defaultValue: 'Goal updated' }))
+          break
+        }
+        case 'createTimeBlock': {
+          const res = await calendarApi.createTimeBlock({
+            title: args.title,
+            date: args.date,
+            startTime: args.startTime,
+            endTime: args.endTime,
+            description: args.description,
+          })
+          result = { success: true, eventId: (res as any)?.eventId }
+          qc.invalidateQueries({ queryKey: calendarQueries.all() })
+          toast.success(t('timeBlockCreated', { ns: 'calendar', defaultValue: 'Time block scheduled' }))
+          break
+        }
+        case 'createNote': {
+          const note = await notesApi.create({
+            title: args.title,
+            content: args.content,
+            tags: args.tags,
+          } as any)
+          result = { success: true, note: { id: (note as any).data?.id ?? (note as any).id } }
+          qc.invalidateQueries({ queryKey: notesQueries.all() })
+          toast.success(t('noteCreated', { ns: 'notes', defaultValue: 'Note created' }))
+          break
+        }
+        case 'updateNote': {
+          const patch: Record<string, unknown> = {}
+          if (args.title !== undefined) patch.title = args.title
+          if (args.content !== undefined) patch.content = args.content
+          const note = await notesApi.update(args.noteId, patch as any)
+          result = { success: true, note: { id: (note as any).data?.id ?? (note as any).id } }
+          qc.invalidateQueries({ queryKey: notesQueries.all() })
+          toast.success(t('noteUpdated', { ns: 'notes', defaultValue: 'Note updated' }))
+          break
+        }
+        case 'deleteNote': {
+          await notesApi.delete(args.noteId)
+          result = { success: true, noteId: args.noteId }
+          qc.invalidateQueries({ queryKey: notesQueries.all() })
+          toast.success(t('noteDeleted', { ns: 'notes', defaultValue: 'Note deleted' }))
+          break
+        }
+        case 'startPomodoro': {
+          const session = await pomodoroApi.createSession({
+            sessionType: 'focus',
+            durationMinutes: args.durationMinutes,
+            taskId: args.taskId,
+            startedAt: new Date().toISOString(),
+          } as any)
+          result = { success: true, sessionId: (session as any).data?.id ?? (session as any).id }
+          qc.invalidateQueries({ queryKey: pomodoroQueries.all() })
+          toast.success(t('pomodoroStarted', { ns: 'pomodoro', defaultValue: 'Pomodoro started' }))
           break
         }
         default:

@@ -15,12 +15,38 @@ interface ToolCallCardProps {
 }
 
 const LABELS: Record<string, { title: string; verb: string }> = {
+  // reads
+  listTasks: { title: 'List tasks', verb: '' },
+  listHabits: { title: 'List habits', verb: '' },
+  listGoals: { title: 'List goals', verb: '' },
+  listNotes: { title: 'List notes', verb: '' },
+  listCalendarEvents: { title: 'List calendar events', verb: '' },
+  findFreeSlots: { title: 'Find free slots', verb: '' },
+  // writes
   createTask: { title: 'Create task', verb: 'Create' },
+  updateTask: { title: 'Update task', verb: 'Update' },
+  deleteTask: { title: 'Delete task', verb: 'Delete' },
   completeTask: { title: 'Complete task', verb: 'Mark done' },
   createHabit: { title: 'Create habit', verb: 'Create' },
+  updateHabit: { title: 'Update habit', verb: 'Update' },
   logHabit: { title: 'Log habit today', verb: 'Log' },
-  listTasks: { title: 'List tasks', verb: '' },
+  createGoal: { title: 'Create goal', verb: 'Create' },
+  updateGoalProgress: { title: 'Update goal progress', verb: 'Update' },
+  createTimeBlock: { title: 'Schedule time block', verb: 'Schedule' },
+  createNote: { title: 'Create note', verb: 'Create' },
+  updateNote: { title: 'Update note', verb: 'Update' },
+  deleteNote: { title: 'Delete note', verb: 'Delete' },
+  startPomodoro: { title: 'Start pomodoro', verb: 'Start' },
 }
+
+const READ_ONLY_TOOLS = new Set([
+  'listTasks',
+  'listHabits',
+  'listGoals',
+  'listNotes',
+  'listCalendarEvents',
+  'findFreeSlots',
+])
 
 export function ToolCallCard({
   toolName,
@@ -34,7 +60,7 @@ export function ToolCallCard({
   const [error, setError] = useState<string | null>(null)
   const label = LABELS[toolName] ?? { title: toolName, verb: 'Run' }
 
-  const isClientTool = toolName !== 'listTasks'
+  const isClientTool = !READ_ONLY_TOOLS.has(toolName)
   const isResolved = state === 'result'
   const resultStatus = isResolved
     ? ((result as any)?.rejected
