@@ -36,6 +36,7 @@ const CURRENCY_OPTIONS = [
   { value: 'COP', label: 'COP ($)' },
   { value: 'MXN', label: 'MXN ($)' },
   { value: 'BRL', label: 'BRL (R$)' },
+  { value: 'PEN', label: 'PEN (S/)' },
 ]
 
 const TIMEZONE_OPTIONS = [
