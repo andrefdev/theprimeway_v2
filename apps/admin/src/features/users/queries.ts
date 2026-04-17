@@ -6,6 +6,8 @@ import {
   getUserFeatureOverrides,
   setFeatureOverride,
   deleteFeatureOverride,
+  getPlans,
+  updateUserSubscription,
 } from './api'
 import { queryClient } from '@/lib/query-client'
 import type { FeatureKey } from '@repo/shared/constants'
@@ -92,6 +94,37 @@ export function useSetFeatureOverride() {
       queryClient.invalidateQueries({
         queryKey: usersQueryKeys.features(userId),
       })
+    },
+  })
+}
+
+export function usePlans() {
+  return useQuery(
+    queryOptions({
+      queryKey: ['admin', 'plans'] as const,
+      queryFn: getPlans,
+    }),
+  )
+}
+
+export function useUpdateUserSubscription() {
+  return useMutation({
+    mutationFn: ({
+      userId,
+      planId,
+      status,
+      endsAt,
+      reason,
+    }: {
+      userId: string
+      planId: string | null
+      status?: string
+      endsAt?: string | null
+      reason?: string
+    }) => updateUserSubscription(userId, { planId, status, endsAt, reason }),
+    onSuccess: (_, { userId }) => {
+      queryClient.invalidateQueries({ queryKey: usersQueryKeys.subscription(userId) })
+      queryClient.invalidateQueries({ queryKey: ['analytics', 'summary'] })
     },
   })
 }

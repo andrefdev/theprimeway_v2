@@ -1,5 +1,12 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useUser, useUserSubscription, useUserFeatures } from '@/features/users/queries'
+import { useState } from 'react'
+import {
+  useUser,
+  useUserSubscription,
+  useUserFeatures,
+  usePlans,
+  useUpdateUserSubscription,
+} from '@/features/users/queries'
 import { FeatureOverrideRow } from '@/components/feature-override-row'
 import {
   Card,
@@ -10,6 +17,8 @@ import {
   Button,
   Badge,
   Skeleton,
+  Select,
+  Input,
 } from '@repo/ui'
 import { PLAN_LIMITS } from '@repo/shared/constants'
 import type { FeatureKey } from '@repo/shared/constants'
@@ -20,6 +29,10 @@ function UserDetailPage() {
   const { data: user, isLoading: userLoading } = useUser(userId)
   const { data: subscription, isLoading: subLoading } = useUserSubscription(userId)
   const { data: overrides, isLoading: overridesLoading } = useUserFeatures(userId)
+  const { data: plans } = usePlans()
+  const updateSub = useUpdateUserSubscription()
+  const [selectedPlanId, setSelectedPlanId] = useState<string>('')
+  const [reason, setReason] = useState('')
 
   const isLoading = userLoading || subLoading || overridesLoading
 
@@ -97,6 +110,60 @@ function UserDetailPage() {
               </div>
             </div>
           )}
+
+          <div className="space-y-3 border-t pt-4">
+            <div>
+              <p className="text-sm font-medium">Change Plan (manual)</p>
+              <p className="text-xs text-muted-foreground">
+                Manual changes bypass Lemon Squeezy. Tagged with source=manual.
+              </p>
+            </div>
+            <div className="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
+              <Select
+                label="Plan"
+                value={selectedPlanId}
+                onChange={(e) => setSelectedPlanId(e.target.value)}
+                placeholder="Select a plan"
+                options={[
+                  { value: 'none', label: 'No plan (free)' },
+                  ...(plans || []).map((p) => ({
+                    value: p.id,
+                    label: `${p.displayName} — ${p.price} ${p.currency}/${p.billingInterval}`,
+                  })),
+                ]}
+              />
+              <Input
+                placeholder="Reason (optional)"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+              />
+              <Button
+                disabled={!selectedPlanId || updateSub.isPending}
+                onClick={() => {
+                  updateSub.mutate(
+                    {
+                      userId,
+                      planId: selectedPlanId === 'none' ? null : selectedPlanId,
+                      reason: reason || undefined,
+                    },
+                    {
+                      onSuccess: () => {
+                        setSelectedPlanId('')
+                        setReason('')
+                      },
+                    },
+                  )
+                }}
+              >
+                {updateSub.isPending ? 'Saving…' : 'Apply'}
+              </Button>
+            </div>
+            {updateSub.isError && (
+              <p className="text-sm text-destructive">
+                {(updateSub.error as Error)?.message || 'Failed to update plan'}
+              </p>
+            )}
+          </div>
         </CardContent>
       </Card>
 
