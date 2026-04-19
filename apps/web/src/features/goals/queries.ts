@@ -138,6 +138,23 @@ export function useCreateVision() {
   })
 }
 
+export function useUpdateVision() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Parameters<typeof goalsApi.updateVision>[1] }) =>
+      goalsApi.updateVision(id, data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: goalsQueries.all() }),
+  })
+}
+
+export function useDeleteVision() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => goalsApi.deleteVision(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: goalsQueries.all() }),
+  })
+}
+
 export function useCreateThreeYearGoal() {
   const queryClient = useQueryClient()
   return useMutation({

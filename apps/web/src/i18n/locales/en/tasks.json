@@ -124,5 +124,14 @@
   "endMustBeAfterStart": "End must be after start",
   "pickDateTime": "Pick date & time",
   "weeklyGoal": "Weekly Goal (optional)",
-  "taskUpdated": "Task updated"
+  "taskUpdated": "Task updated",
+  "taskRescheduled": "Task rescheduled",
+  "archived": "Archived",
+  "archivedTasks": "archived tasks",
+  "noArchived": "No archived tasks",
+  "noArchivedDescription": "Tasks you archive will appear here.",
+  "rescheduleToday": "Reschedule to today",
+  "remove": "Remove",
+  "showArchived": "Show archived",
+  "hideArchived": "Hide archived"
 }

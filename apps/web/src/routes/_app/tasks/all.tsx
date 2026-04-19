@@ -37,6 +37,7 @@ function TasksAllPage() {
   const [search, setSearch] = useState('')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
+  const [showArchive, setShowArchive] = useState(false)
 
   const STATUS_OPTIONS = [
     { value: 'all', label: t('allStatuses') },
@@ -116,9 +117,16 @@ function TasksAllPage() {
         title={t('titleAll')}
         description={`${totalCount} ${t('total')}`}
         actions={
-          <Button onClick={openCreate}>
-            <PlusIcon /> {t('addTask')}
-          </Button>
+          <div className="flex items-center gap-2">
+            {archive.length > 0 && (
+              <Button variant="outline" onClick={() => setShowArchive((v) => !v)}>
+                {showArchive ? t('hideArchived') : t('showArchived')} ({archive.length})
+              </Button>
+            )}
+            <Button onClick={openCreate}>
+              <PlusIcon /> {t('addTask')}
+            </Button>
+          </div>
         }
       />
       <div className="mx-auto max-w-5xl px-6 pb-6 space-y-6">
@@ -139,7 +147,7 @@ function TasksAllPage() {
         {groupedQuery.isError && <QueryError message={t('failedToLoad')} onRetry={() => groupedQuery.refetch()} />}
 
         {!groupedQuery.isLoading && !groupedQuery.isError && (
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
+          <div className={showArchive && archive.length > 0 ? "grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6" : "grid grid-cols-1 gap-6"}>
             {/* Main grouped list */}
             <div className="space-y-3">
               {filteredGroups.length > 0 ? (
@@ -162,8 +170,8 @@ function TasksAllPage() {
             </div>
 
             {/* Archive sidebar */}
-            {archive.length > 0 && (
-              <div className="hidden lg:block">
+            {showArchive && archive.length > 0 && (
+              <div>
                 <ArchivePanel
                   tasks={archive}
                   onReschedule={handleReschedule}
