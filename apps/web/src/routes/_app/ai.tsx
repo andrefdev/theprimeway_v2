@@ -1,15 +1,14 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
-import { SectionHeader } from '@/shared/components/SectionHeader'
 import { useEffect, useRef, useState } from 'react'
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
-import { ScrollArea } from '@/shared/components/ui/scroll-area'
 import { Button } from '@/shared/components/ui/button'
 import { toast } from 'sonner'
 import { ChatInput } from '@/features/ai/components/ChatInput'
 import { BriefingCard } from '@/features/ai/components/BriefingCard'
 import { ToolCallCard } from '@/features/ai/components/ToolCallCard'
+import { Markdown } from '@/features/ai/components/Markdown'
 import { FeatureGate } from '@/features/feature-flags/FeatureGate'
 import { UpgradePrompt } from '@/features/subscriptions/components/UpgradePrompt'
 import { FEATURES } from '@repo/shared/constants'
@@ -239,12 +238,11 @@ function AiPage() {
       feature={FEATURES.AI_ASSISTANT}
       fallback={<UpgradePrompt featureKey={FEATURES.AI_ASSISTANT} />}
     >
-      <div className="flex h-[calc(100vh-4rem)] flex-col">
-        <div className="border-b px-6 py-3">
-          <SectionHeader sectionId="ai" title={t('title')} description={t('subtitle')} />
-        </div>
-
-        <ScrollArea className="flex-1 px-6" ref={scrollRef}>
+      <div className="flex h-full min-h-0 flex-col">
+        <div
+          ref={scrollRef}
+          className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-6"
+        >
           <div className="mx-auto max-w-2xl space-y-4 py-6">
             {messages.length === 0 && (
               <div className="space-y-4">
@@ -281,9 +279,9 @@ function AiPage() {
               <TypingIndicator />
             )}
           </div>
-        </ScrollArea>
+        </div>
 
-        <div className="border-t px-6 py-3">
+        <div className="shrink-0 border-t bg-background px-6 py-3">
           <div className="mx-auto flex max-w-2xl items-end gap-2">
             <div className="flex-1">
               <ChatInput
@@ -333,16 +331,22 @@ function MessageBubble({
       <div className={`flex-1 space-y-2 ${isUser ? 'max-w-[80%]' : ''}`}>
         {parts.map((part: any, idx: number) => {
           if (part.type === 'text') {
+            if (isUser) {
+              return (
+                <div
+                  key={idx}
+                  className="ml-auto w-fit max-w-full whitespace-pre-wrap rounded-2xl rounded-br-md bg-primary px-4 py-2.5 text-sm text-primary-foreground"
+                >
+                  {part.text}
+                </div>
+              )
+            }
             return (
               <div
                 key={idx}
-                className={
-                  isUser
-                    ? 'ml-auto w-fit max-w-full rounded-2xl rounded-br-md bg-primary px-4 py-2.5 text-sm text-primary-foreground'
-                    : 'rounded-2xl rounded-bl-md bg-muted px-4 py-2.5 text-sm text-foreground whitespace-pre-wrap'
-                }
+                className="rounded-2xl rounded-bl-md bg-muted px-4 py-2.5 text-foreground"
               >
-                {part.text}
+                <Markdown content={part.text} />
               </div>
             )
           }
