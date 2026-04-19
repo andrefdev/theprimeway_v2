@@ -124,5 +124,14 @@
   "endMustBeAfterStart": "La hora de fin debe ser posterior al inicio",
   "pickDateTime": "Elegir fecha y hora",
   "weeklyGoal": "Objetivo semanal (opcional)",
-  "taskUpdated": "Tarea actualizada"
+  "taskUpdated": "Tarea actualizada",
+  "taskRescheduled": "Tarea reprogramada",
+  "archived": "Archivadas",
+  "archivedTasks": "tareas archivadas",
+  "noArchived": "Sin tareas archivadas",
+  "noArchivedDescription": "Las tareas que archives aparecerán aquí.",
+  "rescheduleToday": "Reprogramar a hoy",
+  "remove": "Eliminar",
+  "showArchived": "Mostrar archivadas",
+  "hideArchived": "Ocultar archivadas"
 }

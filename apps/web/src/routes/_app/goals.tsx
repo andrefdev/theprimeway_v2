@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import {
   goalsQueries,
   useCreateVision,
+  useUpdateVision,
   useCreateThreeYearGoal,
   useUpdateThreeYearGoal,
   useDeleteThreeYearGoal,
@@ -24,7 +25,7 @@ import { QuarterlyReviewCard } from '@/features/goals/components/QuarterlyReview
 import { QueryError } from '@/shared/components/QueryError'
 import { useLocale } from '@/i18n/useLocale'
 import { formatDate } from '@/i18n/format'
-import { PlusIcon, TargetIcon } from '@/shared/components/Icons'
+import { PlusIcon, TargetIcon, EditIcon } from '@/shared/components/Icons'
 import { EditButton, DeleteButton } from '@/shared/components/ActionButtons'
 import { Button } from '@/shared/components/ui/button'
 import { Badge } from '@/shared/components/ui/badge'
@@ -352,6 +353,7 @@ function RoadmapTab() {
   const threeYearGoalsQuery = useQuery(goalsQueries.threeYearGoals())
   const annualGoalsQuery = useQuery(goalsQueries.annualGoals())
   const createVision = useCreateVision()
+  const updateVision = useUpdateVision()
   const createThreeYearGoal = useCreateThreeYearGoal()
 
   const visions = toArray<PrimeVision>(visionsQuery.data)
@@ -363,13 +365,18 @@ function RoadmapTab() {
 
   const [showVisionForm, setShowVisionForm] = useState(false)
   const [newVisionTitle, setNewVisionTitle] = useState('')
+  const [editingVision, setEditingVision] = useState<PrimeVision | null>(null)
+  const [editVisionTitle, setEditVisionTitle] = useState('')
+  const [editVisionNarrative, setEditVisionNarrative] = useState('')
   const [pillarDialog, setPillarDialog] = useState<{ visionId: string } | null>(null)
   const [pillarTitle, setPillarTitle] = useState('')
   const [pillarArea, setPillarArea] = useState('general')
 
+  const hasVision = visions.length > 0
+
   async function handleCreateVision(e: React.FormEvent) {
     e.preventDefault()
-    if (!newVisionTitle.trim()) return
+    if (!newVisionTitle.trim() || hasVision) return
     try {
       await createVision.mutateAsync({ title: newVisionTitle.trim() })
       toast.success(t('visionCreated'))
@@ -377,6 +384,30 @@ function RoadmapTab() {
       setShowVisionForm(false)
     } catch {
       toast.error(t('failedToCreateVision'))
+    }
+  }
+
+  function openEditVision(vision: PrimeVision) {
+    setEditingVision(vision)
+    setEditVisionTitle(vision.title)
+    setEditVisionNarrative((vision as any).narrative ?? vision.description ?? '')
+  }
+
+  async function handleUpdateVision(e: React.FormEvent) {
+    e.preventDefault()
+    if (!editingVision || !editVisionTitle.trim()) return
+    try {
+      await updateVision.mutateAsync({
+        id: editingVision.id,
+        data: {
+          title: editVisionTitle.trim(),
+          narrative: editVisionNarrative.trim(),
+        },
+      })
+      toast.success(t('visionUpdated'))
+      setEditingVision(null)
+    } catch {
+      toast.error(t('failedToUpdateVision'))
     }
   }
 
@@ -404,12 +435,14 @@ function RoadmapTab() {
           <h3 className="text-lg font-semibold text-foreground">{t('roadmapTitle')}</h3>
           <p className="text-xs text-muted-foreground">{t('roadmapSubtitle')}</p>
         </div>
-        <Button variant="outline" onClick={() => setShowVisionForm(true)}>
-          {t('addVision')}
-        </Button>
+        {!hasVision && (
+          <Button variant="outline" onClick={() => setShowVisionForm(true)}>
+            {t('addVision')}
+          </Button>
+        )}
       </div>
 
-      {showVisionForm && (
+      {showVisionForm && !hasVision && (
         <form onSubmit={handleCreateVision} className="flex gap-2">
           <Input
             autoFocus
@@ -446,14 +479,25 @@ function RoadmapTab() {
                   <TargetIcon className="text-primary" />
                   <h4 className="text-sm font-bold text-foreground">{vision.title}</h4>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-xs"
-                  onClick={() => setPillarDialog({ visionId: vision.id })}
-                >
-                  <PlusIcon size={12} /> {t('addThreeYearGoal')}
-                </Button>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs"
+                    onClick={() => openEditVision(vision)}
+                    aria-label={t('editVision')}
+                  >
+                    <EditIcon size={12} /> {t('editVision')}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs"
+                    onClick={() => setPillarDialog({ visionId: vision.id })}
+                  >
+                    <PlusIcon size={12} /> {t('addThreeYearGoal')}
+                  </Button>
+                </div>
               </div>
               {vision.description && (
                 <p className="mt-1 text-xs text-muted-foreground">{vision.description}</p>
@@ -542,6 +586,42 @@ function RoadmapTab() {
               </Button>
               <Button type="submit" disabled={!pillarTitle.trim() || createThreeYearGoal.isPending}>
                 {t('create', { ns: 'common' })}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!editingVision} onOpenChange={(v) => { if (!v) setEditingVision(null) }}>
+        <DialogContent>
+          <form onSubmit={handleUpdateVision}>
+            <DialogHeader>
+              <DialogTitle>{t('editVision')}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-1.5">
+                <Label>{t('visionPlaceholder')}</Label>
+                <Input
+                  value={editVisionTitle}
+                  onChange={(e) => setEditVisionTitle(e.target.value)}
+                  autoFocus
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>{t('visionNarrativePlaceholder')}</Label>
+                <Textarea
+                  value={editVisionNarrative}
+                  onChange={(e) => setEditVisionNarrative(e.target.value)}
+                  rows={4}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="ghost" onClick={() => setEditingVision(null)}>
+                {t('cancel', { ns: 'common' })}
+              </Button>
+              <Button type="submit" disabled={!editVisionTitle.trim() || updateVision.isPending}>
+                {t('saveChanges')}
               </Button>
             </DialogFooter>
           </form>
