@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router'
-import { Users, BarChart3 } from 'lucide-react'
+import { Users, BarChart3, CreditCard } from 'lucide-react'
 import { cn } from '@repo/ui'
 
 const navItems = [
@@ -12,6 +12,11 @@ const navItems = [
     label: 'Users',
     href: '/users',
     icon: Users,
+  },
+  {
+    label: 'Plans',
+    href: '/plans',
+    icon: CreditCard,
   },
 ] as const
 
