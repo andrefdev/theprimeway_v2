@@ -1,0 +1,7 @@
+{
+  "name": "widget-bridge",
+  "version": "0.1.0",
+  "description": "Writes widget snapshot + reads pending actions via App Group UserDefaults (iOS) / SharedPreferences (Android).",
+  "main": "index.ts",
+  "private": true
+}

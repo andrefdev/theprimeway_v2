@@ -11,6 +11,7 @@ import { cn } from '@/shared/utils/cn';
 import { format } from 'date-fns';
 import { GoalPickerSheet } from '@features/goals/components/GoalPickerSheet';
 import type { WeeklyGoal } from '@shared/types/models';
+import { VoiceInputButton } from '@features/ai/components/VoiceInputButton';
 
 const DURATIONS = [15, 30, 45, 60, 90, 120];
 const PRIORITIES = [
@@ -66,13 +67,20 @@ export function TaskFormSheet({ isOpen, onClose }: TaskFormSheetProps) {
   return (
     <FormSheet isOpen={isOpen} onClose={onClose} title="New Task">
       {/* Title */}
-      <TextInput
-        className="rounded-xl border border-border bg-card px-4 py-3.5 text-base font-medium text-foreground"
-        placeholder="What do you need to do?"
-        placeholderTextColor="hsl(210, 10%, 55%)"
-        value={title}
-        onChangeText={setTitle}
-      />
+      <View className="flex-row items-center gap-2">
+        <TextInput
+          className="flex-1 rounded-xl border border-border bg-card px-4 py-3.5 text-base font-medium text-foreground"
+          placeholder="What do you need to do?"
+          placeholderTextColor="hsl(210, 10%, 55%)"
+          value={title}
+          onChangeText={setTitle}
+        />
+        <VoiceInputButton
+          size={40}
+          onInterim={(text) => setTitle(text)}
+          onTranscript={(text) => setTitle(text)}
+        />
+      </View>
 
       {/* Date + Duration */}
       <View className="flex-row gap-3">

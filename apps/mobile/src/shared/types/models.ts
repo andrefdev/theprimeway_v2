@@ -127,11 +127,13 @@ export interface PrimePillar {
   title: string;
   description?: string;
   outcomes: PrimeOutcome[];
+  annualGoals?: PrimeOutcome[];
 }
 
 export interface PrimeOutcome {
   id: string;
   pillarId?: string;
+  threeYearGoalId?: string;
   title: string;
   description?: string;
   targetDate?: string;
@@ -142,6 +144,7 @@ export interface PrimeOutcome {
 export interface PrimeQuarterFocus {
   id: string;
   outcomeId?: string;
+  annualGoalId?: string;
   year: number;
   quarter: number;
   title: string;
@@ -154,6 +157,7 @@ export interface PrimeQuarterFocus {
 export interface WeeklyGoal {
   id: string;
   quarterFocusId?: string;
+  quarterlyGoalId?: string;
   weekStartDate: string;
   title: string;
   description?: string;
@@ -161,197 +165,10 @@ export interface WeeklyGoal {
   order: number;
 }
 
-// ============================================================
-// FINANZAS
-// ============================================================
-
-export type TransactionType = 'income' | 'expense' | 'transfer';
-export type AccountType =
-  | 'checking'
-  | 'savings'
-  | 'credit'
-  | 'investment'
-  | 'cash'
-  | 'other';
-
-export interface FinanceAccount {
-  id: string;
-  name: string;
-  type: AccountType;
-  bankName?: string;
-  accountNumber?: string;
-  currency: string;
-  initialBalance: number;
-  currentBalance: number;
-  creditLimit?: number;
-  isActive: boolean;
-}
-
-export interface Transaction {
-  id: string;
-  accountId: string;
-  budgetId?: string;
-  debtId?: string;
-  incomeSourceId?: string;
-  type: TransactionType;
-  amount: number;
-  description: string;
-  notes?: string;
-  date: string;
-  isRecurring?: boolean;
-  recurringPattern?: string;
-  transferAccountId?: string;
-  tags: string[];
-  receiptUrl?: string;
-  status: 'pending' | 'reviewed' | 'excluded';
-  currency: string;
-  exchangeRate?: number;
-  baseCurrencyAmount?: number;
-}
-
-export interface Budget {
-  id: string;
-  name: string;
-  description?: string;
-  periodType: string;
-  startDate: string;
-  endDate: string;
-  totalAmount: number;
-  currency: string;
-  categoryType: 'income' | 'expense';
-  isActive: boolean;
-}
-
-export interface Debt {
-  id: string;
-  name: string;
-  description?: string;
-  totalAmount: number;
-  paidAmount: number;
-  currency: string;
-  creditor?: string;
-  dueDate?: string;
-  interestRate?: number;
-  paymentDay?: number;
-  installmentAmount?: number;
-  installmentCount?: number;
-  isRecurring?: boolean;
-}
-
-export interface SavingsGoal {
-  id: string;
-  accountId?: string;
-  name: string;
-  description?: string;
-  targetAmount: number;
-  currentAmount: number;
-  currency: string;
-  targetDate?: string;
-  monthlyContribution?: number;
-  status: 'active' | 'completed' | 'paused';
-}
-
-export interface IncomeSource {
-  id: string;
-  name: string;
-  type: string;
-  amount: number;
-  currency: string;
-  frequency: string;
-  isActive: boolean;
-}
-
-export type RecurringExpenseType = 'fixed' | 'variable';
-export type RecurringExpenseCategory =
-  | 'housing'
-  | 'utilities'
-  | 'insurance'
-  | 'subscriptions'
-  | 'transport'
-  | 'food'
-  | 'health'
-  | 'education'
-  | 'personal'
-  | 'other';
-
-export interface RecurringExpense {
-  id: string;
-  name: string;
-  description?: string;
-  type: RecurringExpenseType;
-  category: RecurringExpenseCategory;
-  amount: number;
-  currency: string;
-  accountId?: string;
-  budgetId?: string;
-  paymentDay?: number;
-  frequency: 'monthly' | 'bimonthly' | 'quarterly' | 'semiannual' | 'annual';
-  isAutoPay: boolean;
-  isActive: boolean;
-  notes?: string;
-}
-
-export type InvestmentType =
-  | 'stocks'
-  | 'bonds'
-  | 'etf'
-  | 'crypto'
-  | 'real_estate'
-  | 'mutual_fund'
-  | 'other';
-
-export interface Investment {
-  id: string;
-  name: string;
-  ticker?: string;
-  investmentType: InvestmentType;
-  platform?: string;
-  currency: string;
-  units?: number;
-  purchasePrice?: number;
-  currentPrice?: number;
-  totalInvested: number;
-  currentValue: number;
-  unrealizedGain?: number;
-  unrealizedGainPercent?: number;
-  purchaseDate?: string;
-  notes?: string;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface InvestmentSummary {
-  totalInvested: number;
-  currentValue: number;
-  totalGain: number;
-  totalGainPercent: number;
-  byType: Record<string, { invested: number; currentValue: number }>;
-}
-
-// ============================================================
-// NOTAS
-// ============================================================
-
-export interface Note {
-  id: string;
-  categoryId?: string;
-  title: string;
-  content?: string;
-  tags: string[];
-  isPinned: boolean;
-  isArchived: boolean;
-  createdAt: string;
-  updatedAt: string;
-  category?: NoteCategory;
-}
-
-export interface NoteCategory {
-  id: string;
-  name: string;
-  color: string;
-  icon?: string;
-}
+// Aliases for the PRD-renamed 5-level hierarchy (Vision → ThreeYear → Annual → Quarterly → Weekly)
+export type ThreeYearGoal = PrimePillar;
+export type AnnualGoal = PrimeOutcome;
+export type QuarterlyGoal = PrimeQuarterFocus;
 
 // ============================================================
 // POMODORO

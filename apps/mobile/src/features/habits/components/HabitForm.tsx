@@ -76,7 +76,7 @@ export function HabitForm({
     setValue,
     formState: { errors },
   } = useForm<HabitFormData>({
-    resolver: zodResolver(habitFormSchema) as any,
+    resolver: zodResolver(habitFormSchema as any),
     defaultValues: {
       name: '',
       description: '',

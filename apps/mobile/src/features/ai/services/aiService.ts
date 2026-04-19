@@ -17,4 +17,23 @@ export const aiService = {
     );
     return response.data;
   },
+
+  generateWeeklyPlan: async (weekStartDate: string): Promise<WeeklyPlanResponse> => {
+    const { data } = await apiClient.post(AI.WEEKLY_PLAN, { weekStartDate });
+    return data.data;
+  },
 };
+
+export type WeeklyPlanDay = { title: string; timeBlock?: string };
+export interface WeeklyPlanResponse {
+  plan: {
+    Monday: WeeklyPlanDay[];
+    Tuesday: WeeklyPlanDay[];
+    Wednesday: WeeklyPlanDay[];
+    Thursday: WeeklyPlanDay[];
+    Friday: WeeklyPlanDay[];
+    Saturday: WeeklyPlanDay[];
+    Sunday: WeeklyPlanDay[];
+  };
+  rationale: string;
+}

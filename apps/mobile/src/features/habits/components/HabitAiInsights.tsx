@@ -1,7 +1,22 @@
 import { View, Text, ActivityIndicator } from 'react-native'
-import { useTranslation } from 'react-i18next'
+import { useTranslation } from '@/shared/hooks/useTranslation'
 import { habitsService } from '../services/habitsService'
 import { useQuery } from '@tanstack/react-query'
+
+type HabitAnalysis = {
+  patterns: {
+    consistencyLevel: string;
+    bestDaysOfWeek?: number[];
+    worstDaysOfWeek?: number[];
+  };
+  metrics: {
+    completionRate?: number;
+    currentStreak?: number;
+    longestStreak?: number;
+    totalCompletions?: number;
+  };
+  insights?: string[];
+};
 
 interface HabitAiInsightsProps {
   habitId: string
@@ -26,9 +41,9 @@ const CONSISTENCY_TEXT: Record<string, string> = {
 export function HabitAiInsights({ habitId }: HabitAiInsightsProps) {
   const { t } = useTranslation('habits')
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error } = useQuery<HabitAnalysis>({
     queryKey: ['habit', habitId, 'analysis'],
-    queryFn: () => habitsService.analyzeHabit(habitId),
+    queryFn: () => habitsService.analyzeHabit(habitId) as Promise<HabitAnalysis>,
   })
 
   if (isLoading) {
@@ -42,7 +57,7 @@ export function HabitAiInsights({ habitId }: HabitAiInsightsProps) {
   if (error || !data) {
     return (
       <View className="bg-white dark:bg-slate-900 rounded-lg p-4 mb-4">
-        <Text className="text-xs text-slate-500">{t('failedToLoadInsights', 'Failed to load insights')}</Text>
+        <Text className="text-xs text-slate-500">{t('failedToLoadInsights')}</Text>
       </View>
     )
   }
@@ -53,7 +68,7 @@ export function HabitAiInsights({ habitId }: HabitAiInsightsProps) {
   return (
     <View className="bg-white dark:bg-slate-900 rounded-lg p-4 mb-4 space-y-4">
       {/* Title */}
-      <Text className="text-sm font-semibold text-slate-900 dark:text-white">⚡ {t('aiInsights', 'AI Insights')}</Text>
+      <Text className="text-sm font-semibold text-slate-900 dark:text-white">⚡ {t('aiInsights')}</Text>
       <Text className="text-xs text-slate-500 dark:text-slate-400">Based on your last 90 days</Text>
 
       {/* Metrics Grid */}
@@ -87,11 +102,11 @@ export function HabitAiInsights({ habitId }: HabitAiInsightsProps) {
       </View>
 
       {/* Best Days */}
-      {data.patterns.bestDaysOfWeek.length > 0 && (
+      {(data.patterns.bestDaysOfWeek?.length ?? 0) > 0 && (
         <View className="space-y-2">
           <Text className="text-xs font-semibold text-slate-500">Best Days</Text>
           <View className="flex-row gap-1">
-            {data.patterns.bestDaysOfWeek.map((day: number) => (
+            {data.patterns.bestDaysOfWeek!.map((day: number) => (
               <View key={day} className="px-2 py-1 rounded border border-slate-200 dark:border-slate-700">
                 <Text className="text-xs text-slate-700 dark:text-slate-300">{DAYS[day]}</Text>
               </View>
@@ -101,10 +116,10 @@ export function HabitAiInsights({ habitId }: HabitAiInsightsProps) {
       )}
 
       {/* Insights */}
-      {data.insights.length > 0 && (
+      {(data.insights?.length ?? 0) > 0 && (
         <View className="space-y-2">
           <Text className="text-xs font-semibold text-yellow-600">💡 Suggestions</Text>
-          {data.insights.map((insight: string, idx: number) => (
+          {data.insights!.map((insight: string, idx: number) => (
             <View key={idx} className="flex-row gap-2">
               <Text className="text-yellow-600">•</Text>
               <Text className="text-xs text-slate-600 dark:text-slate-400 flex-1">{insight}</Text>

@@ -44,7 +44,7 @@ export function TaskForm({ initialData, onSubmit, isLoading, submitLabel, defaul
     watch,
     formState: { errors },
   } = useForm<TaskFormData>({
-    resolver: zodResolver(taskFormSchema) as any,
+    resolver: zodResolver(taskFormSchema as any),
     defaultValues: {
       title: initialData?.title ?? '',
       description: initialData?.description ?? '',

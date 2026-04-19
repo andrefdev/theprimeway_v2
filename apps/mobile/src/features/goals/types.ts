@@ -17,7 +17,8 @@ export const pillarSchema = z.object({
 });
 
 export const outcomeSchema = z.object({
-  pillarId: z.string().min(1, 'Pillar is required'),
+  pillarId: z.string().min(1, 'Pillar is required').optional(),
+  threeYearGoalId: z.string().optional(),
   title: z.string().min(1, 'Title is required').max(200, 'Title too long'),
   description: z.string().max(1000, 'Description too long').optional(),
   targetDate: z.string().optional(),
@@ -25,7 +26,8 @@ export const outcomeSchema = z.object({
 });
 
 export const focusSchema = z.object({
-  outcomeId: z.string().min(1, 'Outcome is required'),
+  outcomeId: z.string().min(1, 'Outcome is required').optional(),
+  annualGoalId: z.string().optional(),
   year: z.number().int().min(2020).max(2100),
   quarter: z.number().int().min(1).max(4),
   title: z.string().min(1, 'Title is required').max(200, 'Title too long'),
@@ -36,7 +38,8 @@ export const focusSchema = z.object({
 });
 
 export const weeklyGoalSchema = z.object({
-  quarterFocusId: z.string().min(1, 'Quarter focus is required'),
+  quarterFocusId: z.string().min(1, 'Quarter focus is required').optional(),
+  quarterlyGoalId: z.string().optional(),
   weekStartDate: z.string().min(1, 'Week start date is required'),
   title: z.string().min(1, 'Title is required').max(200, 'Title too long'),
   description: z.string().max(1000, 'Description too long').optional(),

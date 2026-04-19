@@ -1,9 +1,19 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { buildTaskReminderBody } from './taskReminderContext';
+
+interface TaskReminderContext {
+  description?: string | null;
+  estimatedDurationMinutes?: number | null;
+  goalTitle?: string | null;
+  priority?: string | null;
+}
 
 const REMINDER_CHANNEL_ID = 'reminders';
+const REMINDER_LOW_CHANNEL_ID = 'reminders-low';
 const HABIT_REMINDER_PREFIX = 'habit-reminder-';
+const HABIT_BATCH_PREFIX = 'habit-batch-';
 const TASK_REMINDER_PREFIX = 'task-reminder-';
 const HABIT_REMINDERS_KEY = 'habit_reminder_settings';
 
@@ -20,11 +30,22 @@ interface HabitReminderSettings {
  */
 export async function setupReminderChannel() {
   if (Platform.OS === 'android') {
+    // High-importance channel for time-sensitive notifications (tasks, briefings).
+    // These bypass DND if the user allows "priority" senders.
     await Notifications.setNotificationChannelAsync(REMINDER_CHANNEL_ID, {
-      name: 'Reminders',
-      description: 'Reminders for habits and tasks',
+      name: 'Time-sensitive reminders',
+      description: 'Task due dates and morning briefings',
       importance: Notifications.AndroidImportance.HIGH,
       vibrationPattern: [0, 250, 250, 250],
+      sound: 'default',
+      lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+    });
+    // Default-importance channel for habit reminders — Android's DND will silence these.
+    await Notifications.setNotificationChannelAsync(REMINDER_LOW_CHANNEL_ID, {
+      name: 'Habit reminders',
+      description: 'Daily habit nudges (respect Do Not Disturb)',
+      importance: Notifications.AndroidImportance.DEFAULT,
+      vibrationPattern: [0, 200],
       sound: 'default',
       lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
     });
@@ -54,10 +75,12 @@ export async function scheduleHabitReminder(
     content: {
       title: `🔄 ${habitName}`,
       body: `Time to work on your habit: ${habitName}`,
+      data: { type: 'habit', habitId, priority: 'normal' },
       sound: true,
-      priority: Notifications.AndroidNotificationPriority.HIGH,
+      priority: Notifications.AndroidNotificationPriority.DEFAULT,
+      interruptionLevel: 'active',
       ...(Platform.OS === 'android' && {
-        channelId: REMINDER_CHANNEL_ID,
+        channelId: REMINDER_LOW_CHANNEL_ID,
       }),
     },
     trigger: {
@@ -105,17 +128,59 @@ async function saveHabitReminderSetting(
 }
 
 /**
- * Restores all habit reminders from saved settings.
- * Call on app start after permissions are granted.
+ * Restores all habit reminders from saved settings, batching habits that share a time slot
+ * into a single notification to reduce fatigue.
  */
 export async function restoreHabitReminders(habits: { id: string; name: string }[]) {
   const settings = await getHabitReminderSettings();
+
+  await cancelAllHabitReminders();
+
+  const slots = new Map<string, { hour: number; minute: number; names: string[] }>();
   for (const habit of habits) {
     const setting = settings[habit.id];
-    if (setting?.enabled) {
-      await scheduleHabitReminder(habit.id, habit.name, setting.hour, setting.minute);
-    }
+    if (!setting?.enabled) continue;
+    const key = `${setting.hour}:${setting.minute}`;
+    const slot = slots.get(key) ?? { hour: setting.hour, minute: setting.minute, names: [] };
+    slot.names.push(habit.name);
+    slots.set(key, slot);
   }
+
+  for (const [key, slot] of slots.entries()) {
+    if (slot.names.length === 1) {
+      const habit = habits.find((h) => h.name === slot.names[0]);
+      if (habit) await scheduleHabitReminder(habit.id, habit.name, slot.hour, slot.minute);
+      continue;
+    }
+    await Notifications.scheduleNotificationAsync({
+      identifier: `${HABIT_BATCH_PREFIX}${key}`,
+      content: {
+        title: `🔄 ${slot.names.length} habits to do`,
+        body: slot.names.join(', '),
+        data: { type: 'habit', priority: 'normal' },
+        sound: true,
+        priority: Notifications.AndroidNotificationPriority.DEFAULT,
+        interruptionLevel: 'active',
+        ...(Platform.OS === 'android' && { channelId: REMINDER_LOW_CHANNEL_ID }),
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DAILY,
+        hour: slot.hour,
+        minute: slot.minute,
+      },
+    });
+  }
+}
+
+async function cancelAllHabitReminders() {
+  const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+  await Promise.all(
+    scheduled
+      .filter((n) =>
+        n.identifier.startsWith(HABIT_REMINDER_PREFIX) || n.identifier.startsWith(HABIT_BATCH_PREFIX)
+      )
+      .map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier).catch(() => {}))
+  );
 }
 
 // ────────────────────────────────────────────────
@@ -130,7 +195,8 @@ export async function scheduleTaskReminder(
   taskId: string,
   taskTitle: string,
   dueDate: string,
-  scheduledStart?: string
+  scheduledStart?: string,
+  context?: TaskReminderContext
 ) {
   const identifier = `${TASK_REMINDER_PREFIX}${taskId}`;
 
@@ -156,9 +222,11 @@ export async function scheduleTaskReminder(
     identifier,
     content: {
       title: `📋 Task Reminder`,
-      body: taskTitle,
+      body: buildTaskReminderBody(taskTitle, context ?? {}),
+      data: { type: 'task', taskId, priority: 'high' },
       sound: true,
       priority: Notifications.AndroidNotificationPriority.HIGH,
+      interruptionLevel: 'timeSensitive',
       ...(Platform.OS === 'android' && {
         channelId: REMINDER_CHANNEL_ID,
       }),
@@ -183,11 +251,25 @@ export async function cancelTaskReminder(taskId: string) {
  * Call on app start.
  */
 export async function scheduleUpcomingTaskReminders(
-  tasks: { id: string; title: string; dueDate?: string; scheduledStart?: string }[]
+  tasks: {
+    id: string;
+    title: string;
+    dueDate?: string;
+    scheduledStart?: string;
+    description?: string | null;
+    estimatedDurationMinutes?: number | null;
+    goalTitle?: string | null;
+    priority?: string | null;
+  }[]
 ) {
   for (const task of tasks) {
     if (task.dueDate) {
-      await scheduleTaskReminder(task.id, task.title, task.dueDate, task.scheduledStart);
+      await scheduleTaskReminder(task.id, task.title, task.dueDate, task.scheduledStart, {
+        description: task.description,
+        estimatedDurationMinutes: task.estimatedDurationMinutes,
+        goalTitle: task.goalTitle,
+        priority: task.priority,
+      });
     }
   }
 }

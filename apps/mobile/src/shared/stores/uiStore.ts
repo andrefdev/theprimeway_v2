@@ -16,6 +16,8 @@ interface UiState {
     tasks: number;
     notifications: number;
   };
+  focusModeSilence: boolean;
+  setFocusModeSilence: (v: boolean) => void;
   setPomodoroStatus: (status: PomodoroStatus) => void;
   setPomodoroSessionType: (type: SessionType) => void;
   setPomodoroRemaining: (seconds: number) => void;
@@ -34,6 +36,9 @@ const DEFAULT_POMODORO: PomodoroState = {
 export const useUiStore = create<UiState>((set) => ({
   pomodoro: DEFAULT_POMODORO,
   badgeCounts: { tasks: 0, notifications: 0 },
+  focusModeSilence: true,
+
+  setFocusModeSilence: (v) => set({ focusModeSilence: v }),
 
   setPomodoroStatus: (status) =>
     set((state) => ({ pomodoro: { ...state.pomodoro, status } })),

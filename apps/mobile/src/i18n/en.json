@@ -235,6 +235,7 @@
     "profile": "Profile",
     "today": "Today",
     "weeklyPlan": "Weekly Plan",
+    "weeklyReview": "Weekly Review",
     "focus": "Focus",
     "all": "All",
     "more": "More",
@@ -286,8 +287,8 @@
         "aiChat": "AI Chat",
         "taskShort": "Task",
         "focusShort": "Focus",
-        "expenseShort": "Expense",
-        "noteShort": "Note"
+        "habitShort": "Habit",
+        "goalShort": "Goal"
       },
       "stats": {
         "tasks": {

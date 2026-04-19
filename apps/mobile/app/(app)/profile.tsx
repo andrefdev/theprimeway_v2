@@ -79,21 +79,30 @@ export default function ProfileScreen() {
 
         {/* Gamification Stats */}
         <Animated.View entering={FadeInDown.delay(30).duration(300)} className="mt-4 flex-row gap-3">
-          <View className="flex-1 items-center rounded-xl border border-border bg-card py-3">
+          <Pressable
+            className="flex-1 items-center rounded-xl border border-border bg-card py-3 active:opacity-70"
+            onPress={() => router.push('/(app)/achievements' as never)}
+          >
             <Icon as={Zap} size={18} className="text-xp" />
             <Text className="mt-1 text-lg font-bold text-foreground">{totalXp}</Text>
             <Text className="text-2xs text-muted-foreground">Total XP</Text>
-          </View>
-          <View className="flex-1 items-center rounded-xl border border-border bg-card py-3">
+          </Pressable>
+          <Pressable
+            className="flex-1 items-center rounded-xl border border-border bg-card py-3 active:opacity-70"
+            onPress={() => router.push('/(app)/achievements' as never)}
+          >
             <Icon as={Trophy} size={18} className="text-level-gold" />
             <Text className="mt-1 text-lg font-bold text-foreground">Lv.{level.level}</Text>
             <Text className="text-2xs text-muted-foreground">{level.name}</Text>
-          </View>
-          <View className="flex-1 items-center rounded-xl border border-border bg-card py-3">
+          </Pressable>
+          <Pressable
+            className="flex-1 items-center rounded-xl border border-border bg-card py-3 active:opacity-70"
+            onPress={() => router.push('/(app)/achievements' as never)}
+          >
             <Icon as={Flame} size={18} className="text-streak-fire" />
-            <Text className="mt-1 text-lg font-bold text-foreground">{longestStreak}d</Text>
-            <Text className="text-2xs text-muted-foreground">Best Streak</Text>
-          </View>
+            <Text className="mt-1 text-lg font-bold text-foreground">{currentStreak}d</Text>
+            <Text className="text-2xs text-muted-foreground">Streak</Text>
+          </Pressable>
         </Animated.View>
 
         {/* Subscription Banner */}

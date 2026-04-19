@@ -36,37 +36,7 @@ export const GOALS = {
   WEEKLY: '/api/goals/weekly',
   FOCUS_LINKS_TASKS: '/api/goals/focus-links/tasks',
   FOCUS_LINKS_HABITS: '/api/goals/focus-links/habits',
-  FOCUS_LINKS_FINANCES: '/api/goals/focus-links/finances',
   HEALTH_SNAPSHOTS: '/api/goals/health-snapshots',
-} as const;
-
-// Finances
-export const FINANCES = {
-  ACCOUNTS: '/api/finances/accounts',
-  TRANSACTIONS: '/api/finances/transactions',
-  BUDGETS: '/api/finances/budgets',
-  DEBTS: '/api/finances/debts',
-  SAVINGS: '/api/finances/savings-goals',
-  INCOME: '/api/finances/income-sources',
-  STATS: '/api/finances/stats',
-  EXCHANGE_RATES: '/api/finances/exchange-rates',
-  CALCULATE_INSTALLMENT: '/api/finances/debts/calculate-installment',
-  IMPORT_TRANSACTIONS: '/api/finances/transactions/import',
-  RECURRING_EXPENSES: '/api/finances/recurring-expenses',
-  INVESTMENTS: '/api/finances/investments',
-  INVESTMENT_BY_ID: (id: string) => `/api/finances/investments/${id}`,
-  INVESTMENTS_SUMMARY: '/api/finances/investments/summary',
-  PENDING_TRANSACTIONS: '/api/finances/transactions/pending',
-  INCOME_ESTIMATES: '/api/finances/income-estimates',
-  NET_WORTH: '/api/finances/stats/net-worth',
-} as const;
-
-// Notes
-export const NOTES = {
-  BASE: '/api/notes',
-  BY_ID: (id: string) => `/api/notes/${id}`,
-  CATEGORIES: '/api/notes/categories',
-  CATEGORY_BY_ID: (id: string) => `/api/notes/categories/${id}`,
 } as const;
 
 // Pomodoro
@@ -89,6 +59,8 @@ export const CALENDAR = {
 export const AI = {
   CHAT: '/api/chat',
   THREADS: '/api/ai/threads',
+  BRIEFING: '/api/chat/briefing',
+  WEEKLY_PLAN: '/api/chat/weekly-plan',
 } as const;
 
 // Profile & Settings
@@ -113,22 +85,6 @@ export const SUBSCRIPTION = {
   PLANS: '/api/subscriptions/plans',
   STATUS: '/api/subscriptions/status',
   CHECKOUT: '/api/subscriptions/checkout',
-} as const;
-
-// KYC
-export const KYC = {
-  BASE: '/api/kyc',
-} as const;
-
-// Reading
-export const READING = {
-  SEARCH: '/api/reading/search',
-  WORKS: (key: string) => `/api/reading/works/${key}`,
-  BOOKS: '/api/reading/books',
-  BOOK_BY_ID: (id: string) => `/api/reading/books/${id}`,
-  BOOKS_STATS: '/api/reading/books/stats',
-  GOALS: '/api/reading/goals',
-  GOAL_BY_ID: (id: string) => `/api/reading/goals/${id}`,
 } as const;
 
 // Gamification
