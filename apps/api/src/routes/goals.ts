@@ -8,6 +8,7 @@
  * - NO Prisma queries, NO business logic
  */
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi'
+import * as Sentry from '@sentry/node'
 import type { AppEnv } from '../types/env'
 import { authMiddleware } from '../middleware/auth'
 import { goalsService } from '../services/goals.service'
@@ -16,6 +17,21 @@ import { GOAL_TEMPLATES, GOAL_TEMPLATE_CATEGORIES } from '@repo/shared/constants
 
 export const goalsRoutes = new OpenAPIHono<AppEnv>()
 goalsRoutes.use('*', authMiddleware)
+
+function logRouteError(tag: string, error: unknown, extra?: Record<string, unknown>) {
+  const err = error as { message?: string; code?: string; meta?: unknown; stack?: string }
+  console.error(`[${tag}]`, {
+    message: err?.message,
+    code: err?.code,
+    meta: err?.meta,
+    extra,
+    stack: err?.stack,
+  })
+  Sentry.captureException(error, {
+    tags: { route: tag, area: 'goals' },
+    extra: { ...extra, prismaCode: err?.code, prismaMeta: err?.meta },
+  })
+}
 
 // ─── Shared schemas ──────────────────────────────────────────────────────────
 
@@ -50,7 +66,7 @@ goalsRoutes.openapi(getDashboardSummaryRoute, async (c) => {
     const summary = await goalsService.getDashboardSummary(userId)
     return c.json(summary, 200)
   } catch (error) {
-    console.error('[GOALS_DASHBOARD_SUMMARY]', error)
+    logRouteError('GOALS_DASHBOARD_SUMMARY', error, { userId })
     return c.json({ error: 'Internal server error' }, 500)
   }
 })
@@ -86,7 +102,7 @@ goalsRoutes.openapi(getGoalTreeRoute, async (c) => {
     const tree = await goalsService.getGoalTree(userId, { visionId, threeYearId })
     return c.json(tree, 200)
   } catch (error) {
-    console.error('[GOALS_TREE_GET]', error)
+    logRouteError('GOALS_TREE_GET', error, { userId, visionId, threeYearId })
     return c.json({ error: 'Internal server error' }, 500)
   }
 })
@@ -172,7 +188,7 @@ goalsRoutes.openapi(listVisionsRoute, async (c) => {
     })
     return c.json(result, 200)
   } catch (error) {
-    console.error('[VISIONS_GET]', error)
+    logRouteError('VISIONS_GET', error, { userId })
     return c.json({ error: 'Internal server error' }, 500)
   }
 })
@@ -206,7 +222,7 @@ goalsRoutes.openapi(createVisionRoute, async (c) => {
     const vision = await goalsService.createVision(userId, body)
     return c.json(vision, 200)
   } catch (error) {
-    console.error('[VISIONS_POST]', error)
+    logRouteError('VISIONS_POST', error, { userId, body })
     return c.json({ error: 'Internal server error' }, 500)
   }
 })
@@ -241,7 +257,7 @@ goalsRoutes.openapi(updateVisionRoute, async (c) => {
     if (!vision) return c.json({ error: 'Not found' }, 404)
     return c.json(vision, 200)
   } catch (error) {
-    console.error('[VISION_PATCH]', error)
+    logRouteError('VISION_PATCH', error, { userId })
     return c.json({ error: 'Internal server error' }, 500)
   }
 })
@@ -270,7 +286,7 @@ goalsRoutes.openapi(deleteVisionRoute, async (c) => {
     if (!deleted) return c.json({ error: 'Not found' }, 404)
     return c.body(null, 204)
   } catch (error) {
-    console.error('[VISION_DELETE]', error)
+    logRouteError('VISION_DELETE', error, { userId })
     return c.json({ error: 'Internal server error' }, 500)
   }
 })
@@ -311,7 +327,7 @@ goalsRoutes.openapi(listPillarsRoute, async (c) => {
     })
     return c.json(result, 200)
   } catch (error) {
-    console.error('[PILLARS_GET]', error)
+    logRouteError('PILLARS_GET', error, { userId, query: q })
     return c.json({ error: 'Internal server error' }, 500)
   }
 })
@@ -346,7 +362,7 @@ goalsRoutes.openapi(createPillarRoute, async (c) => {
     const pillar = await goalsService.createThreeYearGoal(userId, body)
     return c.json(pillar, 200)
   } catch (error) {
-    console.error('[PILLARS_POST]', error)
+    logRouteError('PILLARS_POST', error, { userId, body })
     return c.json({ error: 'Internal server error' }, 500)
   }
 })
@@ -381,7 +397,7 @@ goalsRoutes.openapi(updatePillarRoute, async (c) => {
     if (!pillar) return c.json({ error: 'Not found' }, 404)
     return c.json(pillar, 200)
   } catch (error) {
-    console.error('[PILLAR_PATCH]', error)
+    logRouteError('PILLAR_PATCH', error, { userId })
     return c.json({ error: 'Internal server error' }, 500)
   }
 })
@@ -410,7 +426,7 @@ goalsRoutes.openapi(deletePillarRoute, async (c) => {
     if (!deleted) return c.json({ error: 'Not found' }, 404)
     return c.body(null, 204)
   } catch (error) {
-    console.error('[PILLAR_DELETE]', error)
+    logRouteError('PILLAR_DELETE', error, { userId })
     return c.json({ error: 'Internal server error' }, 500)
   }
 })
@@ -450,7 +466,7 @@ goalsRoutes.openapi(listOutcomesRoute, async (c) => {
     })
     return c.json(result, 200)
   } catch (error) {
-    console.error('[OUTCOMES_GET]', error)
+    logRouteError('OUTCOMES_GET', error, { userId })
     return c.json({ error: 'Internal server error' }, 500)
   }
 })
@@ -486,7 +502,7 @@ goalsRoutes.openapi(createOutcomeRoute, async (c) => {
     const outcome = await goalsService.createAnnualGoal(userId, body)
     return c.json(outcome, 200)
   } catch (error) {
-    console.error('[OUTCOMES_POST]', error)
+    logRouteError('OUTCOMES_POST', error, { userId, body })
     return c.json({ error: 'Internal server error' }, 500)
   }
 })
@@ -521,7 +537,7 @@ goalsRoutes.openapi(updateOutcomeRoute, async (c) => {
     if (!outcome) return c.json({ error: 'Not found' }, 404)
     return c.json(outcome, 200)
   } catch (error) {
-    console.error('[OUTCOME_PATCH]', error)
+    logRouteError('OUTCOME_PATCH', error, { userId })
     return c.json({ error: 'Internal server error' }, 500)
   }
 })
@@ -550,7 +566,7 @@ goalsRoutes.openapi(deleteOutcomeRoute, async (c) => {
     if (!deleted) return c.json({ error: 'Not found' }, 404)
     return c.body(null, 204)
   } catch (error) {
-    console.error('[OUTCOME_DELETE]', error)
+    logRouteError('OUTCOME_DELETE', error, { userId })
     return c.json({ error: 'Internal server error' }, 500)
   }
 })
@@ -594,7 +610,7 @@ goalsRoutes.openapi(listFocusesRoute, async (c) => {
     })
     return c.json(result, 200)
   } catch (error) {
-    console.error('[FOCUSES_GET]', error)
+    logRouteError('FOCUSES_GET', error, { userId })
     return c.json({ error: 'Internal server error' }, 500)
   }
 })
@@ -632,7 +648,7 @@ goalsRoutes.openapi(createFocusRoute, async (c) => {
     const focus = await goalsService.createQuarterlyGoal(userId, body)
     return c.json(focus, 200)
   } catch (error) {
-    console.error('[FOCUSES_POST]', error)
+    logRouteError('FOCUSES_POST', error, { userId, body })
     return c.json({ error: 'Internal server error' }, 500)
   }
 })
@@ -667,7 +683,7 @@ goalsRoutes.openapi(updateFocusRoute, async (c) => {
     if (!focus) return c.json({ error: 'Not found' }, 404)
     return c.json(focus, 200)
   } catch (error) {
-    console.error('[FOCUS_PATCH]', error)
+    logRouteError('FOCUS_PATCH', error, { userId })
     return c.json({ error: 'Internal server error' }, 500)
   }
 })
@@ -696,7 +712,7 @@ goalsRoutes.openapi(deleteFocusRoute, async (c) => {
     if (!deleted) return c.json({ error: 'Not found' }, 404)
     return c.body(null, 204)
   } catch (error) {
-    console.error('[FOCUS_DELETE]', error)
+    logRouteError('FOCUS_DELETE', error, { userId })
     return c.json({ error: 'Internal server error' }, 500)
   }
 })
@@ -738,7 +754,7 @@ goalsRoutes.openapi(listWeeklyRoute, async (c) => {
     })
     return c.json(result, 200)
   } catch (error) {
-    console.error('[WEEKLY_GOALS_GET]', error)
+    logRouteError('WEEKLY_GOALS_GET', error, { userId })
     return c.json({ error: 'Internal server error' }, 500)
   }
 })
@@ -773,7 +789,7 @@ goalsRoutes.openapi(createWeeklyRoute, async (c) => {
     const goal = await goalsService.createWeeklyGoal(userId, body)
     return c.json(goal, 200)
   } catch (error) {
-    console.error('[WEEKLY_GOALS_POST]', error)
+    logRouteError('WEEKLY_GOALS_POST', error, { userId, body })
     return c.json({ error: 'Internal server error' }, 500)
   }
 })
@@ -808,7 +824,7 @@ goalsRoutes.openapi(updateWeeklyRoute, async (c) => {
     if (!goal) return c.json({ error: 'Not found' }, 404)
     return c.json(goal, 200)
   } catch (error) {
-    console.error('[WEEKLY_GOAL_PATCH]', error)
+    logRouteError('WEEKLY_GOAL_PATCH', error, { userId })
     return c.json({ error: 'Internal server error' }, 500)
   }
 })
@@ -837,7 +853,7 @@ goalsRoutes.openapi(deleteWeeklyRoute, async (c) => {
     if (!deleted) return c.json({ error: 'Not found' }, 404)
     return c.body(null, 204)
   } catch (error) {
-    console.error('[WEEKLY_GOAL_DELETE]', error)
+    logRouteError('WEEKLY_GOAL_DELETE', error, { userId })
     return c.json({ error: 'Internal server error' }, 500)
   }
 })
@@ -868,7 +884,7 @@ goalsRoutes.openapi(listSnapshotsRoute, (async (c: any) => {
     const data = await goalsService.listHealthSnapshots(q.quarterlyGoalId)
     return c.json({ data }, 200)
   } catch (error) {
-    console.error('[HEALTH_SNAPSHOTS_GET]', error)
+    logRouteError('HEALTH_SNAPSHOTS_GET', error, { userId })
     return c.json({ error: 'Internal server error' }, 500)
   }
 }) as any)
@@ -903,7 +919,7 @@ goalsRoutes.openapi(createSnapshotRoute, async (c) => {
     const snapshot = await goalsService.createHealthSnapshot(userId, body)
     return c.json(snapshot, 200)
   } catch (error) {
-    console.error('[HEALTH_SNAPSHOTS_POST]', error)
+    logRouteError('HEALTH_SNAPSHOTS_POST', error, { userId })
     return c.json({ error: 'Internal server error' }, 500)
   }
 })
@@ -934,7 +950,7 @@ goalsRoutes.openapi(listFocusTaskLinksRoute, (async (c: any) => {
     const data = await goalsService.listFocusTaskLinks(q.quarterlyGoalId)
     return c.json({ data }, 200)
   } catch (error) {
-    console.error('[FOCUS_TASK_LINKS_GET]', error)
+    logRouteError('FOCUS_TASK_LINKS_GET', error, { userId })
     return c.json({ error: 'Internal server error' }, 500)
   }
 }) as any)
@@ -967,7 +983,7 @@ goalsRoutes.openapi(createFocusTaskLinkRoute, async (c) => {
     const link = await goalsService.createFocusTaskLink(userId, body)
     return c.json(link, 200)
   } catch (error) {
-    console.error('[FOCUS_TASK_LINKS_POST]', error)
+    logRouteError('FOCUS_TASK_LINKS_POST', error, { userId })
     return c.json({ error: 'Internal server error' }, 500)
   }
 })
@@ -996,7 +1012,7 @@ goalsRoutes.openapi(deleteFocusTaskLinkRoute, async (c) => {
     if (!deleted) return c.json({ error: 'Not found' }, 404)
     return c.body(null, 204)
   } catch (error) {
-    console.error('[FOCUS_TASK_LINK_DELETE]', error)
+    logRouteError('FOCUS_TASK_LINK_DELETE', error, { userId })
     return c.json({ error: 'Internal server error' }, 500)
   }
 })
@@ -1026,7 +1042,7 @@ goalsRoutes.openapi(listFocusHabitLinksRoute, (async (c: any) => {
     const data = await goalsService.listFocusHabitLinks(q.quarterlyGoalId)
     return c.json({ data }, 200)
   } catch (error) {
-    console.error('[FOCUS_HABIT_LINKS_GET]', error)
+    logRouteError('FOCUS_HABIT_LINKS_GET', error, { userId })
     return c.json({ error: 'Internal server error' }, 500)
   }
 }) as any)
@@ -1059,7 +1075,7 @@ goalsRoutes.openapi(createFocusHabitLinkRoute, async (c) => {
     const link = await goalsService.createFocusHabitLink(userId, body)
     return c.json(link, 200)
   } catch (error) {
-    console.error('[FOCUS_HABIT_LINKS_POST]', error)
+    logRouteError('FOCUS_HABIT_LINKS_POST', error, { userId })
     return c.json({ error: 'Internal server error' }, 500)
   }
 })
@@ -1088,7 +1104,7 @@ goalsRoutes.openapi(deleteFocusHabitLinkRoute, async (c) => {
     if (!deleted) return c.json({ error: 'Not found' }, 404)
     return c.body(null, 204)
   } catch (error) {
-    console.error('[FOCUS_HABIT_LINK_DELETE]', error)
+    logRouteError('FOCUS_HABIT_LINK_DELETE', error, { userId })
     return c.json({ error: 'Internal server error' }, 500)
   }
 })
@@ -1118,7 +1134,7 @@ goalsRoutes.openapi(listFocusFinanceLinksRoute, (async (c: any) => {
     const data = await goalsService.listFocusFinanceLinks(q.quarterlyGoalId)
     return c.json({ data }, 200)
   } catch (error) {
-    console.error('[FOCUS_FINANCE_LINKS_GET]', error)
+    logRouteError('FOCUS_FINANCE_LINKS_GET', error, { userId })
     return c.json({ error: 'Internal server error' }, 500)
   }
 }) as any)
@@ -1153,7 +1169,7 @@ goalsRoutes.openapi(createFocusFinanceLinkRoute, async (c) => {
     const link = await goalsService.createFocusFinanceLink(userId, body)
     return c.json(link, 200)
   } catch (error) {
-    console.error('[FOCUS_FINANCE_LINKS_POST]', error)
+    logRouteError('FOCUS_FINANCE_LINKS_POST', error, { userId })
     return c.json({ error: 'Internal server error' }, 500)
   }
 })
@@ -1182,7 +1198,7 @@ goalsRoutes.openapi(deleteFocusFinanceLinkRoute, async (c) => {
     if (!deleted) return c.json({ error: 'Not found' }, 404)
     return c.body(null, 204)
   } catch (error) {
-    console.error('[FOCUS_FINANCE_LINK_DELETE]', error)
+    logRouteError('FOCUS_FINANCE_LINK_DELETE', error, { userId })
     return c.json({ error: 'Internal server error' }, 500)
   }
 })

@@ -1,4 +1,4 @@
-import { queryOptions } from '@tanstack/react-query'
+import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
 import { notificationsApi } from './api'
 import { CACHE_TIMES } from '@repo/shared/constants'
 
@@ -34,4 +34,56 @@ export const notificationQueries = {
       staleTime: 2 * 60 * 1000,
       refetchInterval: 2 * 60 * 1000,
     }),
+
+  inbox: (opts?: { includeRead?: boolean; includeDismissed?: boolean }) =>
+    queryOptions({
+      queryKey: [...notificationQueries.all(), 'inbox', opts ?? {}],
+      queryFn: () => notificationsApi.getInbox({ ...opts, limit: 100 }),
+      staleTime: 60 * 1000,
+      refetchInterval: 60 * 1000,
+    }),
+}
+
+function invalidateAll(qc: ReturnType<typeof useQueryClient>) {
+  qc.invalidateQueries({ queryKey: notificationQueries.all() })
+}
+
+export function useMarkNotificationRead() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => notificationsApi.markRead(id),
+    onSuccess: () => invalidateAll(qc),
+  })
+}
+
+export function useDismissNotification() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => notificationsApi.dismiss(id),
+    onSuccess: () => invalidateAll(qc),
+  })
+}
+
+export function useDeleteNotification() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => notificationsApi.remove(id),
+    onSuccess: () => invalidateAll(qc),
+  })
+}
+
+export function useMarkAllNotificationsRead() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: () => notificationsApi.markAllRead(),
+    onSuccess: () => invalidateAll(qc),
+  })
+}
+
+export function useDismissAllNotifications() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: () => notificationsApi.dismissAll(),
+    onSuccess: () => invalidateAll(qc),
+  })
 }

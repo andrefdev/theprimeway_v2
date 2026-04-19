@@ -1,6 +1,8 @@
 import { notificationsRepo } from '../repositories/notifications.repo'
 import { gamificationService } from './gamification.service'
 import { calendarService } from './calendar.service'
+import { getMessaging, isPushEnabled } from '../lib/firebase'
+import * as Sentry from '@sentry/node'
 
 interface AppNotification {
   id: string
@@ -213,9 +215,192 @@ class NotificationsService {
     return reminders
   }
 
-  async getBatchedNotifications(userId: string) {
-    const notifications = await this.getAggregated(userId)
+  async syncPersistedInbox(userId: string) {
+    // Persist derived notifications into the notifications table so the user
+    // can mark read / dismiss them. Dedupes by (userId, type, entityId).
+    const aggregated = await this.getAggregated(userId)
     const smartReminders = await this.generateSmartReminders(userId)
+
+    const upserts: Array<{
+      type: string
+      title: string
+      message: string
+      href?: string | null
+      urgency?: string | null
+      data?: unknown
+      entityId: string
+    }> = []
+
+    for (const n of aggregated) {
+      upserts.push({
+        type: n.type,
+        entityId: n.id,
+        title: n.title,
+        message: n.message,
+        href: n.href,
+        urgency: null,
+      })
+    }
+
+    for (const sr of smartReminders) {
+      upserts.push({
+        type: 'smart_reminder',
+        entityId: `smart_reminder_${sr.habitId}`,
+        title: sr.habitName,
+        message: sr.message,
+        href: '/habits',
+        urgency: sr.urgency,
+        data: { streakAtRisk: sr.streakAtRisk, calendarBusy: sr.calendarBusy },
+      })
+    }
+
+    const keepEntityIds = upserts.map((u) => u.entityId)
+    const pushTargets: Array<{
+      title: string
+      message: string
+      href: string | null
+      urgency: string | null
+      type: string
+    }> = []
+
+    for (const u of upserts) {
+      const result = await notificationsRepo.upsertNotification({ userId, ...u })
+      // Push only when row is new, or was previously dismissed and has reappeared.
+      if (result.isNew || result.wasDismissed) {
+        pushTargets.push({
+          title: u.title,
+          message: u.message,
+          href: u.href ?? null,
+          urgency: u.urgency ?? null,
+          type: u.type,
+        })
+      }
+    }
+
+    // Auto-dismiss stale derived notifications (source entity no longer applies).
+    await notificationsRepo.pruneStale(userId, {
+      keepTypes: ['overdue_task', 'habit_missed', 'pending_transaction', 'smart_reminder'],
+      keepEntityIds,
+    })
+
+    // Fire-and-forget push for fresh notifications.
+    if (pushTargets.length > 0 && isPushEnabled()) {
+      // Fan out sequentially but without awaiting the outer caller.
+      void Promise.all(
+        pushTargets.map((p) =>
+          this.sendPushToUser(userId, {
+            title: p.title,
+            body: p.message,
+            url: p.href ?? undefined,
+            tag: p.type,
+          }).catch((err) => {
+            console.error('[push] send failed', err)
+            Sentry.captureException(err, { tags: { area: 'push_send' } })
+          }),
+        ),
+      )
+    }
+  }
+
+  async sendPushToUser(
+    userId: string,
+    payload: { title: string; body: string; url?: string; tag?: string; image?: string },
+  ) {
+    const messaging = getMessaging()
+    if (!messaging) return { success_count: 0, failure_count: 0, skipped: true }
+
+    const devices = await notificationsRepo.findActiveDeviceTokensForUser(userId)
+    const tokens = devices.map((d: { fcmToken: string }) => d.fcmToken).filter(Boolean)
+    if (tokens.length === 0) return { success_count: 0, failure_count: 0 }
+
+    const res = await messaging.sendEachForMulticast({
+      tokens,
+      notification: {
+        title: payload.title,
+        body: payload.body,
+        ...(payload.image ? { imageUrl: payload.image } : {}),
+      },
+      data: {
+        ...(payload.url ? { url: payload.url } : {}),
+        ...(payload.tag ? { tag: payload.tag } : {}),
+      },
+      webpush: payload.url
+        ? { fcmOptions: { link: payload.url } }
+        : undefined,
+    })
+
+    // Clean up invalid tokens.
+    await Promise.all(
+      res.responses.map(async (r, i) => {
+        if (r.success) return
+        const code = r.error?.code ?? ''
+        if (
+          code === 'messaging/registration-token-not-registered' ||
+          code === 'messaging/invalid-registration-token' ||
+          code === 'messaging/invalid-argument'
+        ) {
+          const token = tokens[i]
+          if (token) await notificationsRepo.markDeviceInactive(token)
+        }
+      }),
+    )
+
+    return { success_count: res.successCount, failure_count: res.failureCount }
+  }
+
+  async listInbox(
+    userId: string,
+    opts: { includeRead?: boolean; includeDismissed?: boolean; limit?: number; offset?: number },
+  ) {
+    await this.syncPersistedInbox(userId)
+    return notificationsRepo.listNotifications(userId, {
+      includeRead: opts.includeRead ?? true,
+      includeDismissed: opts.includeDismissed ?? false,
+      limit: Math.min(opts.limit ?? 50, 200),
+      offset: opts.offset ?? 0,
+    })
+  }
+
+  async markRead(userId: string, id: string) {
+    return notificationsRepo.markRead(userId, id)
+  }
+
+  async markAllRead(userId: string) {
+    return notificationsRepo.markAllRead(userId)
+  }
+
+  async dismiss(userId: string, id: string) {
+    return notificationsRepo.dismiss(userId, id)
+  }
+
+  async dismissAll(userId: string) {
+    return notificationsRepo.dismissAll(userId)
+  }
+
+  async deleteNotification(userId: string, id: string) {
+    return notificationsRepo.deleteNotification(userId, id)
+  }
+
+  async getBatchedNotifications(userId: string) {
+    // Ensure inbox reflects current state before batching.
+    await this.syncPersistedInbox(userId)
+    const rawNotifications = await this.getAggregated(userId)
+    const rawSmartReminders = await this.generateSmartReminders(userId)
+
+    // Filter out dismissed items by looking up persisted Notification rows.
+    const { data: persisted } = await notificationsRepo.listNotifications(userId, {
+      includeRead: true,
+      includeDismissed: true,
+      limit: 500,
+      offset: 0,
+    })
+    const dismissed = new Set(
+      persisted.filter((p: any) => p.dismissedAt).map((p: any) => p.entityId),
+    )
+    const notifications = rawNotifications.filter((n) => !dismissed.has(n.id))
+    const smartReminders = rawSmartReminders.filter(
+      (sr) => !dismissed.has(`smart_reminder_${sr.habitId}`),
+    )
 
     // Group notifications by type
     const overdueTasks = notifications.filter((n) => n.type === 'overdue_task')
@@ -329,10 +514,52 @@ class NotificationsService {
       }
     }
 
+    const messaging = getMessaging()
+    if (!messaging) {
+      return {
+        message: 'Push disabled (firebase credentials missing)',
+        total_devices: devices.length,
+        success_count: 0,
+        failure_count: 0,
+      }
+    }
+
+    const tokens = devices.map((d: { fcmToken: string }) => d.fcmToken).filter(Boolean)
+    const res = await messaging.sendEachForMulticast({
+      tokens,
+      notification: {
+        title: body.title,
+        body: body.body,
+        ...(body.image ? { imageUrl: body.image } : {}),
+      },
+      data: {
+        ...(body.url ? { url: body.url } : {}),
+        ...(body.tag ? { tag: body.tag } : {}),
+        ...(body.data ? { payload: JSON.stringify(body.data) } : {}),
+      },
+      webpush: body.url ? { fcmOptions: { link: body.url } } : undefined,
+    })
+
+    // Prune invalid tokens
+    await Promise.all(
+      res.responses.map(async (r, i) => {
+        if (r.success) return
+        const code = r.error?.code ?? ''
+        if (
+          code === 'messaging/registration-token-not-registered' ||
+          code === 'messaging/invalid-registration-token' ||
+          code === 'messaging/invalid-argument'
+        ) {
+          const token = tokens[i]
+          if (token) await notificationsRepo.markDeviceInactive(token)
+        }
+      }),
+    )
+
     return {
-      message: 'Notification endpoint ready -- FCM sending requires firebase-admin integration',
       total_devices: devices.length,
-      _note: 'Wire up firebase-admin sendNotification() for actual push delivery',
+      success_count: res.successCount,
+      failure_count: res.failureCount,
     }
   }
 }

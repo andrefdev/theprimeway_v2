@@ -24,7 +24,12 @@ export interface CalendarItem {
  */
 export function useCalendarItems(dateRange: { from: string; to: string }) {
   const tasksQuery = useQuery(tasksQueries.list({ from: dateRange.from, to: dateRange.to }))
-  const eventsQuery = useQuery(calendarQueries.googleEvents({ from: dateRange.from, to: dateRange.to }))
+  const eventsQuery = useQuery(
+    calendarQueries.googleEvents({
+      timeMin: `${dateRange.from}T00:00:00.000Z`,
+      timeMax: `${dateRange.to}T23:59:59.999Z`,
+    }),
+  )
 
   const items = useMemo<CalendarItem[]>(() => {
     const result: CalendarItem[] = []

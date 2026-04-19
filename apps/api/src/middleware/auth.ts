@@ -1,5 +1,6 @@
 import { createMiddleware } from 'hono/factory'
 import * as jose from 'jose'
+import * as Sentry from '@sentry/node'
 
 const JWT_SECRET = () => new TextEncoder().encode(process.env.JWT_SECRET || 'dev-secret')
 
@@ -34,9 +35,15 @@ export const authMiddleware = createMiddleware<{
       return c.json({ error: 'Invalid token type' }, 401)
     }
 
-    c.set('user', {
-      userId: payload.userId as string,
-      email: payload.email as string,
+    const userId = payload.userId as string
+    const email = payload.email as string
+    c.set('user', { userId, email })
+
+    Sentry.setUser({ id: userId, email })
+    Sentry.addBreadcrumb({
+      category: 'http',
+      level: 'info',
+      message: `${c.req.method} ${c.req.path}`,
     })
 
     await next()

@@ -21,6 +21,7 @@ import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppProfileRouteImport } from './routes/_app/profile'
 import { Route as AppPomodoroRouteImport } from './routes/_app/pomodoro'
 import { Route as AppOnboardingRouteImport } from './routes/_app/onboarding'
+import { Route as AppNotificationsRouteImport } from './routes/_app/notifications'
 import { Route as AppHabitsRouteImport } from './routes/_app/habits'
 import { Route as AppGoalsRouteImport } from './routes/_app/goals'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
@@ -104,6 +105,11 @@ const AppPomodoroRoute = AppPomodoroRouteImport.update({
 const AppOnboardingRoute = AppOnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppNotificationsRoute = AppNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
   getParentRoute: () => AppRoute,
 } as any)
 const AppHabitsRoute = AppHabitsRouteImport.update({
@@ -245,6 +251,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AppDashboardRoute
   '/goals': typeof AppGoalsRoute
   '/habits': typeof AppHabitsRoute
+  '/notifications': typeof AppNotificationsRoute
   '/onboarding': typeof AppOnboardingRoute
   '/pomodoro': typeof AppPomodoroRoute
   '/profile': typeof AppProfileRoute
@@ -283,6 +290,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AppDashboardRoute
   '/goals': typeof AppGoalsRoute
   '/habits': typeof AppHabitsRoute
+  '/notifications': typeof AppNotificationsRoute
   '/onboarding': typeof AppOnboardingRoute
   '/pomodoro': typeof AppPomodoroRoute
   '/profile': typeof AppProfileRoute
@@ -324,6 +332,7 @@ export interface FileRoutesById {
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/goals': typeof AppGoalsRoute
   '/_app/habits': typeof AppHabitsRoute
+  '/_app/notifications': typeof AppNotificationsRoute
   '/_app/onboarding': typeof AppOnboardingRoute
   '/_app/pomodoro': typeof AppPomodoroRoute
   '/_app/profile': typeof AppProfileRoute
@@ -364,6 +373,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/goals'
     | '/habits'
+    | '/notifications'
     | '/onboarding'
     | '/pomodoro'
     | '/profile'
@@ -402,6 +412,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/goals'
     | '/habits'
+    | '/notifications'
     | '/onboarding'
     | '/pomodoro'
     | '/profile'
@@ -442,6 +453,7 @@ export interface FileRouteTypes {
     | '/_app/dashboard'
     | '/_app/goals'
     | '/_app/habits'
+    | '/_app/notifications'
     | '/_app/onboarding'
     | '/_app/pomodoro'
     | '/_app/profile'
@@ -563,6 +575,13 @@ declare module '@tanstack/react-router' {
       path: '/onboarding'
       fullPath: '/onboarding'
       preLoaderRoute: typeof AppOnboardingRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/notifications': {
+      id: '/_app/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof AppNotificationsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/habits': {
@@ -757,6 +776,7 @@ interface AppRouteChildren {
   AppDashboardRoute: typeof AppDashboardRoute
   AppGoalsRoute: typeof AppGoalsRoute
   AppHabitsRoute: typeof AppHabitsRoute
+  AppNotificationsRoute: typeof AppNotificationsRoute
   AppOnboardingRoute: typeof AppOnboardingRoute
   AppPomodoroRoute: typeof AppPomodoroRoute
   AppProfileRoute: typeof AppProfileRoute
@@ -791,6 +811,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppDashboardRoute: AppDashboardRoute,
   AppGoalsRoute: AppGoalsRoute,
   AppHabitsRoute: AppHabitsRoute,
+  AppNotificationsRoute: AppNotificationsRoute,
   AppOnboardingRoute: AppOnboardingRoute,
   AppPomodoroRoute: AppPomodoroRoute,
   AppProfileRoute: AppProfileRoute,

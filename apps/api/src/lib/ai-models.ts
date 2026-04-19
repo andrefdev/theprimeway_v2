@@ -10,3 +10,6 @@ export const chatModel: LanguageModel = anthropic('claude-haiku-4-5')
 // conflict detection, etc. DeepSeek V3 is ~10x cheaper than Claude Sonnet
 // with solid generateObject support.
 export const taskModel: LanguageModel = deepseek('deepseek-chat')
+
+// Fast, low-latency structured outputs for simple estimates (e.g. timebox).
+export const fastModel: LanguageModel = anthropic('claude-haiku-4-5')
