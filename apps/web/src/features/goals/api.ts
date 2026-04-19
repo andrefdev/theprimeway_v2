@@ -1,5 +1,5 @@
 import { api } from '@/shared/lib/api-client'
-import type { Goal, PrimeVision, ThreeYearGoal, AnnualGoal, QuarterlyGoal, WeeklyGoal, FocusLink } from '@repo/shared/types'
+import type { PrimeVision, ThreeYearGoal, AnnualGoal, QuarterlyGoal, WeeklyGoal, FocusLink } from '@repo/shared/types'
 
 interface ListResponse<T> {
   data: T[]
@@ -7,22 +7,6 @@ interface ListResponse<T> {
 }
 
 export const goalsApi = {
-  // Goals (simple/weekly)
-  list: (params?: Record<string, string>) =>
-    api.get<ListResponse<Goal>>('/goals', { params }).then((r) => r.data),
-
-  get: (id: string) =>
-    api.get<Goal>(`/goals/${id}`).then((r) => r.data),
-
-  create: (data: { title: string; description?: string; deadline?: string; progress?: number; type?: string; status?: string }) =>
-    api.post<Goal>('/goals', data).then((r) => r.data),
-
-  update: (id: string, data: Partial<{ title: string; description: string; deadline: string; progress: number; type: string; status: string }>) =>
-    api.patch<Goal>(`/goals/${id}`, data).then((r) => r.data),
-
-  delete: (id: string) =>
-    api.delete(`/goals/${id}`).then((r) => r.data),
-
   // Goal Tree
   getGoalTree: (params?: Record<string, string>) =>
     api.get<PrimeVision[]>('/goals/tree', { params }).then((r) => r.data),

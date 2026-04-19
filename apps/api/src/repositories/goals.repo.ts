@@ -12,78 +12,10 @@
 import { prisma } from '../lib/prisma'
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// GOALS (legacy / simple goals)
+// GOALS (hierarchy: visions → three-year → annual → quarterly → weekly)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 class GoalsRepo {
-  // ─── Goals ──────────────────────────────────────────────────────────────────
-
-  async findManyGoals(userId: string, opts: {
-    status?: string; type?: string; search?: string; limit: number; offset: number
-  }) {
-    const where: Record<string, unknown> = { userId }
-    if (opts.status) where.status = opts.status
-    if (opts.type) where.type = opts.type
-    if (opts.search) {
-      where.OR = [
-        { title: { contains: opts.search, mode: 'insensitive' } },
-        { description: { contains: opts.search, mode: 'insensitive' } },
-      ]
-    }
-
-    const [goals, count] = await Promise.all([
-      prisma.goal.findMany({ where, take: opts.limit, skip: opts.offset, orderBy: { createdAt: 'desc' } }),
-      prisma.goal.count({ where }),
-    ])
-
-    return { data: goals, count }
-  }
-
-  async findGoalById(userId: string, id: string) {
-    return prisma.goal.findFirst({ where: { id, userId } })
-  }
-
-  async createGoal(userId: string, data: {
-    title: string; description?: string; deadline?: string;
-    progress: number; type: string; status: string; relatedTasks?: string[]
-  }) {
-    return prisma.goal.create({
-      data: {
-        userId,
-        title: data.title,
-        description: data.description,
-        deadline: data.deadline ? new Date(data.deadline) : undefined,
-        progress: data.progress,
-        type: data.type,
-        status: data.status,
-        relatedTasks: data.relatedTasks ?? [],
-      },
-    })
-  }
-
-  async updateGoal(userId: string, id: string, data: Record<string, unknown>) {
-    const existing = await prisma.goal.findFirst({ where: { id, userId } })
-    if (!existing) return null
-
-    const updateData: Record<string, unknown> = {}
-    if (data.title !== undefined) updateData.title = data.title
-    if (data.description !== undefined) updateData.description = data.description
-    if (data.deadline !== undefined) updateData.deadline = data.deadline ? new Date(data.deadline as string) : null
-    if (data.progress !== undefined) updateData.progress = data.progress
-    if (data.type !== undefined) updateData.type = data.type
-    if (data.status !== undefined) updateData.status = data.status
-    if (data.relatedTasks !== undefined) updateData.relatedTasks = data.relatedTasks
-
-    return prisma.goal.update({ where: { id }, data: updateData })
-  }
-
-  async deleteGoal(userId: string, id: string): Promise<boolean> {
-    const existing = await prisma.goal.findFirst({ where: { id, userId } })
-    if (!existing) return false
-    await prisma.goal.delete({ where: { id } })
-    return true
-  }
-
   // ─── Visions ────────────────────────────────────────────────────────────────
 
   async findManyVisions(userId: string, opts: {

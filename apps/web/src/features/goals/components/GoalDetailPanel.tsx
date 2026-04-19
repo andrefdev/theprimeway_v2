@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react'
 import {
-  useUpdateGoal,
-  useDeleteGoal,
   useUpdateThreeYearGoal,
   useDeleteThreeYearGoal,
   useUpdateAnnualGoal,
@@ -27,7 +25,7 @@ interface GoalDetailPanelProps {
   onClose: () => void
 }
 
-type GoalType = 'goal' | 'three-year' | 'annual' | 'quarterly' | 'vision'
+type GoalType = 'three-year' | 'annual' | 'quarterly' | 'vision'
 
 export function GoalDetailPanel({ goalId, onClose }: GoalDetailPanelProps) {
   const { locale } = useLocale()
@@ -35,10 +33,8 @@ export function GoalDetailPanel({ goalId, onClose }: GoalDetailPanelProps) {
   const [editedTitle, setEditedTitle] = useState('')
   const [editedDescription, setEditedDescription] = useState('')
   const [editedProgress, setEditedProgress] = useState(0)
-  const [goalType, setGoalType] = useState<GoalType>('goal')
+  const [goalType, setGoalType] = useState<GoalType>('three-year')
   const goalDetail = useGoalDetail(goalId)
-  const updateGoal = useUpdateGoal()
-  const deleteGoal = useDeleteGoal()
   const updateThreeYearGoal = useUpdateThreeYearGoal()
   const deleteThreeYearGoal = useDeleteThreeYearGoal()
   const updateAnnualGoal = useUpdateAnnualGoal()
@@ -69,20 +65,16 @@ export function GoalDetailPanel({ goalId, onClose }: GoalDetailPanelProps) {
       }
 
       switch (goalType) {
-        case 'goal':
-          await updateGoal.mutateAsync({ id: goalId, data: updateData })
-          break
         case 'three-year':
-          await updateThreeYearGoal.mutateAsync({ id: goalId, data: updateData })
+          await updateThreeYearGoal.mutateAsync({ id: goalId, data: updateData as any })
           break
         case 'annual':
-          await updateAnnualGoal.mutateAsync({ id: goalId, data: updateData })
+          await updateAnnualGoal.mutateAsync({ id: goalId, data: updateData as any })
           break
         case 'quarterly':
-          await updateQuarterlyGoal.mutateAsync({ id: goalId, data: updateData })
+          await updateQuarterlyGoal.mutateAsync({ id: goalId, data: updateData as any })
           break
         case 'vision':
-          // Vision update not yet implemented
           break
       }
 
@@ -98,9 +90,6 @@ export function GoalDetailPanel({ goalId, onClose }: GoalDetailPanelProps) {
 
     try {
       switch (goalType) {
-        case 'goal':
-          await deleteGoal.mutateAsync(goalId)
-          break
         case 'three-year':
           await deleteThreeYearGoal.mutateAsync(goalId)
           break
@@ -111,7 +100,6 @@ export function GoalDetailPanel({ goalId, onClose }: GoalDetailPanelProps) {
           await deleteQuarterlyGoal.mutateAsync(goalId)
           break
         case 'vision':
-          // Vision delete not yet implemented
           break
       }
 
@@ -189,7 +177,7 @@ export function GoalDetailPanel({ goalId, onClose }: GoalDetailPanelProps) {
         </div>
 
         {/* Progress */}
-        {['goal', 'three-year', 'annual', 'quarterly'].includes(goalType) && (
+        {['three-year', 'annual', 'quarterly'].includes(goalType) && (
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <Label className="text-xs">Progress</Label>
@@ -227,7 +215,7 @@ export function GoalDetailPanel({ goalId, onClose }: GoalDetailPanelProps) {
                 size="sm"
                 variant="default"
                 onClick={handleSave}
-                disabled={updateGoal.isPending || !editedTitle.trim()}
+                disabled={updateThreeYearGoal.isPending || updateAnnualGoal.isPending || updateQuarterlyGoal.isPending || !editedTitle.trim()}
               >
                 <Save size={14} /> Save
               </Button>
@@ -252,7 +240,7 @@ export function GoalDetailPanel({ goalId, onClose }: GoalDetailPanelProps) {
                 size="sm"
                 variant="destructive"
                 onClick={handleDelete}
-                disabled={deleteGoal.isPending}
+                disabled={deleteThreeYearGoal.isPending || deleteAnnualGoal.isPending || deleteQuarterlyGoal.isPending}
               >
                 <Trash2 size={14} /> Delete
               </Button>

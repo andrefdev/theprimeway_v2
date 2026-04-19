@@ -197,28 +197,29 @@ Workflow:
         }),
 
         listGoals: tool({
-          description: "List the user's goals",
+          description: "List the user's goals across all hierarchy levels (3-year, annual, quarterly)",
           inputSchema: z.object({
             limit: z.number().optional(),
-            status: z.string().optional().describe('Filter by status'),
+            level: z.enum(['three-year', 'annual', 'quarterly', 'all']).optional().describe('Hierarchy level'),
           }),
-          execute: async ({ limit, status }) => {
-            const res: any = await goalsService.listGoals(userId, {
-              status,
-              limit: limit ?? 20,
-              offset: 0,
-            } as any)
-            const goals = res.goals ?? res.data ?? res
-            return {
-              goals: (Array.isArray(goals) ? goals : []).map((g: any) => ({
-                id: g.id,
-                title: g.title,
-                progress: g.progress,
-                status: g.status,
-                deadline: g.deadline,
-                type: g.type,
-              })),
+          execute: async ({ limit, level }) => {
+            const max = limit ?? 20
+            const lv = level ?? 'all'
+            const out: Array<{ id: string; title: string; level: string; progress?: number; parentId?: string }> = []
+
+            if (lv === 'three-year' || lv === 'all') {
+              const { data } = await goalsService.listThreeYearGoals(userId, { limit: max, offset: 0 })
+              for (const g of data as any[]) out.push({ id: g.id, title: g.title, level: 'three-year', parentId: g.visionId ?? undefined })
             }
+            if (lv === 'annual' || lv === 'all') {
+              const { data } = await goalsService.listAnnualGoals(userId, { limit: max, offset: 0 })
+              for (const g of data as any[]) out.push({ id: g.id, title: g.title, level: 'annual', progress: g.progress ?? 0, parentId: g.threeYearGoalId ?? undefined })
+            }
+            if (lv === 'quarterly' || lv === 'all') {
+              const { data } = await goalsService.listQuarterlyGoals(userId, { limit: max, offset: 0 })
+              for (const g of data as any[]) out.push({ id: g.id, title: g.title, level: 'quarterly', progress: g.progress ?? 0, parentId: g.annualGoalId ?? undefined })
+            }
+            return { goals: out.slice(0, max) }
           },
         }),
 
@@ -317,18 +318,25 @@ Workflow:
         }),
 
         createGoal: tool({
-          description: 'Propose creating a new goal. Requires user approval.',
+          description: 'Propose creating a new goal at a hierarchy level (three-year, annual, or quarterly). Requires user approval.',
           inputSchema: z.object({
+            level: z.enum(['three-year', 'annual', 'quarterly']).describe('Hierarchy level'),
             title: z.string(),
             description: z.string().optional(),
-            deadline: z.string().optional().describe('YYYY-MM-DD'),
-            type: z.string().optional(),
+            visionId: z.string().optional().describe('Required when level is three-year'),
+            area: z.enum(['general', 'finances', 'career', 'health', 'relationships', 'mindset', 'lifestyle']).optional().describe('Required when level is three-year'),
+            threeYearGoalId: z.string().optional().describe('Required when level is annual'),
+            targetDate: z.string().optional().describe('YYYY-MM-DD, used for annual'),
+            annualGoalId: z.string().optional().describe('Required when level is quarterly'),
+            year: z.number().optional().describe('Required when level is quarterly'),
+            quarter: z.number().min(1).max(4).optional().describe('Required when level is quarterly'),
           }),
         }),
 
         updateGoalProgress: tool({
-          description: 'Propose updating a goal progress percentage. Requires user approval.',
+          description: 'Propose updating a goal progress percentage. Applies to annual or quarterly goals. Requires user approval.',
           inputSchema: z.object({
+            level: z.enum(['annual', 'quarterly']),
             goalId: z.string(),
             goalTitle: z.string().describe('For display'),
             progress: z.number().min(0).max(100),
