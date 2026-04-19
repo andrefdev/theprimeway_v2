@@ -84,6 +84,7 @@ export async function schedulePomodoroCompletion(
       body: `Your ${sessionLabel} session has ended. Time for the next step!`,
       sound: true,
       priority: Notifications.AndroidNotificationPriority.MAX,
+      interruptionLevel: 'timeSensitive',
       ...(Platform.OS === 'android' && {
         channelId: TIMER_CHANNEL_ID,
       }),

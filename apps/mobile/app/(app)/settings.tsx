@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
-import { View, ScrollView, Pressable, Alert, TextInput, Modal } from 'react-native';
+import { View, ScrollView, Pressable, Alert, TextInput, Modal, Switch } from 'react-native';
 import { Text } from '@/shared/components/ui/text';
 import { Icon } from '@/shared/components/ui/icon';
 import { Card, CardContent } from '@/shared/components/ui/card';
@@ -20,7 +20,18 @@ import {
   Search,
   Check,
   X,
+  Fingerprint,
+  Timer,
 } from 'lucide-react-native';
+import { useBiometricStore } from '@/shared/stores/biometricStore';
+import { useUiStore } from '@/shared/stores/uiStore';
+import { isBiometricSupported, authenticateBiometric } from '@/features/auth/services/biometric';
+import {
+  getMorningBriefingSettings,
+  scheduleMorningBriefing,
+  cancelMorningBriefing,
+} from '@/features/notifications/morningBriefing';
+import { getMaxPerDay, setMaxPerDay } from '@/features/notifications/antifatigue';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { cn } from '@/shared/utils/cn';
@@ -214,7 +225,6 @@ function TimezonePickerModal({
         <FlashList
           data={filtered}
           renderItem={renderItem}
-          estimatedItemSize={52}
           keyExtractor={(item) => item}
           keyboardShouldPersistTaps="handled"
           ItemSeparatorComponent={() => <View className="mx-4 h-px bg-border/50" />}
@@ -323,6 +333,22 @@ export default function SettingsScreen() {
                 showChevron
                 onPress={() => {}}
               />
+              <Divider />
+              <MorningBriefingRow />
+              <Divider />
+              <FocusModeRow />
+              <Divider />
+              <MaxNotificationsRow />
+            </CardContent>
+          </Card>
+        </Animated.View>
+
+        {/* Security */}
+        <Animated.View entering={FadeInDown.delay(75).duration(300)}>
+          <SectionTitle title="Security" />
+          <Card>
+            <CardContent className="gap-0 p-0">
+              <BiometricToggleRow />
             </CardContent>
           </Card>
         </Animated.View>
@@ -384,6 +410,134 @@ function SectionTitle({ title }: { title: string }) {
 
 function Divider() {
   return <View className="mx-4 h-px bg-border" />;
+}
+
+function MaxNotificationsRow() {
+  const [max, setMax] = useState(5);
+
+  useEffect(() => {
+    getMaxPerDay().then(setMax);
+  }, []);
+
+  const change = async (delta: number) => {
+    const next = Math.max(1, Math.min(50, max + delta));
+    setMax(next);
+    await setMaxPerDay(next);
+  };
+
+  return (
+    <View className="flex-row items-center justify-between px-4 py-3.5">
+      <View className="flex-1 flex-row items-center gap-3">
+        <Icon as={Bell} size={18} className="text-muted-foreground" />
+        <View className="flex-1">
+          <Text className="text-sm font-medium text-foreground">Max per day</Text>
+          <Text className="text-xs text-muted-foreground">Low-priority cap, high-priority always shown</Text>
+        </View>
+      </View>
+      <View className="flex-row items-center gap-2">
+        <Pressable
+          onPress={() => change(-1)}
+          className="h-7 w-7 items-center justify-center rounded-md border border-border active:bg-muted"
+        >
+          <Text className="text-sm text-foreground">−</Text>
+        </Pressable>
+        <Text className="w-6 text-center text-sm font-semibold text-foreground">{max}</Text>
+        <Pressable
+          onPress={() => change(1)}
+          className="h-7 w-7 items-center justify-center rounded-md border border-border active:bg-muted"
+        >
+          <Text className="text-sm text-foreground">+</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+function FocusModeRow() {
+  const enabled = useUiStore((s) => s.focusModeSilence);
+  const setEnabled = useUiStore((s) => s.setFocusModeSilence);
+  return (
+    <View className="flex-row items-center justify-between px-4 py-3.5">
+      <View className="flex-row items-center gap-3">
+        <Icon as={Timer} size={18} className="text-muted-foreground" />
+        <View>
+          <Text className="text-sm font-medium text-foreground">Silence during focus</Text>
+          <Text className="text-xs text-muted-foreground">Mute notifications in focus sessions</Text>
+        </View>
+      </View>
+      <Switch value={enabled} onValueChange={setEnabled} />
+    </View>
+  );
+}
+
+function MorningBriefingRow() {
+  const [enabled, setEnabled] = useState(false);
+  const [hour, setHour] = useState(7);
+  const [minute, setMinute] = useState(0);
+
+  useEffect(() => {
+    getMorningBriefingSettings().then((s) => {
+      setEnabled(s.enabled);
+      setHour(s.hour);
+      setMinute(s.minute);
+    });
+  }, []);
+
+  const handleToggle = async (v: boolean) => {
+    if (v) {
+      await scheduleMorningBriefing(hour, minute);
+    } else {
+      await cancelMorningBriefing();
+    }
+    setEnabled(v);
+  };
+
+  const timeLabel = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+
+  return (
+    <View className="flex-row items-center justify-between px-4 py-3.5">
+      <View className="flex-row items-center gap-3">
+        <Icon as={Bell} size={18} className="text-muted-foreground" />
+        <View>
+          <Text className="text-sm font-medium text-foreground">Morning briefing</Text>
+          <Text className="text-xs text-muted-foreground">Daily at {timeLabel}</Text>
+        </View>
+      </View>
+      <Switch value={enabled} onValueChange={handleToggle} />
+    </View>
+  );
+}
+
+function BiometricToggleRow() {
+  const enabled = useBiometricStore((s) => s.enabled);
+  const setEnabled = useBiometricStore((s) => s.setEnabled);
+  const [supported, setSupported] = useState(false);
+
+  useEffect(() => {
+    isBiometricSupported().then(setSupported);
+  }, []);
+
+  const handleToggle = async (value: boolean) => {
+    if (value) {
+      const ok = await authenticateBiometric('Enable biometric unlock');
+      if (!ok) return;
+    }
+    await setEnabled(value);
+  };
+
+  return (
+    <View className="flex-row items-center justify-between px-4 py-3.5">
+      <View className="flex-row items-center gap-3">
+        <Icon as={Fingerprint} size={18} className="text-muted-foreground" />
+        <Text className="text-sm font-medium text-foreground">Biometric unlock</Text>
+      </View>
+      <Switch
+        value={enabled}
+        onValueChange={handleToggle}
+        disabled={!supported}
+      />
+    </View>
+  );
 }
 
 function SettingRow({

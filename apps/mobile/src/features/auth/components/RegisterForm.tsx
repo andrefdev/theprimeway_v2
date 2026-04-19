@@ -19,7 +19,7 @@ export function RegisterForm({ onSubmit, isLoading }: RegisterFormProps) {
     handleSubmit,
     formState: { errors },
   } = useForm<RegisterFormData>({
-    resolver: zodResolver(registerSchema),
+    resolver: zodResolver(registerSchema as any),
     defaultValues: { name: '', email: '', password: '' },
   });
 

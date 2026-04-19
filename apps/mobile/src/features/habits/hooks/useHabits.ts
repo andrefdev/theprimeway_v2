@@ -6,6 +6,7 @@ import {
   cancelHabitReminder,
   getHabitReminderSettings,
 } from '@/features/notifications/reminderNotifications';
+import { removeHabitFromStacks } from '../services/habitStacks';
 import type {
   CreateHabitPayload,
   UpdateHabitPayload,
@@ -146,6 +147,7 @@ export function useDeleteHabit() {
       queryClient.invalidateQueries({ queryKey: queryKeys.habits.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.habits.stats });
       cancelHabitReminder(id);
+      removeHabitFromStacks(id);
     },
   });
 }
@@ -154,6 +156,7 @@ export function useLogHabit() {
   const queryClient = useQueryClient();
 
   return useMutation({
+    mutationKey: ['habits', 'log'],
     mutationFn: ({ id, data }: { id: string; data: HabitLogPayload }) =>
       habitsService.logHabit(id, data),
     onMutate: async ({ id, data }) => {

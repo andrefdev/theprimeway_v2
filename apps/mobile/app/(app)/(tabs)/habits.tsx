@@ -24,6 +24,7 @@ import {
   useLogHabit,
 } from '@/features/habits/hooks/useHabits';
 import type { HabitFormData, HabitWithLogs } from '@/features/habits/types';
+import { useHabitStackPrompt } from '@/features/habits/hooks/useHabitStackPrompt';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { format } from 'date-fns';
@@ -93,7 +94,7 @@ export default function HabitsScreen() {
     ]);
   };
 
-  const handleCompleteHabit = useCallback(
+  const doLogIncrement = useCallback(
     (habit: HabitWithLogs) => {
       const today = new Date().toISOString().split('T')[0];
       const todayLog = habit.logs?.find((log) => log.date?.split('T')[0] === today);
@@ -104,6 +105,23 @@ export default function HabitsScreen() {
       });
     },
     [logHabit]
+  );
+
+  const promptStack = useHabitStackPrompt(habits, doLogIncrement);
+
+  const handleCompleteHabit = useCallback(
+    (habit: HabitWithLogs) => {
+      const today = new Date().toISOString().split('T')[0];
+      const todayLog = habit.logs?.find((log) => log.date?.split('T')[0] === today);
+      const prevCount = todayLog?.completedCount ?? 0;
+      const target = habit.targetFrequency ?? 1;
+      const willHitTarget = prevCount < target && prevCount + 1 >= target;
+      doLogIncrement(habit);
+      if (willHitTarget) {
+        setTimeout(() => promptStack(habit), 350);
+      }
+    },
+    [doLogIncrement, promptStack]
   );
 
   const handleUncompleteHabit = useCallback(

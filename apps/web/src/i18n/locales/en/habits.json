@@ -60,6 +60,7 @@
   "habitCompletedToast": "{{name}} completed!",
   "aiInsights": "AI Insights",
   "failedToLoadInsights": "Failed to load insights",
+  "noInsightsYet": "Start tracking this habit to see insights",
   "applyReminder": "Apply Reminder",
   "goalLinked": "Goal linked successfully",
   "goalUnlinked": "Goal unlinked",
@@ -90,5 +91,13 @@
   "criticalReminder": "{{name}}: {{streak}}-day streak expires soon! Less than 2 hours remaining.",
   "minimalVersion": "Only {{minutes}} minutes left! Do a minimal version of {{name}} to save your {{streak}}-day streak.",
   "hoursLeft": "{{count}} hours left",
-  "streakDays": "{{count}}-day streak"
+  "streakDays": "{{count}}-day streak",
+  "searchHabits": "Search habits...",
+  "statsTitle": "Habit Stats",
+  "completionRate": "Completion Rate",
+  "activeHabits": "Active Habits",
+  "doneToday": "Done Today",
+  "completionOverTime": "Completion Over Time",
+  "topStreaks": "Top Streaks",
+  "days": "days"
 }

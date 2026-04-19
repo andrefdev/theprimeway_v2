@@ -12,6 +12,8 @@ import { format } from 'date-fns';
 import type { Task, WeeklyGoal } from '@shared/types/models';
 import { GoalPickerSheet } from '@features/goals/components/GoalPickerSheet';
 import { TaskAiInsights } from './TaskAiInsights';
+import { SubtaskList } from './SubtaskList';
+import { deleteAllSubtasks } from '../services/localSubtasks';
 
 const DURATIONS = [15, 30, 45, 60, 90, 120];
 const PRIORITIES = [
@@ -82,6 +84,7 @@ export function TaskEditSheet({ task, isOpen, onClose }: TaskEditSheetProps) {
         style: 'destructive',
         onPress: async () => {
           await deleteTask.mutateAsync(task.id);
+          await deleteAllSubtasks(task.id);
           onClose();
         },
       },
@@ -190,6 +193,9 @@ export function TaskEditSheet({ task, isOpen, onClose }: TaskEditSheetProps) {
           ) : null}
         </Pressable>
       </View>
+
+      {/* Subtasks */}
+      {task && <SubtaskList taskId={task.id} />}
 
       {/* AI Insights */}
       {task && <TaskAiInsights taskId={task.id} />}

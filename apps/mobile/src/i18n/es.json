@@ -235,6 +235,7 @@
     "profile": "Perfil",
     "today": "Hoy",
     "weeklyPlan": "Plan semanal",
+    "weeklyReview": "Revisión semanal",
     "focus": "Foco",
     "all": "Todas",
     "more": "Mas",
@@ -286,8 +287,8 @@
         "aiChat": "Chat IA",
         "taskShort": "Tarea",
         "focusShort": "Foco",
-        "expenseShort": "Gasto",
-        "noteShort": "Nota"
+        "habitShort": "Hábito",
+        "goalShort": "Objetivo"
       },
       "stats": {
         "tasks": {

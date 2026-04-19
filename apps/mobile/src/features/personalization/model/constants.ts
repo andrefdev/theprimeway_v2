@@ -5,22 +5,15 @@ import {
   ListChecks,
   CheckCheck,
   Target,
-  CreditCard,
-  StickyNote,
-  BookOpen,
   CalendarDays,
   MessageSquare,
 } from 'lucide-react-native';
 
-// Default Lucide icons for each section (only 9 imports, not 84)
 export const DEFAULT_SECTION_ICONS: Record<SectionId, LucideIcon> = {
   dashboard: LayoutDashboard,
   tasks: ListChecks,
   habits: CheckCheck,
   goals: Target,
-  finances: CreditCard,
-  notes: StickyNote,
-  reading: BookOpen,
   calendar: CalendarDays,
   ai: MessageSquare,
 };

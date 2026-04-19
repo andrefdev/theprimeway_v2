@@ -60,6 +60,7 @@
   "habitCompletedToast": "¡{{name}} completado!",
   "aiInsights": "Información de IA",
   "failedToLoadInsights": "Error al cargar información",
+  "noInsightsYet": "Registra este hábito para ver información",
   "applyReminder": "Aplicar recordatorio",
   "goalLinked": "Objetivo vinculado correctamente",
   "goalUnlinked": "Objetivo desvinculado",
@@ -90,5 +91,13 @@
   "criticalReminder": "{{name}}: ¡la racha de {{streak}} días expira pronto! Quedan menos de 2 horas.",
   "minimalVersion": "¡Solo quedan {{minutes}} minutos! Haz una versión mínima de {{name}} para salvar tu racha de {{streak}} días.",
   "hoursLeft": "{{count}} horas restantes",
-  "streakDays": "Racha de {{count}} días"
+  "streakDays": "Racha de {{count}} días",
+  "searchHabits": "Buscar hábitos...",
+  "statsTitle": "Estadísticas de hábitos",
+  "completionRate": "Tasa de cumplimiento",
+  "activeHabits": "Hábitos activos",
+  "doneToday": "Completados hoy",
+  "completionOverTime": "Cumplimiento en el tiempo",
+  "topStreaks": "Mejores rachas",
+  "days": "días"
 }

@@ -583,24 +583,40 @@ class HabitsService {
     const habit = await habitsRepository.findById(userId, habitId)
     if (!habit) return null
 
-    // Fetch recent logs (last 90 days)
     const logs = await habitsRepository.findRecentLogs([habitId], 90)
+    const totalDays = 90
+
+    if (logs.length === 0) {
+      return {
+        habit: { id: habit.id, name: habit.name },
+        metrics: {
+          completionRate: 0,
+          currentStreak: 0,
+          longestStreak: 0,
+          totalCompletions: 0,
+          daysTracked: 0,
+        },
+        patterns: {
+          bestDaysOfWeek: [] as number[],
+          consistencyLevel: 'poor' as const,
+        },
+        insights: [] as string[],
+      }
+    }
+
     const logsByDate = logs.reduce(
       (acc, log) => {
         const dateStr = log.date instanceof Date ? log.date.toISOString().split('T')[0]! : log.date
-        acc[dateStr] = log
+        if (dateStr) acc[dateStr] = log
         return acc
       },
       {} as Record<string, HabitLogModel>,
     )
 
-    // Calculate stats
-    const totalDays = 90
     const completedDays = logs.filter((l) => (l.completedCount ?? 0) > 0).length
     const completionRate = (completedDays / totalDays) * 100
     const totalCompletions = logs.reduce((sum, l) => sum + (l.completedCount ?? 0), 0)
 
-    // Find streaks
     const endDate = new Date().toISOString().split('T')[0]!
     const startDate = new Date()
     startDate.setDate(startDate.getDate() - 90)
@@ -613,10 +629,10 @@ class HabitsService {
       (dateStr: string) => isHabitApplicable(habit, dateStr),
     )
 
-    // Identify patterns (best days of week)
     const dayPatterns: Record<number, number> = {}
     logs.forEach((log) => {
       const date = new Date(log.date)
+      if (isNaN(date.getTime())) return
       const dayOfWeek = date.getDay()
       if (!dayPatterns[dayOfWeek]) dayPatterns[dayOfWeek] = 0
       dayPatterns[dayOfWeek] += log.completedCount ?? 0
@@ -627,8 +643,7 @@ class HabitsService {
       .slice(0, 3)
       .map(([day]) => parseInt(day))
 
-    // Generate insights
-    const insights = []
+    const insights: string[] = []
     if (completionRate >= 80) {
       insights.push('Excellent consistency! You\'re crushing this habit.')
     } else if (completionRate >= 60) {

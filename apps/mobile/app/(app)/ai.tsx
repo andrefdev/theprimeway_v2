@@ -30,6 +30,7 @@ import { useAuthStore } from '@/shared/stores/authStore';
 import { FeatureGate } from '@/features/feature-flags/FeatureGate';
 import { UpgradePrompt } from '@/features/subscriptions/components/UpgradePrompt';
 import { FEATURES } from '@repo/shared/constants';
+import { VoiceInputButton } from '@features/ai/components/VoiceInputButton';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -161,7 +162,8 @@ function ToolCallCard({ toolCall }: ToolCallCardProps) {
 // ---------------------------------------------------------------------------
 
 function AiChatScreenContent() {
-  const { t } = useTranslation('features.ai');
+  const { t, locale } = useTranslation('features.ai');
+  const voiceLang = locale?.startsWith('es') ? 'es-ES' : 'en-US';
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -483,6 +485,14 @@ function AiChatScreenContent() {
                 onSubmitEditing={() => handleSend()}
               />
             </View>
+            <VoiceInputButton
+              lang={voiceLang}
+              onInterim={(text) => setInput(text)}
+              onTranscript={(text) => {
+                setInput('');
+                handleSend(text);
+              }}
+            />
             <Pressable
               className={cn(
                 'h-11 w-11 items-center justify-center rounded-full',

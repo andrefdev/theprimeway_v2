@@ -1,5 +1,6 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
+import Swipeable from 'react-native-gesture-handler/Swipeable';
 import Animated, {
   FadeIn,
   FadeOut,
@@ -30,15 +31,17 @@ interface TaskCardProps {
   onToggleComplete?: (task: Task) => void;
   onPress?: (task: Task) => void;
   onTimer?: (task: Task) => void;
+  onLongPress?: () => void;
   showTimeSlot?: boolean;
 }
 
-export function TaskCard({ task, onToggleComplete, onPress, onTimer, showTimeSlot }: TaskCardProps) {
+export function TaskCard({ task, onToggleComplete, onPress, onTimer, onLongPress, showTimeSlot }: TaskCardProps) {
   const isCompleted = task.status === 'completed';
   const [showXp, setShowXp] = useState(false);
   const addXp = useGamificationStore((s) => s.addXp);
   const awardXpToBackend = useGamificationStore((s) => s.awardXpToBackend);
   const checkScale = useSharedValue(1);
+  const swipeableRef = useRef<Swipeable>(null);
 
   const checkAnimStyle = useAnimatedStyle(() => ({
     transform: [{ scale: checkScale.value }],
@@ -83,10 +86,31 @@ export function TaskCard({ task, onToggleComplete, onPress, onTimer, showTimeSlo
     ? new Date(task.scheduledStart).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     : null;
 
+  const renderRightActions = () => (
+    <View className="mb-0 ml-2 w-24 items-center justify-center rounded-2xl bg-emerald-500">
+      <Icon as={Check} size={24} className="text-white" />
+      <Text className="mt-1 text-xs font-semibold text-white">Complete</Text>
+    </View>
+  );
+
+  const handleSwipeComplete = () => {
+    swipeableRef.current?.close();
+    if (!isCompleted) handleToggle();
+  };
+
   return (
     <Animated.View entering={FadeIn.duration(200)} exiting={FadeOut.duration(150)}>
+      <Swipeable
+        ref={swipeableRef}
+        renderRightActions={isCompleted ? undefined : renderRightActions}
+        onSwipeableOpen={(dir) => dir === 'right' && handleSwipeComplete()}
+        overshootRight={false}
+        rightThreshold={60}
+      >
       <Pressable
         onPress={handlePress}
+        onLongPress={onLongPress}
+        delayLongPress={250}
         className={cn(
           'relative overflow-hidden rounded-2xl border border-border bg-card p-4',
           isCompleted && 'opacity-60'
@@ -166,6 +190,7 @@ export function TaskCard({ task, onToggleComplete, onPress, onTimer, showTimeSlo
           </View>
         )}
       </Pressable>
+      </Swipeable>
     </Animated.View>
   );
 }

@@ -9,7 +9,6 @@ import { TaskEditSheet } from '@features/tasks/components/TaskEditSheet';
 import { TaskTimerSheet } from '@features/tasks/components/TaskTimerSheet';
 import { TaskFormSheet } from '@features/tasks/components/TaskFormSheet';
 import { HabitCard } from '@features/habits/components/HabitCard';
-import { TransactionFormSheet } from '@features/finances/components/TransactionFormSheet';
 import { PlayerStatusBar } from '@features/gamification/components/PlayerStatusBar';
 import { DailyGoalRing } from '@features/gamification/components/DailyGoalRing';
 import { useGamificationStore } from '@features/gamification/stores/gamificationStore';
@@ -18,9 +17,12 @@ import { useHabits, useHabitStats, useLogHabit } from '@features/habits/hooks/us
 import { useAuthStore } from '@/shared/stores/authStore';
 import { router } from 'expo-router';
 import {
-  CheckSquare, Flame, Timer, Plus, Wallet, FileText, Sparkles, Bell,
+  CheckSquare, Flame, Timer, Plus, Sparkles, Bell, LayoutGrid,
 } from 'lucide-react-native';
 import { useAggregatedNotifications } from '@features/notifications/hooks/useNotifications';
+import { ProactiveSuggestionsCard } from '@features/ai/components/ProactiveSuggestionsCard';
+import { useWidgetSync } from '@features/widgets/useWidgetSync';
+import { OfflineBanner } from '@/shared/components/OfflineBanner';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -39,7 +41,6 @@ export default function DashboardScreen() {
 
   // Sheets state
   const [showTaskForm, setShowTaskForm] = useState(false);
-  const [showTransactionForm, setShowTransactionForm] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [timerTask, setTimerTask] = useState<Task | null>(null);
 
@@ -77,6 +78,9 @@ export default function DashboardScreen() {
     syncWithBackend();
   }, []);
 
+  // Sync widget snapshot + drain pending widget actions
+  useWidgetSync();
+
   const getGreeting = (): string => {
     const hour = new Date().getHours();
     if (hour < 12) return t('greeting.morning');
@@ -108,6 +112,8 @@ export default function DashboardScreen() {
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
+        <OfflineBanner />
+
         {/* Logo + Bell */}
         <View className="mt-2 flex-row items-center gap-2.5">
           <Image
@@ -146,9 +152,14 @@ export default function DashboardScreen() {
           <View className="flex-row justify-between">
             <QuickAction icon={Plus} label={t('quickActions.taskShort')} color="primary" onPress={() => setShowTaskForm(true)} />
             <QuickAction icon={Timer} label={t('quickActions.focusShort')} color="destructive" onPress={() => router.push('/(app)/pomodoro')} />
-            <QuickAction icon={Wallet} label={t('quickActions.expenseShort')} color="success" onPress={() => setShowTransactionForm(true)} />
-            <QuickAction icon={FileText} label={t('quickActions.noteShort')} color="accent" onPress={() => router.push('/(app)/notes/new' as never)} />
+            <QuickAction icon={Flame} label={t('quickActions.habitShort')} color="success" onPress={() => router.push('/(app)/(tabs)/habits')} />
+            <QuickAction icon={LayoutGrid} label={t('quickActions.goalShort')} color="accent" onPress={() => router.push('/(app)/(tabs)/goals')} />
           </View>
+        </Animated.View>
+
+        {/* Proactive suggestions */}
+        <Animated.View entering={FadeInDown.delay(175).duration(400)} className="mt-6">
+          <ProactiveSuggestionsCard />
         </Animated.View>
 
         {/* AI Briefing */}
@@ -216,7 +227,6 @@ export default function DashboardScreen() {
 
       {/* Sheets */}
       <TaskFormSheet isOpen={showTaskForm} onClose={() => setShowTaskForm(false)} />
-      <TransactionFormSheet isOpen={showTransactionForm} onClose={() => setShowTransactionForm(false)} />
       <TaskEditSheet task={editingTask} isOpen={!!editingTask} onClose={() => setEditingTask(null)} />
       <TaskTimerSheet task={timerTask} isOpen={!!timerTask} onClose={() => setTimerTask(null)} />
     </SafeAreaView>

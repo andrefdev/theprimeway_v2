@@ -13,13 +13,27 @@ import { QueryProvider } from '@/shared/providers/QueryProvider';
 import { AuthProvider } from '@/shared/providers/AuthProvider';
 import { useAuthStore } from '@/shared/stores/authStore';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
-import { registerForPushNotifications } from '@/features/notifications/pushNotifications';
+import { OfflineBanner } from '@/shared/components/ui/offline-banner';
+import {
+  registerForPushNotifications,
+  addNotificationResponseListener,
+} from '@/features/notifications/pushNotifications';
 import { setupTimerChannel } from '@/features/notifications/timerNotifications';
 import { setupReminderChannel } from '@/features/notifications/reminderNotifications';
+import { restoreMorningBriefing } from '@/features/notifications/morningBriefing';
+import { pruneOldQuotas } from '@/features/notifications/antifatigue';
+import { pruneOldDismissed } from '@/features/ai/services/proactiveSuggestions';
+import { registerMutationDefaults } from '@/shared/offline/mutationDefaults';
+import { routeFromNotification } from '@/features/notifications/notificationRouter';
+import * as Notifications from 'expo-notifications';
 
 export { ErrorBoundary } from 'expo-router';
 
 SplashScreen.preventAutoHideAsync();
+
+// Register mutation defaults synchronously before the tree mounts so that
+// paused mutations hydrated from AsyncStorage can be resumed.
+registerMutationDefaults();
 
 export default function RootLayout() {
   const { colorScheme } = useColorScheme();
@@ -36,6 +50,16 @@ export default function RootLayout() {
     setupTimerChannel();
     setupReminderChannel();
     registerForPushNotifications();
+    restoreMorningBriefing();
+    pruneOldQuotas();
+    pruneOldDismissed();
+
+    Notifications.getLastNotificationResponseAsync().then((resp) => {
+      if (resp) routeFromNotification(resp);
+    });
+
+    const sub = addNotificationResponseListener(routeFromNotification);
+    return () => sub.remove();
   }, []);
 
   return (
@@ -51,6 +75,7 @@ export default function RootLayout() {
                 <Stack.Screen name="(app)" />
               </Stack>
               <PortalHost />
+              <OfflineBanner />
             </BottomSheetModalProvider>
           </AuthProvider>
         </QueryProvider>

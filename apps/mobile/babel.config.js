@@ -17,6 +17,7 @@ module.exports = function (api) {
             '@ui': './src/shared/components/ui',
             '@features': './src/features',
             '@shared': './src/shared',
+            '@repo/shared': './src/shared/repo-shared',
             '@assets': './assets',
 
             'tailwind.config': './tailwind.config.js',

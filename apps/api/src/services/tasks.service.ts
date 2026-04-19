@@ -131,21 +131,19 @@ class TasksService {
     // Auto-archive past incomplete tasks
     await tasksRepository.archivePastTasks(userId, referenceDate)
 
-    // Fetch open tasks and archive
-    const [openTasks, archivedTasks] = await Promise.all([
-      tasksRepository.findMany(userId, { status: 'open', archivedAt: null }),
+    // Fetch all non-archived tasks (open + completed) and archive
+    const [activeTasks, archivedTasks] = await Promise.all([
+      tasksRepository.findMany(userId, { archivedAt: null }),
       tasksRepository.findArchivedTasks(userId),
     ])
 
     // Group by scheduled date
     const groupMap = new Map<string, TaskModel[]>()
 
-    for (const task of openTasks) {
+    for (const task of activeTasks) {
       const dateKey = task.scheduledDate
         ? task.scheduledDate.toISOString().split('T')[0]!
         : 'no-date'
-
-      console.log('📊 Task grouping - taskId:', task.id, 'scheduledDate:', task.scheduledDate, 'dateKey:', dateKey)
 
       if (!groupMap.has(dateKey)) groupMap.set(dateKey, [])
       groupMap.get(dateKey)!.push(task)
@@ -684,16 +682,18 @@ Provide a realistic estimate in minutes.
       .map((g) => `- ${g.title}${g.description ? ` (${g.description})` : ''}`)
       .join('\n')
 
-    const result = await generateObject({
-      model: taskModel,
-      schema: z.object({
-        contextBrief: z.string().describe('Brief context about the task'),
-        suggestedSubtasks: z.array(z.string()).describe('3-5 suggested subtasks'),
-        tips: z.array(z.string()).describe('2-3 practical tips for completing this task'),
-        suggestedGoalId: z.string().optional().describe('If task belongs to a weekly goal, provide its ID'),
-        suggestedGoalTitle: z.string().optional().describe('If task belongs to a weekly goal, provide its title'),
-      }),
-      prompt: `
+    let result
+    try {
+      result = await generateObject({
+        model: taskModel,
+        schema: z.object({
+          contextBrief: z.string().describe('Brief context about the task'),
+          suggestedSubtasks: z.array(z.string()).describe('3-5 suggested subtasks'),
+          tips: z.array(z.string()).describe('2-3 practical tips for completing this task'),
+          suggestedGoalId: z.string().optional().describe('If task belongs to a weekly goal, provide its ID'),
+          suggestedGoalTitle: z.string().optional().describe('If task belongs to a weekly goal, provide its title'),
+        }),
+        prompt: `
 Analyze this task and provide insights:
 Title: ${task.title}
 ${task.description ? `Description: ${task.description}` : ''}
@@ -709,9 +709,12 @@ Provide:
 3. 2-3 practical tips
 4. If the task clearly belongs to one of the listed weekly goals, provide suggestedGoalId and suggestedGoalTitle. Otherwise omit these fields.
       `,
-    })
+      })
+    } catch (err) {
+      console.error('[TASK_INSIGHT]', err)
+      throw new Error(err instanceof Error ? err.message : 'AI insight generation failed')
+    }
 
-    // Cache the insight in the task
     if (taskId) {
       await tasksRepository.update(userId, taskId, {
         aiInsightJson: result.object,

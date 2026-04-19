@@ -6,8 +6,6 @@ import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import {
   Target,
-  BookOpen,
-  FileText,
   Bot,
   Calendar,
   Timer,
@@ -83,26 +81,19 @@ export default function MoreScreen() {
       bgClass: 'bg-warning/15',
     },
     {
-      icon: BookOpen,
-      label: t('reading'),
-      route: '/(app)/(tabs)/goals/reading',
-      iconClass: 'text-info',
-      bgClass: 'bg-info/15',
+      icon: CheckCircle2,
+      label: t('weeklyReview'),
+      route: '/(app)/weekly-review',
+      iconClass: 'text-success',
+      bgClass: 'bg-success/15',
     },
   ];
 
   const PRODUCTIVITY_ITEMS_T: HubItem[] = [
     {
-      icon: FileText,
-      label: t('notes'),
-      route: '/(app)/notes',
-      iconClass: 'text-success',
-      bgClass: 'bg-success/15',
-    },
-    {
       icon: Bot,
       label: t('aiChat'),
-      route: '/(app)/ai',
+      route: '/(app)/(tabs)/ai',
       iconClass: 'text-primary',
       bgClass: 'bg-primary/15',
     },

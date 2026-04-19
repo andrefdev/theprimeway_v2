@@ -39,12 +39,12 @@ export function ThreeYearGoalCard({ threeYearGoal, className }: ThreeYearGoalCar
   const averageProgress =
     annualGoalCount > 0
       ? Math.round(
-          threeYearGoal.annualGoals.reduce((sum, o) => sum + (o.progress ?? 0), 0) / annualGoalCount
+          (threeYearGoal.annualGoals ?? []).reduce((sum, o) => sum + (o.progress ?? 0), 0) / annualGoalCount
         )
       : 0;
 
   const handlePress = () => {
-    router.push(`/(app)/(tabs)/goals/three-year/${threeYearGoal.id}`);
+    router.push(`/(app)/(tabs)/goals/three-year/${threeYearGoal.id}` as any);
   };
 
   return (

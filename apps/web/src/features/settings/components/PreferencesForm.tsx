@@ -1,3 +1,4 @@
+import { useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Card, CardContent } from '@/shared/components/ui/card'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/shared/components/ui/select'
@@ -8,6 +9,7 @@ import { toast } from 'sonner'
 import { useTheme } from '@/shared/providers/theme-provider'
 import { useUpdateSettings } from '../queries'
 import type { UserSettings } from '../api'
+import { getAllTimezones, getBrowserTimezone } from '@/shared/lib/timezone'
 
 interface PreferencesFormProps {
   settings: UserSettings | null
@@ -39,26 +41,19 @@ const CURRENCY_OPTIONS = [
   { value: 'PEN', label: 'PEN (S/)' },
 ]
 
-const TIMEZONE_OPTIONS = [
-  { value: 'America/New_York', label: 'Eastern (US)' },
-  { value: 'America/Chicago', label: 'Central (US)' },
-  { value: 'America/Denver', label: 'Mountain (US)' },
-  { value: 'America/Los_Angeles', label: 'Pacific (US)' },
-  { value: 'America/Bogota', label: 'Colombia' },
-  { value: 'America/Mexico_City', label: 'Mexico City' },
-  { value: 'America/Lima', label: 'Lima' },
-  { value: 'America/Santiago', label: 'Santiago' },
-  { value: 'America/Buenos_Aires', label: 'Buenos Aires' },
-  { value: 'America/Sao_Paulo', label: 'São Paulo' },
-  { value: 'Europe/London', label: 'London' },
-  { value: 'Europe/Madrid', label: 'Madrid' },
-]
-
 export function PreferencesForm({ settings, saving, onSettingsChange }: PreferencesFormProps) {
   const { t } = useTranslation('settings')
   const { i18n } = useTranslation()
   const { setTheme } = useTheme()
   const updateSettings = useUpdateSettings()
+  const timezones = useMemo(() => getAllTimezones(), [])
+  const browserTz = useMemo(() => getBrowserTimezone(), [])
+
+  useEffect(() => {
+    if (settings && !settings.timezone) {
+      onSettingsChange('timezone', browserTz)
+    }
+  }, [settings, browserTz, onSettingsChange])
 
   async function handleSave() {
     if (!settings) return
@@ -124,14 +119,17 @@ export function PreferencesForm({ settings, saving, onSettingsChange }: Preferen
 
             <div className="space-y-1.5">
               <Label>{t('timezone')}</Label>
-              <Select value={settings.timezone} onValueChange={(v) => onSettingsChange('timezone', v)}>
+              <Select
+                value={settings.timezone || browserTz}
+                onValueChange={(v) => onSettingsChange('timezone', v)}
+              >
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
-                  {TIMEZONE_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
+                <SelectContent className="max-h-[300px]">
+                  {timezones.map((tz) => (
+                    <SelectItem key={tz} value={tz}>
+                      {tz.replace(/_/g, ' ')}
                     </SelectItem>
                   ))}
                 </SelectContent>

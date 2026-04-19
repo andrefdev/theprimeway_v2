@@ -1,16 +1,32 @@
-import { View, Pressable, ScrollView } from 'react-native';
+import { View, Pressable, ScrollView, ActivityIndicator } from 'react-native';
 import { Text } from '@/shared/components/ui/text';
 import { Icon } from '@/shared/components/ui/icon';
 import { Card, CardContent } from '@/shared/components/ui/card';
-import { PillTabs } from '@/shared/components/ui/pill-tabs';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, RefreshCw, Link2 } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PageHeader } from '@features/personalization/components/PageHeader';
-import { useState } from 'react';
-import { format, addMonths, subMonths, startOfMonth, getDaysInMonth, getDay } from 'date-fns';
+import { useState, useMemo } from 'react';
+import {
+  format,
+  addMonths,
+  subMonths,
+  startOfMonth,
+  getDaysInMonth,
+  getDay,
+  startOfDay,
+  endOfDay,
+  isSameDay,
+  parseISO,
+} from 'date-fns';
 import { cn } from '@/shared/utils/cn';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import {
+  useCalendarAccounts,
+  useCalendarEvents,
+  useSyncCalendar,
+} from '@features/calendar/hooks/useCalendar';
+import { useGoogleCalendarOAuth } from '@features/calendar/hooks/useGoogleCalendarOAuth';
 
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
@@ -18,12 +34,43 @@ export default function CalendarScreen() {
   const { t } = useTranslation('features.calendar');
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [view, setView] = useState('month');
+
+  const { data: accounts } = useCalendarAccounts();
+  const hasConnected = (accounts ?? []).some((a) => a.isConnected);
+
+  const monthRange = useMemo(
+    () => ({
+      start: startOfMonth(currentMonth).toISOString(),
+      end: endOfDay(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0)).toISOString(),
+    }),
+    [currentMonth]
+  );
+
+  const { data: events, isLoading: eventsLoading } = useCalendarEvents(
+    hasConnected ? monthRange : undefined
+  );
+  const sync = useSyncCalendar();
+  const oauth = useGoogleCalendarOAuth();
 
   const daysInMonth = getDaysInMonth(currentMonth);
   const firstDayOfMonth = getDay(startOfMonth(currentMonth));
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
   const emptySlots = Array.from({ length: firstDayOfMonth }, (_, i) => i);
+
+  const eventsByDay = useMemo(() => {
+    const map = new Map<number, number>();
+    (events ?? []).forEach((e) => {
+      const d = parseISO(e.startDate);
+      if (d.getMonth() === currentMonth.getMonth() && d.getFullYear() === currentMonth.getFullYear()) {
+        map.set(d.getDate(), (map.get(d.getDate()) ?? 0) + 1);
+      }
+    });
+    return map;
+  }, [events, currentMonth]);
+
+  const selectedDayEvents = useMemo(() => {
+    return (events ?? []).filter((e) => isSameDay(parseISO(e.startDate), selectedDate));
+  }, [events, selectedDate]);
 
   const isToday = (day: number) => {
     const today = new Date();
@@ -34,19 +81,63 @@ export default function CalendarScreen() {
     );
   };
 
-  const isSelected = (day: number) => {
-    return (
-      day === selectedDate.getDate() &&
-      currentMonth.getMonth() === selectedDate.getMonth() &&
-      currentMonth.getFullYear() === selectedDate.getFullYear()
-    );
-  };
+  const isSelected = (day: number) =>
+    day === selectedDate.getDate() &&
+    currentMonth.getMonth() === selectedDate.getMonth() &&
+    currentMonth.getFullYear() === selectedDate.getFullYear();
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>
       <PageHeader sectionId="calendar" title={t('title')} />
 
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+        {/* Connection banner */}
+        {!hasConnected && (
+          <View className="mx-4 mt-3">
+            <Card>
+              <CardContent className="gap-3 p-4">
+                <View className="flex-row items-center gap-2">
+                  <Icon as={Link2} size={16} className="text-primary" />
+                  <Text className="text-sm font-semibold text-foreground">
+                    Connect Google Calendar
+                  </Text>
+                </View>
+                <Text className="text-xs text-muted-foreground">
+                  Sync your events and see them here.
+                </Text>
+                {oauth.error && (
+                  <Text className="text-xs text-destructive">{oauth.error}</Text>
+                )}
+                <Pressable
+                  onPress={() => oauth.connectAccount()}
+                  disabled={oauth.isConnecting}
+                  className="self-start rounded-md bg-primary px-4 py-2 active:opacity-80"
+                >
+                  <Text className="text-sm font-medium text-primary-foreground">
+                    {oauth.isConnecting ? 'Connecting...' : 'Connect'}
+                  </Text>
+                </Pressable>
+              </CardContent>
+            </Card>
+          </View>
+        )}
+
+        {/* Sync button */}
+        {hasConnected && (
+          <View className="flex-row items-center justify-end px-4 pt-2">
+            <Pressable
+              onPress={() => sync.mutate()}
+              disabled={sync.isPending}
+              className="flex-row items-center gap-1.5 rounded-md bg-muted px-3 py-1.5 active:opacity-80"
+            >
+              <Icon as={RefreshCw} size={12} className="text-foreground" />
+              <Text className="text-xs font-medium text-foreground">
+                {sync.isPending ? 'Syncing...' : 'Sync'}
+              </Text>
+            </Pressable>
+          </View>
+        )}
+
         {/* Month Navigation */}
         <View className="flex-row items-center justify-between px-4 py-3">
           <Pressable
@@ -80,59 +171,101 @@ export default function CalendarScreen() {
           {emptySlots.map((_, i) => (
             <View key={`empty-${i}`} className="h-11 w-[14.28%]" />
           ))}
-          {days.map((day) => (
-            <Pressable
-              key={day}
-              className="h-11 w-[14.28%] items-center justify-center"
-              onPress={() =>
-                setSelectedDate(
-                  new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day)
-                )
-              }
-            >
-              <View
-                className={cn(
-                  'h-9 w-9 items-center justify-center rounded-full',
-                  isToday(day) && !isSelected(day) && 'border border-primary',
-                  isSelected(day) && 'bg-primary'
-                )}
+          {days.map((day) => {
+            const count = eventsByDay.get(day) ?? 0;
+            return (
+              <Pressable
+                key={day}
+                className="h-11 w-[14.28%] items-center justify-center"
+                onPress={() =>
+                  setSelectedDate(
+                    new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day)
+                  )
+                }
               >
-                <Text
+                <View
                   className={cn(
-                    'text-sm',
-                    isSelected(day)
-                      ? 'font-bold text-primary-foreground'
-                      : isToday(day)
-                        ? 'font-bold text-primary'
-                        : 'text-foreground'
+                    'h-9 w-9 items-center justify-center rounded-full',
+                    isToday(day) && !isSelected(day) && 'border border-primary',
+                    isSelected(day) && 'bg-primary'
                   )}
                 >
-                  {day}
-                </Text>
-              </View>
-            </Pressable>
-          ))}
+                  <Text
+                    className={cn(
+                      'text-sm',
+                      isSelected(day)
+                        ? 'font-bold text-primary-foreground'
+                        : isToday(day)
+                          ? 'font-bold text-primary'
+                          : 'text-foreground'
+                    )}
+                  >
+                    {day}
+                  </Text>
+                </View>
+                {count > 0 && (
+                  <View className="mt-0.5 h-1 w-1 rounded-full bg-primary" />
+                )}
+              </Pressable>
+            );
+          })}
         </View>
 
         {/* Selected Date Events */}
-        <Animated.View entering={FadeInDown.duration(300)} className="mt-4 px-4">
+        <Animated.View entering={FadeInDown.duration(300)} className="mt-4 px-4 pb-8">
           <Text className="mb-3 text-lg font-bold text-foreground">
             {format(selectedDate, 'EEEE, MMMM d')}
           </Text>
 
-          <Card>
-            <CardContent className="items-center py-8">
-              <View className="h-12 w-12 items-center justify-center rounded-full bg-muted">
-                <Icon as={CalendarIcon} size={20} className="text-muted-foreground" />
-              </View>
-              <Text className="mt-3 text-sm font-medium text-muted-foreground">
-                {t('events.noEvents')}
-              </Text>
-              <Text className="mt-1 text-xs text-muted-foreground">
-                Connect Google Calendar to see events
-              </Text>
-            </CardContent>
-          </Card>
+          {eventsLoading ? (
+            <Card>
+              <CardContent className="items-center py-8">
+                <ActivityIndicator size="small" />
+              </CardContent>
+            </Card>
+          ) : selectedDayEvents.length === 0 ? (
+            <Card>
+              <CardContent className="items-center py-8">
+                <View className="h-12 w-12 items-center justify-center rounded-full bg-muted">
+                  <Icon as={CalendarIcon} size={20} className="text-muted-foreground" />
+                </View>
+                <Text className="mt-3 text-sm font-medium text-muted-foreground">
+                  {t('events.noEvents')}
+                </Text>
+              </CardContent>
+            </Card>
+          ) : (
+            <View className="gap-2">
+              {selectedDayEvents.map((ev) => (
+                <Card key={ev.id}>
+                  <CardContent className="flex-row items-start gap-3 p-3">
+                    <View
+                      className="mt-1 h-3 w-3 rounded-full"
+                      style={{ backgroundColor: ev.color ?? '#6366f1' }}
+                    />
+                    <View className="flex-1">
+                      <Text className="text-sm font-semibold text-foreground">
+                        {ev.title}
+                      </Text>
+                      <Text className="text-xs text-muted-foreground">
+                        {ev.isAllDay
+                          ? 'All day'
+                          : `${format(parseISO(ev.startDate), 'HH:mm')} – ${format(parseISO(ev.endDate), 'HH:mm')}`}
+                      </Text>
+                      {ev.description ? (
+                        <Text
+                          className="mt-1 text-xs text-muted-foreground"
+                          numberOfLines={2}
+                        >
+                          {ev.description}
+                        </Text>
+                      ) : null}
+                    </View>
+                  </CardContent>
+                </Card>
+              ))}
+            </View>
+          )}
         </Animated.View>
       </ScrollView>
     </SafeAreaView>

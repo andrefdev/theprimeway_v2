@@ -95,7 +95,7 @@ export default function AnnualGoalDetailScreen() {
 
   const renderQuarterlyGoal = ({ item }: { item: QuarterlyGoal }) => (
     <Pressable
-      onPress={() => router.push(`/(app)/(tabs)/goals/quarterly/${item.id}`)}
+      onPress={() => router.push(`/(app)/(tabs)/goals/quarterly/${item.id}` as any)}
       className="mb-3 rounded-xl border border-border bg-card p-4 active:opacity-80"
     >
       <View className="flex-row items-center justify-between">

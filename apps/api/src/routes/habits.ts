@@ -672,7 +672,9 @@ habitRoutes.openapi(analyzeHabitRoute, async (c) => {
     return c.json({ data: analysis }, 200)
   } catch (error) {
     console.error('[HABIT_ANALYZE]', error)
-    return c.json({ error: 'Internal Error' }, 500)
+    const message = error instanceof Error ? error.message : 'Internal Error'
+    const body = process.env.NODE_ENV !== 'production' ? { error: message } : { error: 'Internal Error' }
+    return c.json(body, 500)
   }
 })
 

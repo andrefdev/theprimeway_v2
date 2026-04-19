@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@shared/api/queryKeys';
 import { tasksService } from '../services/tasksService';
 import { scheduleTaskReminder, cancelTaskReminder } from '@/features/notifications/reminderNotifications';
+import { taskToContext } from '@/features/notifications/taskReminderContext';
 import type { Task } from '@shared/types/models';
 import type { GetTasksParams, TaskFormData } from '../types';
 
@@ -40,6 +41,7 @@ export function useCreateTask() {
   const queryClient = useQueryClient();
 
   return useMutation({
+    mutationKey: ['tasks', 'create'],
     mutationFn: (data: TaskFormData) => tasksService.createTask(data),
     onMutate: async (newTaskData) => {
       // Cancel outgoing refetches
@@ -88,7 +90,7 @@ export function useCreateTask() {
       queryClient.invalidateQueries({ queryKey: queryKeys.tasks.grouped });
 
       if (task?.dueDate) {
-        scheduleTaskReminder(task.id, task.title, task.dueDate, task.scheduledStart);
+        scheduleTaskReminder(task.id, task.title, task.dueDate, task.scheduledStart, taskToContext(task));
       }
     },
   });
@@ -98,6 +100,7 @@ export function useUpdateTask() {
   const queryClient = useQueryClient();
 
   return useMutation({
+    mutationKey: ['tasks', 'update'],
     mutationFn: ({ id, data }: { id: string; data: Partial<TaskFormData> & { status?: string } }) =>
       tasksService.updateTask(id, data),
     onMutate: async ({ id, data }) => {
@@ -154,7 +157,7 @@ export function useUpdateTask() {
       queryClient.invalidateQueries({ queryKey: queryKeys.tasks.byId(variables.id) });
 
       if (task?.dueDate) {
-        scheduleTaskReminder(task.id, task.title, task.dueDate, task.scheduledStart);
+        scheduleTaskReminder(task.id, task.title, task.dueDate, task.scheduledStart, taskToContext(task));
       } else if (variables.data.status === 'completed') {
         cancelTaskReminder(variables.id);
       }
@@ -166,6 +169,7 @@ export function useDeleteTask() {
   const queryClient = useQueryClient();
 
   return useMutation({
+    mutationKey: ['tasks', 'delete'],
     mutationFn: (id: string) => tasksService.deleteTask(id),
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: queryKeys.tasks.all });

@@ -554,7 +554,7 @@ Rules:
     }
   }
 
-  async getChallenges(userId: string, date: string, locale: string) {
+  async getChallenges(userId: string, date: string, _locale: string) {
     let challenges = await gamificationRepo.findDailyChallenges(userId, date)
 
     if (challenges.length === 0) {
@@ -567,8 +567,10 @@ Rules:
       userId: ch.userId,
       date: ch.date,
       type: ch.type,
-      title: locale === 'es' ? ch.titleEs : ch.titleEn,
-      description: locale === 'es' ? ch.descEs : ch.descEn,
+      titleEn: ch.titleEn,
+      titleEs: ch.titleEs,
+      descriptionEn: ch.descEn,
+      descriptionEs: ch.descEs,
       xpReward: ch.xpReward,
       targetValue: ch.targetValue,
       currentValue: ch.currentValue,

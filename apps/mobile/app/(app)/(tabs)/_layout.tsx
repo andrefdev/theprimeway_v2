@@ -5,8 +5,8 @@ import {
   House,
   CheckSquare,
   Flame,
-  Wallet,
   LayoutGrid,
+  Sparkles,
 } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import { THEME } from '../../../lib/theme';
@@ -22,8 +22,8 @@ const TAB_ICONS: Record<string, LucideIcon> = {
   index: House,
   tasks: CheckSquare,
   habits: Flame,
-  finances: Wallet,
   goals: LayoutGrid,
+  ai: Sparkles,
 };
 
 function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
@@ -101,8 +101,8 @@ export default function TabLayout() {
       <Tabs.Screen name="index" options={{ title: t('home') }} />
       <Tabs.Screen name="tasks" options={{ title: t('tasks') }} />
       <Tabs.Screen name="habits" options={{ title: t('habits') }} />
-      <Tabs.Screen name="finances" options={{ title: t('finances'), popToTopOnBlur: true }} />
-      <Tabs.Screen name="goals" options={{ title: t('more'), popToTopOnBlur: true }} />
+      <Tabs.Screen name="goals" options={{ title: t('goals'), popToTopOnBlur: true }} />
+      <Tabs.Screen name="ai" options={{ title: t('ai') }} />
     </Tabs>
   );
 }

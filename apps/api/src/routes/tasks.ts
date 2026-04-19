@@ -692,7 +692,12 @@ taskRoutes.openapi(insightRoute, (async (c: any) => {
     const result = await tasksService.getTaskInsight(userId, taskId)
     return c.json(result, 200)
   } catch (err) {
-    return c.json({ error: 'Failed to generate insights' }, 400)
+    console.error('[TASK_INSIGHT_ROUTE]', err)
+    const message = err instanceof Error ? err.message : 'Failed to generate insights'
+    const body = process.env.NODE_ENV !== 'production'
+      ? { error: 'ai_unavailable', message }
+      : { error: 'ai_unavailable' }
+    return c.json(body, 400)
   }
 }) as any)
 

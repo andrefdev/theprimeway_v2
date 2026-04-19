@@ -21,26 +21,6 @@ export const queryKeys = {
     healthSnapshots: ['goals', 'health-snapshots'],
     focusLinks: (focusId: string) => ['goals', 'focus-links', focusId],
   },
-  finances: {
-    accounts: ['finances', 'accounts'],
-    transactions: ['finances', 'transactions'],
-    budgets: ['finances', 'budgets'],
-    debts: ['finances', 'debts'],
-    savings: ['finances', 'savings-goals'],
-    income: ['finances', 'income-sources'],
-    stats: ['finances', 'stats'],
-    recurringExpenses: ['finances', 'recurring-expenses'],
-    investments: ['finances', 'investments'],
-    investmentsSummary: ['finances', 'investments', 'summary'],
-    pendingTransactions: ['finances', 'transactions', 'pending'],
-    incomeEstimates: ['finances', 'income-estimates'],
-    netWorth: ['finances', 'net-worth'],
-  },
-  notes: {
-    all: ['notes'],
-    categories: ['notes', 'categories'],
-    byId: (id: string) => ['notes', id],
-  },
   pomodoro: {
     sessions: ['pomodoro', 'sessions'],
     stats: ['pomodoro', 'stats'],
@@ -63,5 +43,11 @@ export const queryKeys = {
   },
   features: {
     resolved: ['features', 'resolved'],
+  },
+  gamification: {
+    profile: ['gamification', 'profile'],
+    streak: ['gamification', 'streak'],
+    achievements: ['gamification', 'achievements'],
+    challenges: (date?: string) => (date ? ['gamification', 'challenges', date] : ['gamification', 'challenges']),
   },
 };

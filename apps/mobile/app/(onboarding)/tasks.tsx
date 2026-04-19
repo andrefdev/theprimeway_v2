@@ -124,14 +124,14 @@ export default function TasksScreen() {
       <View className="flex-row items-center justify-between border-t border-border px-6 pb-6 pt-4">
         <Button
           variant="ghost"
-          onPress={() => router.push('/(onboarding)/finances')}
+          onPress={() => router.replace('/(app)/(tabs)')}
         >
           <Text className="text-sm text-muted-foreground">{tOnboarding('buttons.skip')}</Text>
         </Button>
 
         <Button
           size="lg"
-          onPress={() => router.push('/(onboarding)/finances')}
+          onPress={() => router.replace('/(app)/(tabs)')}
           disabled={taskName.trim().length === 0}
           className="min-w-[140px]"
         >

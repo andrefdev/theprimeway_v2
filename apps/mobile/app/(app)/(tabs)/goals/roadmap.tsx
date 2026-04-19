@@ -160,15 +160,17 @@ function RoadmapTab({
     (threeYearGoals ?? []).map((g: any) => [g.area, g])
   );
 
-  const pillarGrid: ThreeYearGoal[] = PILLARS.map(
-    (config) =>
-      goalsByArea.get(config.area) ?? {
-        id: `stub-${config.area}`,
-        area: config.area,
-        title: t(`areas.${config.area}`),
-        annualGoals: [],
-      }
-  );
+  const pillarGrid: ThreeYearGoal[] = PILLARS.map((config) => {
+    const existing = goalsByArea.get(config.area);
+    if (existing) return existing as ThreeYearGoal;
+    return {
+      id: `stub-${config.area}`,
+      area: config.area,
+      title: t(`areas.${config.area}`),
+      annualGoals: [],
+      outcomes: [],
+    } as ThreeYearGoal;
+  });
 
   return (
     <ScrollView
@@ -587,7 +589,7 @@ function ScoreCard({
         className="mb-2 h-9 w-9 items-center justify-center rounded-full"
         style={{ backgroundColor: color + '20' }}
       >
-        <Icon as={icon} size={16} style={{ color }} />
+        <Icon as={icon} size={16} color={color} />
       </View>
       <Text className="text-xl font-bold text-foreground">{score}</Text>
       <Text className="mt-0.5 text-center text-2xs text-muted-foreground">{label}</Text>

@@ -21,11 +21,18 @@
         "applinks:theprimeway.com",
         "applinks:app.theprimeway.app"
       ],
+      "entitlements": {
+        "com.apple.security.application-groups": [
+          "group.com.indrox.theprimeway"
+        ]
+      },
       "infoPlist": {
         "NSCalendarsUsageDescription": "To sync your tasks with your calendar",
         "NSCameraUsageDescription": "To add photos to your receipts and profile",
         "NSPhotoLibraryUsageDescription": "To upload profile pictures and receipts",
         "NSFaceIDUsageDescription": "To authenticate securely",
+        "NSMicrophoneUsageDescription": "To capture voice input for AI chat and task creation",
+        "NSSpeechRecognitionUsageDescription": "To transcribe your speech to text",
         "ITSAppUsesNonExemptEncryption": false
       },
       "config": {
@@ -95,9 +102,19 @@
         }
       ],
       "expo-calendar",
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "To capture voice input for AI chat and task creation",
+          "speechRecognitionPermission": "To transcribe your speech to text",
+          "androidSpeechServicePackages": ["com.google.android.googlequicksearchbox"]
+        }
+      ],
       "expo-localization",
       "expo-web-browser",
       "@react-native-google-signin/google-signin",
+      "@bacons/apple-targets",
+      "./plugins/with-android-widget.js",
       [
         "expo-build-properties",
         {
