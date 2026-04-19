@@ -513,25 +513,6 @@ model Task {
 }
 
 
-model Goal {
-  id            String    @id @default(uuid())
-  userId        String?   @map("user_id")
-  user          User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  title         String
-  description   String?
-  deadline      DateTime?
-  progress      Int?      @default(0)
-  type          String    @default("short-term")
-  status        String    @default("in-progress")
-  relatedTasks  Json?
-  createdAt     DateTime? @default(now()) @map("created_at")
-  updatedAt     DateTime? @default(now()) @map("updated_at")
-
-  @@index([userId])
-  @@index([userId, status])
-  @@map("goals")
-}
-
 model HealthMetric {
   id           String    @id @default(uuid())
   userId       String?   @map("user_id")
@@ -687,7 +668,6 @@ model User {
   pomodoroDailyStats    PomodoroDailyStat[]
   pomodoroSessions      PomodoroSession[]
   tasks                 Task[]
-  goals                 Goal[]
   weeklyGoals           WeeklyGoal[]
   calendarAccounts      CalendarAccount[]
 

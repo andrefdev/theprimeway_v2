@@ -5,20 +5,6 @@ import { CACHE_TIMES } from '@repo/shared/constants'
 export const goalsQueries = {
   all: () => ['goals'] as const,
 
-  list: (params?: Record<string, string>) =>
-    queryOptions({
-      queryKey: [...goalsQueries.all(), 'list', params],
-      queryFn: () => goalsApi.list(params),
-      staleTime: CACHE_TIMES.standard,
-    }),
-
-  detail: (id: string) =>
-    queryOptions({
-      queryKey: [...goalsQueries.all(), 'detail', id],
-      queryFn: () => goalsApi.get(id),
-      staleTime: CACHE_TIMES.standard,
-    }),
-
   tree: (params?: Record<string, string>) =>
     queryOptions({
       queryKey: [...goalsQueries.all(), 'tree', params],
@@ -110,13 +96,10 @@ export const goalsQueries = {
 }
 
 export function useGoalDetail(goalId: string) {
-  const detailQuery = useQuery(goalsQueries.detail(goalId))
-
-  // Fallback: scan hierarchy lists when flat /goals/:id returns 404
-  const visionsQuery = useQuery({ ...goalsQueries.visions(), enabled: detailQuery.isError })
-  const threeYearQuery = useQuery({ ...goalsQueries.threeYearGoals(), enabled: detailQuery.isError })
-  const annualQuery = useQuery({ ...goalsQueries.annualGoals(), enabled: detailQuery.isError })
-  const quarterlyQuery = useQuery({ ...goalsQueries.quarterlyGoals(), enabled: detailQuery.isError })
+  const visionsQuery = useQuery(goalsQueries.visions())
+  const threeYearQuery = useQuery(goalsQueries.threeYearGoals())
+  const annualQuery = useQuery(goalsQueries.annualGoals())
+  const quarterlyQuery = useQuery(goalsQueries.quarterlyGoals())
 
   const toArray = (d: unknown) => (Array.isArray(d) ? d : (d as any)?.data ?? [])
 
@@ -125,53 +108,26 @@ export function useGoalDetail(goalId: string) {
   const quarterlyGoal = toArray(quarterlyQuery.data).find((g: any) => g.id === goalId)
   const vision = toArray(visionsQuery.data).find((g: any) => g.id === goalId)
 
-  const data = detailQuery.data || threeYearGoal || annualGoal || quarterlyGoal || vision || null
-  const goalType = detailQuery.data
-    ? 'goal'
-    : threeYearGoal
-      ? 'three-year'
-      : annualGoal
-        ? 'annual'
-        : quarterlyGoal
-          ? 'quarterly'
-          : vision
-            ? 'vision'
-            : undefined
+  const data = threeYearGoal || annualGoal || quarterlyGoal || vision || null
+  const goalType = threeYearGoal
+    ? 'three-year'
+    : annualGoal
+      ? 'annual'
+      : quarterlyGoal
+        ? 'quarterly'
+        : vision
+          ? 'vision'
+          : undefined
 
-  const fallbackLoading = detailQuery.isError &&
-    (visionsQuery.isLoading || threeYearQuery.isLoading || annualQuery.isLoading || quarterlyQuery.isLoading)
+  const isLoading =
+    visionsQuery.isLoading || threeYearQuery.isLoading || annualQuery.isLoading || quarterlyQuery.isLoading
 
   return {
     data,
-    goalType: goalType as 'goal' | 'three-year' | 'annual' | 'quarterly' | 'vision' | undefined,
-    isLoading: detailQuery.isLoading || fallbackLoading,
-    isError: detailQuery.isError && !data,
+    goalType: goalType as 'three-year' | 'annual' | 'quarterly' | 'vision' | undefined,
+    isLoading,
+    isError: !isLoading && !data,
   }
-}
-
-export function useCreateGoal() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: goalsApi.create,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: goalsQueries.all() }),
-  })
-}
-
-export function useUpdateGoal() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Parameters<typeof goalsApi.update>[1] }) =>
-      goalsApi.update(id, data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: goalsQueries.all() }),
-  })
-}
-
-export function useDeleteGoal() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (id: string) => goalsApi.delete(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: goalsQueries.all() }),
-  })
 }
 
 export function useCreateVision() {

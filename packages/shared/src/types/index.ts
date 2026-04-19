@@ -5,7 +5,6 @@ export type { Task, TaskStatus, TaskPriority } from './task'
 export type { Habit, HabitLog, HabitStats } from './habit'
 export type { FinanceAccount, Transaction, Budget } from './finance'
 export type {
-  Goal,
   PrimeVision,
   ThreeYearGoal,
   PrimePillar,

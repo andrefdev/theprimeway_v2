@@ -1,15 +1,3 @@
-export interface Goal {
-  id: string
-  userId: string
-  title: string
-  description: string | null
-  status: string
-  progress: number
-  deadline: string | null
-  createdAt: string
-  updatedAt: string
-}
-
 export interface PrimeVision {
   id: string
   userId: string

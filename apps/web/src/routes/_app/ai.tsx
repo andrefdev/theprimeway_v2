@@ -141,20 +141,40 @@ function AiPage() {
           break
         }
         case 'createGoal': {
-          const goal = await goalsApi.create({
-            title: args.title,
-            description: args.description,
-            deadline: args.deadline,
-            type: args.type,
-          })
-          result = { success: true, goal: { id: (goal as any).id, title: (goal as any).title } }
+          let goal: any
+          if (args.level === 'three-year') {
+            goal = await goalsApi.createThreeYearGoal({
+              visionId: args.visionId,
+              area: args.area || 'general',
+              title: args.title,
+              description: args.description,
+            })
+          } else if (args.level === 'annual') {
+            goal = await goalsApi.createAnnualGoal({
+              threeYearGoalId: args.threeYearGoalId,
+              title: args.title,
+              description: args.description,
+              targetDate: args.targetDate,
+            })
+          } else {
+            goal = await goalsApi.createQuarterlyGoal({
+              annualGoalId: args.annualGoalId,
+              year: args.year,
+              quarter: args.quarter,
+              title: args.title,
+              description: args.description,
+            })
+          }
+          result = { success: true, goal: { id: goal?.id, title: goal?.title ?? goal?.name, level: args.level } }
           qc.invalidateQueries({ queryKey: goalsQueries.all() })
           toast.success(t('goalCreated', { ns: 'goals', defaultValue: 'Goal created' }))
           break
         }
         case 'updateGoalProgress': {
-          const goal = await goalsApi.update(args.goalId, { progress: args.progress })
-          result = { success: true, goal: { id: (goal as any).id, progress: (goal as any).progress } }
+          const goal = args.level === 'quarterly'
+            ? await goalsApi.updateQuarterlyGoal(args.goalId, { progress: args.progress })
+            : await goalsApi.updateAnnualGoal(args.goalId, { progress: args.progress })
+          result = { success: true, goal: { id: (goal as any).id, progress: (goal as any).progress, level: args.level } }
           qc.invalidateQueries({ queryKey: goalsQueries.all() })
           toast.success(t('goalUpdated', { ns: 'goals', defaultValue: 'Goal updated' }))
           break

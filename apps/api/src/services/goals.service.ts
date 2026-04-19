@@ -9,8 +9,6 @@
 import { goalsRepository } from '../repositories/goals.repo'
 import { gamificationService } from './gamification.service'
 import { prisma } from '../lib/prisma'
-import { validateLimit } from '../lib/limits'
-import { FEATURES } from '@repo/shared/constants'
 import { generateObject } from 'ai'
 import { taskModel } from '../lib/ai-models'
 import { z } from 'zod'
@@ -20,67 +18,6 @@ import { z } from 'zod'
 // ═══════════════════════════════════════════════════════════════════════════════
 
 class GoalsService {
-  // ─── Goals (legacy) ─────────────────────────────────────────────────────────
-
-  async listGoals(userId: string, opts: {
-    status?: string; type?: string; search?: string; limit: number; offset: number
-  }) {
-    return goalsRepository.findManyGoals(userId, opts)
-  }
-
-  async getGoal(userId: string, id: string) {
-    return goalsRepository.findGoalById(userId, id)
-  }
-
-  async createGoal(userId: string, input: {
-    title: string; description?: string; deadline?: string;
-    progress?: number; type?: string; status?: string; relatedTasks?: string[]
-  }) {
-    // Check goal limit
-    const [subscription, usage] = await Promise.all([
-      prisma.userSubscription.findFirst({
-        where: { userId },
-        orderBy: { createdAt: 'desc' },
-        include: { plan: true },
-      }),
-      prisma.userUsageStat.findFirst({
-        where: { userId },
-      }),
-    ])
-
-    const plan = subscription?.plan
-    if (plan) {
-      validateLimit(FEATURES.GOALS_LIMIT, plan, usage?.currentGoals ?? 0)
-    }
-
-    return goalsRepository.createGoal(userId, {
-      title: input.title,
-      description: input.description,
-      deadline: input.deadline,
-      progress: input.progress ?? 0,
-      type: input.type ?? 'short-term',
-      status: input.status ?? 'in-progress',
-      relatedTasks: input.relatedTasks,
-    })
-  }
-
-  async updateGoal(userId: string, id: string, input: Record<string, unknown>) {
-    const data: Record<string, unknown> = {}
-    if (input.title !== undefined) data.title = input.title
-    if (input.description !== undefined) data.description = input.description
-    if (input.deadline !== undefined) data.deadline = input.deadline
-    if (input.progress !== undefined) data.progress = input.progress
-    if (input.type !== undefined) data.type = input.type
-    if (input.status !== undefined) data.status = input.status
-    if (input.relatedTasks !== undefined) data.relatedTasks = input.relatedTasks
-
-    return goalsRepository.updateGoal(userId, id, data)
-  }
-
-  async deleteGoal(userId: string, id: string) {
-    return goalsRepository.deleteGoal(userId, id)
-  }
-
   // ─── Visions ────────────────────────────────────────────────────────────────
 
   async listVisions(userId: string, opts: {
