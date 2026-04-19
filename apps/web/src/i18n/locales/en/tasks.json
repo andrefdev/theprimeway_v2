@@ -117,6 +117,12 @@
   "suggestedGoal": "Suggested Goal",
   "apply": "Apply",
   "noInsightsAvailable": "No insights available",
+  "insightsError": "AI insights unavailable. Try again in a moment.",
+  "retry": "Retry",
+  "startTime": "Start time",
+  "endTime": "End time",
+  "endMustBeAfterStart": "End must be after start",
+  "pickDateTime": "Pick date & time",
   "weeklyGoal": "Weekly Goal (optional)",
   "taskUpdated": "Task updated"
 }

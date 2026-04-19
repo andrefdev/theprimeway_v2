@@ -53,6 +53,7 @@ const ROUTE_LABELS: Record<string, string> = {
   'settings': 'navSettings',
   'profile': 'navProfile',
   'dashboard': 'navDashboard',
+  'ai': 'navAI',
 }
 
 interface BreadcrumbSegment {

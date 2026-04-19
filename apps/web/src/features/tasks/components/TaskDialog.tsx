@@ -26,6 +26,8 @@ import {
   SelectItem,
 } from '@/shared/components/ui/select'
 import { DatePicker } from '@/shared/components/ui/date-picker'
+import { DateTimePicker } from '@/shared/components/ui/date-time-picker'
+import { Switch } from '@/shared/components/ui/switch'
 import { toast } from 'sonner'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -62,9 +64,15 @@ export function TaskDialog({ open, onClose, task, defaultDate }: TaskDialogProps
   const [showScheduleResult, setShowScheduleResult] = useState<{ start: string; end: string } | null>(null)
   const isEdit = !!task
 
-  const { data: insight, isLoading: isInsightLoading } = useQuery({
+  const {
+    data: insight,
+    isLoading: isInsightLoading,
+    isError: isInsightError,
+    refetch: refetchInsight,
+  } = useQuery({
     ...tasksQueries.insight(task?.id || ''),
     enabled: isEdit && showInsights && !!task,
+    retry: false,
   })
 
   const { data: weeklyGoalsData = [] } = useQuery({
@@ -95,6 +103,7 @@ export function TaskDialog({ open, onClose, task, defaultDate }: TaskDialogProps
   useEffect(() => {
     if (!open) return
     if (task) {
+      const hasTimes = !!(task.scheduledStart && task.scheduledEnd)
       form.reset({
         title: task.title,
         description: task.description ?? '',
@@ -102,6 +111,7 @@ export function TaskDialog({ open, onClose, task, defaultDate }: TaskDialogProps
         scheduledDate: task.scheduledDate ?? undefined,
         scheduledStart: task.scheduledStart ?? undefined,
         scheduledEnd: task.scheduledEnd ?? undefined,
+        isAllDay: (task as any).isAllDay ?? !hasTimes,
         estimatedDuration: task.estimatedDuration ?? undefined,
         tags: task.tags ?? [],
         weeklyGoalId: (task as any).weeklyGoalId ?? undefined,
@@ -112,6 +122,7 @@ export function TaskDialog({ open, onClose, task, defaultDate }: TaskDialogProps
         description: '',
         priority: 'medium',
         scheduledDate: defaultDate,
+        isAllDay: true,
         estimatedDuration: undefined,
         tags: [],
       })
@@ -250,60 +261,129 @@ export function TaskDialog({ open, onClose, task, defaultDate }: TaskDialogProps
               </div>
             </div>
 
-            {/* Scheduled Date */}
+            {/* Scheduled Date / Time */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <Label>{t('scheduledDate')}</Label>
-                {isEdit && task && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={async () => {
-                      try {
-                        const result = await scheduleTask.mutateAsync({
-                          taskId: task.id,
-                          duration: form.watch('estimatedDuration'),
-                        })
-                        if (result.slot) {
-                          setShowScheduleResult(result.slot)
-                          const startDate = new Date(result.slot.start)
-                          const year = startDate.getFullYear()
-                          const month = String(startDate.getMonth() + 1).padStart(2, '0')
-                          const day = String(startDate.getDate()).padStart(2, '0')
-                          form.setValue('scheduledDate', `${year}-${month}-${day}`)
-                          form.setValue('scheduledStart', result.slot.start)
-                          form.setValue('scheduledEnd', result.slot.end)
-                          toast.success(t('foundOptimalSlot'))
-                        } else {
-                          toast.error(t('noSlotsFound'))
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1.5">
+                    <Switch
+                      id="isAllDay"
+                      checked={form.watch('isAllDay') ?? true}
+                      onCheckedChange={(v) => {
+                        form.setValue('isAllDay', v)
+                        if (v) {
+                          form.setValue('scheduledStart', undefined)
+                          form.setValue('scheduledEnd', undefined)
                         }
-                      } catch {
-                        toast.error(t('failedToFindSlot'))
-                      }
-                    }}
-                    disabled={scheduleTask.isPending}
-                    className="text-xs"
-                  >
-                    {scheduleTask.isPending ? t('common:loading', { defaultValue: 'Loading...' }) : t('findBestTime')}
-                  </Button>
-                )}
+                      }}
+                    />
+                    <Label htmlFor="isAllDay" className="text-xs text-muted-foreground cursor-pointer">
+                      {t('allDay')}
+                    </Label>
+                  </div>
+                  {isEdit && task && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={async () => {
+                        try {
+                          const result = await scheduleTask.mutateAsync({
+                            taskId: task.id,
+                            duration: form.watch('estimatedDuration'),
+                          })
+                          if (result.slot) {
+                            setShowScheduleResult(result.slot)
+                            const startDate = new Date(result.slot.start)
+                            const year = startDate.getFullYear()
+                            const month = String(startDate.getMonth() + 1).padStart(2, '0')
+                            const day = String(startDate.getDate()).padStart(2, '0')
+                            form.setValue('scheduledDate', `${year}-${month}-${day}`)
+                            form.setValue('scheduledStart', result.slot.start)
+                            form.setValue('scheduledEnd', result.slot.end)
+                            form.setValue('isAllDay', false)
+                            toast.success(t('foundOptimalSlot'))
+                          } else {
+                            toast.error(t('noSlotsFound'))
+                          }
+                        } catch {
+                          toast.error(t('failedToFindSlot'))
+                        }
+                      }}
+                      disabled={scheduleTask.isPending}
+                      className="text-xs"
+                    >
+                      {scheduleTask.isPending ? t('common:loading', { defaultValue: 'Loading...' }) : t('findBestTime')}
+                    </Button>
+                  )}
+                </div>
               </div>
-              <DatePicker
-                date={parseLocalDate(form.watch('scheduledDate'))}
-                onDateChange={(d) => {
-                  if (!d) {
-                    form.setValue('scheduledDate', undefined)
-                    return
-                  }
-                  const year = d.getFullYear()
-                  const month = String(d.getMonth() + 1).padStart(2, '0')
-                  const day = String(d.getDate()).padStart(2, '0')
-                  form.setValue('scheduledDate', `${year}-${month}-${day}`)
-                }}
-                placeholder={t('pickDate')}
-                className="w-full"
-              />
+
+              {(form.watch('isAllDay') ?? true) ? (
+                <DatePicker
+                  date={parseLocalDate(form.watch('scheduledDate'))}
+                  onDateChange={(d) => {
+                    if (!d) {
+                      form.setValue('scheduledDate', undefined)
+                      return
+                    }
+                    const year = d.getFullYear()
+                    const month = String(d.getMonth() + 1).padStart(2, '0')
+                    const day = String(d.getDate()).padStart(2, '0')
+                    form.setValue('scheduledDate', `${year}-${month}-${day}`)
+                  }}
+                  placeholder={t('pickDate')}
+                  className="w-full"
+                />
+              ) : (
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">{t('startTime')}</Label>
+                    <DateTimePicker
+                      value={form.watch('scheduledStart') ? new Date(form.watch('scheduledStart')!) : undefined}
+                      onChange={(d) => {
+                        if (!d) {
+                          form.setValue('scheduledStart', undefined)
+                          return
+                        }
+                        form.setValue('scheduledStart', d.toISOString())
+                        const year = d.getFullYear()
+                        const month = String(d.getMonth() + 1).padStart(2, '0')
+                        const day = String(d.getDate()).padStart(2, '0')
+                        form.setValue('scheduledDate', `${year}-${month}-${day}`)
+                        const endStr = form.watch('scheduledEnd')
+                        const duration = form.watch('estimatedDuration')
+                        if (!endStr && duration) {
+                          const end = new Date(d.getTime() + duration * 60_000)
+                          form.setValue('scheduledEnd', end.toISOString())
+                        }
+                      }}
+                      placeholder={t('pickDateTime')}
+                      className="w-full"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">{t('endTime')}</Label>
+                    <DateTimePicker
+                      value={form.watch('scheduledEnd') ? new Date(form.watch('scheduledEnd')!) : undefined}
+                      onChange={(d) => {
+                        form.setValue('scheduledEnd', d ? d.toISOString() : undefined)
+                      }}
+                      placeholder={t('pickDateTime')}
+                      className="w-full"
+                    />
+                    {(() => {
+                      const s = form.watch('scheduledStart')
+                      const e = form.watch('scheduledEnd')
+                      if (s && e && new Date(e) <= new Date(s)) {
+                        return <p className="text-xs text-destructive">{t('endMustBeAfterStart')}</p>
+                      }
+                      return null
+                    })()}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Schedule Result */}
@@ -413,6 +493,19 @@ export function TaskDialog({ open, onClose, task, defaultDate }: TaskDialogProps
                   <div className="space-y-2 p-3 rounded-lg bg-secondary/50 border border-border/30 text-sm">
                     {isInsightLoading ? (
                       <p className="text-xs text-muted-foreground">{t('common:loading', { defaultValue: 'Loading...' })}</p>
+                    ) : isInsightError ? (
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-xs text-destructive">{t('insightsError')}</p>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="text-xs h-6 px-2"
+                          onClick={() => refetchInsight()}
+                        >
+                          {t('retry')}
+                        </Button>
+                      </div>
                     ) : insight ? (
                       <div className="space-y-3">
                         <div>

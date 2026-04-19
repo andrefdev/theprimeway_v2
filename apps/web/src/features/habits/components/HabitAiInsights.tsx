@@ -27,7 +27,7 @@ export function HabitAIInsights({ habitId }: HabitAIInsightsProps) {
     )
   }
 
-  if (error || !data) {
+  if (error) {
     return (
       <Card>
         <CardHeader>
@@ -35,6 +35,19 @@ export function HabitAIInsights({ habitId }: HabitAIInsightsProps) {
         </CardHeader>
         <CardContent>
           <p className="text-xs text-muted-foreground">{t('failedToLoadInsights', 'Failed to load insights')}</p>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (!data || data.metrics.totalCompletions === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm">{t('aiInsights', 'AI Insights')}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-xs text-muted-foreground">{t('noInsightsYet', 'Start tracking this habit to see insights')}</p>
         </CardContent>
       </Card>
     )
