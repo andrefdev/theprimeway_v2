@@ -1,6 +1,6 @@
 # GitHub Secrets Configuration Checklist
 
-This document lists all 29 GitHub Secrets required for ThePrimeWay deployment via GitHub Actions.
+This document lists all 35 GitHub Secrets required for ThePrimeWay deployment via GitHub Actions.
 
 ---
 
@@ -11,7 +11,7 @@ This document lists all 29 GitHub Secrets required for ThePrimeWay deployment vi
 3. Enter name and value exactly as listed below
 4. Click **Add secret**
 
-Repeat for all 29 secrets.
+Repeat for all 35 secrets.
 
 ---
 
@@ -208,6 +208,36 @@ These are injected at **Docker build time**, not secrets (visible in bundle), bu
 
 ---
 
+### Firebase Web / Cloud Messaging — Build-time Vite (6 secrets)
+
+Baked into SPA bundle at Docker build (visible in browser, not secrets). Also injected into `firebase-messaging-sw.js` via sed.
+
+- [ ] **VITE_FIREBASE_API_KEY**
+  - Source: Firebase Console → Project Settings → General → Web app config
+  - Type: Plain text
+
+- [ ] **VITE_FIREBASE_AUTH_DOMAIN**
+  - Example: `theprimeway-prod.firebaseapp.com`
+  - Type: Plain text
+
+- [ ] **VITE_FIREBASE_PROJECT_ID**
+  - Same value as `FIREBASE_PROJECT_ID`
+  - Type: Plain text
+
+- [ ] **VITE_FIREBASE_MESSAGING_SENDER_ID**
+  - Numeric sender ID from Firebase web config
+  - Type: Plain text
+
+- [ ] **VITE_FIREBASE_APP_ID**
+  - Example: `1:123456789:web:abc123def456`
+  - Type: Plain text
+
+- [ ] **VITE_FIREBASE_VAPID_KEY**
+  - Source: Firebase Console → Project Settings → Cloud Messaging → Web Push certificates
+  - Type: Plain text
+
+---
+
 ### Image Hosting - Cloudinary (2 secrets)
 
 - [x] **CLOUDINARY_CLOUD_NAME**
@@ -235,9 +265,9 @@ These are injected at **Docker build time**, not secrets (visible in bundle), bu
 
 ## Verification Steps
 
-After adding all 29 secrets:
+After adding all 35 secrets:
 
-1. **Count**: Go to Settings → Secrets → Actions. Should show **29 secrets** listed.
+1. **Count**: Go to Settings → Secrets → Actions. Should show **35 secrets** listed.
 
 2. **Test values**: Ensure each secret is non-empty:
    ```bash

@@ -17,7 +17,7 @@ import { FEATURES } from '@repo/shared/constants'
 import { prisma } from '../lib/prisma'
 import type { Task } from '@prisma/client'
 import { generateObject } from 'ai'
-import { taskModel } from '../lib/ai-models'
+import { taskModel, fastModel } from '../lib/ai-models'
 import { z } from 'zod'
 
 type TaskModel = Task & { weeklyGoal?: unknown }
@@ -350,11 +350,20 @@ class TasksService {
     // Get all tasks for this day
     const tasks = await tasksRepository.findMany(userId, {})
 
-    // Get calendar events for this day and the next (to handle time zones properly)
-    const startOfDay = `${targetDate}T00:00:00Z`
-    const endOfDay = `${targetDate}T23:59:59Z`
+    // Normalize to YYYY-MM-DD — caller may pass full ISO string
+    const dateOnly = targetDate.includes('T') ? targetDate.split('T')[0]! : targetDate
 
-    const calendarEvents = await calendarService.getGoogleEvents(userId, startOfDay, endOfDay)
+    // Get calendar events for this day and the next (to handle time zones properly)
+    const startOfDay = `${dateOnly}T00:00:00Z`
+    const endOfDay = `${dateOnly}T23:59:59Z`
+
+    let calendarEvents: any[] = []
+    try {
+      calendarEvents = await calendarService.getGoogleEvents(userId, startOfDay, endOfDay)
+    } catch {
+      // Calendar not connected or fetch failed — proceed without events
+      calendarEvents = []
+    }
 
     // Convert calendar events to the format expected by scheduleOptimizer
     const events = calendarEvents.map((event: any) => ({
@@ -374,7 +383,7 @@ class TasksService {
     const suggestion = scheduleOptimizer.getSuggestion(
       plannedTasks,
       events,
-      targetDate,
+      dateOnly,
       estimatedDuration,
       preferredTime,
     )
@@ -585,30 +594,22 @@ Instructions:
   ): Promise<{ minutes: number; rationale: string }> {
     // Get user's recent tasks for context calibration
     const recentTasks = await tasksRepository.findMany(userId, {
-      limit: 5,
+      limit: 3,
     })
 
     const taskHistory = recentTasks
-      .slice(0, 3)
-      .map((t: any) => `- ${t.title}: ${t.estimatedDurationMinutes || '?'} min (actual: ${t.actualDurationMinutes || '?'} min)`)
+      .map((t: any) => `- ${t.title}: est ${t.estimatedDurationMinutes || '?'}m, actual ${t.actualDurationMinutes || '?'}m`)
       .join('\n')
 
     const result = await generateObject({
-      model: taskModel,
+      model: fastModel,
       schema: z.object({
-        minutes: z.number().int().positive().describe('Estimated duration in minutes'),
-        rationale: z.string().describe('Brief explanation of the estimate'),
+        minutes: z.number().int().positive(),
+        rationale: z.string().max(120),
       }),
-      prompt: `
-Estimate the time required to complete this task:
-Title: ${title}
-${description ? `Description: ${description}` : ''}
-
-Consider the user's task history for calibration:
-${taskHistory || 'No recent tasks'}
-
-Provide a realistic estimate in minutes.
-      `,
+      prompt: `Estimate minutes to complete task. Short rationale.
+Task: ${title}${description ? ` — ${description}` : ''}
+${taskHistory ? `Recent:\n${taskHistory}` : ''}`,
     })
 
     // Optionally save to task if taskId provided

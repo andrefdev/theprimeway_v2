@@ -242,22 +242,32 @@ export function TaskDialog({ open, onClose, task, defaultDate }: TaskDialogProps
                     {estimateTimebox.isPending ? t('common:loading', { defaultValue: 'Loading...' }) : t('suggest')}
                   </Button>
                 </div>
-                <Select
-                  value={form.watch('estimatedDuration') ? String(form.watch('estimatedDuration')) : 'none'}
-                  onValueChange={(v) => form.setValue('estimatedDuration', v !== 'none' ? Number(v) : undefined)}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder={t('selectDuration')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">{t('noDuration')}</SelectItem>
-                    {DURATION_PRESETS.map((d) => (
-                      <SelectItem key={d} value={String(d)}>
-                        {d >= 60 ? `${d / 60}h` : `${d}min`}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {(() => {
+                  const current = form.watch('estimatedDuration')
+                  return (
+                    <>
+                      <Input
+                        type="number"
+                        inputMode="numeric"
+                        min={1}
+                        step={5}
+                        list="duration-presets"
+                        value={current ?? ''}
+                        onChange={(e) => {
+                          const v = e.target.value
+                          form.setValue('estimatedDuration', v === '' ? undefined : Math.max(1, Number(v)))
+                        }}
+                        placeholder={t('selectDuration')}
+                        className="w-full"
+                      />
+                      <datalist id="duration-presets">
+                        {DURATION_PRESETS.map((d) => (
+                          <option key={d} value={d} />
+                        ))}
+                      </datalist>
+                    </>
+                  )
+                })()}
               </div>
             </div>
 

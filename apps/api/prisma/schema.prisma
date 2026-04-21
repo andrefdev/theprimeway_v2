@@ -698,6 +698,7 @@ model User {
   workPreferences       UserWorkPreferences[]
   devices               UserDevice[]
   notificationPreferences NotificationPreferences?
+  notifications         Notification[]
   onboarding            UserOnboarding?
 
   // Personalization
@@ -736,6 +737,30 @@ model NotificationPreferences {
 
   @@index([userId])
   @@map("notification_preferences")
+}
+
+model Notification {
+  id         String    @id @default(uuid())
+  userId     String    @map("user_id")
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type       String    // overdue_task | habit_missed | pending_transaction | smart_reminder | system
+  entityId   String?   @map("entity_id") // task/habit/tx id for dedup + linking
+  title      String
+  message    String
+  href       String?
+  urgency    String?   // high | medium | low
+  data       Json?     // arbitrary extra payload
+
+  readAt      DateTime? @map("read_at")
+  dismissedAt DateTime? @map("dismissed_at")
+
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  @@index([userId, dismissedAt, readAt, createdAt])
+  @@unique([userId, type, entityId], name: "user_type_entity")
+  @@map("notifications")
 }
 
 model Account {

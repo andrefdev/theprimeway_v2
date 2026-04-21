@@ -23,6 +23,11 @@ notificationRoutes.use('/preferences', authMiddleware)
 notificationRoutes.use('/aggregated', authMiddleware)
 notificationRoutes.use('/batched', authMiddleware)
 notificationRoutes.use('/smart-reminders', authMiddleware)
+notificationRoutes.use('/inbox', authMiddleware)
+notificationRoutes.use('/inbox/*', authMiddleware)
+notificationRoutes.use('/:id/read', authMiddleware)
+notificationRoutes.use('/:id/dismiss', authMiddleware)
+notificationRoutes.use('/:id', authMiddleware)
 
 // ---------------------------------------------------------------------------
 // POST /register
@@ -195,6 +200,159 @@ const sendRoute = createRoute({
     200: { content: { 'application/json': { schema: z.any() } }, description: 'Sent' },
     401: { content: { 'application/json': { schema: errorResponse } }, description: 'Unauthorized' },
   },
+})
+
+// ---------------------------------------------------------------------------
+// GET /inbox — persisted notifications with filters
+// ---------------------------------------------------------------------------
+const inboxRoute = createRoute({
+  method: 'get',
+  path: '/inbox',
+  tags: ['Notifications'],
+  summary: 'Get persisted notification inbox',
+  security: [{ Bearer: [] }],
+  request: {
+    query: z.object({
+      includeRead: z.string().optional(),
+      includeDismissed: z.string().optional(),
+      limit: z.string().optional(),
+      offset: z.string().optional(),
+    }),
+  },
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: z.object({ data: z.array(z.any()), count: z.number(), unread: z.number() }),
+        },
+      },
+      description: 'Inbox',
+    },
+  },
+})
+
+notificationRoutes.openapi(inboxRoute, async (c) => {
+  const userId = c.get('user').userId
+  const q = c.req.valid('query')
+  const result = await notificationsService.listInbox(userId, {
+    includeRead: q.includeRead === 'true',
+    includeDismissed: q.includeDismissed === 'true',
+    limit: q.limit ? Math.max(1, Number(q.limit)) : 50,
+    offset: q.offset ? Math.max(0, Number(q.offset)) : 0,
+  })
+  return c.json(result, 200)
+})
+
+// ---------------------------------------------------------------------------
+// POST /inbox/mark-all-read
+// ---------------------------------------------------------------------------
+const markAllReadRoute = createRoute({
+  method: 'post',
+  path: '/inbox/mark-all-read',
+  tags: ['Notifications'],
+  summary: 'Mark all notifications as read',
+  security: [{ Bearer: [] }],
+  responses: {
+    200: { content: { 'application/json': { schema: z.object({ updated: z.number() }) } }, description: 'OK' },
+  },
+})
+
+notificationRoutes.openapi(markAllReadRoute, async (c) => {
+  const userId = c.get('user').userId
+  const result = await notificationsService.markAllRead(userId)
+  return c.json({ updated: result.count }, 200)
+})
+
+// ---------------------------------------------------------------------------
+// POST /inbox/dismiss-all
+// ---------------------------------------------------------------------------
+const dismissAllRoute = createRoute({
+  method: 'post',
+  path: '/inbox/dismiss-all',
+  tags: ['Notifications'],
+  summary: 'Dismiss all active notifications',
+  security: [{ Bearer: [] }],
+  responses: {
+    200: { content: { 'application/json': { schema: z.object({ updated: z.number() }) } }, description: 'OK' },
+  },
+})
+
+notificationRoutes.openapi(dismissAllRoute, async (c) => {
+  const userId = c.get('user').userId
+  const result = await notificationsService.dismissAll(userId)
+  return c.json({ updated: result.count }, 200)
+})
+
+// ---------------------------------------------------------------------------
+// POST /:id/read
+// ---------------------------------------------------------------------------
+const markReadRoute = createRoute({
+  method: 'post',
+  path: '/{id}/read',
+  tags: ['Notifications'],
+  summary: 'Mark a notification as read',
+  security: [{ Bearer: [] }],
+  request: { params: z.object({ id: z.string() }) },
+  responses: {
+    200: { content: { 'application/json': { schema: z.any() } }, description: 'OK' },
+    404: { content: { 'application/json': { schema: errorResponse } }, description: 'Not found' },
+  },
+})
+
+notificationRoutes.openapi(markReadRoute, async (c) => {
+  const userId = c.get('user').userId
+  const { id } = c.req.valid('param')
+  const result = await notificationsService.markRead(userId, id)
+  if (!result) return c.json({ error: 'Not found' }, 404)
+  return c.json(result, 200)
+})
+
+// ---------------------------------------------------------------------------
+// POST /:id/dismiss
+// ---------------------------------------------------------------------------
+const dismissRoute = createRoute({
+  method: 'post',
+  path: '/{id}/dismiss',
+  tags: ['Notifications'],
+  summary: 'Dismiss a notification',
+  security: [{ Bearer: [] }],
+  request: { params: z.object({ id: z.string() }) },
+  responses: {
+    200: { content: { 'application/json': { schema: z.object({ success: z.boolean() }) } }, description: 'OK' },
+    404: { content: { 'application/json': { schema: errorResponse } }, description: 'Not found' },
+  },
+})
+
+notificationRoutes.openapi(dismissRoute, async (c) => {
+  const userId = c.get('user').userId
+  const { id } = c.req.valid('param')
+  const ok = await notificationsService.dismiss(userId, id)
+  if (!ok) return c.json({ error: 'Not found' }, 404)
+  return c.json({ success: true }, 200)
+})
+
+// ---------------------------------------------------------------------------
+// DELETE /:id
+// ---------------------------------------------------------------------------
+const deleteRoute = createRoute({
+  method: 'delete',
+  path: '/{id}',
+  tags: ['Notifications'],
+  summary: 'Delete a notification permanently',
+  security: [{ Bearer: [] }],
+  request: { params: z.object({ id: z.string() }) },
+  responses: {
+    200: { content: { 'application/json': { schema: z.object({ success: z.boolean() }) } }, description: 'OK' },
+    404: { content: { 'application/json': { schema: errorResponse } }, description: 'Not found' },
+  },
+})
+
+notificationRoutes.openapi(deleteRoute, async (c) => {
+  const userId = c.get('user').userId
+  const { id } = c.req.valid('param')
+  const ok = await notificationsService.deleteNotification(userId, id)
+  if (!ok) return c.json({ error: 'Not found' }, 404)
+  return c.json({ success: true }, 200)
 })
 
 notificationRoutes.openapi(sendRoute, (async (c: any) => {
