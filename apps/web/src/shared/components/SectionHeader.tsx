@@ -115,7 +115,7 @@ export function SectionHeader({
             ) : (
               <div className={cn('h-full w-full bg-gradient-to-b', gradient)} />
             )}
-            <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/20">
+            <div className="absolute inset-0 flex items-start justify-end p-2">
               <span className="flex items-center gap-1.5 rounded-md bg-background/80 px-3 py-1.5 text-xs font-medium text-foreground opacity-0 shadow-sm backdrop-blur-sm transition-opacity group-hover:opacity-100">
                 <ImageIcon className="h-3.5 w-3.5" />
                 Change cover

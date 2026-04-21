@@ -201,6 +201,8 @@ function HabitsPage() {
                     habits={filteredHabits}
                     onToggle={(h, date) => handleToggle(h, date)}
                     onEdit={openEdit}
+                    onArchive={handleArchive}
+                    onDelete={handleDelete}
                   />
                 ) : (
                   <EmptyState title={t('noHabitsYet')} description={t('noHabitsDescription')} />

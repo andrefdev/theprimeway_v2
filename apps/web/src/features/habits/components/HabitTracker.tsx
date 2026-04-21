@@ -2,6 +2,8 @@ import { useMemo } from 'react'
 import { format, subDays } from 'date-fns'
 import { ScrollArea } from '@/shared/components/ui/scroll-area'
 import { Badge } from '@/shared/components/ui/badge'
+import { EditButton, DeleteButton } from '@/shared/components/ActionButtons'
+import { Archive } from 'lucide-react'
 import type { Habit } from '@repo/shared/types'
 import { LIFE_PILLARS, CATEGORY_TO_PILLAR } from '@repo/shared/constants'
 import { useTranslation } from 'react-i18next'
@@ -14,9 +16,11 @@ interface HabitTrackerProps {
   habits: Habit[]
   onToggle: (habit: Habit, date: string) => void
   onEdit: (habit: Habit) => void
+  onArchive?: (habit: Habit) => void
+  onDelete?: (habit: Habit) => void
 }
 
-export function HabitTracker({ habits, onToggle, onEdit }: HabitTrackerProps) {
+export function HabitTracker({ habits, onToggle, onEdit, onArchive, onDelete }: HabitTrackerProps) {
   const { t } = useTranslation('habits')
 
   const dates = useMemo(() => {
@@ -89,6 +93,8 @@ export function HabitTracker({ habits, onToggle, onEdit }: HabitTrackerProps) {
                 dates={dates}
                 onToggle={onToggle}
                 onEdit={onEdit}
+                onArchive={onArchive}
+                onDelete={onDelete}
               />
             ))}
           </tbody>
@@ -114,11 +120,15 @@ function HabitRow({
   dates,
   onToggle,
   onEdit,
+  onArchive,
+  onDelete,
 }: {
   habit: Habit
   dates: DateInfo[]
   onToggle: (habit: Habit, date: string) => void
   onEdit: (habit: Habit) => void
+  onArchive?: (habit: Habit) => void
+  onDelete?: (habit: Habit) => void
 }) {
   const { t } = useTranslation('habits')
   const logs = habit.logs ?? []
@@ -146,9 +156,10 @@ function HabitRow({
   }
 
   return (
-    <tr className="border-b border-border/50 hover:bg-muted/20 transition-colors">
+    <tr className="group border-b border-border/50 hover:bg-muted/20 transition-colors">
       {/* Habit name — sticky left */}
       <td className="sticky left-0 z-10 bg-card px-3 py-2">
+        <div className="flex items-center justify-between gap-2">
         <button
           type="button"
           onClick={() => onEdit(habit)}
@@ -177,6 +188,23 @@ function HabitRow({
             )
           })()}
         </button>
+        {(onArchive || onDelete) && (
+          <div className="flex items-center gap-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+            <EditButton onClick={() => onEdit(habit)} />
+            {onArchive && (
+              <button
+                type="button"
+                onClick={() => onArchive(habit)}
+                className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground opacity-0 transition-all hover:bg-muted hover:text-foreground group-hover:opacity-100"
+                title={t('archive')}
+              >
+                <Archive className="size-3.5" />
+              </button>
+            )}
+            {onDelete && <DeleteButton onClick={() => onDelete(habit)} />}
+          </div>
+        )}
+        </div>
       </td>
 
       {/* Day cells */}

@@ -25,6 +25,7 @@ import {
   SelectContent,
   SelectItem,
 } from '@/shared/components/ui/select'
+import { DurationCombobox } from './DurationCombobox'
 import { DatePicker } from '@/shared/components/ui/date-picker'
 import { DateTimePicker } from '@/shared/components/ui/date-time-picker'
 import { Switch } from '@/shared/components/ui/switch'
@@ -242,32 +243,12 @@ export function TaskDialog({ open, onClose, task, defaultDate }: TaskDialogProps
                     {estimateTimebox.isPending ? t('common:loading', { defaultValue: 'Loading...' }) : t('suggest')}
                   </Button>
                 </div>
-                {(() => {
-                  const current = form.watch('estimatedDuration')
-                  return (
-                    <>
-                      <Input
-                        type="number"
-                        inputMode="numeric"
-                        min={1}
-                        step={5}
-                        list="duration-presets"
-                        value={current ?? ''}
-                        onChange={(e) => {
-                          const v = e.target.value
-                          form.setValue('estimatedDuration', v === '' ? undefined : Math.max(1, Number(v)))
-                        }}
-                        placeholder={t('selectDuration')}
-                        className="w-full"
-                      />
-                      <datalist id="duration-presets">
-                        {DURATION_PRESETS.map((d) => (
-                          <option key={d} value={d} />
-                        ))}
-                      </datalist>
-                    </>
-                  )
-                })()}
+                <DurationCombobox
+                  value={form.watch('estimatedDuration')}
+                  onChange={(v) => form.setValue('estimatedDuration', v)}
+                  presets={DURATION_PRESETS}
+                  placeholder={t('selectDuration')}
+                />
               </div>
             </div>
 
