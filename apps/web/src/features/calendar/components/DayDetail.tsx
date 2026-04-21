@@ -1,10 +1,16 @@
+import { useState } from 'react'
 import { Card, CardContent } from '@/shared/components/ui/card'
 import { Badge } from '@/shared/components/ui/badge'
 import { EmptyState } from '@/shared/components/ui/empty-state'
 import { CheckIcon } from '@/shared/components/Icons'
+import { TaskItem } from '@/shared/components/TaskItem'
+import { TaskDialog } from '@/features/tasks/components/TaskDialog'
+import { useUpdateTask, useDeleteTask } from '@/features/tasks/queries'
 import { useLocale } from '@/i18n/useLocale'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 import { format, isToday, isTomorrow } from 'date-fns'
+import type { Task } from '@repo/shared/types'
 import type { CalendarItem } from '../hooks/use-calendar-items'
 import { getItemsForDay } from '../hooks/use-calendar-items'
 
@@ -23,10 +29,48 @@ interface DayDetailProps {
 
 export function DayDetail({ day, items }: DayDetailProps) {
   const { t } = useTranslation('calendar')
+  const { t: tTasks } = useTranslation('tasks')
   const { dateFnsLocale } = useLocale()
+  const updateTask = useUpdateTask()
+  const deleteTask = useDeleteTask()
+  const [editingTask, setEditingTask] = useState<Task | null>(null)
   const dayItems = getItemsForDay(items, day)
   const timedItems = dayItems.filter((i) => !i.isAllDay)
   const allDayItems = dayItems.filter((i) => i.isAllDay)
+
+  async function handleToggleTask(task: Task) {
+    const newStatus = task.status === 'completed' ? 'open' : 'completed'
+    try {
+      await updateTask.mutateAsync({ id: task.id, data: { status: newStatus } })
+    } catch {
+      toast.error(tTasks('failedToUpdate'))
+    }
+  }
+
+  async function handleDeleteTask(task: Task) {
+    try {
+      await deleteTask.mutateAsync(task.id)
+      toast.success(tTasks('taskDeleted'))
+    } catch {
+      toast.error(tTasks('failedToDelete'))
+    }
+  }
+
+  function renderItem(item: CalendarItem, showTime: boolean) {
+    if (item.type === 'task' && item.task) {
+      return (
+        <TaskItem
+          key={item.id}
+          task={item.task}
+          size="sm"
+          onToggle={() => handleToggleTask(item.task!)}
+          onEdit={() => setEditingTask(item.task!)}
+          onDelete={() => handleDeleteTask(item.task!)}
+        />
+      )
+    }
+    return <EventRow key={item.id} item={item} showTime={showTime} />
+  }
 
   function formatDayLabel(d: Date): string {
     if (isToday(d)) return t('today')
@@ -54,9 +98,7 @@ export function DayDetail({ day, items }: DayDetailProps) {
               <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
                 {t('allDay')}
               </span>
-              {allDayItems.map((item) => (
-                <EventRow key={item.id} item={item} />
-              ))}
+              {allDayItems.map((item) => renderItem(item, false))}
             </div>
           )}
 
@@ -68,13 +110,17 @@ export function DayDetail({ day, items }: DayDetailProps) {
                   {t('scheduled')}
                 </span>
               )}
-              {timedItems.map((item) => (
-                <EventRow key={item.id} item={item} showTime />
-              ))}
+              {timedItems.map((item) => renderItem(item, true))}
             </div>
           )}
         </div>
       )}
+
+      <TaskDialog
+        open={!!editingTask}
+        onClose={() => setEditingTask(null)}
+        task={editingTask}
+      />
     </div>
   )
 }

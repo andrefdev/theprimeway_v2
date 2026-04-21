@@ -16,6 +16,7 @@ export interface CalendarItem {
   type: 'task' | 'event'
   status?: string
   priority?: string
+  task?: Task
 }
 
 /**
@@ -66,6 +67,7 @@ export function useCalendarItems(dateRange: { from: string; to: string }) {
         type: 'task',
         status: task.status,
         priority: task.priority,
+        task,
       })
     }
 
