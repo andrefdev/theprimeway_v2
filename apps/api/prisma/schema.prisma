@@ -733,6 +733,10 @@ model NotificationPreferences {
   taskReminderOffset    Int       @default(30) @map("task_reminder_offset")    // minutes before due
   habitReminderTime     String    @default("20:00") @map("habit_reminder_time") // HH:mm user local time
 
+  // Cron de-dup: set after a habit reminder push fires so the 10-min cron tick
+  // does not re-send on the same local day.
+  lastHabitReminderAt   DateTime? @map("last_habit_reminder_at")
+
   createdAt             DateTime  @default(now()) @map("created_at")
   updatedAt             DateTime  @updatedAt @map("updated_at")
 

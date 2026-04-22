@@ -104,25 +104,33 @@ class CronService {
       usersByLang[lang]!.push(user.id)
     }
 
-    const results: Array<{ lang: string; userCount: number; message: string }> = []
+    const titleByLang = { en: 'Your daily dose of motivation', es: 'Tu dosis diaria de motivación' }
+    const results: Array<{ lang: string; userCount: number; message: string; sent: number; failed: number }> = []
 
     for (const [lang, userIds] of Object.entries(usersByLang)) {
       if (userIds.length === 0) continue
 
       const messages = MOTIVATION_MESSAGES[lang as keyof typeof MOTIVATION_MESSAGES]
       const randomMessage = messages[Math.floor(Math.random() * messages.length)]!
+      const title = titleByLang[lang as 'en' | 'es']
 
-      await cronRepo.findActiveDevicesByUserIds(userIds)
-      // NOTE: Actual FCM sending requires firebase-admin SDK
+      let sent = 0
+      let failed = 0
+      for (const userId of userIds) {
+        const res = await notificationsService.sendPushToUser(userId, {
+          title,
+          body: randomMessage,
+          url: '/dashboard',
+          tag: 'daily-motivation',
+        })
+        sent += res.success_count
+        failed += res.failure_count
+      }
 
-      results.push({ lang, userCount: userIds.length, message: randomMessage })
+      results.push({ lang, userCount: userIds.length, message: randomMessage, sent, failed })
     }
 
-    return {
-      success: true,
-      results,
-      _note: 'FCM push delivery requires firebase-admin integration',
-    }
+    return { success: true, results }
   }
 
   async processReminders(now: Date) {
@@ -170,10 +178,17 @@ class CronService {
       for (const task of tasks) {
         const targetDate = task.scheduledStart || task.dueDate!
         const minutesUntil = Math.round((targetDate.getTime() - nowMs) / 60000)
-        void formatTimeUntil(minutesUntil, lang)
+        const whenLabel = formatTimeUntil(minutesUntil, lang)
+        const title = lang === 'es' ? 'Recordatorio de tarea' : 'Task reminder'
+        const body = lang === 'es' ? `${task.title} · ${whenLabel}` : `${task.title} · ${whenLabel}`
 
         try {
-          // NOTE: Wire up sendNotification(tokens, { title, body }, { url, tag })
+          await notificationsService.sendPushToUser(user.id, {
+            title,
+            body,
+            url: '/tasks/today',
+            tag: `task-reminder-${task.id}`,
+          })
           await cronRepo.markTaskReminded(task.id)
           totalSent++
         } catch (error) {
@@ -207,6 +222,10 @@ class CronService {
       todayEnd.setHours(23, 59, 59, 999)
       const currentDayIndex = userNow.getDay()
 
+      // Skip if a habit reminder already went out in the user's local day.
+      const lastSent = user.notificationPreferences?.lastHabitReminderAt
+      if (lastSent && lastSent >= todayStart && lastSent <= todayEnd) continue
+
       const habitLogs = await cronRepo.findHabitLogsByUserAndDate(user.id, todayStart, todayEnd)
 
       let hasIncomplete = false
@@ -233,18 +252,36 @@ class CronService {
       }
     }
 
-    let totalSent = 0
-    for (const [_lang, userIds] of Object.entries(usersToRemind)) {
-      if (userIds.length === 0) continue
-
-      const devices = await cronRepo.findActiveDevicesByUserIds(userIds)
-      if (devices.length === 0) continue
-
-      // NOTE: Wire up sendNotification(tokens, { title, body }, { url, tag })
-      totalSent += userIds.length
+    const copyByLang = {
+      en: { title: "Don't break the chain", body: 'You still have habits to complete today.' },
+      es: { title: 'No rompas la cadena', body: 'Aún tienes hábitos por completar hoy.' },
     }
 
-    return { sent: totalSent }
+    let totalSent = 0
+    let totalFailed = 0
+    for (const [lang, userIds] of Object.entries(usersToRemind)) {
+      if (userIds.length === 0) continue
+
+      const { title, body } = copyByLang[lang as 'en' | 'es']
+      for (const userId of userIds) {
+        const res = await notificationsService.sendPushToUser(userId, {
+          title,
+          body,
+          url: '/habits',
+          tag: 'habit-reminder',
+        })
+        totalSent += res.success_count
+        totalFailed += res.failure_count
+
+        // Mark as sent to prevent re-sending within the same local day.
+        await prisma.notificationPreferences.update({
+          where: { userId },
+          data: { lastHabitReminderAt: new Date() },
+        })
+      }
+    }
+
+    return { sent: totalSent, failed: totalFailed }
   }
 
   async processQuarterlyReview() {
@@ -267,26 +304,34 @@ class CronService {
       where: {
         quarterlyGoals: { some: {} },
       },
-      select: { id: true, email: true, name: true },
+      select: { id: true, email: true, name: true, locale: true },
     })
 
     const results: Array<{ userId: string; status: string; error?: string }> = []
 
     for (const user of users) {
       try {
-        const review = await goalsService.getQuarterlyReview(user.id, quarter, year)
+        await goalsService.getQuarterlyReview(user.id, quarter, year)
 
         // Check quarterly milestone achievements
         await gamificationService.checkAchievements(user.id)
 
         results.push({ userId: user.id, status: 'generated' })
 
-        // Push notification (FCM) — best-effort
-        const devices = await cronRepo.findActiveDevicesByUserId(user.id)
-        if (devices.length > 0) {
-          // NOTE: Wire up sendNotification(tokens, { title, body }, { url, tag })
-          void review // review data available for push payload
-        }
+        const lang = (user.locale || 'en').startsWith('es') ? 'es' : 'en'
+        const title =
+          lang === 'es' ? `Tu revisión del Q${quarter} está lista` : `Your Q${quarter} review is ready`
+        const body =
+          lang === 'es'
+            ? 'Revisa tu progreso trimestral y planifica el próximo ciclo.'
+            : 'Review your quarterly progress and plan the next cycle.'
+
+        await notificationsService.sendPushToUser(user.id, {
+          title,
+          body,
+          url: '/goals',
+          tag: `quarterly-review-q${quarter}-${year}`,
+        })
       } catch (err) {
         results.push({ userId: user.id, status: 'failed', error: (err as Error).message })
       }
@@ -347,15 +392,21 @@ class CronService {
           })
         }
 
-        // Try to send push notification
-        const devices = await cronRepo.findActiveDevicesByUserId(user.id)
-        if (devices.length > 0) {
-          // NOTE: Wire up sendNotification(tokens, { title, body }, { url, tag })
-          console.log(
-            `[WEEKLY_REVIEW] Would push to ${devices.length} devices for user ${user.id}`,
-          )
-          void plan // plan data available for push payload
-        }
+        void plan
+
+        const lang = (user.locale || 'en').startsWith('es') ? 'es' : 'en'
+        const title = lang === 'es' ? 'Tu plan semanal está listo' : 'Your weekly plan is ready'
+        const body =
+          lang === 'es'
+            ? 'Revisa tus prioridades de la semana y empieza con impulso.'
+            : 'Check your priorities for the week and start with momentum.'
+
+        await notificationsService.sendPushToUser(user.id, {
+          title,
+          body,
+          url: '/dashboard',
+          tag: `weekly-review-${weekStartDate}`,
+        })
 
         results.push({ userId: user.id, status: 'generated' })
       } catch (err) {
