@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
@@ -69,7 +73,7 @@ jobs:
         with:
           context: .
           file: ./apps/api/Dockerfile
-          push: true
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
           tags: |
             ${{ env.REGISTRY }}/${{ github.repository_owner }}/theprimeway-api:latest
             ${{ env.REGISTRY }}/${{ github.repository_owner }}/theprimeway-api:${{ github.sha }}
@@ -102,7 +106,7 @@ jobs:
         with:
           context: .
           file: ./apps/web/Dockerfile
-          push: true
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
           tags: |
             ${{ env.REGISTRY }}/${{ github.repository_owner }}/theprimeway-web:latest
             ${{ env.REGISTRY }}/${{ github.repository_owner }}/theprimeway-web:${{ github.sha }}
@@ -146,7 +150,7 @@ jobs:
         with:
           context: .
           file: ./apps/admin/Dockerfile
-          push: true
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
           tags: |
             ${{ env.REGISTRY }}/${{ github.repository_owner }}/theprimeway-admin:latest
             ${{ env.REGISTRY }}/${{ github.repository_owner }}/theprimeway-admin:${{ github.sha }}
@@ -169,6 +173,7 @@ jobs:
     # At least one build job must have run and not been skipped
     if: |
       always() && !cancelled() && !contains(needs.*.result, 'failure') &&
+      github.event_name == 'push' && github.ref == 'refs/heads/main' &&
       (needs.changes.outputs.api == 'true' ||
        needs.changes.outputs.web == 'true' ||
        needs.changes.outputs.admin == 'true' ||
