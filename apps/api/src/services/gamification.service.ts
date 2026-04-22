@@ -3,6 +3,14 @@ import { prisma } from '../lib/prisma'
 import { generateObject } from 'ai'
 import { taskModel } from '../lib/ai-models'
 import { z } from 'zod'
+import { ACHIEVEMENT_DEFINITIONS } from '../content/achievements'
+import {
+  buildAchievementContext,
+  evaluateCondition,
+  listConditionTypes,
+  type AchievementCondition,
+} from './gamification/condition-registry'
+import { gamificationEvents } from './gamification/events'
 
 const RANK_THRESHOLDS: Record<string, { minXp: number; minLevel: number; minStreak: number }> = {
   E: { minXp: 0, minLevel: 1, minStreak: 0 },
@@ -138,8 +146,13 @@ class GamificationService {
       { totalXp: finalXpAmount },
     )
 
+    gamificationEvents.emit('xp.awarded', { userId, meta: { amount: finalXpAmount, source: body.source } })
+
     // Check for rank-up after awarding XP
     const rankResult = await this.checkAndUpdateRank(userId)
+    if (rankResult.ranked_up) {
+      gamificationEvents.emit('rank.updated', { userId, meta: { newRank: rankResult.newRank } })
+    }
 
     // Build level-up / rank-up events
     const events: Array<{ type: 'level_up' | 'rank_up'; data: Record<string, unknown> }> = []
@@ -297,6 +310,9 @@ class GamificationService {
     })
 
     const u = updated as any
+    if (newStreak !== profile.currentStreak) {
+      gamificationEvents.emit('streak.updated', { userId, meta: { currentStreak: newStreak } })
+    }
     return {
       currentStreak: updated.currentStreak,
       longestStreak: updated.longestStreak,
@@ -362,98 +378,63 @@ class GamificationService {
   }
 
   async seedAchievements() {
-    const achievements = [
-      // Streaks
-      { key: 'streak_3', category: 'streaks', titleEn: '3-Day Streak', titleEs: 'Racha de 3 días', descEn: 'Maintain a 3-day streak', descEs: 'Mantén una racha de 3 días', condition: { type: 'streak_days', value: 3 }, xpReward: 25, rarity: 'common', sortOrder: 1 },
-      { key: 'streak_7', category: 'streaks', titleEn: '7-Day Streak', titleEs: 'Racha de 7 días', descEn: 'Maintain a 7-day streak', descEs: 'Mantén una racha de 7 días', condition: { type: 'streak_days', value: 7 }, xpReward: 75, rarity: 'common', sortOrder: 2 },
-      { key: 'streak_14', category: 'streaks', titleEn: 'Fortnight Warrior', titleEs: 'Guerrero de 2 Semanas', descEn: 'Maintain a 14-day streak', descEs: 'Mantén una racha de 14 días', condition: { type: 'streak_days', value: 14 }, xpReward: 150, rarity: 'rare', sortOrder: 3 },
-      { key: 'streak_30', category: 'streaks', titleEn: 'Monthly Master', titleEs: 'Maestro del Mes', descEn: 'Maintain a 30-day streak', descEs: 'Mantén una racha de 30 días', condition: { type: 'streak_days', value: 30 }, xpReward: 300, rarity: 'epic', sortOrder: 4 },
-      { key: 'streak_90', category: 'streaks', titleEn: 'Legendary Dedication', titleEs: 'Dedicación Legendaria', descEn: 'Maintain a 90-day streak', descEs: 'Mantén una racha de 90 días', condition: { type: 'streak_days', value: 90 }, xpReward: 750, rarity: 'legendary', sortOrder: 5 },
-      // Tasks
-      { key: 'first_task', category: 'tasks', titleEn: 'Task Starter', titleEs: 'Iniciador de Tareas', descEn: 'Complete your first task', descEs: 'Completa tu primera tarea', condition: { type: 'tasks_completed', value: 1 }, xpReward: 10, rarity: 'common', sortOrder: 6 },
-      { key: 'task_master', category: 'tasks', titleEn: 'Task Master', titleEs: 'Maestro de Tareas', descEn: 'Complete 10 tasks', descEs: 'Completa 10 tareas', condition: { type: 'tasks_completed', value: 10 }, xpReward: 50, rarity: 'common', sortOrder: 7 },
-      { key: 'century', category: 'tasks', titleEn: 'Century Club', titleEs: 'Club del Siglo', descEn: 'Complete 100 tasks', descEs: 'Completa 100 tareas', condition: { type: 'tasks_completed', value: 100 }, xpReward: 250, rarity: 'rare', sortOrder: 8 },
-      { key: 'task_legend', category: 'tasks', titleEn: 'Task Legend', titleEs: 'Leyenda de Tareas', descEn: 'Complete 500 tasks', descEs: 'Completa 500 tareas', condition: { type: 'tasks_completed', value: 500 }, xpReward: 1000, rarity: 'legendary', sortOrder: 9 },
-      // Habits
-      { key: 'first_habit', category: 'habits', titleEn: 'Habit Starter', titleEs: 'Iniciador de Hábitos', descEn: 'Log your first habit', descEs: 'Registra tu primer hábito', condition: { type: 'habit_logs', value: 1 }, xpReward: 10, rarity: 'common', sortOrder: 10 },
-      { key: 'habit_week', category: 'habits', titleEn: 'Weekly Warrior', titleEs: 'Guerrero Semanal', descEn: 'Log 7 habit entries', descEs: 'Registra 7 entradas de hábitos', condition: { type: 'habit_logs', value: 7 }, xpReward: 50, rarity: 'common', sortOrder: 11 },
-      { key: 'habit_century', category: 'habits', titleEn: 'Habit Centurion', titleEs: 'Centurión de Hábitos', descEn: 'Log 100 habit entries', descEs: 'Registra 100 entradas de hábitos', condition: { type: 'habit_logs', value: 100 }, xpReward: 300, rarity: 'epic', sortOrder: 12 },
-      // Pomodoro
-      { key: 'first_pomodoro', category: 'pomodoro', titleEn: 'Focus Starter', titleEs: 'Iniciador de Enfoque', descEn: 'Complete your first Pomodoro', descEs: 'Completa tu primer Pomodoro', condition: { type: 'pomodoro_sessions', value: 1 }, xpReward: 10, rarity: 'common', sortOrder: 13 },
-      { key: 'flow_state', category: 'pomodoro', titleEn: 'Flow State', titleEs: 'Estado de Flujo', descEn: 'Complete 10 Pomodoro sessions', descEs: 'Completa 10 sesiones Pomodoro', condition: { type: 'pomodoro_sessions', value: 10 }, xpReward: 75, rarity: 'rare', sortOrder: 14 },
-      // Milestones
-      { key: 'goal_setter', category: 'milestones', titleEn: 'Goal Setter', titleEs: 'Establecedor de Objetivos', descEn: 'Create your first goal', descEs: 'Crea tu primer objetivo', condition: { type: 'goals_created', value: 1 }, xpReward: 25, rarity: 'common', sortOrder: 15 },
-      { key: 'quarterly_done', category: 'milestones', titleEn: 'Quarterly Champion', titleEs: 'Campeón del Trimestre', descEn: 'Complete a quarterly goal', descEs: 'Completa un objetivo trimestral', condition: { type: 'quarterly_progress', value: 100 }, xpReward: 500, rarity: 'epic', sortOrder: 16 },
-      { key: 'first_1000_xp', category: 'milestones', titleEn: 'Thousand Ascender', titleEs: 'Ascendente de Mil', descEn: 'Earn 1,000 XP', descEs: 'Gana 1,000 XP', condition: { type: 'total_xp', value: 1000 }, xpReward: 100, rarity: 'common', sortOrder: 17 },
-      { key: 'ten_k_xp', category: 'milestones', titleEn: 'XP Titan', titleEs: 'Titán XP', descEn: 'Earn 10,000 XP', descEs: 'Gana 10,000 XP', condition: { type: 'total_xp', value: 10000 }, xpReward: 500, rarity: 'rare', sortOrder: 18 },
-      // Ranks
-      { key: 'rank_d', category: 'ranks', titleEn: 'Rank D Achieved', titleEs: 'Rango D Alcanzado', descEn: 'Reach Rank D', descEs: 'Alcanza el Rango D', condition: { type: 'reach_rank', value: 'D' }, xpReward: 50, rarity: 'common', sortOrder: 19 },
-      { key: 'rank_s', category: 'ranks', titleEn: 'S-Rank Legend', titleEs: 'Leyenda de Rango S', descEn: 'Reach Rank S', descEs: 'Alcanza el Rango S', condition: { type: 'reach_rank', value: 'S' }, xpReward: 2000, rarity: 'legendary', sortOrder: 20 },
-    ]
+    const knownTypes = new Set(listConditionTypes())
+    const skipped: string[] = []
+
+    const targets = ACHIEVEMENT_DEFINITIONS.filter((ach) => {
+      if (!knownTypes.has(ach.condition.type)) {
+        skipped.push(`${ach.key} (unknown condition type: ${ach.condition.type})`)
+        return false
+      }
+      return true
+    })
 
     const results = await Promise.all(
-      achievements.map((ach) =>
+      targets.map((ach) =>
         prisma.achievement.upsert({
           where: { key: ach.key },
-          update: {},
+          // Keep titles/descriptions/xp in sync with the content file on reseed;
+          // never change `key` once released.
+          update: {
+            category: ach.category,
+            titleEn: ach.titleEn,
+            titleEs: ach.titleEs,
+            descEn: ach.descEn,
+            descEs: ach.descEs,
+            condition: ach.condition,
+            xpReward: ach.xpReward,
+            rarity: ach.rarity,
+            sortOrder: ach.sortOrder,
+            ...(ach.icon ? { icon: ach.icon } : {}),
+          } as any,
           create: ach as any,
-        })
-      )
+        }),
+      ),
     )
 
-    return { seeded: results.length }
+    return { seeded: results.length, skipped }
   }
 
   async checkAchievements(userId: string) {
-    // Load all achievements with user unlock status
-    const achievements = await prisma.achievement.findMany({
-      include: { userAchievements: { where: { userId } } },
-    })
+    const [achievements, ctx] = await Promise.all([
+      prisma.achievement.findMany({
+        include: { userAchievements: { where: { userId } } },
+      }),
+      buildAchievementContext(userId),
+    ])
 
-    const profile = await gamificationRepo.findProfile(userId)
-
-    // Fetch all aggregate counts in parallel
-    const [habitLogCount, completedTaskCount, goalCount, pomodoroCount, quarterlyGoals] =
-      await Promise.all([
-        prisma.habitLog.count({ where: { habit: { userId }, completedCount: { gt: 0 } } }),
-        prisma.task.count({ where: { userId, status: 'completed' } }),
-        prisma.weeklyGoal.count({ where: { userId } }),
-        prisma.pomodoroSession.count({ where: { userId, status: 'completed' } }),
-        prisma.quarterlyGoal.findMany({ where: { userId }, select: { progress: true } }),
-      ])
-
-    const maxQuarterlyProgress = quarterlyGoals.reduce(
-      (max, g) => Math.max(max, g.progress ?? 0),
-      0
-    )
-
-    // Condition resolver map
-    type Resolver = (cond: Record<string, unknown>) => boolean
-    const resolvers: Record<string, Resolver> = {
-      streak_days: (c) => (profile?.currentStreak ?? 0) >= Number(c.value),
-      habit_logs: (c) => habitLogCount >= Number(c.value),
-      tasks_completed: (c) => completedTaskCount >= Number(c.value),
-      goals_created: (c) => goalCount >= Number(c.value),
-      pomodoro_sessions: (c) => pomodoroCount >= Number(c.value),
-      total_xp: (c) => (profile?.totalXp ?? 0) >= Number(c.value),
-      reach_rank: (c) => rankOrder(profile?.rank ?? 'E') >= rankOrder(String(c.value)),
-      quarterly_progress: (c) => maxQuarterlyProgress >= Number(c.value),
-    }
-
-    // Check and unlock
     const unlocked = []
     for (const achievement of achievements) {
-      if (achievement.userAchievements.length > 0) continue // already unlocked
-      const cond = achievement.condition as Record<string, unknown>
-      const resolver = resolvers[cond.type as string]
-      if (!resolver) continue
-      if (!resolver(cond)) continue
+      if (achievement.userAchievements.length > 0) continue
+      const cond = achievement.condition as AchievementCondition | null
+      if (!cond || !cond.type) continue
+      const result = evaluateCondition(cond, ctx)
+      if (!result || !result.met) continue
 
       await prisma.userAchievement.create({
         data: { userId, achievementId: achievement.id, unlockedAt: new Date() },
       })
 
-      // Award XP for unlocking
       if (achievement.xpReward > 0) {
         await this.awardXp(userId, {
           source: 'achievement',
@@ -466,6 +447,29 @@ class GamificationService {
     }
 
     return { data: unlocked, count: unlocked.length }
+  }
+
+  /** Return progress for every achievement (for UI progress bars). */
+  async getAchievementsProgress(userId: string) {
+    const [achievements, ctx] = await Promise.all([
+      prisma.achievement.findMany({
+        include: { userAchievements: { where: { userId } } },
+      }),
+      buildAchievementContext(userId),
+    ])
+
+    return achievements.map((achievement: any) => {
+      const cond = achievement.condition as AchievementCondition | null
+      const result = cond ? evaluateCondition(cond, ctx) : null
+      return {
+        id: achievement.id,
+        key: achievement.key,
+        isUnlocked: achievement.userAchievements.length > 0,
+        progress: result?.progress ?? 0,
+        target: result?.target ?? 0,
+        met: result?.met ?? false,
+      }
+    })
   }
 
   private async generateDailyChallenges(userId: string, date: string): Promise<void> {
@@ -607,6 +611,7 @@ Rules:
       } catch (xpError) {
         console.error('[CHALLENGE_XP]', xpError)
       }
+      gamificationEvents.emit('challenge.completed', { userId, meta: { challengeId } })
     }
 
     return updated

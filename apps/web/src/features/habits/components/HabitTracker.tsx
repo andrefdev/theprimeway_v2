@@ -159,51 +159,58 @@ function HabitRow({
     <tr className="group border-b border-border/50 hover:bg-muted/20 transition-colors">
       {/* Habit name — sticky left */}
       <td className="sticky left-0 z-10 bg-card px-3 py-2">
-        <div className="flex items-center justify-between gap-2">
-        <button
-          type="button"
-          onClick={() => onEdit(habit)}
-          className="flex items-center gap-2 text-left hover:text-primary transition-colors"
-        >
-          <div
-            className="h-2.5 w-2.5 rounded-full shrink-0"
-            style={{ backgroundColor: habit.color || '#3b82f6' }}
-          />
-          <span className="text-sm font-medium text-foreground truncate max-w-30">
-            {habit.name}
-          </span>
-          {habit.category && (() => {
-            const pillarId = CATEGORY_TO_PILLAR[habit.category] || habit.category
-            const pillar = LIFE_PILLARS.find(p => p.id === pillarId)
-            return (
-              <Badge variant="outline" className="text-[8px] px-1 py-0 hidden sm:inline-flex gap-1">
-                {pillar && (
-                  <span
-                    className="inline-block h-1.5 w-1.5 rounded-full"
-                    style={{ backgroundColor: pillar.color }}
-                  />
+        <div className="flex flex-col gap-1 max-w-44">
+          <button
+            type="button"
+            onClick={() => onEdit(habit)}
+            className="flex items-center gap-2 text-left hover:text-primary transition-colors"
+          >
+            <div
+              className="h-2.5 w-2.5 rounded-full shrink-0"
+              style={{ backgroundColor: habit.color || '#3b82f6' }}
+            />
+            <span className="text-sm font-medium text-foreground truncate">
+              {habit.name}
+            </span>
+          </button>
+          <div className="flex items-center gap-1 pl-4.5" onClick={(e) => e.stopPropagation()}>
+            {habit.category && (() => {
+              const pillarId = CATEGORY_TO_PILLAR[habit.category] || habit.category
+              const pillar = LIFE_PILLARS.find(p => p.id === pillarId)
+              return (
+                <Badge variant="outline" className="text-[9px] px-1 py-0 gap-1 font-normal">
+                  {pillar && (
+                    <span
+                      className="inline-block h-1.5 w-1.5 rounded-full"
+                      style={{ backgroundColor: pillar.color }}
+                    />
+                  )}
+                  {t(pillarI18nKey(pillarId) as any)}
+                </Badge>
+              )
+            })()}
+            <span className="text-[9px] text-muted-foreground">
+              {habit.frequencyType === 'daily'
+                ? t('daily')
+                : habit.frequencyType === 'week_days'
+                  ? `${habit.weekDays.length}${t('daysShort', { defaultValue: 'd' })}/wk`
+                  : `${habit.targetFrequency}x/wk`}
+            </span>
+            <div className="ml-auto hidden items-center gap-0.5 group-hover:flex">
+              <EditButton onClick={() => onEdit(habit)} />
+                {onArchive && (
+                  <button
+                    type="button"
+                    onClick={() => onArchive(habit)}
+                    className="inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    title={t('archive')}
+                  >
+                    <Archive className="size-3" />
+                  </button>
                 )}
-                {t(pillarI18nKey(pillarId) as any)}
-              </Badge>
-            )
-          })()}
-        </button>
-        {(onArchive || onDelete) && (
-          <div className="flex items-center gap-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
-            <EditButton onClick={() => onEdit(habit)} />
-            {onArchive && (
-              <button
-                type="button"
-                onClick={() => onArchive(habit)}
-                className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground opacity-0 transition-all hover:bg-muted hover:text-foreground group-hover:opacity-100"
-                title={t('archive')}
-              >
-                <Archive className="size-3.5" />
-              </button>
-            )}
-            {onDelete && <DeleteButton onClick={() => onDelete(habit)} />}
+                {onDelete && <DeleteButton onClick={() => onDelete(habit)} />}
+              </div>
           </div>
-        )}
         </div>
       </td>
 

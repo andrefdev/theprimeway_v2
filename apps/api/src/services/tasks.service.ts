@@ -10,6 +10,7 @@
 import { tasksRepository } from '../repositories/tasks.repo'
 import { calendarService } from './calendar.service'
 import { gamificationService } from './gamification.service'
+import { gamificationEvents } from './gamification/events'
 import { syncService } from './sync.service'
 import { scheduleOptimizer } from './schedule-optimizer'
 import { validateLimit } from '../lib/limits'
@@ -297,6 +298,9 @@ class TasksService {
         amount: xpAmount,
         metadata: { taskTitle: currentTask.title },
       })
+      gamificationEvents.emit('task.completed', { userId, meta: { taskId } })
+    } else if (input.status !== 'completed' && currentTask.status === 'completed') {
+      gamificationEvents.emit('task.uncompleted', { userId, meta: { taskId } })
     }
 
     return updatedTask

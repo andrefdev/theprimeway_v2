@@ -145,7 +145,7 @@ function AiPage() {
           if (args.level === 'three-year') {
             goal = await goalsApi.createThreeYearGoal({
               visionId: args.visionId,
-              area: args.area || 'general',
+              area: args.area || 'lifestyle',
               title: args.title,
               description: args.description,
             })

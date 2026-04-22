@@ -348,6 +348,26 @@ gamificationRoutes.openapi(checkAchievementsRoute, async (c) => {
 })
 
 // ---------------------------------------------------------------------------
+// GET /achievements/progress — per-achievement progress for UI progress bars
+// ---------------------------------------------------------------------------
+const achievementsProgressRoute = createRoute({
+  method: 'get',
+  path: '/achievements/progress',
+  tags: ['Gamification'],
+  summary: 'Achievement progress',
+  security: [{ Bearer: [] }],
+  responses: {
+    200: { content: { 'application/json': { schema: z.object({ data: z.array(z.any()) }) } }, description: 'Progress' },
+  },
+})
+
+gamificationRoutes.openapi(achievementsProgressRoute, (async (c: any) => {
+  const userId = c.get('user').userId
+  const data = await gamificationService.getAchievementsProgress(userId)
+  return c.json({ data }, 200)
+}) as any)
+
+// ---------------------------------------------------------------------------
 // GET /challenges
 // ---------------------------------------------------------------------------
 const getChallengesRoute = createRoute({

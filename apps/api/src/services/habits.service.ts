@@ -9,6 +9,7 @@
  */
 import { habitsRepository } from '../repositories/habits.repo'
 import { gamificationService } from './gamification.service'
+import { gamificationEvents } from './gamification/events'
 import { prisma } from '../lib/prisma'
 import { validateLimit } from '../lib/limits'
 import { FEATURES, CATEGORY_TO_PILLAR } from '@repo/shared/constants'
@@ -381,6 +382,7 @@ class HabitsService {
 
       // Auto-check-in streak
       await gamificationService.checkInStreak(userId, input.date)
+      gamificationEvents.emit('habit.logged', { userId, meta: { habitId } })
     }
 
     return { log }

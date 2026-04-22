@@ -3,6 +3,9 @@ import './lib/sentry'
 import { serve } from '@hono/node-server'
 import { app } from './app'
 import { attachSyncServer } from './lib/sync-server'
+import { subscribeGamificationHandlers } from './services/gamification/event-handler'
+
+subscribeGamificationHandlers()
 
 const port = Number(process.env.PORT) || 3001
 

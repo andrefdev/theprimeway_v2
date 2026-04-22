@@ -1,4 +1,5 @@
 import { readingRepo } from '../repositories/reading.repo'
+import { gamificationEvents } from './gamification/events'
 
 class ReadingService {
   async listBooks(
@@ -148,7 +149,11 @@ class ReadingService {
     if (body.tags !== undefined) updateData.tags = body.tags
     if (body.favorite !== undefined) updateData.favorite = body.favorite
 
-    return readingRepo.updateUserBook(id, updateData)
+    const updated = await readingRepo.updateUserBook(id, updateData)
+    if (body.status === 'finished' && existing.status !== 'finished') {
+      gamificationEvents.emit('book.finished', { userId, meta: { userBookId: id } })
+    }
+    return updated
   }
 
   async deleteBook(userId: string, id: string) {

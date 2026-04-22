@@ -7,7 +7,7 @@
  * - NO Prisma queries, NO HTTP concerns
  */
 import { goalsRepository } from '../repositories/goals.repo'
-import { gamificationService } from './gamification.service'
+import { gamificationEvents } from './gamification/events'
 import { prisma } from '../lib/prisma'
 import { generateObject } from 'ai'
 import { taskModel } from '../lib/ai-models'
@@ -102,7 +102,7 @@ class GoalsService {
     const result = await goalsRepository.updateQuarterlyGoal(userId, id, data)
     // Check quarterly milestone achievements when progress changes
     if ('progress' in data) {
-      gamificationService.checkAchievements(userId).catch(() => {})
+      gamificationEvents.emit('quarterly.progress.updated', { userId })
     }
     return result
   }
@@ -123,10 +123,12 @@ class GoalsService {
   async createWeeklyGoal(userId: string, input: {
     quarterlyGoalId?: string; weekStartDate: string; title: string; status?: string
   }) {
-    return goalsRepository.createWeeklyGoal(userId, {
+    const result = await goalsRepository.createWeeklyGoal(userId, {
       ...input,
       status: input.status ?? 'not-started',
     })
+    gamificationEvents.emit('goal.created', { userId })
+    return result
   }
 
   async updateWeeklyGoal(userId: string, id: string, data: Record<string, unknown>) {

@@ -709,6 +709,7 @@ model User {
   xpEvents              XpEvent[]
   dailyXpSnapshots      DailyXpSnapshot[]
   userAchievements      UserAchievement[]
+  achievementProgress   UserAchievementProgress[]
   dailyChallenges       DailyChallenge[]
 
   // Feature flags
@@ -1356,6 +1357,7 @@ model Achievement {
   sortOrder Int    @default(0) @map("sort_order")
 
   userAchievements UserAchievement[]
+  userProgress     UserAchievementProgress[]
 
   @@map("achievements")
 }
@@ -1371,6 +1373,22 @@ model UserAchievement {
   @@unique([userId, achievementId])
   @@index([userId])
   @@map("user_achievements")
+}
+
+model UserAchievementProgress {
+  id            String      @id @default(uuid())
+  userId        String      @map("user_id")
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievementId String      @map("achievement_id")
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  value         Int         @default(0)
+  target        Int         @default(0)
+  met           Boolean     @default(false)
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+
+  @@unique([userId, achievementId])
+  @@index([userId])
+  @@map("user_achievement_progress")
 }
 
 model DailyChallenge {

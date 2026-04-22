@@ -93,36 +93,36 @@ export function SectionHeader({
     <div className="mb-6">
       {/* Cover — full width */}
       {isPersonalizable ? (
-        <CoverGallery
-          selectedUrl={coverImageUrl}
-          onSelect={handleCoverSelect}
-          onRemove={handleCoverRemove}
-        >
-          <button
-            type="button"
-            className="group relative block h-28 w-full overflow-hidden sm:h-36"
-          >
-            {coverImageUrl ? (
-              <>
-                <img
-                  src={coverImageUrl}
-                  alt=""
-                  className="h-full w-full object-cover"
-                  style={{ objectPosition: `center ${coverPositionY}%` }}
-                />
-                <div className="absolute inset-x-0 bottom-0 h-full bg-gradient-to-t from-background via-background/40 to-transparent" />
-              </>
-            ) : (
-              <div className={cn('h-full w-full bg-gradient-to-b', gradient)} />
-            )}
-            <div className="absolute inset-0 flex items-start justify-end p-2">
-              <span className="flex items-center gap-1.5 rounded-md bg-background/80 px-3 py-1.5 text-xs font-medium text-foreground opacity-0 shadow-sm backdrop-blur-sm transition-opacity group-hover:opacity-100">
+        <div className="group relative h-28 w-full overflow-hidden sm:h-36">
+          {coverImageUrl ? (
+            <>
+              <img
+                src={coverImageUrl}
+                alt=""
+                className="h-full w-full object-cover"
+                style={{ objectPosition: `center ${coverPositionY}%` }}
+              />
+              <div className="absolute inset-x-0 bottom-0 h-full bg-gradient-to-t from-background via-background/40 to-transparent" />
+            </>
+          ) : (
+            <div className={cn('h-full w-full bg-gradient-to-b', gradient)} />
+          )}
+          <div className="absolute inset-0 flex items-start justify-end p-2 pointer-events-none">
+            <CoverGallery
+              selectedUrl={coverImageUrl}
+              onSelect={handleCoverSelect}
+              onRemove={handleCoverRemove}
+            >
+              <button
+                type="button"
+                className="pointer-events-auto flex items-center gap-1.5 rounded-md bg-background/80 px-3 py-1.5 text-xs font-medium text-foreground opacity-0 shadow-sm backdrop-blur-sm transition-opacity hover:bg-background group-hover:opacity-100 focus-visible:opacity-100"
+              >
                 <ImageIcon className="h-3.5 w-3.5" />
                 Change cover
-              </span>
-            </div>
-          </button>
-        </CoverGallery>
+              </button>
+            </CoverGallery>
+          </div>
+        </div>
       ) : (
         <div className="relative h-28 overflow-hidden sm:h-36">
           {propCoverUrl ? (

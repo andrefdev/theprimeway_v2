@@ -4,6 +4,7 @@ import {
   closestCenter,
   PointerSensor,
   TouchSensor,
+  useDroppable,
   useSensor,
   useSensors,
   type DragEndEvent,
@@ -72,14 +73,29 @@ export function WeekPlanner({
       if (!over) return
 
       const taskId = String(active.id)
-      const targetDate = String(over.id)
+      const overId = String(over.id)
 
-      // Check if dropped on a day column
-      if (targetDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
-        onMoveToDay(taskId, targetDate)
+      let targetDate: string | null = null
+      if (overId.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        targetDate = overId
+      } else {
+        // Dropped on another task — resolve its day
+        for (const [dateKey, dayTasks] of tasksByDay.entries()) {
+          if (dayTasks.some((x) => x.id === overId)) {
+            targetDate = dateKey
+            break
+          }
+        }
       }
+      if (!targetDate) return
+
+      const source = tasks.find((x) => x.id === taskId)
+      const sourceDate = source?.scheduledDate?.split('T')[0]
+      if (sourceDate === targetDate) return
+
+      onMoveToDay(taskId, targetDate)
     },
-    [onMoveToDay],
+    [onMoveToDay, tasksByDay, tasks],
   )
 
   return (
@@ -142,13 +158,17 @@ function DayColumn({
   onDelete,
   onQuickAdd,
 }: DayColumnProps) {
-  const { setNodeRef } = useSortable({ id: dateKey })
+  const { setNodeRef, isOver } = useDroppable({ id: dateKey })
 
   return (
     <div
       ref={setNodeRef}
-      className={`flex flex-col rounded-xl border-2 p-4 backdrop-blur-xs ${
-        today ? 'border-primary/50 bg-primary/10' : 'border-border/50 bg-card/50'
+      className={`flex flex-col rounded-xl border-2 p-4 backdrop-blur-xs transition-colors ${
+        isOver
+          ? 'border-primary bg-primary/20'
+          : today
+            ? 'border-primary/50 bg-primary/10'
+            : 'border-border/50 bg-card/50'
       }`}
     >
       {/* Day header */}

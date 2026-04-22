@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm --filter @repo/api exec tsc --noEmit)",
+      "Bash(pnpm --filter @repo/web exec tsc --noEmit)",
+      "Bash(pnpm --filter @repo/api build)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(pnpm --filter @repo/api add ai@^5 @ai-sdk/anthropic@^2 @ai-sdk/deepseek@^1)",
+      "WebFetch(domain:ai-sdk.dev)",
+      "Bash(pnpm exec *)",
+      "Bash(pnpm build *)",
+      "PowerShell(Get-Command *)",
+      "PowerShell(python -c \"import paramiko; print\\(paramiko.__version__\\)\" 2>&1)"
+    ]
+  }
+}

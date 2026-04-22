@@ -8,6 +8,7 @@ import { QueryError } from '@/shared/components/QueryError'
 import { ChevronRight } from 'lucide-react'
 import { toast } from 'sonner'
 import { useUpdateTask } from '@/features/tasks/queries'
+import { TaskTimerButton } from '@/features/tasks/components/TaskTimerButton'
 import type { Task } from '@repo/shared/types'
 import { UseQueryResult } from '@tanstack/react-query'
 
@@ -70,6 +71,7 @@ export function TodayTasksList({ tasks, tasksQuery }: TodayTasksListProps) {
                     {t('high', { ns: 'common' })}
                   </span>
                 )}
+                <TaskTimerButton task={task} />
               </div>
             ))}
           </div>

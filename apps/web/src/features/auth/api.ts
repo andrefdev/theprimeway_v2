@@ -10,6 +10,7 @@ export interface AuthResponse {
     email: string
     image: string | null
     emailVerified: string | null
+    role: string
   }
 }
 

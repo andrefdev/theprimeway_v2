@@ -7,6 +7,7 @@ export interface AuthUser {
   email: string
   image: string | null
   emailVerified: string | null
+  role?: string | null
   createdAt?: string | null
   settings?: {
     timezone: string | null

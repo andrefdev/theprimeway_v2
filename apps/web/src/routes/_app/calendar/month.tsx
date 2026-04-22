@@ -8,6 +8,7 @@ import { SkeletonList } from '@/shared/components/ui/skeleton-list'
 import { MonthView } from '@/features/calendar/components/MonthView'
 import { WeekView } from '@/features/calendar/components/WeekView'
 import { DayDetail } from '@/features/calendar/components/DayDetail'
+import { CalendarNav } from '@/features/calendar/components/CalendarNav'
 import { useCalendarItems } from '@/features/calendar/hooks/use-calendar-items'
 import { FreeTimeCard } from '@/features/calendar/components/FreeTimeCard'
 import { TimeBlockSuggestions } from '@/features/calendar/components/TimeBlockSuggestions'
@@ -23,20 +24,19 @@ import {
 } from 'date-fns'
 import { useState } from 'react'
 
-export const Route = createFileRoute('/_app/calendar')({
-  component: CalendarPage,
+export const Route = createFileRoute('/_app/calendar/month')({
+  component: CalendarMonthPage,
 })
 
 type CalendarViewMode = 'month' | 'week'
 
-function CalendarPage() {
+function CalendarMonthPage() {
   const { t } = useTranslation('calendar')
   const { dateFnsLocale } = useLocale()
   const [currentDate, setCurrentDate] = useState(new Date())
   const [view, setView] = useState<CalendarViewMode>('month')
   const [selectedDay, setSelectedDay] = useState<Date | null>(new Date())
 
-  // Compute date range for data fetching
   const rangeStart = view === 'month'
     ? startOfWeek(startOfMonth(currentDate), { weekStartsOn: 1 })
     : startOfWeek(currentDate, { weekStartsOn: 1 })
@@ -52,26 +52,17 @@ function CalendarPage() {
   const { items, isLoading } = useCalendarItems(dateRange)
 
   function handlePrev() {
-    if (view === 'month') {
-      setCurrentDate(subMonths(currentDate, 1))
-    } else {
-      setCurrentDate(addDays(currentDate, -7))
-    }
+    if (view === 'month') setCurrentDate(subMonths(currentDate, 1))
+    else setCurrentDate(addDays(currentDate, -7))
   }
-
   function handleNext() {
-    if (view === 'month') {
-      setCurrentDate(addMonths(currentDate, 1))
-    } else {
-      setCurrentDate(addDays(currentDate, 7))
-    }
+    if (view === 'month') setCurrentDate(addMonths(currentDate, 1))
+    else setCurrentDate(addDays(currentDate, 7))
   }
-
   function handleToday() {
     setCurrentDate(new Date())
     setSelectedDay(new Date())
   }
-
   function handleDayClick(day: Date) {
     setSelectedDay(day)
   }
@@ -79,14 +70,13 @@ function CalendarPage() {
   return (
     <div>
       <SectionHeader sectionId="calendar" title={t('title')} />
-      <div className="mx-auto max-w-5xl px-6 pb-6 space-y-6">
-        {/* Navigation */}
+      <CalendarNav />
+      <div className="mx-auto max-w-5xl px-6 pb-6 pt-4 space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold text-foreground">
             {format(currentDate, view === 'month' ? 'MMMM yyyy' : "'W'w — MMMM yyyy", { locale: dateFnsLocale })}
           </h2>
           <div className="flex items-center gap-2">
-            {/* View toggle */}
             <div className="flex rounded-lg border border-border overflow-hidden">
               <button
                 type="button"
@@ -108,7 +98,6 @@ function CalendarPage() {
               </button>
             </div>
 
-            {/* Navigation */}
             <div className="flex items-center gap-1">
               <Button variant="ghost" size="icon" onClick={handlePrev}>
                 <ChevronLeftIcon />
@@ -135,21 +124,14 @@ function CalendarPage() {
                   selectedDay={selectedDay}
                   onDayClick={handleDayClick}
                 />
-                {selectedDay && (
-                  <DayDetail day={selectedDay} items={items} />
-                )}
+                {selectedDay && <DayDetail day={selectedDay} items={items} />}
               </div>
             ) : (
-              <WeekView
-                currentDate={currentDate}
-                items={items}
-                onDayClick={handleDayClick}
-              />
+              <WeekView currentDate={currentDate} items={items} onDayClick={handleDayClick} />
             )}
           </>
         )}
 
-        {/* AI Calendar Features */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <FreeTimeCard />
           <TimeBlockSuggestions />
