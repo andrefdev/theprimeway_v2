@@ -2,8 +2,14 @@ import { useMemo } from 'react'
 import { format, subDays } from 'date-fns'
 import { ScrollArea } from '@/shared/components/ui/scroll-area'
 import { Badge } from '@/shared/components/ui/badge'
-import { EditButton, DeleteButton } from '@/shared/components/ActionButtons'
-import { Archive } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from '@/shared/components/ui/dropdown-menu'
+import { Archive, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import type { Habit } from '@repo/shared/types'
 import { LIFE_PILLARS, CATEGORY_TO_PILLAR } from '@repo/shared/constants'
 import { useTranslation } from 'react-i18next'
@@ -159,58 +165,78 @@ function HabitRow({
     <tr className="group border-b border-border/50 hover:bg-muted/20 transition-colors">
       {/* Habit name — sticky left */}
       <td className="sticky left-0 z-10 bg-card px-3 py-2">
-        <div className="flex flex-col gap-1 max-w-44">
-          <button
-            type="button"
-            onClick={() => onEdit(habit)}
-            className="flex items-center gap-2 text-left hover:text-primary transition-colors"
-          >
-            <div
-              className="h-2.5 w-2.5 rounded-full shrink-0"
-              style={{ backgroundColor: habit.color || '#3b82f6' }}
-            />
-            <span className="text-sm font-medium text-foreground truncate">
-              {habit.name}
-            </span>
-          </button>
-          <div className="flex items-center gap-1 pl-4.5" onClick={(e) => e.stopPropagation()}>
-            {habit.category && (() => {
-              const pillarId = CATEGORY_TO_PILLAR[habit.category] || habit.category
-              const pillar = LIFE_PILLARS.find(p => p.id === pillarId)
-              return (
-                <Badge variant="outline" className="text-[9px] px-1 py-0 gap-1 font-normal">
-                  {pillar && (
-                    <span
-                      className="inline-block h-1.5 w-1.5 rounded-full"
-                      style={{ backgroundColor: pillar.color }}
-                    />
-                  )}
-                  {t(pillarI18nKey(pillarId) as any)}
-                </Badge>
-              )
-            })()}
-            <span className="text-[9px] text-muted-foreground">
-              {habit.frequencyType === 'daily'
-                ? t('daily')
-                : habit.frequencyType === 'week_days'
-                  ? `${habit.weekDays.length}${t('daysShort', { defaultValue: 'd' })}/wk`
-                  : `${habit.targetFrequency}x/wk`}
-            </span>
-            <div className="ml-auto hidden items-center gap-0.5 group-hover:flex">
-              <EditButton onClick={() => onEdit(habit)} />
-                {onArchive && (
-                  <button
-                    type="button"
-                    onClick={() => onArchive(habit)}
-                    className="inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                    title={t('archive')}
-                  >
-                    <Archive className="size-3" />
-                  </button>
-                )}
-                {onDelete && <DeleteButton onClick={() => onDelete(habit)} />}
-              </div>
+        <div className="flex items-start gap-1 max-w-44">
+          <div className="flex flex-col gap-1 min-w-0 flex-1">
+            <button
+              type="button"
+              onClick={() => onEdit(habit)}
+              className="flex items-center gap-2 text-left hover:text-primary transition-colors"
+            >
+              <div
+                className="h-2.5 w-2.5 rounded-full shrink-0"
+                style={{ backgroundColor: habit.color || '#3b82f6' }}
+              />
+              <span className="text-sm font-medium text-foreground truncate">
+                {habit.name}
+              </span>
+            </button>
+            <div className="flex items-center gap-1 pl-4.5">
+              {habit.category && (() => {
+                const pillarId = CATEGORY_TO_PILLAR[habit.category] || habit.category
+                const pillar = LIFE_PILLARS.find(p => p.id === pillarId)
+                return (
+                  <Badge variant="outline" className="text-[9px] px-1 py-0 gap-1 font-normal">
+                    {pillar && (
+                      <span
+                        className="inline-block h-1.5 w-1.5 rounded-full"
+                        style={{ backgroundColor: pillar.color }}
+                      />
+                    )}
+                    {t(pillarI18nKey(pillarId) as any)}
+                  </Badge>
+                )
+              })()}
+              <span className="text-[9px] text-muted-foreground">
+                {habit.frequencyType === 'daily'
+                  ? t('daily')
+                  : habit.frequencyType === 'week_days'
+                    ? `${habit.weekDays.length}${t('daysShort', { defaultValue: 'd' })}/wk`
+                    : `${habit.targetFrequency}x/wk`}
+              </span>
+            </div>
           </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-muted-foreground opacity-60 transition-opacity hover:bg-muted hover:text-foreground hover:opacity-100 focus:opacity-100 focus:outline-none data-[state=open]:opacity-100"
+              aria-label={t('more', { ns: 'common' })}
+            >
+              <MoreHorizontal className="size-3.5" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuItem onClick={() => onEdit(habit)}>
+                <Pencil className="size-3.5" />
+                {t('edit', { ns: 'common' })}
+              </DropdownMenuItem>
+              {onArchive && (
+                <DropdownMenuItem onClick={() => onArchive(habit)}>
+                  <Archive className="size-3.5" />
+                  {t('archive')}
+                </DropdownMenuItem>
+              )}
+              {onDelete && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={() => onDelete(habit)}
+                  >
+                    <Trash2 className="size-3.5" />
+                    {t('delete', { ns: 'common' })}
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </td>
 
