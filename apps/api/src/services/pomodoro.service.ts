@@ -2,6 +2,7 @@ import { pomodoroRepo } from '../repositories/pomodoro.repo'
 import { prisma } from '../lib/prisma'
 import { validateLimit } from '../lib/limits'
 import { FEATURES } from '@repo/shared/constants'
+import { gamificationEvents } from './gamification/events'
 
 const XP_VALUES = { pomodoro: 15 }
 
@@ -116,6 +117,7 @@ class PomodoroService {
       } catch (xpError) {
         console.error('[POMODORO] Failed to award XP:', xpError)
       }
+      gamificationEvents.emit('pomodoro.completed', { userId, meta: { sessionId: id } })
     }
 
     return session

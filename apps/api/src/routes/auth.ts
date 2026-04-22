@@ -147,6 +147,7 @@ const meRoute = createRoute({
               email: z.string(),
               image: z.string().nullable(),
               emailVerified: z.string().nullable(),
+              role: z.string(),
               settings: z.object({
                 timezone: z.string().nullable(),
                 theme: z.string().nullable(),

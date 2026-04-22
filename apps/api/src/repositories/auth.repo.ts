@@ -40,6 +40,7 @@ const userSelectWithSettings = {
   image: true,
   emailVerified: true,
   passwordHash: true,
+  role: true,
   settings: {
     select: { timezone: true, theme: true, locale: true, baseCurrency: true },
   },

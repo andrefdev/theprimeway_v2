@@ -11,6 +11,7 @@ import { prisma } from '../lib/prisma'
 import { validateLimit } from '../lib/limits'
 import { FEATURES } from '@repo/shared/constants'
 import type { FindNotesOptions } from '../repositories/notes.repo'
+import { gamificationEvents } from './gamification/events'
 import type { Note, NoteCategory } from '@prisma/client'
 
 type NoteModel = Note & { category?: NoteCategory | null }
@@ -91,7 +92,7 @@ class NotesService {
       validateLimit(FEATURES.NOTES_LIMIT, plan, usage?.currentNotes ?? 0)
     }
 
-    return notesRepository.create(userId, {
+    const note = await notesRepository.create(userId, {
       title: input.title,
       content: input.content,
       categoryId: input.categoryId,
@@ -99,6 +100,8 @@ class NotesService {
       isArchived: input.isArchived,
       tags: input.tags,
     })
+    gamificationEvents.emit('note.created', { userId, meta: { noteId: note.id } })
+    return note
   }
 
   async updateNote(userId: string, noteId: string, input: UpdateNoteInput): Promise<NoteModel | null> {

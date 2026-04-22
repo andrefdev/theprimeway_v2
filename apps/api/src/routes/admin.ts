@@ -7,6 +7,8 @@ import { plansRepo, type PlanRow } from '../repositories/plans.repo'
 import { bustFeatureCache } from '../services/features.service'
 import { FEATURES } from '@repo/shared/constants'
 import { prisma } from '../lib/prisma'
+import { sendPushSchema } from '@repo/shared/validators'
+import { notificationsService } from '../services/notifications.service'
 
 export const adminRoutes = new OpenAPIHono<AppEnv>()
 
@@ -720,4 +722,27 @@ adminRoutes.openapi(analyticsSummaryRoute, async (c) => {
     },
     200,
   )
+})
+
+// ---------------------------------------------------------------------------
+// POST /api/admin/notifications/push — send custom FCM push to all or specific users
+// ---------------------------------------------------------------------------
+const sendPushRoute = createRoute({
+  method: 'post',
+  path: '/notifications/push',
+  tags: ['Admin'],
+  summary: 'Send a push notification to all users or a subset',
+  security: [{ Bearer: [] }],
+  request: { body: { content: { 'application/json': { schema: sendPushSchema } } } },
+  responses: {
+    200: { content: { 'application/json': { schema: z.any() } }, description: 'Sent' },
+    400: { content: { 'application/json': { schema: z.object({ error: z.string() }) } }, description: 'Invalid' },
+  },
+})
+
+adminRoutes.openapi(sendPushRoute, async (c) => {
+  const body = c.req.valid('json')
+  const result = await notificationsService.sendPush(body)
+  if ('error' in result) return c.json({ error: 'Missing title or body' }, 400)
+  return c.json(result, 200)
 })

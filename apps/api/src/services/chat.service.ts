@@ -324,7 +324,7 @@ Workflow:
             title: z.string(),
             description: z.string().optional(),
             visionId: z.string().optional().describe('Required when level is three-year'),
-            area: z.enum(['general', 'finances', 'career', 'health', 'relationships', 'mindset', 'lifestyle']).optional().describe('Required when level is three-year'),
+            area: z.enum(['finances', 'career', 'health', 'relationships', 'mindset', 'lifestyle']).optional().describe('Required when level is three-year'),
             threeYearGoalId: z.string().optional().describe('Required when level is annual'),
             targetDate: z.string().optional().describe('YYYY-MM-DD, used for annual'),
             annualGoalId: z.string().optional().describe('Required when level is quarterly'),

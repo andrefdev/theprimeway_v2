@@ -59,7 +59,7 @@ services:
     networks:
       - theprimeway-net
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO /dev/null http://localhost/index.html || exit 1"]
+      test: ["CMD-SHELL", "wget -qO /dev/null http://127.0.0.1/index.html || exit 1"]
       interval: 30s
       timeout: 10s
       start_period: 15s
@@ -79,7 +79,7 @@ services:
     networks:
       - theprimeway-net
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO /dev/null http://localhost/index.html || exit 1"]
+      test: ["CMD-SHELL", "wget -qO /dev/null http://127.0.0.1/index.html || exit 1"]
       interval: 30s
       timeout: 10s
       start_period: 15s

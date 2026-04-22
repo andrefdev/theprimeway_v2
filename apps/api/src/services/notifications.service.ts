@@ -525,8 +525,15 @@ class NotificationsService {
     }
 
     const tokens = devices.map((d: { fcmToken: string }) => d.fcmToken).filter(Boolean)
-    const res = await messaging.sendEachForMulticast({
-      tokens,
+
+    // FCM limits multicast to 500 tokens per call — chunk to support broadcasts.
+    const FCM_MULTICAST_LIMIT = 500
+    const chunks: string[][] = []
+    for (let i = 0; i < tokens.length; i += FCM_MULTICAST_LIMIT) {
+      chunks.push(tokens.slice(i, i + FCM_MULTICAST_LIMIT))
+    }
+
+    const messagePayload = {
       notification: {
         title: body.title,
         body: body.body,
@@ -538,28 +545,37 @@ class NotificationsService {
         ...(body.data ? { payload: JSON.stringify(body.data) } : {}),
       },
       webpush: body.url ? { fcmOptions: { link: body.url } } : undefined,
-    })
+    }
 
-    // Prune invalid tokens
-    await Promise.all(
-      res.responses.map(async (r, i) => {
-        if (r.success) return
-        const code = r.error?.code ?? ''
-        if (
-          code === 'messaging/registration-token-not-registered' ||
-          code === 'messaging/invalid-registration-token' ||
-          code === 'messaging/invalid-argument'
-        ) {
-          const token = tokens[i]
-          if (token) await notificationsRepo.markDeviceInactive(token)
-        }
-      }),
-    )
+    let successCount = 0
+    let failureCount = 0
+
+    for (const chunkTokens of chunks) {
+      const res = await messaging.sendEachForMulticast({ tokens: chunkTokens, ...messagePayload })
+      successCount += res.successCount
+      failureCount += res.failureCount
+
+      // Prune invalid tokens
+      await Promise.all(
+        res.responses.map(async (r, i) => {
+          if (r.success) return
+          const code = r.error?.code ?? ''
+          if (
+            code === 'messaging/registration-token-not-registered' ||
+            code === 'messaging/invalid-registration-token' ||
+            code === 'messaging/invalid-argument'
+          ) {
+            const token = chunkTokens[i]
+            if (token) await notificationsRepo.markDeviceInactive(token)
+          }
+        }),
+      )
+    }
 
     return {
       total_devices: devices.length,
-      success_count: res.successCount,
-      failure_count: res.failureCount,
+      success_count: successCount,
+      failure_count: failureCount,
     }
   }
 }

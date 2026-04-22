@@ -207,6 +207,8 @@ jobs:
           CLOUDINARY_UPLOAD_PRESET: ${{ secrets.CLOUDINARY_UPLOAD_PRESET }}
           RAPIDAPI_KEY: ${{ secrets.RAPIDAPI_KEY }}
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          ADMIN_API_KEY: ${{ secrets.ADMIN_API_KEY }}
         run: |
           # Build .env with printf — single quotes prevent special char issues
           # (angle brackets in SMTP_FROM, passwords with symbols, etc.)
@@ -238,6 +240,8 @@ jobs:
           printf "CLOUDINARY_UPLOAD_PRESET='%s'\n" "$CLOUDINARY_UPLOAD_PRESET" >> .env
           printf "RAPIDAPI_KEY='%s'\n" "$RAPIDAPI_KEY" >> .env
           printf "SENTRY_DSN='%s'\n" "$SENTRY_DSN" >> .env
+          printf "CRON_SECRET='%s'\n" "$CRON_SECRET" >> .env
+          printf "ADMIN_API_KEY='%s'\n" "$ADMIN_API_KEY" >> .env
 
           # FIREBASE_PRIVATE_KEY: expand \n escapes, wrap in double quotes for multiline
           FIREBASE_PRIVATE_KEY_EXPANDED=$(printf '%b' "$FIREBASE_PRIVATE_KEY_RAW")
@@ -253,7 +257,7 @@ jobs:
       - name: Ensure server directories exist
         run: |
           ssh -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
-            'mkdir -p /var/www/theprimeway/nginx'
+            'mkdir -p /var/www/theprimeway/nginx /var/www/theprimeway/scripts'
 
       - name: Copy config files to server
         run: |
@@ -265,6 +269,9 @@ jobs:
 
           scp -P ${{ secrets.SSH_PORT }} nginx/theprimeway.conf nginx/spa.conf \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/theprimeway/nginx/
+
+          scp -P ${{ secrets.SSH_PORT }} scripts/install-cron.sh \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/theprimeway/scripts/install-cron.sh
 
       - name: Pull latest images and start containers
         uses: appleboy/ssh-action@v1

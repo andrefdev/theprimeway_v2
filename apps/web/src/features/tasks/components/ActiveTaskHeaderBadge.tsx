@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { Timer, Square, ExternalLink } from 'lucide-react'
+import { Timer, Square, ExternalLink, Check } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
 import { tasksQueries } from '../queries'
-import { useStopTimer } from '../queries'
+import { useStopTimer, useUpdateTask } from '../queries'
 import {
   Dialog,
   DialogContent,
@@ -56,6 +56,7 @@ export function ActiveTaskHeaderBadge() {
   }, [activeTask])
 
   const stopTimer = useStopTimer()
+  const updateTask = useUpdateTask()
 
   if (!activeTask) return null
 
@@ -66,6 +67,18 @@ export function ActiveTaskHeaderBadge() {
   const handleStop = async () => {
     try {
       await stopTimer.mutateAsync(activeTask.id)
+      setOpen(false)
+    } catch {
+      // noop
+    }
+  }
+
+  const handleComplete = async () => {
+    try {
+      if (activeTask.actualStart && !activeTask.actualEnd) {
+        await stopTimer.mutateAsync(activeTask.id)
+      }
+      await updateTask.mutateAsync({ id: activeTask.id, data: { status: 'completed' } })
       setOpen(false)
     } catch {
       // noop
@@ -144,11 +157,20 @@ export function ActiveTaskHeaderBadge() {
               <Button
                 variant="destructive"
                 onClick={handleStop}
-                disabled={stopTimer.isPending}
+                disabled={stopTimer.isPending || updateTask.isPending}
                 className="gap-2"
               >
                 <Square className="h-4 w-4" />
                 {t('stopTimer', { defaultValue: 'Stop timer' })}
+              </Button>
+              <Button
+                variant="default"
+                onClick={handleComplete}
+                disabled={stopTimer.isPending || updateTask.isPending}
+                className="gap-2"
+              >
+                <Check className="h-4 w-4" />
+                {t('markComplete', { defaultValue: 'Mark complete' })}
               </Button>
               <Button variant="outline" asChild>
                 <Link to="/tasks" onClick={() => setOpen(false)} className="gap-2">
