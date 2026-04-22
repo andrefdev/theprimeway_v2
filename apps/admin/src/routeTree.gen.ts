@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AdminRouteImport } from './routes/_admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminNotificationsRouteImport } from './routes/_admin/notifications'
 import { Route as AdminAnalyticsRouteImport } from './routes/_admin/analytics'
 import { Route as AdminUsersIndexRouteImport } from './routes/_admin/users.index'
 import { Route as AdminPlansIndexRouteImport } from './routes/_admin/plans.index'
@@ -32,6 +33,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminNotificationsRoute = AdminNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => AdminRoute,
 } as any)
 const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
   id: '/analytics',
@@ -68,6 +74,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/analytics': typeof AdminAnalyticsRoute
+  '/notifications': typeof AdminNotificationsRoute
   '/plans/$planId': typeof AdminPlansPlanIdRoute
   '/plans/new': typeof AdminPlansNewRoute
   '/users/$userId': typeof AdminUsersUserIdRoute
@@ -78,6 +85,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/analytics': typeof AdminAnalyticsRoute
+  '/notifications': typeof AdminNotificationsRoute
   '/plans/$planId': typeof AdminPlansPlanIdRoute
   '/plans/new': typeof AdminPlansNewRoute
   '/users/$userId': typeof AdminUsersUserIdRoute
@@ -90,6 +98,7 @@ export interface FileRoutesById {
   '/_admin': typeof AdminRouteWithChildren
   '/login': typeof LoginRoute
   '/_admin/analytics': typeof AdminAnalyticsRoute
+  '/_admin/notifications': typeof AdminNotificationsRoute
   '/_admin/plans/$planId': typeof AdminPlansPlanIdRoute
   '/_admin/plans/new': typeof AdminPlansNewRoute
   '/_admin/users/$userId': typeof AdminUsersUserIdRoute
@@ -102,6 +111,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/analytics'
+    | '/notifications'
     | '/plans/$planId'
     | '/plans/new'
     | '/users/$userId'
@@ -112,6 +122,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/analytics'
+    | '/notifications'
     | '/plans/$planId'
     | '/plans/new'
     | '/users/$userId'
@@ -123,6 +134,7 @@ export interface FileRouteTypes {
     | '/_admin'
     | '/login'
     | '/_admin/analytics'
+    | '/_admin/notifications'
     | '/_admin/plans/$planId'
     | '/_admin/plans/new'
     | '/_admin/users/$userId'
@@ -158,6 +170,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_admin/notifications': {
+      id: '/_admin/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof AdminNotificationsRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/_admin/analytics': {
       id: '/_admin/analytics'
@@ -206,6 +225,7 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteChildren {
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
+  AdminNotificationsRoute: typeof AdminNotificationsRoute
   AdminPlansPlanIdRoute: typeof AdminPlansPlanIdRoute
   AdminPlansNewRoute: typeof AdminPlansNewRoute
   AdminUsersUserIdRoute: typeof AdminUsersUserIdRoute
@@ -215,6 +235,7 @@ interface AdminRouteChildren {
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAnalyticsRoute: AdminAnalyticsRoute,
+  AdminNotificationsRoute: AdminNotificationsRoute,
   AdminPlansPlanIdRoute: AdminPlansPlanIdRoute,
   AdminPlansNewRoute: AdminPlansNewRoute,
   AdminUsersUserIdRoute: AdminUsersUserIdRoute,
