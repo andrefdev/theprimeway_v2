@@ -109,6 +109,7 @@
     "tailwind-merge": "^3.3.1",
     "tailwind-variants": "0.1.20",
     "tailwindcss-animate": "^1.0.7",
+    "whatwg-fetch": "^3.6.20",
     "zod": "^4.3.6",
     "zustand": "^5.0.11"
   },
