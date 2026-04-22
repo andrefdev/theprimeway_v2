@@ -14,8 +14,14 @@ import { HabitsFilters } from '@/features/habits/components/HabitsFilters'
 import { HabitDetailPanel } from '@/features/habits/components/HabitDetailPanel'
 import { QueryError } from '@/shared/components/QueryError'
 import { PlusIcon, CheckIcon } from '@/shared/components/Icons'
-import { EditButton, DeleteButton } from '@/shared/components/ActionButtons'
-import { Archive, ArchiveRestore } from 'lucide-react'
+import { Archive, ArchiveRestore, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from '@/shared/components/ui/dropdown-menu'
 import { Button } from '@/shared/components/ui/button'
 import { Badge } from '@/shared/components/ui/badge'
 import { Card, CardContent } from '@/shared/components/ui/card'
@@ -358,20 +364,30 @@ function HabitCard({
                   {habit.name}
                 </p>
               </div>
-              <div
-                className="flex items-center gap-0.5 shrink-0"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <EditButton onClick={onEdit} />
-                <button
-                  type="button"
-                  onClick={onArchive}
-                  className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground opacity-0 transition-all hover:bg-muted hover:text-foreground group-hover:opacity-100"
-                  title={t('archive')}
-                >
-                  <Archive className="size-3.5" />
-                </button>
-                <DeleteButton onClick={onDelete} />
+              <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground opacity-60 transition-opacity hover:bg-muted hover:text-foreground hover:opacity-100 focus:opacity-100 focus:outline-none data-[state=open]:opacity-100"
+                    aria-label={t('more', { ns: 'common' })}
+                  >
+                    <MoreHorizontal className="size-3.5" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-40">
+                    <DropdownMenuItem onClick={onEdit}>
+                      <Pencil className="size-3.5" />
+                      {t('edit', { ns: 'common' })}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={onArchive}>
+                      <Archive className="size-3.5" />
+                      {t('archive')}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem variant="destructive" onClick={onDelete}>
+                      <Trash2 className="size-3.5" />
+                      {t('delete', { ns: 'common' })}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
 

@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { ChevronDown, Check } from 'lucide-react'
+import { ChevronDown } from 'lucide-react'
 import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/components/ui/button'
 import {
@@ -101,7 +101,6 @@ export function DurationCombobox({
                     onSelect={() => commit(p)}
                   >
                     {p} min
-                    {value === p && <Check className="ml-auto size-4" />}
                   </CommandItem>
                 ))}
               {value !== undefined && (
