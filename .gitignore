@@ -28,3 +28,9 @@ coverage/
 # prisma
 prisma/dev.db
 prisma/dev.db-journal
+
+# tanstack router generated tmp
+apps/web/.tanstack/
+
+# tauri generated schemas
+apps/desktop/src-tauri/gen/
