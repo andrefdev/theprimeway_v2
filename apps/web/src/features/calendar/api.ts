@@ -1,10 +1,22 @@
 import { api } from '@/shared/lib/api-client'
 
-interface CalendarAccount {
+export interface Calendar {
+  id: string
+  calendarAccountId: string
+  providerCalendarId: string
+  name: string
+  color?: string | null
+  isPrimary?: boolean | null
+  isSelectedForSync?: boolean | null
+}
+
+export interface CalendarAccount {
   id: string
   provider: string
-  email: string
-  isActive: boolean
+  email: string | null
+  isPrimary?: boolean | null
+  defaultTargetCalendarId?: string | null
+  calendars?: Calendar[]
 }
 
 interface CalendarEvent {
@@ -24,16 +36,24 @@ interface ListResponse<T> {
 
 export const calendarApi = {
   listAccounts: () =>
-    api.get<ListResponse<CalendarAccount>>('/calendar/accounts').then((r) => r.data),
+    api.get<{ data: CalendarAccount[] }>('/calendar/accounts').then((r) => r.data.data),
 
   deleteAccount: (id: string) =>
-    api.delete(`/calendar/accounts/${id}`).then((r) => r.data),
+    api.delete('/calendar/accounts', { params: { id } }).then((r) => r.data),
 
   updateAccount: (id: string, body: { defaultTargetCalendarId?: string | null }) =>
     api.patch<{ data: any }>(`/calendar/accounts/${id}`, body).then((r) => r.data.data),
 
+  updateCalendar: (
+    id: string,
+    body: { isSelectedForSync?: boolean; isPrimary?: boolean; color?: string },
+  ) => api.patch<{ data: Calendar }>(`/calendar/calendars/${id}`, body).then((r) => r.data.data),
+
   getGoogleConnectUrl: () =>
-    api.get<{ data: { url: string } }>('/calendar/google/connect').then((r) => r.data),
+    api.get<{ url: string }>('/calendar/google/connect').then((r) => r.data),
+
+  connectGoogle: (code: string) =>
+    api.post<{ data: any }>('/calendar/google/callback', { code }).then((r) => r.data.data),
 
   getGoogleEvents: (params?: Record<string, string>) =>
     api.get<ListResponse<CalendarEvent>>('/calendar/google/events', { params }).then((r) => r.data),
