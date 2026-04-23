@@ -44,6 +44,8 @@ interface TaskDialogProps {
   onClose: () => void
   task?: Task | null
   defaultDate?: string
+  defaultStart?: string
+  defaultEnd?: string
 }
 
 const PRIORITY_OPTIONS = [
@@ -54,7 +56,7 @@ const PRIORITY_OPTIONS = [
 
 const DURATION_PRESETS = [15, 30, 45, 60, 90, 120]
 
-export function TaskDialog({ open, onClose, task, defaultDate }: TaskDialogProps) {
+export function TaskDialog({ open, onClose, task, defaultDate, defaultStart, defaultEnd }: TaskDialogProps) {
   const { t } = useTranslation('tasks')
   const { locale } = useLocale()
   const createTask = useCreateTask()
@@ -118,17 +120,20 @@ export function TaskDialog({ open, onClose, task, defaultDate }: TaskDialogProps
         weeklyGoalId: (task as any).weeklyGoalId ?? undefined,
       })
     } else {
+      const hasTimes = !!(defaultStart && defaultEnd)
       form.reset({
         title: '',
         description: '',
         priority: 'medium',
         scheduledDate: defaultDate,
-        isAllDay: true,
+        scheduledStart: defaultStart,
+        scheduledEnd: defaultEnd,
+        isAllDay: !hasTimes,
         estimatedDuration: undefined,
         tags: [],
       })
     }
-  }, [open, task, defaultDate, form])
+  }, [open, task, defaultDate, defaultStart, defaultEnd, form])
 
   async function onSubmit(data: CreateTaskInput) {
     try {

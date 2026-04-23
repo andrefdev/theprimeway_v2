@@ -8,8 +8,10 @@ import {
   type LoginInput,
   type RegisterInput,
 } from '@repo/shared/validators'
-import { useLogin, useRegister } from '@/features/auth/queries'
+import { useLogin, useRegister, useVerifyEmail, useResendOtp } from '@/features/auth/queries'
 import { OAuthButtons } from '@/features/auth/components/OAuthButtons'
+import { OtpForm } from '@/features/auth/components/OtpForm'
+import { isVerificationPending } from '@/features/auth/api'
 import { useState } from 'react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/components/ui/tabs'
 import { Button } from '@/shared/components/ui/button'
@@ -71,6 +73,7 @@ function LoginForm() {
   const login = useLogin()
   const [error, setError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null)
 
   const form = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
@@ -80,11 +83,25 @@ function LoginForm() {
   async function onSubmit(data: LoginInput) {
     setError(null)
     try {
-      await login.mutateAsync(data)
+      const result = await login.mutateAsync(data)
+      if (isVerificationPending(result)) {
+        setPendingEmail(result.email)
+        return
+      }
       navigate({ to: '/' })
     } catch (err: any) {
       setError(err.response?.data?.error || t('loginFailed'))
     }
+  }
+
+  if (pendingEmail) {
+    return (
+      <VerifyEmailStep
+        email={pendingEmail}
+        onBack={() => setPendingEmail(null)}
+        onVerified={() => navigate({ to: '/' })}
+      />
+    )
   }
 
   return (
@@ -192,6 +209,7 @@ function RegisterForm() {
   const register = useRegister()
   const [error, setError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null)
 
   const form = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
@@ -201,11 +219,21 @@ function RegisterForm() {
   async function onSubmit(data: RegisterInput) {
     setError(null)
     try {
-      await register.mutateAsync(data)
-      navigate({ to: '/' })
+      const result = await register.mutateAsync(data)
+      setPendingEmail(result.email)
     } catch (err: any) {
       setError(err.response?.data?.error || t('registerFailed'))
     }
+  }
+
+  if (pendingEmail) {
+    return (
+      <VerifyEmailStep
+        email={pendingEmail}
+        onBack={() => setPendingEmail(null)}
+        onVerified={() => navigate({ to: '/' })}
+      />
+    )
   }
 
   return (
@@ -316,5 +344,51 @@ function RegisterForm() {
         </Button>
       </form>
     </div>
+  )
+}
+
+function VerifyEmailStep({
+  email,
+  onBack,
+  onVerified,
+}: {
+  email: string
+  onBack: () => void
+  onVerified: () => void
+}) {
+  const { t } = useTranslation('auth')
+  const verify = useVerifyEmail()
+  const resend = useResendOtp()
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleVerify(code: string) {
+    setError(null)
+    try {
+      await verify.mutateAsync({ email, code })
+      onVerified()
+    } catch (err: any) {
+      setError(err.response?.data?.error || t('invalidCode'))
+    }
+  }
+
+  async function handleResend() {
+    setError(null)
+    try {
+      await resend.mutateAsync({ email, purpose: 'register' })
+    } catch (err: any) {
+      setError(err.response?.data?.error || t('forgotPasswordFailed'))
+    }
+  }
+
+  return (
+    <OtpForm
+      email={email}
+      onSubmit={handleVerify}
+      onResend={handleResend}
+      onChangeEmail={onBack}
+      submitting={verify.isPending}
+      resending={resend.isPending}
+      error={error}
+    />
   )
 }

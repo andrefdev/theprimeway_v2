@@ -141,9 +141,10 @@ export const COOLICON_CATEGORIES: Record<
 }
 
 export type GalleryCategory =
-  | 'nature'
+  | 'landscapes'
   | 'abstract'
-  | 'minimal'
+  | 'shapes'
+  | 'cyberpunk'
   | 'gradient'
   | 'workspace'
   | 'motivational'
@@ -166,29 +167,29 @@ const unsplash = (
   `https://images.unsplash.com/photo-${photoId}?w=${w}&h=${h}&fit=crop&auto=format&q=80`
 
 export const COVER_GALLERY: GalleryImage[] = [
-  // Nature
-  { id: 'nature-1', category: 'nature', url: unsplash('1506744038136-46273834b3fb', 1600, 400), thumbnailUrl: unsplash('1506744038136-46273834b3fb', 400, 100), credit: 'Bailey Zindel', premium: false },
-  { id: 'nature-2', category: 'nature', url: unsplash('1470071459604-3b5ec3a7fe05', 1600, 400), thumbnailUrl: unsplash('1470071459604-3b5ec3a7fe05', 400, 100), credit: 'v2osk', premium: true },
-  { id: 'nature-3', category: 'nature', url: unsplash('1441974231531-c6227db76b6e', 1600, 400), thumbnailUrl: unsplash('1441974231531-c6227db76b6e', 400, 100), credit: 'Luca Bravo', premium: true },
-  { id: 'nature-4', category: 'nature', url: unsplash('1465146344425-f00d5f5c8f07', 1600, 400), thumbnailUrl: unsplash('1465146344425-f00d5f5c8f07', 400, 100), credit: 'Robert Lukeman', premium: true },
-  { id: 'nature-5', category: 'nature', url: unsplash('1500534623283-1cb2d502d73a', 1600, 400), thumbnailUrl: unsplash('1500534623283-1cb2d502d73a', 400, 100), credit: 'Justin Kauffman', premium: true },
-  { id: 'nature-6', category: 'nature', url: unsplash('1518173946687-a1e24210a8be', 1600, 400), thumbnailUrl: unsplash('1518173946687-a1e24210a8be', 400, 100), credit: 'Yoal Desurmont', premium: true },
+  // Landscapes
+  { id: 'landscapes-1', category: 'landscapes', url: unsplash('1506744038136-46273834b3fb', 1600, 400), thumbnailUrl: unsplash('1506744038136-46273834b3fb', 400, 100), credit: 'Bailey Zindel', premium: false },
+  { id: 'landscapes-2', category: 'landscapes', url: unsplash('1470071459604-3b5ec3a7fe05', 1600, 400), thumbnailUrl: unsplash('1470071459604-3b5ec3a7fe05', 400, 100), credit: 'v2osk', premium: true },
+  { id: 'landscapes-3', category: 'landscapes', url: unsplash('1441974231531-c6227db76b6e', 1600, 400), thumbnailUrl: unsplash('1441974231531-c6227db76b6e', 400, 100), credit: 'Luca Bravo', premium: true },
+  { id: 'landscapes-4', category: 'landscapes', url: unsplash('1465146344425-f00d5f5c8f07', 1600, 400), thumbnailUrl: unsplash('1465146344425-f00d5f5c8f07', 400, 100), credit: 'Robert Lukeman', premium: true },
 
   // Abstract
   { id: 'abstract-1', category: 'abstract', url: unsplash('1557672172-298e090bd0f1', 1600, 400), thumbnailUrl: unsplash('1557672172-298e090bd0f1', 400, 100), credit: 'Pawel Czerwinski', premium: false },
   { id: 'abstract-2', category: 'abstract', url: unsplash('1579546929518-9e396f3cc809', 1600, 400), thumbnailUrl: unsplash('1579546929518-9e396f3cc809', 400, 100), credit: 'Gradienta', premium: true },
-  { id: 'abstract-3', category: 'abstract', url: unsplash('1558591710-4b4a1ae0f04d', 1600, 400), thumbnailUrl: unsplash('1558591710-4b4a1ae0f04d', 400, 100), credit: 'Steve Johnson', premium: true },
-  { id: 'abstract-4', category: 'abstract', url: unsplash('1550684376-efcbd6e3f031', 1600, 400), thumbnailUrl: unsplash('1550684376-efcbd6e3f031', 400, 100), credit: 'Milad Fakurian', premium: true },
-  { id: 'abstract-5', category: 'abstract', url: unsplash('1567095761054-7a02e69e5c43', 1600, 400), thumbnailUrl: unsplash('1567095761054-7a02e69e5c43', 400, 100), credit: 'JJ Ying', premium: true },
-  { id: 'abstract-6', category: 'abstract', url: unsplash('1553356084-58ef4a67b2a7', 1600, 400), thumbnailUrl: unsplash('1553356084-58ef4a67b2a7', 400, 100), credit: 'Fakurian Design', premium: true },
+  { id: 'abstract-3', category: 'abstract', url: unsplash('1550684376-efcbd6e3f031', 1600, 400), thumbnailUrl: unsplash('1550684376-efcbd6e3f031', 400, 100), credit: 'Milad Fakurian', premium: true },
+  { id: 'abstract-4', category: 'abstract', url: unsplash('1553356084-58ef4a67b2a7', 1600, 400), thumbnailUrl: unsplash('1553356084-58ef4a67b2a7', 400, 100), credit: 'Fakurian Design', premium: true },
 
-  // Minimal
-  { id: 'minimal-1', category: 'minimal', url: unsplash('1507003211169-0a1dd7228f2d', 1600, 400), thumbnailUrl: unsplash('1507003211169-0a1dd7228f2d', 400, 100), credit: 'Scott Webb', premium: false },
-  { id: 'minimal-2', category: 'minimal', url: unsplash('1494438639946-1ebd1d20bf85', 1600, 400), thumbnailUrl: unsplash('1494438639946-1ebd1d20bf85', 400, 100), credit: 'Joel Filipe', premium: true },
-  { id: 'minimal-3', category: 'minimal', url: unsplash('1517816743773-33a7e1c0faba', 1600, 400), thumbnailUrl: unsplash('1517816743773-33a7e1c0faba', 400, 100), credit: 'Patrick Tomasso', premium: true },
-  { id: 'minimal-4', category: 'minimal', url: unsplash('1513542789411-b6a5d4f31634', 1600, 400), thumbnailUrl: unsplash('1513542789411-b6a5d4f31634', 400, 100), credit: 'Bench Accounting', premium: true },
-  { id: 'minimal-5', category: 'minimal', url: unsplash('1519710164239-da123dc03ef4', 1600, 400), thumbnailUrl: unsplash('1519710164239-da123dc03ef4', 400, 100), credit: 'Samantha Gades', premium: true },
-  { id: 'minimal-6', category: 'minimal', url: unsplash('1486312338219-ce68d2c6f44d', 1600, 400), thumbnailUrl: unsplash('1486312338219-ce68d2c6f44d', 400, 100), credit: 'Kari Shea', premium: true },
+  // Shapes (geometric)
+  { id: 'shapes-1', category: 'shapes', url: unsplash('1558591710-4b4a1ae0f04d', 1600, 400), thumbnailUrl: unsplash('1558591710-4b4a1ae0f04d', 400, 100), credit: 'Steve Johnson', premium: false },
+  { id: 'shapes-2', category: 'shapes', url: unsplash('1567095761054-7a02e69e5c43', 1600, 400), thumbnailUrl: unsplash('1567095761054-7a02e69e5c43', 400, 100), credit: 'JJ Ying', premium: true },
+  { id: 'shapes-3', category: 'shapes', url: unsplash('1618172193622-ae2d025f4032', 1600, 400), thumbnailUrl: unsplash('1618172193622-ae2d025f4032', 400, 100), credit: 'Pawel Czerwinski', premium: true },
+  { id: 'shapes-4', category: 'shapes', url: unsplash('1618005182384-a83a8bd57fbe', 1600, 400), thumbnailUrl: unsplash('1618005182384-a83a8bd57fbe', 400, 100), credit: 'Gradienta', premium: true },
+
+  // Cyberpunk
+  { id: 'cyberpunk-1', category: 'cyberpunk', url: unsplash('1518709268805-4e9042af9f23', 1600, 400), thumbnailUrl: unsplash('1518709268805-4e9042af9f23', 400, 100), credit: 'Maxim Hopman', premium: false },
+  { id: 'cyberpunk-2', category: 'cyberpunk', url: unsplash('1542831371-29b0f74f9713', 1600, 400), thumbnailUrl: unsplash('1542831371-29b0f74f9713', 400, 100), credit: 'Ryoji Iwata', premium: true },
+  { id: 'cyberpunk-3', category: 'cyberpunk', url: unsplash('1493514789931-586cb221d7a7', 1600, 400), thumbnailUrl: unsplash('1493514789931-586cb221d7a7', 400, 100), credit: 'Denys Nevozhai', premium: true },
+  { id: 'cyberpunk-4', category: 'cyberpunk', url: unsplash('1505761671935-60b3a7427bad', 1600, 400), thumbnailUrl: unsplash('1505761671935-60b3a7427bad', 400, 100), credit: 'Andre Benz', premium: true },
 
   // Gradient
   { id: 'gradient-1', category: 'gradient', url: unsplash('1614850523459-c2f4c699c52e', 1600, 400), thumbnailUrl: unsplash('1614850523459-c2f4c699c52e', 400, 100), credit: 'Codioful', premium: false },
@@ -203,7 +204,6 @@ export const COVER_GALLERY: GalleryImage[] = [
   { id: 'workspace-2', category: 'workspace', url: unsplash('1498050108023-c5249f4df085', 1600, 400), thumbnailUrl: unsplash('1498050108023-c5249f4df085', 400, 100), credit: 'Christopher Gower', premium: true },
   { id: 'workspace-3', category: 'workspace', url: unsplash('1519389950473-47ba0277781c', 1600, 400), thumbnailUrl: unsplash('1519389950473-47ba0277781c', 400, 100), credit: 'Marvin Meyer', premium: true },
   { id: 'workspace-4', category: 'workspace', url: unsplash('1497032628192-86f99bcd76bc', 1600, 400), thumbnailUrl: unsplash('1497032628192-86f99bcd76bc', 400, 100), credit: 'Jeff Sheldon', premium: true },
-  { id: 'workspace-5', category: 'workspace', url: unsplash('1542744173-8e7e91415657', 1600, 400), thumbnailUrl: unsplash('1542744173-8e7e91415657', 400, 100), credit: 'XPS', premium: true },
   { id: 'workspace-6', category: 'workspace', url: unsplash('1517502884422-41eaead166d4', 1600, 400), thumbnailUrl: unsplash('1517502884422-41eaead166d4', 400, 100), credit: 'Norbert Levajsics', premium: true },
 
   // Motivational
@@ -224,9 +224,10 @@ export const COVER_GALLERY: GalleryImage[] = [
 ]
 
 export const GALLERY_CATEGORIES: { id: GalleryCategory; labelKey: string }[] = [
-  { id: 'nature', labelKey: 'gallery.nature' },
+  { id: 'landscapes', labelKey: 'gallery.landscapes' },
   { id: 'abstract', labelKey: 'gallery.abstract' },
-  { id: 'minimal', labelKey: 'gallery.minimal' },
+  { id: 'shapes', labelKey: 'gallery.shapes' },
+  { id: 'cyberpunk', labelKey: 'gallery.cyberpunk' },
   { id: 'gradient', labelKey: 'gallery.gradient' },
   { id: 'workspace', labelKey: 'gallery.workspace' },
   { id: 'motivational', labelKey: 'gallery.motivational' },

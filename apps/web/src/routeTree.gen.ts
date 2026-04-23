@@ -22,13 +22,13 @@ import { Route as AppProfileRouteImport } from './routes/_app/profile'
 import { Route as AppPomodoroRouteImport } from './routes/_app/pomodoro'
 import { Route as AppOnboardingRouteImport } from './routes/_app/onboarding'
 import { Route as AppNotificationsRouteImport } from './routes/_app/notifications'
-import { Route as AppHabitsRouteImport } from './routes/_app/habits'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as AppAiRouteImport } from './routes/_app/ai'
 import { Route as AppSplatRouteImport } from './routes/_app/$'
 import { Route as AppTasksIndexRouteImport } from './routes/_app/tasks/index'
 import { Route as AppReadingIndexRouteImport } from './routes/_app/reading/index'
 import { Route as AppNotesIndexRouteImport } from './routes/_app/notes/index'
+import { Route as AppHabitsIndexRouteImport } from './routes/_app/habits/index'
 import { Route as AppGoalsIndexRouteImport } from './routes/_app/goals/index'
 import { Route as AppFinancesIndexRouteImport } from './routes/_app/finances/index'
 import { Route as AppCalendarIndexRouteImport } from './routes/_app/calendar/index'
@@ -40,6 +40,9 @@ import { Route as AppTasksAllRouteImport } from './routes/_app/tasks/all'
 import { Route as AppReadingLibraryRouteImport } from './routes/_app/reading/library'
 import { Route as AppNotesTrashRouteImport } from './routes/_app/notes/trash'
 import { Route as AppNotesNoteIdRouteImport } from './routes/_app/notes/$noteId'
+import { Route as AppHabitsTrackerRouteImport } from './routes/_app/habits/tracker'
+import { Route as AppHabitsStatsRouteImport } from './routes/_app/habits/stats'
+import { Route as AppHabitsListRouteImport } from './routes/_app/habits/list'
 import { Route as AppGoalsWeeklyRouteImport } from './routes/_app/goals/weekly'
 import { Route as AppGoalsTreeRouteImport } from './routes/_app/goals/tree'
 import { Route as AppGoalsQuarterlyRouteImport } from './routes/_app/goals/quarterly'
@@ -53,7 +56,6 @@ import { Route as AppFinancesIncomeRouteImport } from './routes/_app/finances/in
 import { Route as AppFinancesHistoryRouteImport } from './routes/_app/finances/history'
 import { Route as AppFinancesDebtsRouteImport } from './routes/_app/finances/debts'
 import { Route as AppFinancesAccountsRouteImport } from './routes/_app/finances/accounts'
-import { Route as AppCalendarMonthRouteImport } from './routes/_app/calendar/month'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/_auth',
@@ -118,11 +120,6 @@ const AppNotificationsRoute = AppNotificationsRouteImport.update({
   path: '/notifications',
   getParentRoute: () => AppRoute,
 } as any)
-const AppHabitsRoute = AppHabitsRouteImport.update({
-  id: '/habits',
-  path: '/habits',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppDashboardRoute = AppDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -151,6 +148,11 @@ const AppReadingIndexRoute = AppReadingIndexRouteImport.update({
 const AppNotesIndexRoute = AppNotesIndexRouteImport.update({
   id: '/notes/',
   path: '/notes/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppHabitsIndexRoute = AppHabitsIndexRouteImport.update({
+  id: '/habits/',
+  path: '/habits/',
   getParentRoute: () => AppRoute,
 } as any)
 const AppGoalsIndexRoute = AppGoalsIndexRouteImport.update({
@@ -206,6 +208,21 @@ const AppNotesTrashRoute = AppNotesTrashRouteImport.update({
 const AppNotesNoteIdRoute = AppNotesNoteIdRouteImport.update({
   id: '/notes/$noteId',
   path: '/notes/$noteId',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppHabitsTrackerRoute = AppHabitsTrackerRouteImport.update({
+  id: '/habits/tracker',
+  path: '/habits/tracker',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppHabitsStatsRoute = AppHabitsStatsRouteImport.update({
+  id: '/habits/stats',
+  path: '/habits/stats',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppHabitsListRoute = AppHabitsListRouteImport.update({
+  id: '/habits/list',
+  path: '/habits/list',
   getParentRoute: () => AppRoute,
 } as any)
 const AppGoalsWeeklyRoute = AppGoalsWeeklyRouteImport.update({
@@ -273,18 +290,12 @@ const AppFinancesAccountsRoute = AppFinancesAccountsRouteImport.update({
   path: '/finances/accounts',
   getParentRoute: () => AppRoute,
 } as any)
-const AppCalendarMonthRoute = AppCalendarMonthRouteImport.update({
-  id: '/calendar/month',
-  path: '/calendar/month',
-  getParentRoute: () => AppRoute,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$': typeof AppSplatRoute
   '/ai': typeof AppAiRoute
   '/dashboard': typeof AppDashboardRoute
-  '/habits': typeof AppHabitsRoute
   '/notifications': typeof AppNotificationsRoute
   '/onboarding': typeof AppOnboardingRoute
   '/pomodoro': typeof AppPomodoroRoute
@@ -295,7 +306,6 @@ export interface FileRoutesByFullPath {
   '/login': typeof AuthLoginRoute
   '/register': typeof AuthRegisterRoute
   '/reset-password': typeof AuthResetPasswordRoute
-  '/calendar/month': typeof AppCalendarMonthRoute
   '/finances/accounts': typeof AppFinancesAccountsRoute
   '/finances/debts': typeof AppFinancesDebtsRoute
   '/finances/history': typeof AppFinancesHistoryRoute
@@ -309,6 +319,9 @@ export interface FileRoutesByFullPath {
   '/goals/quarterly': typeof AppGoalsQuarterlyRoute
   '/goals/tree': typeof AppGoalsTreeRoute
   '/goals/weekly': typeof AppGoalsWeeklyRoute
+  '/habits/list': typeof AppHabitsListRoute
+  '/habits/stats': typeof AppHabitsStatsRoute
+  '/habits/tracker': typeof AppHabitsTrackerRoute
   '/notes/$noteId': typeof AppNotesNoteIdRoute
   '/notes/trash': typeof AppNotesTrashRoute
   '/reading/library': typeof AppReadingLibraryRoute
@@ -320,6 +333,7 @@ export interface FileRoutesByFullPath {
   '/calendar/': typeof AppCalendarIndexRoute
   '/finances/': typeof AppFinancesIndexRoute
   '/goals/': typeof AppGoalsIndexRoute
+  '/habits/': typeof AppHabitsIndexRoute
   '/notes/': typeof AppNotesIndexRoute
   '/reading/': typeof AppReadingIndexRoute
   '/tasks/': typeof AppTasksIndexRoute
@@ -329,7 +343,6 @@ export interface FileRoutesByTo {
   '/$': typeof AppSplatRoute
   '/ai': typeof AppAiRoute
   '/dashboard': typeof AppDashboardRoute
-  '/habits': typeof AppHabitsRoute
   '/notifications': typeof AppNotificationsRoute
   '/onboarding': typeof AppOnboardingRoute
   '/pomodoro': typeof AppPomodoroRoute
@@ -340,7 +353,6 @@ export interface FileRoutesByTo {
   '/login': typeof AuthLoginRoute
   '/register': typeof AuthRegisterRoute
   '/reset-password': typeof AuthResetPasswordRoute
-  '/calendar/month': typeof AppCalendarMonthRoute
   '/finances/accounts': typeof AppFinancesAccountsRoute
   '/finances/debts': typeof AppFinancesDebtsRoute
   '/finances/history': typeof AppFinancesHistoryRoute
@@ -354,6 +366,9 @@ export interface FileRoutesByTo {
   '/goals/quarterly': typeof AppGoalsQuarterlyRoute
   '/goals/tree': typeof AppGoalsTreeRoute
   '/goals/weekly': typeof AppGoalsWeeklyRoute
+  '/habits/list': typeof AppHabitsListRoute
+  '/habits/stats': typeof AppHabitsStatsRoute
+  '/habits/tracker': typeof AppHabitsTrackerRoute
   '/notes/$noteId': typeof AppNotesNoteIdRoute
   '/notes/trash': typeof AppNotesTrashRoute
   '/reading/library': typeof AppReadingLibraryRoute
@@ -365,6 +380,7 @@ export interface FileRoutesByTo {
   '/calendar': typeof AppCalendarIndexRoute
   '/finances': typeof AppFinancesIndexRoute
   '/goals': typeof AppGoalsIndexRoute
+  '/habits': typeof AppHabitsIndexRoute
   '/notes': typeof AppNotesIndexRoute
   '/reading': typeof AppReadingIndexRoute
   '/tasks': typeof AppTasksIndexRoute
@@ -377,7 +393,6 @@ export interface FileRoutesById {
   '/_app/$': typeof AppSplatRoute
   '/_app/ai': typeof AppAiRoute
   '/_app/dashboard': typeof AppDashboardRoute
-  '/_app/habits': typeof AppHabitsRoute
   '/_app/notifications': typeof AppNotificationsRoute
   '/_app/onboarding': typeof AppOnboardingRoute
   '/_app/pomodoro': typeof AppPomodoroRoute
@@ -388,7 +403,6 @@ export interface FileRoutesById {
   '/_auth/login': typeof AuthLoginRoute
   '/_auth/register': typeof AuthRegisterRoute
   '/_auth/reset-password': typeof AuthResetPasswordRoute
-  '/_app/calendar/month': typeof AppCalendarMonthRoute
   '/_app/finances/accounts': typeof AppFinancesAccountsRoute
   '/_app/finances/debts': typeof AppFinancesDebtsRoute
   '/_app/finances/history': typeof AppFinancesHistoryRoute
@@ -402,6 +416,9 @@ export interface FileRoutesById {
   '/_app/goals/quarterly': typeof AppGoalsQuarterlyRoute
   '/_app/goals/tree': typeof AppGoalsTreeRoute
   '/_app/goals/weekly': typeof AppGoalsWeeklyRoute
+  '/_app/habits/list': typeof AppHabitsListRoute
+  '/_app/habits/stats': typeof AppHabitsStatsRoute
+  '/_app/habits/tracker': typeof AppHabitsTrackerRoute
   '/_app/notes/$noteId': typeof AppNotesNoteIdRoute
   '/_app/notes/trash': typeof AppNotesTrashRoute
   '/_app/reading/library': typeof AppReadingLibraryRoute
@@ -413,6 +430,7 @@ export interface FileRoutesById {
   '/_app/calendar/': typeof AppCalendarIndexRoute
   '/_app/finances/': typeof AppFinancesIndexRoute
   '/_app/goals/': typeof AppGoalsIndexRoute
+  '/_app/habits/': typeof AppHabitsIndexRoute
   '/_app/notes/': typeof AppNotesIndexRoute
   '/_app/reading/': typeof AppReadingIndexRoute
   '/_app/tasks/': typeof AppTasksIndexRoute
@@ -424,7 +442,6 @@ export interface FileRouteTypes {
     | '/$'
     | '/ai'
     | '/dashboard'
-    | '/habits'
     | '/notifications'
     | '/onboarding'
     | '/pomodoro'
@@ -435,7 +452,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/reset-password'
-    | '/calendar/month'
     | '/finances/accounts'
     | '/finances/debts'
     | '/finances/history'
@@ -449,6 +465,9 @@ export interface FileRouteTypes {
     | '/goals/quarterly'
     | '/goals/tree'
     | '/goals/weekly'
+    | '/habits/list'
+    | '/habits/stats'
+    | '/habits/tracker'
     | '/notes/$noteId'
     | '/notes/trash'
     | '/reading/library'
@@ -460,6 +479,7 @@ export interface FileRouteTypes {
     | '/calendar/'
     | '/finances/'
     | '/goals/'
+    | '/habits/'
     | '/notes/'
     | '/reading/'
     | '/tasks/'
@@ -469,7 +489,6 @@ export interface FileRouteTypes {
     | '/$'
     | '/ai'
     | '/dashboard'
-    | '/habits'
     | '/notifications'
     | '/onboarding'
     | '/pomodoro'
@@ -480,7 +499,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/reset-password'
-    | '/calendar/month'
     | '/finances/accounts'
     | '/finances/debts'
     | '/finances/history'
@@ -494,6 +512,9 @@ export interface FileRouteTypes {
     | '/goals/quarterly'
     | '/goals/tree'
     | '/goals/weekly'
+    | '/habits/list'
+    | '/habits/stats'
+    | '/habits/tracker'
     | '/notes/$noteId'
     | '/notes/trash'
     | '/reading/library'
@@ -505,6 +526,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/finances'
     | '/goals'
+    | '/habits'
     | '/notes'
     | '/reading'
     | '/tasks'
@@ -516,7 +538,6 @@ export interface FileRouteTypes {
     | '/_app/$'
     | '/_app/ai'
     | '/_app/dashboard'
-    | '/_app/habits'
     | '/_app/notifications'
     | '/_app/onboarding'
     | '/_app/pomodoro'
@@ -527,7 +548,6 @@ export interface FileRouteTypes {
     | '/_auth/login'
     | '/_auth/register'
     | '/_auth/reset-password'
-    | '/_app/calendar/month'
     | '/_app/finances/accounts'
     | '/_app/finances/debts'
     | '/_app/finances/history'
@@ -541,6 +561,9 @@ export interface FileRouteTypes {
     | '/_app/goals/quarterly'
     | '/_app/goals/tree'
     | '/_app/goals/weekly'
+    | '/_app/habits/list'
+    | '/_app/habits/stats'
+    | '/_app/habits/tracker'
     | '/_app/notes/$noteId'
     | '/_app/notes/trash'
     | '/_app/reading/library'
@@ -552,6 +575,7 @@ export interface FileRouteTypes {
     | '/_app/calendar/'
     | '/_app/finances/'
     | '/_app/goals/'
+    | '/_app/habits/'
     | '/_app/notes/'
     | '/_app/reading/'
     | '/_app/tasks/'
@@ -656,13 +680,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppNotificationsRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/habits': {
-      id: '/_app/habits'
-      path: '/habits'
-      fullPath: '/habits'
-      preLoaderRoute: typeof AppHabitsRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/dashboard': {
       id: '/_app/dashboard'
       path: '/dashboard'
@@ -703,6 +720,13 @@ declare module '@tanstack/react-router' {
       path: '/notes'
       fullPath: '/notes/'
       preLoaderRoute: typeof AppNotesIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/habits/': {
+      id: '/_app/habits/'
+      path: '/habits'
+      fullPath: '/habits/'
+      preLoaderRoute: typeof AppHabitsIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/goals/': {
@@ -780,6 +804,27 @@ declare module '@tanstack/react-router' {
       path: '/notes/$noteId'
       fullPath: '/notes/$noteId'
       preLoaderRoute: typeof AppNotesNoteIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/habits/tracker': {
+      id: '/_app/habits/tracker'
+      path: '/habits/tracker'
+      fullPath: '/habits/tracker'
+      preLoaderRoute: typeof AppHabitsTrackerRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/habits/stats': {
+      id: '/_app/habits/stats'
+      path: '/habits/stats'
+      fullPath: '/habits/stats'
+      preLoaderRoute: typeof AppHabitsStatsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/habits/list': {
+      id: '/_app/habits/list'
+      path: '/habits/list'
+      fullPath: '/habits/list'
+      preLoaderRoute: typeof AppHabitsListRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/goals/weekly': {
@@ -873,13 +918,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppFinancesAccountsRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/calendar/month': {
-      id: '/_app/calendar/month'
-      path: '/calendar/month'
-      fullPath: '/calendar/month'
-      preLoaderRoute: typeof AppCalendarMonthRouteImport
-      parentRoute: typeof AppRoute
-    }
   }
 }
 
@@ -887,14 +925,12 @@ interface AppRouteChildren {
   AppSplatRoute: typeof AppSplatRoute
   AppAiRoute: typeof AppAiRoute
   AppDashboardRoute: typeof AppDashboardRoute
-  AppHabitsRoute: typeof AppHabitsRoute
   AppNotificationsRoute: typeof AppNotificationsRoute
   AppOnboardingRoute: typeof AppOnboardingRoute
   AppPomodoroRoute: typeof AppPomodoroRoute
   AppProfileRoute: typeof AppProfileRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppSubscriptionRoute: typeof AppSubscriptionRoute
-  AppCalendarMonthRoute: typeof AppCalendarMonthRoute
   AppFinancesAccountsRoute: typeof AppFinancesAccountsRoute
   AppFinancesDebtsRoute: typeof AppFinancesDebtsRoute
   AppFinancesHistoryRoute: typeof AppFinancesHistoryRoute
@@ -908,6 +944,9 @@ interface AppRouteChildren {
   AppGoalsQuarterlyRoute: typeof AppGoalsQuarterlyRoute
   AppGoalsTreeRoute: typeof AppGoalsTreeRoute
   AppGoalsWeeklyRoute: typeof AppGoalsWeeklyRoute
+  AppHabitsListRoute: typeof AppHabitsListRoute
+  AppHabitsStatsRoute: typeof AppHabitsStatsRoute
+  AppHabitsTrackerRoute: typeof AppHabitsTrackerRoute
   AppNotesNoteIdRoute: typeof AppNotesNoteIdRoute
   AppNotesTrashRoute: typeof AppNotesTrashRoute
   AppReadingLibraryRoute: typeof AppReadingLibraryRoute
@@ -919,6 +958,7 @@ interface AppRouteChildren {
   AppCalendarIndexRoute: typeof AppCalendarIndexRoute
   AppFinancesIndexRoute: typeof AppFinancesIndexRoute
   AppGoalsIndexRoute: typeof AppGoalsIndexRoute
+  AppHabitsIndexRoute: typeof AppHabitsIndexRoute
   AppNotesIndexRoute: typeof AppNotesIndexRoute
   AppReadingIndexRoute: typeof AppReadingIndexRoute
   AppTasksIndexRoute: typeof AppTasksIndexRoute
@@ -928,14 +968,12 @@ const AppRouteChildren: AppRouteChildren = {
   AppSplatRoute: AppSplatRoute,
   AppAiRoute: AppAiRoute,
   AppDashboardRoute: AppDashboardRoute,
-  AppHabitsRoute: AppHabitsRoute,
   AppNotificationsRoute: AppNotificationsRoute,
   AppOnboardingRoute: AppOnboardingRoute,
   AppPomodoroRoute: AppPomodoroRoute,
   AppProfileRoute: AppProfileRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppSubscriptionRoute: AppSubscriptionRoute,
-  AppCalendarMonthRoute: AppCalendarMonthRoute,
   AppFinancesAccountsRoute: AppFinancesAccountsRoute,
   AppFinancesDebtsRoute: AppFinancesDebtsRoute,
   AppFinancesHistoryRoute: AppFinancesHistoryRoute,
@@ -949,6 +987,9 @@ const AppRouteChildren: AppRouteChildren = {
   AppGoalsQuarterlyRoute: AppGoalsQuarterlyRoute,
   AppGoalsTreeRoute: AppGoalsTreeRoute,
   AppGoalsWeeklyRoute: AppGoalsWeeklyRoute,
+  AppHabitsListRoute: AppHabitsListRoute,
+  AppHabitsStatsRoute: AppHabitsStatsRoute,
+  AppHabitsTrackerRoute: AppHabitsTrackerRoute,
   AppNotesNoteIdRoute: AppNotesNoteIdRoute,
   AppNotesTrashRoute: AppNotesTrashRoute,
   AppReadingLibraryRoute: AppReadingLibraryRoute,
@@ -960,6 +1001,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppCalendarIndexRoute: AppCalendarIndexRoute,
   AppFinancesIndexRoute: AppFinancesIndexRoute,
   AppGoalsIndexRoute: AppGoalsIndexRoute,
+  AppHabitsIndexRoute: AppHabitsIndexRoute,
   AppNotesIndexRoute: AppNotesIndexRoute,
   AppReadingIndexRoute: AppReadingIndexRoute,
   AppTasksIndexRoute: AppTasksIndexRoute,

@@ -87,7 +87,7 @@ class AuthRepository {
           name: data.name,
           email: data.email,
           passwordHash: data.passwordHash,
-          emailVerified: new Date(),
+          emailVerified: null,
         },
         select: userSelectPublic,
       })
@@ -97,6 +97,22 @@ class AuthRepository {
       })
 
       return user
+    })
+  }
+
+  async markEmailVerified(email: string) {
+    return prisma.user.update({
+      where: { email },
+      data: { emailVerified: new Date() },
+      select: userSelectPublic,
+    })
+  }
+
+  async updatePasswordByEmail(email: string, passwordHash: string) {
+    return prisma.user.update({
+      where: { email },
+      data: { passwordHash },
+      select: { id: true, email: true },
     })
   }
 

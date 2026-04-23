@@ -1,5 +1,5 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
-import { authApi } from './api'
+import { authApi, isVerificationPending } from './api'
 import { useAuthStore } from '@/shared/stores/auth.store'
 import { useFeaturesStore } from '@/shared/stores/features.store'
 import { featureQueries } from '@/features/feature-flags/queries'
@@ -22,6 +22,7 @@ export function useLogin() {
   return useMutation({
     mutationFn: (data: LoginInput) => authApi.login(data),
     onSuccess: (data) => {
+      if (isVerificationPending(data)) return
       loginSuccess(data.token, data.refreshToken, data.user)
       queryClient.invalidateQueries({ queryKey: featureQueries.all() })
     },
@@ -29,13 +30,42 @@ export function useLogin() {
 }
 
 export function useRegister() {
-  const loginSuccess = useAuthStore((s) => s.loginSuccess)
-
   return useMutation({
     mutationFn: (data: RegisterInput) => authApi.register(data),
+  })
+}
+
+export function useVerifyEmail() {
+  const loginSuccess = useAuthStore((s) => s.loginSuccess)
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ email, code }: { email: string; code: string }) =>
+      authApi.verifyEmail(email, code),
     onSuccess: (data) => {
       loginSuccess(data.token, data.refreshToken, data.user)
+      queryClient.invalidateQueries({ queryKey: featureQueries.all() })
     },
+  })
+}
+
+export function useResendOtp() {
+  return useMutation({
+    mutationFn: ({ email, purpose }: { email: string; purpose: 'register' | 'reset' }) =>
+      authApi.resendOtp(email, purpose),
+  })
+}
+
+export function useForgotPassword() {
+  return useMutation({
+    mutationFn: (email: string) => authApi.forgotPassword(email),
+  })
+}
+
+export function useResetPassword() {
+  return useMutation({
+    mutationFn: ({ email, code, password }: { email: string; code: string; password: string }) =>
+      authApi.resetPassword(email, code, password),
   })
 }
 

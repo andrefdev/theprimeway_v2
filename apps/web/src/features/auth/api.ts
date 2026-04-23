@@ -14,6 +14,19 @@ export interface AuthResponse {
   }
 }
 
+export interface VerificationPendingResponse {
+  requiresVerification: true
+  email: string
+}
+
+export type LoginResponse = AuthResponse | VerificationPendingResponse
+
+export function isVerificationPending(
+  r: LoginResponse | AuthResponse,
+): r is VerificationPendingResponse {
+  return (r as VerificationPendingResponse).requiresVerification === true
+}
+
 export interface MeResponse {
   user: AuthResponse['user'] & {
     settings: {
@@ -27,10 +40,10 @@ export interface MeResponse {
 
 export const authApi = {
   login: (data: LoginInput) =>
-    api.post<AuthResponse>('/auth/login', data).then((r) => r.data),
+    api.post<LoginResponse>('/auth/login', data).then((r) => r.data),
 
   register: (data: RegisterInput) =>
-    api.post<AuthResponse>('/auth/register', data).then((r) => r.data),
+    api.post<VerificationPendingResponse>('/auth/register', data).then((r) => r.data),
 
   oauth: (data: OAuthInput) =>
     api.post<AuthResponse>('/auth/oauth', data).then((r) => r.data),
@@ -44,9 +57,15 @@ export const authApi = {
   logout: () =>
     api.delete('/auth/logout'),
 
-  forgotPassword: (email: string) =>
-    api.post<{ success: boolean }>('/auth/forgot-password', { email }).then((r) => r.data),
+  verifyEmail: (email: string, code: string) =>
+    api.post<AuthResponse>('/auth/verify-email', { email, code }).then((r) => r.data),
 
-  resetPassword: (token: string, password: string) =>
-    api.post<{ success: boolean }>('/auth/reset-password', { token, password }).then((r) => r.data),
+  resendOtp: (email: string, purpose: 'register' | 'reset') =>
+    api.post<{ ok: true }>('/auth/resend-otp', { email, purpose }).then((r) => r.data),
+
+  forgotPassword: (email: string) =>
+    api.post<{ ok: true }>('/auth/forgot-password', { email }).then((r) => r.data),
+
+  resetPassword: (email: string, code: string, password: string) =>
+    api.post<{ ok: true }>('/auth/reset-password', { email, code, password }).then((r) => r.data),
 }
