@@ -67,6 +67,15 @@ export function TasksToday() {
     }
   }
 
+  async function handleArchive(task: Task) {
+    try {
+      await updateTask.mutateAsync({ id: task.id, data: { status: 'archived' } })
+      toast.success(t('taskArchived', { defaultValue: 'Task archived' }))
+    } catch {
+      toast.error(t('failedToUpdate'))
+    }
+  }
+
   async function handleReorder(taskId: string, newStart: string, newEnd: string) {
     try {
       await updateTask.mutateAsync({
@@ -102,6 +111,7 @@ export function TasksToday() {
             onToggle={toggleTask}
             onEdit={openEdit}
             onDelete={handleDelete}
+            onArchive={handleArchive}
             onReorder={handleReorder}
             onQuickAdd={() => openCreate()}
           />

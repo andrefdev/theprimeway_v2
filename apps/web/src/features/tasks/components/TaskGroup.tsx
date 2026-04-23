@@ -14,6 +14,7 @@ interface TaskGroupProps {
   onToggle: (task: Task) => void
   onEdit: (task: Task) => void
   onDelete: (task: Task) => void
+  onArchive?: (task: Task) => void
   defaultOpen?: boolean
 }
 
@@ -23,6 +24,7 @@ export function TaskGroup({
   onToggle,
   onEdit,
   onDelete,
+  onArchive,
   defaultOpen = true,
 }: TaskGroupProps) {
   const { t } = useTranslation('tasks')
@@ -59,6 +61,7 @@ export function TaskGroup({
               onToggle={() => onToggle(task)}
               onEdit={() => onEdit(task)}
               onDelete={() => onDelete(task)}
+              onArchive={onArchive ? () => onArchive(task) : undefined}
               showDate={dateKey === 'no-date'}
             />
           ))}

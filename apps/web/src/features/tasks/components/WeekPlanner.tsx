@@ -29,6 +29,7 @@ interface WeekPlannerProps {
   onToggle: (task: Task) => void
   onEdit: (task: Task) => void
   onDelete: (task: Task) => void
+  onArchive?: (task: Task) => void
   onMoveToDay: (taskId: string, newDate: string) => void
   onQuickAdd: (date: string) => void
 }
@@ -39,6 +40,7 @@ export function WeekPlanner({
   onToggle,
   onEdit,
   onDelete,
+  onArchive,
   onMoveToDay,
   onQuickAdd,
 }: WeekPlannerProps) {
@@ -138,6 +140,7 @@ export function WeekPlanner({
               onToggle={onToggle}
               onEdit={onEdit}
               onDelete={onDelete}
+              onArchive={onArchive}
               onQuickAdd={() => onQuickAdd(dateKey)}
             />
           )
@@ -174,6 +177,7 @@ interface DayColumnProps {
   onToggle: (task: Task) => void
   onEdit: (task: Task) => void
   onDelete: (task: Task) => void
+  onArchive?: (task: Task) => void
   onQuickAdd: () => void
 }
 
@@ -187,6 +191,7 @@ function DayColumn({
   onToggle,
   onEdit,
   onDelete,
+  onArchive,
   onQuickAdd,
 }: DayColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: dateKey })
@@ -240,6 +245,7 @@ function DayColumn({
                 onToggle={() => onToggle(task)}
                 onEdit={() => onEdit(task)}
                 onDelete={() => onDelete(task)}
+                onArchive={onArchive ? () => onArchive(task) : undefined}
               />
             ))}
           </div>
@@ -273,11 +279,13 @@ function SortableWeekTask({
   onToggle,
   onEdit,
   onDelete,
+  onArchive,
 }: {
   task: Task
   onToggle: () => void
   onEdit: () => void
   onDelete: () => void
+  onArchive?: () => void
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
@@ -314,6 +322,7 @@ function SortableWeekTask({
         onToggle={onToggle}
         onEdit={onEdit}
         onDelete={onDelete}
+        onArchive={onArchive}
         size="sm"
         dragHandle={dragHandle}
       />

@@ -27,6 +27,7 @@ interface DayPlannerProps {
   onToggle: (task: Task) => void
   onEdit: (task: Task) => void
   onDelete: (task: Task) => void
+  onArchive?: (task: Task) => void
   onReorder: (taskId: string, newStart: string, newEnd: string) => void
   onQuickAdd: (hour: number) => void
   startHour?: number
@@ -41,6 +42,7 @@ export function DayPlanner({
   onToggle,
   onEdit,
   onDelete,
+  onArchive,
   onReorder,
   onQuickAdd,
   startHour = 6,
@@ -113,6 +115,7 @@ export function DayPlanner({
               onToggle={() => onToggle(task)}
               onEdit={() => onEdit(task)}
               onDelete={() => onDelete(task)}
+              onArchive={onArchive ? () => onArchive(task) : undefined}
               size="sm"
             />
           ))}
@@ -137,6 +140,7 @@ export function DayPlanner({
                   onToggle={onToggle}
                   onEdit={onEdit}
                   onDelete={onDelete}
+                  onArchive={onArchive}
                   onQuickAdd={() => onQuickAdd(hour)}
                 />
               )
@@ -157,10 +161,11 @@ interface HourSlotProps {
   onToggle: (task: Task) => void
   onEdit: (task: Task) => void
   onDelete: (task: Task) => void
+  onArchive?: (task: Task) => void
   onQuickAdd: () => void
 }
 
-function HourSlot({ hour, tasks, onToggle, onEdit, onDelete, onQuickAdd }: HourSlotProps) {
+function HourSlot({ hour, tasks, onToggle, onEdit, onDelete, onArchive, onQuickAdd }: HourSlotProps) {
   const [hovered, setHovered] = useState(false)
   const timeLabel = `${String(hour).padStart(2, '0')}:00`
 
@@ -186,6 +191,7 @@ function HourSlot({ hour, tasks, onToggle, onEdit, onDelete, onQuickAdd }: HourS
               onToggle={() => onToggle(task)}
               onEdit={() => onEdit(task)}
               onDelete={() => onDelete(task)}
+              onArchive={onArchive ? () => onArchive(task) : undefined}
             />
           ))}
         </SortableContext>
@@ -213,11 +219,13 @@ function SortableTaskItem({
   onToggle,
   onEdit,
   onDelete,
+  onArchive,
 }: {
   task: Task
   onToggle: () => void
   onEdit: () => void
   onDelete: () => void
+  onArchive?: () => void
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
@@ -254,6 +262,7 @@ function SortableTaskItem({
         onToggle={onToggle}
         onEdit={onEdit}
         onDelete={onDelete}
+        onArchive={onArchive}
         size="sm"
         dragHandle={dragHandle}
       />

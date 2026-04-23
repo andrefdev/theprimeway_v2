@@ -77,6 +77,15 @@ function TasksWeeklyPage() {
     }
   }
 
+  async function handleArchive(task: Task) {
+    try {
+      await updateTask.mutateAsync({ id: task.id, data: { status: 'archived' } })
+      toast.success(t('taskArchived', { defaultValue: 'Task archived' }))
+    } catch {
+      toast.error(t('failedToUpdate'))
+    }
+  }
+
   async function handleMoveToDay(taskId: string, newDate: string) {
     try {
       await updateTask.mutateAsync({ id: taskId, data: { scheduledDate: newDate } })
@@ -129,6 +138,7 @@ function TasksWeeklyPage() {
             onToggle={toggleTask}
             onEdit={openEdit}
             onDelete={handleDelete}
+            onArchive={handleArchive}
             onMoveToDay={handleMoveToDay}
             onQuickAdd={(date) => openCreate(date)}
           />
