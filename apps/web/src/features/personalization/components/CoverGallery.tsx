@@ -9,9 +9,10 @@ import { cn } from '@/shared/lib/utils'
 
 const CATEGORIES: Array<{ key: GalleryCategory | 'all'; label: string }> = [
   { key: 'all', label: 'All' },
-  { key: 'nature', label: 'Nature' },
+  { key: 'landscapes', label: 'Landscapes' },
   { key: 'abstract', label: 'Abstract' },
-  { key: 'minimal', label: 'Minimal' },
+  { key: 'shapes', label: 'Shapes' },
+  { key: 'cyberpunk', label: 'Cyberpunk' },
   { key: 'gradient', label: 'Gradient' },
   { key: 'workspace', label: 'Workspace' },
   { key: 'motivational', label: 'Motivational' },

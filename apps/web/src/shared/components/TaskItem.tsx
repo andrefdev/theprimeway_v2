@@ -38,7 +38,7 @@ export function TaskItem({ task, onToggle, onEdit, onDelete, size = 'md', showDa
           {dragHandle && <div className="flex justify-end -mt-2 -mr-2">{dragHandle}</div>}
 
           <div className="space-y-1.5">
-            <p className={`text-sm font-medium leading-snug ${isCompleted ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
+            <p className={`text-sm font-medium leading-snug break-words line-clamp-3 ${isCompleted ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
               {task.title}
             </p>
             {task.description && (
@@ -90,7 +90,7 @@ export function TaskItem({ task, onToggle, onEdit, onDelete, size = 'md', showDa
       <CompletionToggle completed={isCompleted} onClick={onToggle} size={size} />
 
       <div className="flex-1 min-w-0">
-        <p className={`text-sm font-medium ${isCompleted ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
+        <p className={`text-sm font-medium break-words line-clamp-3 ${isCompleted ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
           {task.title}
         </p>
         <div className="flex items-center gap-2 mt-1 flex-wrap">

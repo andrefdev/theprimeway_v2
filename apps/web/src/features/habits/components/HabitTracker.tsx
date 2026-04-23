@@ -1,6 +1,5 @@
 import { useMemo } from 'react'
 import { format, subDays } from 'date-fns'
-import { ScrollArea } from '@/shared/components/ui/scroll-area'
 import { Badge } from '@/shared/components/ui/badge'
 import {
   DropdownMenu,
@@ -61,18 +60,18 @@ export function HabitTracker({ habits, onToggle, onEdit, onArchive, onDelete }: 
   if (habits.length === 0) return null
 
   return (
-    <div className="rounded-lg border border-border overflow-hidden">
-      <ScrollArea className="w-full">
+    <div className="rounded-lg border border-border overflow-x-auto">
+      <div className="w-full">
         <table className="w-full border-collapse text-xs">
           <thead>
             <tr className="border-b border-border bg-muted/30">
-              <th className="sticky left-0 z-10 bg-muted/30 px-3 py-2 text-left font-medium text-muted-foreground min-w-35">
+              <th className="sticky left-0 z-20 bg-card px-3 py-2 text-left font-medium text-muted-foreground min-w-35 border-r border-border shadow-[2px_0_4px_rgba(0,0,0,0.04)]">
                 {t('habit')}
               </th>
               {dates.map((d) => (
                 <th
                   key={d.key}
-                  className={`px-1 py-2 text-center font-normal min-w-8 transition-colors ${
+                  className={`px-0.5 py-2 text-center font-normal min-w-7 transition-colors ${
                     d.isToday
                       ? 'bg-primary/10 border-r-2 border-primary/40'
                       : d.isFuture
@@ -105,7 +104,7 @@ export function HabitTracker({ habits, onToggle, onEdit, onArchive, onDelete }: 
             ))}
           </tbody>
         </table>
-      </ScrollArea>
+      </div>
     </div>
   )
 }
@@ -164,19 +163,19 @@ function HabitRow({
   return (
     <tr className="group border-b border-border/50 hover:bg-muted/20 transition-colors">
       {/* Habit name — sticky left */}
-      <td className="sticky left-0 z-10 bg-card px-3 py-2">
-        <div className="flex items-start gap-1 max-w-44">
+      <td className="sticky left-0 z-20 bg-card px-3 py-2 border-r border-border shadow-[2px_0_4px_rgba(0,0,0,0.04)]">
+        <div className="flex items-start gap-1 w-full">
           <div className="flex flex-col gap-1 min-w-0 flex-1">
             <button
               type="button"
               onClick={() => onEdit(habit)}
-              className="flex items-center gap-2 text-left hover:text-primary transition-colors"
+              className="flex w-full items-start gap-2 text-left hover:text-primary transition-colors"
             >
               <div
-                className="h-2.5 w-2.5 rounded-full shrink-0"
+                className="mt-1 h-2.5 w-2.5 rounded-full shrink-0"
                 style={{ backgroundColor: habit.color || '#3b82f6' }}
               />
-              <span className="text-sm font-medium text-foreground truncate">
+              <span className="text-sm font-medium text-foreground line-clamp-2 break-words leading-tight">
                 {habit.name}
               </span>
             </button>
@@ -250,7 +249,7 @@ function HabitRow({
         const disabled = future || !applicable
 
         return (
-          <td key={d.key} className={`px-1 py-2 text-center transition-colors ${d.isToday ? 'bg-primary/5' : ''} ${d.isToday ? 'border-r-2 border-primary/40' : ''}`}>
+          <td key={d.key} className={`px-0.5 py-2 text-center transition-colors ${d.isToday ? 'bg-primary/5' : ''} ${d.isToday ? 'border-r-2 border-primary/40' : ''}`}>
             <button
               type="button"
               disabled={disabled}

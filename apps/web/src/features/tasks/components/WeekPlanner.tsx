@@ -1,6 +1,7 @@
-import { useMemo, useCallback } from 'react'
+import { useMemo, useCallback, useState } from 'react'
 import {
   DndContext,
+  DragOverlay,
   closestCenter,
   PointerSensor,
   TouchSensor,
@@ -8,6 +9,7 @@ import {
   useSensor,
   useSensors,
   type DragEndEvent,
+  type DragStartEvent,
 } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -41,6 +43,7 @@ export function WeekPlanner({
   onQuickAdd,
 }: WeekPlannerProps) {
   const { dateFnsLocale } = useLocale()
+  const [activeTask, setActiveTask] = useState<Task | null>(null)
 
   const days = useMemo(() => {
     return Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
@@ -67,8 +70,17 @@ export function WeekPlanner({
     useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
   )
 
+  const handleDragStart = useCallback(
+    (event: DragStartEvent) => {
+      const task = tasks.find((x) => x.id === String(event.active.id))
+      setActiveTask(task ?? null)
+    },
+    [tasks],
+  )
+
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
+      setActiveTask(null)
       const { active, over } = event
       if (!over) return
 
@@ -99,9 +111,15 @@ export function WeekPlanner({
   )
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onDragCancel={() => setActiveTask(null)}
+    >
       <div className="overflow-x-auto">
-        <div className="grid gap-4 min-h-[calc(100vh-200px)] min-w-max" style={{ gridTemplateColumns: 'repeat(7, minmax(320px, 1fr))' }}>
+        <div className="grid gap-4 min-h-[calc(100vh-200px)]" style={{ gridTemplateColumns: 'repeat(7, 320px)' }}>
           {days.map((day) => {
           const dateKey = format(day, 'yyyy-MM-dd')
           const dayTasks = tasksByDay.get(dateKey) ?? []
@@ -126,6 +144,19 @@ export function WeekPlanner({
           })}
         </div>
       </div>
+      <DragOverlay dropAnimation={null}>
+        {activeTask ? (
+          <div className="w-[288px] opacity-95 shadow-2xl rounded-lg rotate-1 pointer-events-none">
+            <TaskItem
+              task={activeTask}
+              onToggle={() => {}}
+              onEdit={() => {}}
+              onDelete={() => {}}
+              size="sm"
+            />
+          </div>
+        ) : null}
+      </DragOverlay>
     </DndContext>
   )
 }
@@ -163,7 +194,7 @@ function DayColumn({
   return (
     <div
       ref={setNodeRef}
-      className={`flex flex-col rounded-xl border-2 p-4 backdrop-blur-xs transition-colors ${
+      className={`flex flex-col min-w-0 rounded-xl border-2 p-4 backdrop-blur-xs transition-colors ${
         isOver
           ? 'border-primary bg-primary/20'
           : today

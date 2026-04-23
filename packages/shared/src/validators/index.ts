@@ -1,8 +1,24 @@
 // Zod schemas shared between web, api, and mobile
 // Single source of truth for request/response validation
 
-export { loginSchema, registerSchema, oauthSchema } from './auth'
-export type { LoginInput, RegisterInput, OAuthInput } from './auth'
+export {
+  loginSchema,
+  registerSchema,
+  oauthSchema,
+  verifyEmailSchema,
+  resendOtpSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+} from './auth'
+export type {
+  LoginInput,
+  RegisterInput,
+  OAuthInput,
+  VerifyEmailInput,
+  ResendOtpInput,
+  ForgotPasswordInput,
+  ResetPasswordInput,
+} from './auth'
 
 export { createTaskSchema, updateTaskSchema } from './task'
 export type { CreateTaskInput, UpdateTaskInput } from './task'

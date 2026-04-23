@@ -8,7 +8,15 @@
  * - NO Prisma queries, NO business logic
  */
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi'
-import { loginSchema, registerSchema, oauthSchema } from '@repo/shared/validators'
+import {
+  loginSchema,
+  registerSchema,
+  oauthSchema,
+  verifyEmailSchema,
+  resendOtpSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+} from '@repo/shared/validators'
 import { authMiddleware } from '../middleware/auth'
 import { authService } from '../services/auth.service'
 import type { AppEnv } from '../types/env'
@@ -33,6 +41,15 @@ const tokenResponse = z.object({
 
 const errorResponse = z.object({ error: z.string() })
 
+const verificationPendingResponse = z.object({
+  requiresVerification: z.literal(true),
+  email: z.string(),
+})
+
+const okResponse = z.object({ ok: z.literal(true) })
+
+const loginResponse = z.union([tokenResponse, verificationPendingResponse])
+
 // ---------------------------------------------------------------------------
 // POST /login
 // ---------------------------------------------------------------------------
@@ -43,7 +60,7 @@ const loginRoute = createRoute({
   summary: 'Login with email and password',
   request: { body: { content: { 'application/json': { schema: loginSchema } } } },
   responses: {
-    200: { content: { 'application/json': { schema: tokenResponse } }, description: 'Login successful' },
+    200: { content: { 'application/json': { schema: loginResponse } }, description: 'Login successful or verification required' },
     401: { content: { 'application/json': { schema: errorResponse } }, description: 'Invalid credentials' },
   },
 })
@@ -66,7 +83,7 @@ const registerRoute = createRoute({
   summary: 'Register a new account',
   request: { body: { content: { 'application/json': { schema: registerSchema } } } },
   responses: {
-    201: { content: { 'application/json': { schema: tokenResponse } }, description: 'Registration successful' },
+    201: { content: { 'application/json': { schema: verificationPendingResponse } }, description: 'Registration started — verification code sent' },
     409: { content: { 'application/json': { schema: errorResponse } }, description: 'Email already exists' },
   },
 })
@@ -77,6 +94,92 @@ authRoutes.openapi(registerRoute, async (c) => {
 
   if ('error' in result) return c.json({ error: result.error }, 409)
   return c.json(result, 201)
+})
+
+// ---------------------------------------------------------------------------
+// POST /verify-email
+// ---------------------------------------------------------------------------
+const verifyEmailRoute = createRoute({
+  method: 'post',
+  path: '/verify-email',
+  tags: ['Auth'],
+  summary: 'Verify registration OTP and finalize signup',
+  request: { body: { content: { 'application/json': { schema: verifyEmailSchema } } } },
+  responses: {
+    200: { content: { 'application/json': { schema: tokenResponse } }, description: 'Email verified, session issued' },
+    400: { content: { 'application/json': { schema: errorResponse } }, description: 'Invalid or expired code' },
+  },
+})
+
+authRoutes.openapi(verifyEmailRoute, async (c) => {
+  const { email, code } = c.req.valid('json')
+  const result = await authService.verifyEmail(email, code)
+  if ('error' in result) return c.json({ error: result.error }, 400)
+  return c.json(result, 200)
+})
+
+// ---------------------------------------------------------------------------
+// POST /resend-otp
+// ---------------------------------------------------------------------------
+const resendOtpRoute = createRoute({
+  method: 'post',
+  path: '/resend-otp',
+  tags: ['Auth'],
+  summary: 'Resend a one-time code (register or reset)',
+  request: { body: { content: { 'application/json': { schema: resendOtpSchema } } } },
+  responses: {
+    200: { content: { 'application/json': { schema: okResponse } }, description: 'Sent (or silently ignored)' },
+    429: { content: { 'application/json': { schema: errorResponse } }, description: 'Rate limit exceeded' },
+  },
+})
+
+authRoutes.openapi(resendOtpRoute, async (c) => {
+  const { email, purpose } = c.req.valid('json')
+  const result = await authService.resendOtp(email, purpose)
+  if ('error' in result) return c.json({ error: result.error }, 429)
+  return c.json(result, 200)
+})
+
+// ---------------------------------------------------------------------------
+// POST /forgot-password
+// ---------------------------------------------------------------------------
+const forgotPasswordRoute = createRoute({
+  method: 'post',
+  path: '/forgot-password',
+  tags: ['Auth'],
+  summary: 'Request password reset OTP',
+  request: { body: { content: { 'application/json': { schema: forgotPasswordSchema } } } },
+  responses: {
+    200: { content: { 'application/json': { schema: okResponse } }, description: 'If the account exists, an email was sent' },
+  },
+})
+
+authRoutes.openapi(forgotPasswordRoute, async (c) => {
+  const { email } = c.req.valid('json')
+  const result = await authService.forgotPassword(email)
+  return c.json(result, 200)
+})
+
+// ---------------------------------------------------------------------------
+// POST /reset-password
+// ---------------------------------------------------------------------------
+const resetPasswordRoute = createRoute({
+  method: 'post',
+  path: '/reset-password',
+  tags: ['Auth'],
+  summary: 'Reset password with OTP',
+  request: { body: { content: { 'application/json': { schema: resetPasswordSchema } } } },
+  responses: {
+    200: { content: { 'application/json': { schema: okResponse } }, description: 'Password reset' },
+    400: { content: { 'application/json': { schema: errorResponse } }, description: 'Invalid or expired code' },
+  },
+})
+
+authRoutes.openapi(resetPasswordRoute, async (c) => {
+  const { email, code, password } = c.req.valid('json')
+  const result = await authService.resetPassword(email, code, password)
+  if ('error' in result) return c.json({ error: result.error }, 400)
+  return c.json(result, 200)
 })
 
 // ---------------------------------------------------------------------------

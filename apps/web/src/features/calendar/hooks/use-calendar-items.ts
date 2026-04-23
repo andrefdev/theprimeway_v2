@@ -24,7 +24,14 @@ export interface CalendarItem {
  * into a unified list of CalendarItems for display.
  */
 export function useCalendarItems(dateRange: { from: string; to: string }) {
-  const tasksQuery = useQuery(tasksQueries.list({ from: dateRange.from, to: dateRange.to }))
+  const tasksQuery = useQuery(
+    tasksQueries.list({
+      filter: 'week',
+      weekStart: dateRange.from,
+      weekEnd: dateRange.to,
+      limit: '500',
+    }),
+  )
   const eventsQuery = useQuery(
     calendarQueries.googleEvents({
       timeMin: `${dateRange.from}T00:00:00.000Z`,

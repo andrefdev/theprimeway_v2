@@ -55,6 +55,22 @@ export function ActiveTaskHeaderBadge() {
     return () => clearInterval(id)
   }, [activeTask])
 
+  useEffect(() => {
+    if (!activeTask) return
+    const originalTitle = document.title
+    const baseTitle = originalTitle.replace(/^⏱\s[^·]+·\s/, '')
+    const update = () => {
+      const secs = computeElapsed(activeTask)
+      document.title = `⏱ ${formatElapsed(secs)} · ${activeTask.title} — ${baseTitle}`
+    }
+    update()
+    const id = setInterval(update, 1000)
+    return () => {
+      clearInterval(id)
+      document.title = baseTitle
+    }
+  }, [activeTask])
+
   const stopTimer = useStopTimer()
   const updateTask = useUpdateTask()
 
@@ -118,12 +134,12 @@ export function ActiveTaskHeaderBadge() {
           </DialogHeader>
 
           <div className="flex flex-col items-center gap-6 py-4">
-            <div className="text-center">
-              <h2 className="text-lg font-semibold text-foreground">
+            <div className="w-full text-center px-2 min-w-0">
+              <h2 className="text-lg font-semibold text-foreground break-words line-clamp-4">
                 {activeTask.title}
               </h2>
               {activeTask.description && (
-                <p className="mt-1 text-sm text-muted-foreground">
+                <p className="mt-1 text-sm text-muted-foreground break-words line-clamp-3">
                   {activeTask.description}
                 </p>
               )}
@@ -153,7 +169,7 @@ export function ActiveTaskHeaderBadge() {
               )}
             </div>
 
-            <div className="flex w-full items-center justify-center gap-2">
+            <div className="flex w-full flex-wrap items-center justify-center gap-2">
               <Button
                 variant="destructive"
                 onClick={handleStop}

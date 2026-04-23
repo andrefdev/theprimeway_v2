@@ -12,6 +12,8 @@ import { authRepository } from '../repositories/auth.repo'
 import { signAccessToken, signRefreshToken } from '../middleware/auth'
 import bcrypt from 'bcryptjs'
 import * as jose from 'jose'
+import { otpService } from './otp.service'
+import { emailService } from './email.service'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -96,7 +98,7 @@ async function getAppleUserInfo(idToken: string): Promise<OAuthUserInfo | null> 
 // Service
 // ---------------------------------------------------------------------------
 class AuthService {
-  async login(email: string, password: string): Promise<{ error: string } | AuthResult> {
+  async login(email: string, password: string): Promise<{ error: string } | AuthResult | { requiresVerification: true; email: string }> {
     const normalizedEmail = email.toLowerCase().trim()
     const user = await authRepository.findUserByEmail(normalizedEmail)
 
@@ -105,21 +107,110 @@ class AuthService {
     const valid = await bcrypt.compare(password, user.passwordHash)
     if (!valid) return { error: 'Invalid credentials' }
 
+    if (!user.emailVerified) {
+      await this.sendRegisterOtp(normalizedEmail)
+      return { requiresVerification: true, email: normalizedEmail }
+    }
+
     const tokens = await generateTokens(user.id, user.email!)
     return { ...tokens, user: formatUser(user) }
   }
 
-  async register(name: string, email: string, password: string): Promise<{ error: string } | AuthResult> {
+  async register(name: string, email: string, password: string): Promise<{ error: string } | { requiresVerification: true; email: string }> {
     const normalizedEmail = email.toLowerCase().trim()
 
     const existing = await authRepository.findUserByEmail(normalizedEmail)
-    if (existing) return { error: 'Email already registered' }
+    if (existing) {
+      if (existing.emailVerified) return { error: 'Email already registered' }
+      // Unverified user — allow re-registration: update password, re-issue OTP
+      const passwordHash = await bcrypt.hash(password, SALT_ROUNDS)
+      await authRepository.updatePasswordByEmail(normalizedEmail, passwordHash)
+      await this.sendRegisterOtp(normalizedEmail)
+      return { requiresVerification: true, email: normalizedEmail }
+    }
 
     const passwordHash = await bcrypt.hash(password, SALT_ROUNDS)
-    const user = await authRepository.createUserWithSettings({ name, email: normalizedEmail, passwordHash })
+    await authRepository.createUserWithSettings({ name, email: normalizedEmail, passwordHash })
+    await this.sendRegisterOtp(normalizedEmail)
+
+    return { requiresVerification: true, email: normalizedEmail }
+  }
+
+  private async sendRegisterOtp(email: string): Promise<{ error: string } | { ok: true }> {
+    const issued = await otpService.issue(email, 'register')
+    if ('error' in issued) return issued
+    try {
+      await emailService.sendRegisterOtp(email, issued.code)
+    } catch (e) {
+      console.error('[auth] failed to send register OTP', e)
+      return { error: 'Failed to send verification email' }
+    }
+    return { ok: true }
+  }
+
+  async verifyEmail(email: string, code: string): Promise<{ error: string } | AuthResult> {
+    const normalizedEmail = email.toLowerCase().trim()
+    const result = await otpService.verify(normalizedEmail, 'register', code)
+    if ('error' in result) return result
+
+    const user = await authRepository.markEmailVerified(normalizedEmail)
+    await otpService.consume(result.id)
+
+    // Fire-and-forget welcome email
+    emailService.sendWelcome(normalizedEmail, user.name).catch((e) => {
+      console.error('[auth] failed to send welcome email', e)
+    })
 
     const tokens = await generateTokens(user.id, user.email!)
     return { ...tokens, user: formatUser(user) }
+  }
+
+  async resendOtp(email: string, purpose: 'register' | 'reset'): Promise<{ error: string } | { ok: true }> {
+    const normalizedEmail = email.toLowerCase().trim()
+    const user = await authRepository.findUserByEmail(normalizedEmail)
+
+    if (purpose === 'register') {
+      if (!user) return { ok: true } // don't leak
+      if (user.emailVerified) return { error: 'Email already verified' }
+      return this.sendRegisterOtp(normalizedEmail)
+    }
+
+    // reset
+    if (!user?.passwordHash) return { ok: true }
+    return this.sendResetOtp(normalizedEmail)
+  }
+
+  async forgotPassword(email: string): Promise<{ ok: true }> {
+    const normalizedEmail = email.toLowerCase().trim()
+    const user = await authRepository.findUserByEmail(normalizedEmail)
+    if (user?.passwordHash) {
+      await this.sendResetOtp(normalizedEmail)
+    }
+    return { ok: true } // always succeed to avoid email enumeration
+  }
+
+  private async sendResetOtp(email: string): Promise<{ error: string } | { ok: true }> {
+    const issued = await otpService.issue(email, 'reset')
+    if ('error' in issued) return issued
+    try {
+      await emailService.sendResetOtp(email, issued.code)
+    } catch (e) {
+      console.error('[auth] failed to send reset OTP', e)
+      return { error: 'Failed to send reset email' }
+    }
+    return { ok: true }
+  }
+
+  async resetPassword(email: string, code: string, newPassword: string): Promise<{ error: string } | { ok: true }> {
+    const normalizedEmail = email.toLowerCase().trim()
+    const result = await otpService.verify(normalizedEmail, 'reset', code)
+    if ('error' in result) return result
+
+    const passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS)
+    await authRepository.updatePasswordByEmail(normalizedEmail, passwordHash)
+    await otpService.consume(result.id)
+
+    return { ok: true }
   }
 
   async refreshToken(refreshTokenStr: string): Promise<{ error: string } | AuthTokens> {

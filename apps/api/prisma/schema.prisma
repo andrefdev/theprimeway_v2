@@ -824,17 +824,18 @@ model PushSubscription {
   @@map("push_subscriptions")
 }
 
-// One-time password for email verification during registration
+// One-time password for email verification + password reset
 model EmailOtp {
   id         String   @id @default(uuid())
   email      String
-  code       String
+  codeHash   String   @map("code_hash")
+  purpose    String   // "register" | "reset"
   expiresAt  DateTime @map("expires_at")
   attempts   Int      @default(0) @map("attempts")
   consumed   Boolean  @default(false) @map("consumed")
   createdAt  DateTime @default(now()) @map("created_at")
 
-  @@index([email])
+  @@index([email, purpose])
   @@map("email_otp")
 }
 
