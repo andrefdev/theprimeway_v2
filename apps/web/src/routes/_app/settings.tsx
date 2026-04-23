@@ -6,6 +6,7 @@ import { PreferencesForm } from '@/features/settings/components/PreferencesForm'
 import { ChangePasswordForm } from '@/features/settings/components/ChangePasswordForm'
 import { DangerZone } from '@/features/settings/components/DangerZone'
 import { NotificationsPreferences } from '@/features/notifications/components/NotificationsPreferences'
+import { GoogleCalendarSettings } from '@/features/calendar/components/GoogleCalendarSettings'
 import { useFeature } from '@/features/feature-flags/hooks'
 import { FEATURES } from '@repo/shared/constants'
 import { toast } from 'sonner'
@@ -41,6 +42,7 @@ function SettingsPage() {
         <PreferencesForm settings={settings} saving={saving} onSettingsChange={update} isPremium={customThemeCreationFeature.enabled} />
 
         <NotificationsPreferences />
+        <GoogleCalendarSettings />
         <ChangePasswordForm />
 
         {/* Only show DangerZone if export data is available */}

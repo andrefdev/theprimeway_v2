@@ -21,7 +21,7 @@ Schema changes:
 |---|---|---|---|
 | `GOOGLE_CLIENT_ID` | yes | OAuth connect + refresh | Existing. |
 | `GOOGLE_CLIENT_SECRET` | yes | OAuth token exchange | Existing. |
-| `GOOGLE_CALENDAR_REDIRECT_URI` | yes | OAuth callback | Existing. |
+| `GOOGLE_CALENDAR_REDIRECT_URI` | yes | OAuth callback | Public URL of the web page that handles the `?code=` exchange. Must match exactly one of the OAuth client's Authorized redirect URIs in Google Cloud Console. Point it at the settings page — the web UI (`GoogleCalendarSettings` in `apps/web/src/features/calendar/components/GoogleCalendarSettings.tsx`) reads `code` from the query string on mount and POSTs it to `/api/calendar/google/callback`. Examples: prod `https://app.theprimeway.app/settings`, dev `http://localhost:5173/settings`. |
 | `GOOGLE_CALENDAR_WEBHOOK_URL` | **new — required for Google→App sync** | `subscribeWatchChannel` | Public HTTPS base URL (no trailing slash). Example: `https://api.theprimeway.app`. Falls back to `API_BASE_URL` if unset. The webhook path `/api/calendar/google/webhook` is appended automatically. Google rejects non-HTTPS and IP addresses. |
 | `API_BASE_URL` | optional | Fallback for webhook base | Used if `GOOGLE_CALENDAR_WEBHOOK_URL` is unset. |
 | `JWT_SECRET` | yes | WebSocket auth + HTTP auth | Existing. WebSocket validates the same access-token JWT passed via `?token=` query parameter. |

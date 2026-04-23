@@ -39,5 +39,19 @@
   "passwordTooShort": "Password must be at least 8 characters",
   "failedToChangePassword": "Failed to change password. Check your current password.",
   "notifSaveInfo": "Notification preferences will be saved with backend integration",
-  "accountDeleteInfo": "Account deletion requires confirmation via email. Coming soon."
+  "accountDeleteInfo": "Account deletion requires confirmation via email. Coming soon.",
+  "googleCal": {
+    "title": "Google Calendar",
+    "description": "Connect your Google account and pick which calendars to sync.",
+    "connect": "Connect",
+    "addAnother": "Add account",
+    "connected": "Google Calendar connected",
+    "connectFailed": "Google Calendar connection failed",
+    "notConfigured": "Google Calendar is not configured",
+    "noAccounts": "No Google accounts connected yet.",
+    "noCalendars": "No calendars found for this account.",
+    "disconnect": "Disconnect",
+    "disconnectConfirm": "Disconnect this Google account?",
+    "primary": "primary"
+  }
 }

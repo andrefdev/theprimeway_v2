@@ -63,3 +63,26 @@ export function useSyncCalendar() {
     },
   })
 }
+
+export function useUpdateCalendar() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (args: {
+      id: string
+      body: { isSelectedForSync?: boolean; isPrimary?: boolean; color?: string }
+    }) => calendarApi.updateCalendar(args.id, args.body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: calendarQueries.all() })
+    },
+  })
+}
+
+export function useConnectGoogleCalendar() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (code: string) => calendarApi.connectGoogle(code),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: calendarQueries.all() })
+    },
+  })
+}
