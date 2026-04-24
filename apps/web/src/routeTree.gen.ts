@@ -26,6 +26,7 @@ import { Route as AppNotificationsRouteImport } from './routes/_app/notification
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as AppCompassRouteImport } from './routes/_app/compass'
 import { Route as AppChannelsRouteImport } from './routes/_app/channels'
+import { Route as AppBrainRouteImport } from './routes/_app/brain'
 import { Route as AppApiDocsRouteImport } from './routes/_app/api-docs'
 import { Route as AppAiRouteImport } from './routes/_app/ai'
 import { Route as AppSplatRouteImport } from './routes/_app/$'
@@ -143,6 +144,11 @@ const AppCompassRoute = AppCompassRouteImport.update({
 const AppChannelsRoute = AppChannelsRouteImport.update({
   id: '/channels',
   path: '/channels',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppBrainRoute = AppBrainRouteImport.update({
+  id: '/brain',
+  path: '/brain',
   getParentRoute: () => AppRoute,
 } as any)
 const AppApiDocsRoute = AppApiDocsRouteImport.update({
@@ -326,6 +332,7 @@ export interface FileRoutesByFullPath {
   '/$': typeof AppSplatRoute
   '/ai': typeof AppAiRoute
   '/api-docs': typeof AppApiDocsRoute
+  '/brain': typeof AppBrainRoute
   '/channels': typeof AppChannelsRoute
   '/compass': typeof AppCompassRoute
   '/dashboard': typeof AppDashboardRoute
@@ -378,6 +385,7 @@ export interface FileRoutesByTo {
   '/$': typeof AppSplatRoute
   '/ai': typeof AppAiRoute
   '/api-docs': typeof AppApiDocsRoute
+  '/brain': typeof AppBrainRoute
   '/channels': typeof AppChannelsRoute
   '/compass': typeof AppCompassRoute
   '/dashboard': typeof AppDashboardRoute
@@ -433,6 +441,7 @@ export interface FileRoutesById {
   '/_app/$': typeof AppSplatRoute
   '/_app/ai': typeof AppAiRoute
   '/_app/api-docs': typeof AppApiDocsRoute
+  '/_app/brain': typeof AppBrainRoute
   '/_app/channels': typeof AppChannelsRoute
   '/_app/compass': typeof AppCompassRoute
   '/_app/dashboard': typeof AppDashboardRoute
@@ -487,6 +496,7 @@ export interface FileRouteTypes {
     | '/$'
     | '/ai'
     | '/api-docs'
+    | '/brain'
     | '/channels'
     | '/compass'
     | '/dashboard'
@@ -539,6 +549,7 @@ export interface FileRouteTypes {
     | '/$'
     | '/ai'
     | '/api-docs'
+    | '/brain'
     | '/channels'
     | '/compass'
     | '/dashboard'
@@ -593,6 +604,7 @@ export interface FileRouteTypes {
     | '/_app/$'
     | '/_app/ai'
     | '/_app/api-docs'
+    | '/_app/brain'
     | '/_app/channels'
     | '/_app/compass'
     | '/_app/dashboard'
@@ -766,6 +778,13 @@ declare module '@tanstack/react-router' {
       path: '/channels'
       fullPath: '/channels'
       preLoaderRoute: typeof AppChannelsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/brain': {
+      id: '/_app/brain'
+      path: '/brain'
+      fullPath: '/brain'
+      preLoaderRoute: typeof AppBrainRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/api-docs': {
@@ -1020,6 +1039,7 @@ interface AppRouteChildren {
   AppSplatRoute: typeof AppSplatRoute
   AppAiRoute: typeof AppAiRoute
   AppApiDocsRoute: typeof AppApiDocsRoute
+  AppBrainRoute: typeof AppBrainRoute
   AppChannelsRoute: typeof AppChannelsRoute
   AppCompassRoute: typeof AppCompassRoute
   AppDashboardRoute: typeof AppDashboardRoute
@@ -1068,6 +1088,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSplatRoute: AppSplatRoute,
   AppAiRoute: AppAiRoute,
   AppApiDocsRoute: AppApiDocsRoute,
+  AppBrainRoute: AppBrainRoute,
   AppChannelsRoute: AppChannelsRoute,
   AppCompassRoute: AppCompassRoute,
   AppDashboardRoute: AppDashboardRoute,

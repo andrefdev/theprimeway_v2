@@ -113,6 +113,12 @@ function useSecondaryNavItems() {
       requiredFeature: FEATURES.NOTES_MODULE,
     },
     {
+      title: t('navBrain', { defaultValue: 'Brain' }),
+      to: '/brain',
+      icon: sidebarIcons.brain(undefined, { size: 20 }),
+      requiredFeature: FEATURES.BRAIN_MODULE,
+    },
+    {
       title: t('navReading'),
       to: '/reading',
       icon: sidebarIcons.reading(undefined, { size: 20 }),

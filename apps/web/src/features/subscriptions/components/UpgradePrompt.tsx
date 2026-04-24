@@ -71,6 +71,14 @@ const defaultFeatureMessages: Record<FeatureKey, { title: string; description: s
     title: 'Pomodoro Limit Reached',
     description: "You've reached the daily pomodoro limit for your plan. Upgrade to Premium for unlimited sessions.",
   },
+  BRAIN_MODULE: {
+    title: 'Second Brain Unlock',
+    description: 'Capture thoughts and let AI organize them across your goals, tasks, and habits. Upgrade to Premium to access this feature.',
+  },
+  BRAIN_ENTRIES_LIMIT: {
+    title: 'Thought Limit Reached',
+    description: "You've reached the brain entries limit for your plan. Upgrade to Premium for unlimited thoughts.",
+  },
 }
 
 const featureKeyToTranslationKey: Record<string, string> = {
