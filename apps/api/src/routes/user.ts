@@ -11,7 +11,6 @@ import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi'
 import type { AppEnv } from '../types/env'
 import { authMiddleware } from '../middleware/auth'
 import { userService } from '../services/user.service'
-import { prisma } from '../lib/prisma'
 
 export const userRoutes = new OpenAPIHono<AppEnv>()
 
@@ -404,7 +403,7 @@ const getSectionCustomizationsRoute = createRoute({
 
 userRoutes.openapi(getSectionCustomizationsRoute, (async (c: any) => {
   const { userId } = c.get('user')
-  const data = await prisma.sectionCustomization.findMany({ where: { userId } })
+  const data = await userService.listSectionCustomizations(userId)
   return c.json({ data }, 200)
 }) as any)
 
@@ -442,13 +441,7 @@ userRoutes.openapi(upsertSectionCustomizationRoute, (async (c: any) => {
   const { userId } = c.get('user')
   const body = c.req.valid('json')
   const { sectionId, ...fields } = body
-
-  const data = await prisma.sectionCustomization.upsert({
-    where: { userId_sectionId: { userId, sectionId } },
-    update: { ...fields, updatedAt: new Date() },
-    create: { userId, sectionId, ...fields },
-  })
-
+  const data = await userService.upsertSectionCustomization(userId, sectionId, fields)
   return c.json({ data }, 200)
 }) as any)
 
@@ -471,6 +464,6 @@ userRoutes.openapi(deleteSectionCustomizationRoute, (async (c: any) => {
   const sectionId = c.req.query('sectionId')
   if (!sectionId) return c.json({ error: 'sectionId is required' }, 400)
 
-  await prisma.sectionCustomization.deleteMany({ where: { userId, sectionId } })
+  await userService.deleteSectionCustomization(userId, sectionId)
   return c.json({ message: 'Deleted' }, 200)
 }) as any)

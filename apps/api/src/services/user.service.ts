@@ -129,6 +129,18 @@ class UserService {
     console.log(`[USER_DELETE] Deleting user ${userId} and cascading entities...`)
     await userRepository.deleteUser(userId)
   }
+
+  // ── Section customizations ─────────────────────────────────────────────
+
+  listSectionCustomizations(userId: string) { return userRepository.listSectionCustomizations(userId) }
+
+  upsertSectionCustomization(userId: string, sectionId: string, fields: Record<string, unknown>) {
+    return userRepository.upsertSectionCustomization(userId, sectionId, fields)
+  }
+
+  deleteSectionCustomization(userId: string, sectionId: string) {
+    return userRepository.deleteSectionCustomization(userId, sectionId)
+  }
 }
 
 export const userService = new UserService()

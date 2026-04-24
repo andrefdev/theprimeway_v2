@@ -17,7 +17,7 @@
 - **Recurring series** CRUD + opportunistic materialization on /rituals/today.
 - **Clean architecture.** All session-added routes refactored: zero `prisma` imports in `/routes/*` (except 3 pre-existing legacy files outside this work's scope).
 
-**API TS baseline:** 108 (pre-migration) → **98** (current)
+**API TS baseline:** 108 (pre-migration) → 98 → **90** (current, after admin/dashboard refactor)
 **Web TS:** **0**
 **Migrations applied:** 3 → **8**
 
@@ -201,7 +201,7 @@ Routes translate to HTTP 404/409/500 by reason.
 1. ~~**Onboarding polish**~~ ✅ 2026-04-24 — `POST /user/onboarding/complete` now seeds default contexts (Work/Personal) + General channel + Mon–Fri 09:00–17:00 working-hours on finish. Wired in `OnboardingWizard` via `onboardingApi.completeOnboarding`.
 2. ~~**Public API keys + webhook on `task.completed`**~~ ✅ 2026-04-24 — `ApiKey` + `Webhook` schema + migration `20260424151518_add_api_keys_and_webhooks`. `POST /api/api-keys` (returns plaintext once, `pk_live_…`), `DELETE /api/api-keys/:id` (revoke). `/api/webhooks` CRUD with HMAC-SHA256 signatures (`X-Primeway-Signature: sha256=…`). Events whitelist: `task.completed|task.created|task.updated|goal.completed`. `webhooksService.dispatch(userId, event, data)` fire-and-forget with 5s timeout, records `lastDeliveryCode`. Wired in `tasks.service.updateTask` on completion transition. Middleware `apiKeyOrJwtMiddleware` available for public-API surfaces (not yet applied).
 3. ~~**Cron materializer (formal)**~~ ✅ 2026-04-24 — `POST /cron/materialize-daily` runs `ritualsService.ensureDailyForAllUsers` + `recurringService.materializeForAllUsers`. Opportunistic call retained as safety net.
-4. **Refactor pre-existing direct-prisma routes** — `dashboard.ts`, `user.ts`, `admin.ts` still have the anti-pattern (pre-existing tech debt).
+4. ~~**Refactor pre-existing direct-prisma routes**~~ ✅ 2026-04-24 — `dashboard.ts` (→ `dashboard.service` + `dashboard.repo`), `user.ts` (sectionCustomizations moved into `userService`), `admin.ts` (→ new `admin.service` + `admin.repo` covering role check, user list/get, subscription CRUD, analytics aggregation). All three routes no longer import prisma.
 5. **Vision Map radial viz** (spec §8 Phase 4 experimental).
 6. ~~**Focus Mode polish**~~ 🟡 2026-04-24 — post-complete "What's the smallest next step?" prompt added (creates backlog task on submit). Subtasks panel still pending (needs Subtask CRUD routes).
 7. **Mobile companion app** (multi-week scope).

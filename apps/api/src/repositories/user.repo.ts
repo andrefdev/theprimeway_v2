@@ -95,6 +95,28 @@ class UserRepository {
   async deleteUser(userId: string): Promise<void> {
     await prisma.user.delete({ where: { id: userId } })
   }
+
+  // ── Section customizations ─────────────────────────────────────────────
+
+  listSectionCustomizations(userId: string) {
+    return prisma.sectionCustomization.findMany({ where: { userId } })
+  }
+
+  upsertSectionCustomization(
+    userId: string,
+    sectionId: string,
+    fields: Record<string, unknown>,
+  ) {
+    return prisma.sectionCustomization.upsert({
+      where: { userId_sectionId: { userId, sectionId } },
+      update: { ...fields, updatedAt: new Date() },
+      create: { userId, sectionId, ...fields },
+    })
+  }
+
+  deleteSectionCustomization(userId: string, sectionId: string) {
+    return prisma.sectionCustomization.deleteMany({ where: { userId, sectionId } })
+  }
 }
 
 export const userRepository = new UserRepository()
