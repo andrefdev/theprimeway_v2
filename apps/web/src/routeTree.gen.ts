@@ -18,11 +18,14 @@ import { Route as AuthLoginRouteImport } from './routes/_auth/login'
 import { Route as AuthForgotPasswordRouteImport } from './routes/_auth/forgot-password'
 import { Route as AppSubscriptionRouteImport } from './routes/_app/subscription'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
+import { Route as AppRecurringRouteImport } from './routes/_app/recurring'
 import { Route as AppProfileRouteImport } from './routes/_app/profile'
 import { Route as AppPomodoroRouteImport } from './routes/_app/pomodoro'
 import { Route as AppOnboardingRouteImport } from './routes/_app/onboarding'
 import { Route as AppNotificationsRouteImport } from './routes/_app/notifications'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
+import { Route as AppCompassRouteImport } from './routes/_app/compass'
+import { Route as AppChannelsRouteImport } from './routes/_app/channels'
 import { Route as AppAiRouteImport } from './routes/_app/ai'
 import { Route as AppSplatRouteImport } from './routes/_app/$'
 import { Route as AppTasksIndexRouteImport } from './routes/_app/tasks/index'
@@ -100,6 +103,11 @@ const AppSettingsRoute = AppSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AppRoute,
 } as any)
+const AppRecurringRoute = AppRecurringRouteImport.update({
+  id: '/recurring',
+  path: '/recurring',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppProfileRoute = AppProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -123,6 +131,16 @@ const AppNotificationsRoute = AppNotificationsRouteImport.update({
 const AppDashboardRoute = AppDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCompassRoute = AppCompassRouteImport.update({
+  id: '/compass',
+  path: '/compass',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppChannelsRoute = AppChannelsRouteImport.update({
+  id: '/channels',
+  path: '/channels',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAiRoute = AppAiRouteImport.update({
@@ -295,11 +313,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$': typeof AppSplatRoute
   '/ai': typeof AppAiRoute
+  '/channels': typeof AppChannelsRoute
+  '/compass': typeof AppCompassRoute
   '/dashboard': typeof AppDashboardRoute
   '/notifications': typeof AppNotificationsRoute
   '/onboarding': typeof AppOnboardingRoute
   '/pomodoro': typeof AppPomodoroRoute
   '/profile': typeof AppProfileRoute
+  '/recurring': typeof AppRecurringRoute
   '/settings': typeof AppSettingsRoute
   '/subscription': typeof AppSubscriptionRoute
   '/forgot-password': typeof AuthForgotPasswordRoute
@@ -342,11 +363,14 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$': typeof AppSplatRoute
   '/ai': typeof AppAiRoute
+  '/channels': typeof AppChannelsRoute
+  '/compass': typeof AppCompassRoute
   '/dashboard': typeof AppDashboardRoute
   '/notifications': typeof AppNotificationsRoute
   '/onboarding': typeof AppOnboardingRoute
   '/pomodoro': typeof AppPomodoroRoute
   '/profile': typeof AppProfileRoute
+  '/recurring': typeof AppRecurringRoute
   '/settings': typeof AppSettingsRoute
   '/subscription': typeof AppSubscriptionRoute
   '/forgot-password': typeof AuthForgotPasswordRoute
@@ -392,11 +416,14 @@ export interface FileRoutesById {
   '/_auth': typeof AuthRouteWithChildren
   '/_app/$': typeof AppSplatRoute
   '/_app/ai': typeof AppAiRoute
+  '/_app/channels': typeof AppChannelsRoute
+  '/_app/compass': typeof AppCompassRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/notifications': typeof AppNotificationsRoute
   '/_app/onboarding': typeof AppOnboardingRoute
   '/_app/pomodoro': typeof AppPomodoroRoute
   '/_app/profile': typeof AppProfileRoute
+  '/_app/recurring': typeof AppRecurringRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/subscription': typeof AppSubscriptionRoute
   '/_auth/forgot-password': typeof AuthForgotPasswordRoute
@@ -441,11 +468,14 @@ export interface FileRouteTypes {
     | '/'
     | '/$'
     | '/ai'
+    | '/channels'
+    | '/compass'
     | '/dashboard'
     | '/notifications'
     | '/onboarding'
     | '/pomodoro'
     | '/profile'
+    | '/recurring'
     | '/settings'
     | '/subscription'
     | '/forgot-password'
@@ -488,11 +518,14 @@ export interface FileRouteTypes {
     | '/'
     | '/$'
     | '/ai'
+    | '/channels'
+    | '/compass'
     | '/dashboard'
     | '/notifications'
     | '/onboarding'
     | '/pomodoro'
     | '/profile'
+    | '/recurring'
     | '/settings'
     | '/subscription'
     | '/forgot-password'
@@ -537,11 +570,14 @@ export interface FileRouteTypes {
     | '/_auth'
     | '/_app/$'
     | '/_app/ai'
+    | '/_app/channels'
+    | '/_app/compass'
     | '/_app/dashboard'
     | '/_app/notifications'
     | '/_app/onboarding'
     | '/_app/pomodoro'
     | '/_app/profile'
+    | '/_app/recurring'
     | '/_app/settings'
     | '/_app/subscription'
     | '/_auth/forgot-password'
@@ -652,6 +688,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/recurring': {
+      id: '/_app/recurring'
+      path: '/recurring'
+      fullPath: '/recurring'
+      preLoaderRoute: typeof AppRecurringRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/profile': {
       id: '/_app/profile'
       path: '/profile'
@@ -685,6 +728,20 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AppDashboardRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/compass': {
+      id: '/_app/compass'
+      path: '/compass'
+      fullPath: '/compass'
+      preLoaderRoute: typeof AppCompassRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/channels': {
+      id: '/_app/channels'
+      path: '/channels'
+      fullPath: '/channels'
+      preLoaderRoute: typeof AppChannelsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/ai': {
@@ -924,11 +981,14 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppSplatRoute: typeof AppSplatRoute
   AppAiRoute: typeof AppAiRoute
+  AppChannelsRoute: typeof AppChannelsRoute
+  AppCompassRoute: typeof AppCompassRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppNotificationsRoute: typeof AppNotificationsRoute
   AppOnboardingRoute: typeof AppOnboardingRoute
   AppPomodoroRoute: typeof AppPomodoroRoute
   AppProfileRoute: typeof AppProfileRoute
+  AppRecurringRoute: typeof AppRecurringRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppSubscriptionRoute: typeof AppSubscriptionRoute
   AppFinancesAccountsRoute: typeof AppFinancesAccountsRoute
@@ -967,11 +1027,14 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppSplatRoute: AppSplatRoute,
   AppAiRoute: AppAiRoute,
+  AppChannelsRoute: AppChannelsRoute,
+  AppCompassRoute: AppCompassRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppNotificationsRoute: AppNotificationsRoute,
   AppOnboardingRoute: AppOnboardingRoute,
   AppPomodoroRoute: AppPomodoroRoute,
   AppProfileRoute: AppProfileRoute,
+  AppRecurringRoute: AppRecurringRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppSubscriptionRoute: AppSubscriptionRoute,
   AppFinancesAccountsRoute: AppFinancesAccountsRoute,

@@ -655,9 +655,9 @@ adminRoutes.openapi(analyticsSummaryRoute, async (c) => {
     prisma.userUsageStat.count({ where: { updatedAt: { gte: since7d } } }),
     prisma.userUsageStat.count({ where: { updatedAt: { gte: since30d } } }),
     prisma.task.count({ where: { createdAt: { gte: since30d } } }),
-    prisma.habit.count({ where: { createdAt: { gte: since30d } } }),
+    prisma.task.count({ where: { kind: 'HABIT', createdAt: { gte: since30d } } }),
     prisma.note.count({ where: { createdAt: { gte: since30d } } }),
-    prisma.pomodoroSession.count({ where: { createdAt: { gte: since30d } } }),
+    prisma.workingSession.count({ where: { kind: 'POMODORO', createdAt: { gte: since30d } } }),
   ])
 
   const plans = await prisma.subscriptionPlan.findMany({

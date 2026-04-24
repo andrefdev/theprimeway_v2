@@ -17,8 +17,19 @@ class ChatRepository {
   }
 
   async findActiveHabits(userId: string) {
-    return prisma.habit.findMany({
-      where: { userId, isActive: true },
+    const tasks = await prisma.task.findMany({
+      where: { userId, kind: 'HABIT', archivedAt: null },
+    })
+    return tasks.map((t: any) => {
+      const m = (t.habitMeta ?? {}) as any
+      return {
+        id: t.id,
+        name: t.title,
+        description: t.description,
+        targetFrequency: typeof m.targetFrequency === 'number' ? m.targetFrequency : 1,
+        frequencyType: m.frequencyType ?? null,
+        isActive: true,
+      }
     })
   }
 
@@ -55,8 +66,8 @@ class ChatRepository {
   }
 
   async findActiveGoalsByUser(userId: string) {
-    return prisma.quarterlyGoal.findMany({
-      where: { userId },
+    return prisma.goal.findMany({
+      where: { userId, horizon: 'QUARTER', status: 'ACTIVE' },
       orderBy: { createdAt: 'desc' },
     })
   }

@@ -24,6 +24,16 @@ import { cronRoutes } from './routes/cron'
 import { dashboardRoutes } from './routes/dashboard'
 import { featuresRoutes } from './routes/features'
 import { adminRoutes } from './routes/admin'
+import { visionRoutes } from './routes/vision'
+import { channelsRoutes } from './routes/channels'
+import { workingSessionsRoutes } from './routes/working-sessions'
+import { workingHoursRoutes } from './routes/working-hours'
+import { recurringSeriesRoutes } from './routes/recurring-series'
+import { ritualsRoutes } from './routes/rituals'
+import { commandsRoutes } from './routes/commands'
+import { schedulingRoutes } from './routes/scheduling'
+import { apiKeysRoutes } from './routes/api-keys'
+import { webhooksRoutes } from './routes/webhooks'
 
 // Create app with OpenAPI support
 export const app = new OpenAPIHono<AppEnv>()
@@ -68,6 +78,18 @@ app.route('/api/cron', cronRoutes)
 app.route('/api/dashboard', dashboardRoutes)
 app.route('/api/features', featuresRoutes)
 app.route('/api/admin', adminRoutes)
+
+// Vision-to-Execution OS (Phase 1)
+app.route('/api/vision', visionRoutes)
+app.route('/api/channels', channelsRoutes)
+app.route('/api/working-sessions', workingSessionsRoutes)
+app.route('/api/working-hours', workingHoursRoutes)
+app.route('/api/recurring-series', recurringSeriesRoutes)
+app.route('/api/rituals', ritualsRoutes)
+app.route('/api/commands', commandsRoutes)
+app.route('/api/scheduling', schedulingRoutes)
+app.route('/api/api-keys', apiKeysRoutes)
+app.route('/api/webhooks', webhooksRoutes)
 
 // Swagger UI
 app.get('/docs', swaggerUI({ url: '/openapi.json' }))

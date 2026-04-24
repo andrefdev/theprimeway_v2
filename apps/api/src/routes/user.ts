@@ -211,87 +211,55 @@ userRoutes.openapi(postProfileRoute, (async (c: any) => {
   }
 }) as any)
 
+// /work-preferences endpoints removed — replaced by /api/working-hours.
+
 // ---------------------------------------------------------------------------
-// GET /work-preferences — Fetch work preferences
+// POST /onboarding/complete — Finalize onboarding + seed defaults
 // ---------------------------------------------------------------------------
-const workPrefsSchema = z.object({
-  data: z.object({
-    id: z.string(),
-    userId: z.string(),
-    timeZone: z.string(),
-    workStartHour: z.number(),
-    workEndHour: z.number(),
-    workDays: z.array(z.number()),
-    defaultTaskDurationMinutes: z.number(),
-    maxTasksPerDay: z.number(),
-    overflowStrategy: z.string(),
-  }).passthrough(),
+const completeOnboardingBody = z.object({
+  locale: z.string().optional(),
+  timezone: z.string().optional(),
 })
 
-const getWorkPrefsRoute = createRoute({
-  method: 'get',
-  path: '/work-preferences',
+const completeOnboardingRoute = createRoute({
+  method: 'post',
+  path: '/onboarding/complete',
   tags: ['User'],
-  summary: 'Get user work preferences',
-  security: [{ Bearer: [] }],
-  responses: {
-    200: { content: { 'application/json': { schema: workPrefsSchema } }, description: 'Work preferences' },
-    500: { content: { 'application/json': { schema: errorResponse } }, description: 'Internal error' },
-  },
-})
-
-userRoutes.openapi(getWorkPrefsRoute, (async (c: any) => {
-  const { userId } = c.get('user')
-
-  try {
-    const data = await userService.getWorkPreferences(userId)
-    return c.json({ data }, 200)
-  } catch (error) {
-    console.error('[WORK_PREFERENCES_GET]', error)
-    return c.json({ error: 'Internal Error' }, 500)
-  }
-}) as any)
-
-// ---------------------------------------------------------------------------
-// PUT /work-preferences — Update work preferences
-// ---------------------------------------------------------------------------
-const updateWorkPrefsBody = z.object({
-  timeZone: z.string().optional(),
-  workStartHour: z.number().int().min(0).max(23).optional(),
-  workEndHour: z.number().int().min(0).max(23).optional(),
-  workDays: z.array(z.number().int().min(0).max(6)).optional(),
-  defaultTaskDurationMinutes: z.number().int().min(1).optional(),
-  maxTasksPerDay: z.number().int().min(1).optional(),
-  overflowStrategy: z.string().optional(),
-})
-
-const putWorkPrefsRoute = createRoute({
-  method: 'put',
-  path: '/work-preferences',
-  tags: ['User'],
-  summary: 'Update user work preferences',
+  summary: 'Complete onboarding and seed default contexts/channels/working-hours',
   security: [{ Bearer: [] }],
   request: {
-    body: { content: { 'application/json': { schema: updateWorkPrefsBody } } },
+    body: { content: { 'application/json': { schema: completeOnboardingBody } } },
   },
   responses: {
-    200: { content: { 'application/json': { schema: workPrefsSchema } }, description: 'Updated preferences' },
+    200: {
+      content: {
+        'application/json': {
+          schema: z.object({
+            data: z.object({
+              settings: z.any(),
+              seeded: z.object({ workingHours: z.number() }),
+            }),
+          }),
+        },
+      },
+      description: 'Onboarding completed',
+    },
     500: { content: { 'application/json': { schema: errorResponse } }, description: 'Internal error' },
   },
 })
 
-userRoutes.openapi(putWorkPrefsRoute, (async (c: any) => {
+userRoutes.openapi(completeOnboardingRoute, (async (c: any) => {
   const { userId } = c.get('user')
-
   try {
     const body = c.req.valid('json')
-    const data = await userService.updateWorkPreferences(userId, body)
+    const data = await userService.completeOnboarding(userId, body)
     return c.json({ data }, 200)
   } catch (error) {
-    console.error('[WORK_PREFERENCES_PUT]', error)
+    console.error('[ONBOARDING_COMPLETE]', error)
     return c.json({ error: 'Internal Error' }, 500)
   }
 }) as any)
+
 
 // ---------------------------------------------------------------------------
 // DELETE /delete — Delete user account (cascading)

@@ -18,6 +18,7 @@ import { TaskItem } from '@/shared/components/TaskItem'
 import { Button } from '@/shared/components/ui/button'
 import { PlusIcon } from '@/shared/components/Icons'
 import { ScrollArea } from '@/shared/components/ui/scroll-area'
+import { AutoScheduleButton } from '@/features/scheduling/components/AutoScheduleButton'
 import type { Task } from '@repo/shared/types'
 import { useTranslation } from 'react-i18next'
 
@@ -109,15 +110,21 @@ export function DayPlanner({
             {t('unscheduled')} ({unscheduled.length})
           </h4>
           {unscheduled.map((task) => (
-            <TaskItem
-              key={task.id}
-              task={task}
-              onToggle={() => onToggle(task)}
-              onEdit={() => onEdit(task)}
-              onDelete={() => onDelete(task)}
-              onArchive={onArchive ? () => onArchive(task) : undefined}
-              size="sm"
-            />
+            <div key={task.id} className="flex items-center gap-2">
+              <div className="flex-1 min-w-0">
+                <TaskItem
+                  task={task}
+                  onToggle={() => onToggle(task)}
+                  onEdit={() => onEdit(task)}
+                  onDelete={() => onDelete(task)}
+                  onArchive={onArchive ? () => onArchive(task) : undefined}
+                  size="sm"
+                />
+              </div>
+              {task.status === 'open' && (
+                <AutoScheduleButton taskId={task.id} day={date} label="X" variant="ghost" size="sm" />
+              )}
+            </div>
           ))}
         </div>
       )}

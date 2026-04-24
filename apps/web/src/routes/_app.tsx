@@ -11,6 +11,10 @@ import { useLocaleSync } from '@/i18n/useLocaleSync'
 import { useSyncSocket } from '@/shared/hooks/use-sync-socket'
 import { RouteLoadingSkeleton } from '@/shared/components/RouteLoadingSkeleton'
 import { ChatPanel } from '@/features/ai/components/ChatPanel'
+import { CaptureDialog } from '@/features/capture/components/CaptureDialog'
+import { useCaptureShortcut } from '@/features/capture/hooks/use-capture-shortcut'
+import { useUndoShortcut } from '@/features/scheduling/hooks/use-undo-shortcut'
+import { FocusMode } from '@/features/focus/components/FocusMode'
 
 export const Route = createFileRoute('/_app')({
   beforeLoad: () => {
@@ -25,6 +29,8 @@ export const Route = createFileRoute('/_app')({
 function AppLayout() {
   useLocaleSync()
   useSyncSocket()
+  useUndoShortcut()
+  const [captureOpen, closeCapture] = useCaptureShortcut()
   return (
     <TooltipProvider>
       <SidebarProvider className="h-dvh! min-h-0!">
@@ -41,6 +47,8 @@ function AppLayout() {
           <MobileBottomNav />
         </SidebarInset>
         <ChatPanel />
+        <CaptureDialog open={captureOpen} onClose={closeCapture} />
+        <FocusMode />
       </SidebarProvider>
     </TooltipProvider>
   )

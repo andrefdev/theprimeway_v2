@@ -631,3 +631,17 @@ calendarRoutes.patch('/accounts/:id', async (c: any) => {
   if (!account) return c.json({ error: 'Not found or unauthorized' }, 404)
   return c.json({ data: account }, 200)
 })
+
+// ---------------------------------------------------------------------------
+// GET /events — cached CalendarEvent rows for the user within [from, to]
+// Used by the Compass surface to render busy blocks alongside WorkingSessions.
+// ---------------------------------------------------------------------------
+calendarRoutes.get('/events', async (c) => {
+  const userId = c.get('user').userId
+  const from = c.req.query('from')
+  const to = c.req.query('to')
+  if (!from || !to) return c.json({ error: 'from and to required' }, 400)
+  const events = await calendarService.listEventsInRange(userId, new Date(from), new Date(to))
+  return c.json({ data: events })
+})
+

@@ -8,6 +8,9 @@ export function useCompleteOnboarding() {
         await onboardingApi.updateProfile({ name: data.name })
       }
       await onboardingApi.savePreferences(data.preferences)
+      await onboardingApi.completeOnboarding({
+        locale: data.preferences.locale,
+      })
     },
   })
 }

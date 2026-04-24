@@ -6,6 +6,9 @@
  * - Returns Prisma objects directly (camelCase)
  * - Date normalization
  * - NO business logic, NO HTTP concerns
+ *
+ * Legacy `weeklyGoalId` is derived from TaskGoal M2M (first WEEK-horizon goal).
+ * Writes that set `weeklyGoalId` are translated to TaskGoal upsert/delete.
  */
 import { prisma } from '../lib/prisma'
 
@@ -31,12 +34,58 @@ export function normalizeScheduledDate(dateStr: string): Date {
   return new Date(`${datePart}T00:00:00.000Z`)
 }
 
-const defaultInclude = { weeklyGoal: true }
+const defaultInclude = {
+  goalLinks: { include: { goal: true } },
+} as const
+
 const defaultOrderBy = [
   { scheduledStart: 'asc' as const },
   { orderInDay: 'asc' as const },
   { createdAt: 'desc' as const },
 ]
+
+/** Attach legacy `weeklyGoalId` / `weeklyGoal` derived from TaskGoal M2M. */
+function attachLegacyWeekly<T extends { goalLinks?: any[] } | null>(task: T): any {
+  if (!task) return task
+  const links = (task as any).goalLinks ?? []
+  const weekly = links.find((l: any) => l.goal?.horizon === 'WEEK')
+  const weeklyGoal = weekly
+    ? {
+        id: weekly.goal.id,
+        userId: weekly.goal.userId,
+        title: weekly.goal.title,
+        weekStartDate: weekly.goal.startsOn,
+        status: 'planned',
+      }
+    : null
+  return { ...task, weeklyGoalId: weekly?.goalId ?? null, weeklyGoal }
+}
+
+function attachLegacyWeeklyMany<T extends { goalLinks?: any[] }>(tasks: T[]): any[] {
+  return tasks.map((t) => attachLegacyWeekly(t))
+}
+
+/** Upsert/delete the single WEEK-horizon link for a task to emulate legacy weeklyGoalId semantics. */
+async function syncWeeklyLink(taskId: string, weeklyGoalId: string | null) {
+  const existing = await prisma.taskGoal.findMany({
+    where: { taskId, goal: { horizon: 'WEEK' } },
+    select: { goalId: true },
+  })
+  const existingIds = existing.map((e: { goalId: string }) => e.goalId)
+
+  if (weeklyGoalId) {
+    // Remove any other WEEK links
+    const toRemove = existingIds.filter((id: string) => id !== weeklyGoalId)
+    if (toRemove.length > 0) {
+      await prisma.taskGoal.deleteMany({ where: { taskId, goalId: { in: toRemove } } })
+    }
+    if (!existingIds.includes(weeklyGoalId)) {
+      await prisma.taskGoal.create({ data: { taskId, goalId: weeklyGoalId } })
+    }
+  } else if (existingIds.length > 0) {
+    await prisma.taskGoal.deleteMany({ where: { taskId, goalId: { in: existingIds } } })
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Repository
@@ -48,21 +97,22 @@ class TasksRepository {
     if (options.priority) where.priority = options.priority
     if (options.scheduledDate) where.scheduledDate = options.scheduledDate
     if (options.archivedAt !== undefined) where.archivedAt = options.archivedAt
-    if (options.weeklyGoalId) where.weeklyGoalId = options.weeklyGoalId
+    if (options.weeklyGoalId) where.goalLinks = { some: { goalId: options.weeklyGoalId } }
 
-    return prisma.task.findMany({
+    const tasks = await prisma.task.findMany({
       where,
       include: defaultInclude,
       orderBy: defaultOrderBy,
       take: options.limit ?? 200,
       skip: options.offset ?? 0,
     })
+    return attachLegacyWeeklyMany(tasks)
   }
 
   async findTodaysTasks(userId: string, todayISO: string) {
     const dayStart = new Date(`${todayISO}T00:00:00.000Z`)
     const dayEnd = new Date(`${todayISO}T23:59:59.999Z`)
-    return prisma.task.findMany({
+    const tasks = await prisma.task.findMany({
       where: {
         userId,
         scheduledDate: { gte: dayStart, lte: dayEnd },
@@ -72,28 +122,31 @@ class TasksRepository {
       include: defaultInclude,
       orderBy: defaultOrderBy,
     })
+    return attachLegacyWeeklyMany(tasks)
   }
 
   async findBacklogTasks(userId: string) {
-    return prisma.task.findMany({
+    const tasks = await prisma.task.findMany({
       where: { userId, scheduledDate: null, status: 'open', archivedAt: null },
       include: defaultInclude,
       orderBy: [{ createdAt: 'desc' }],
     })
+    return attachLegacyWeeklyMany(tasks)
   }
 
   async findArchivedTasks(userId: string) {
-    return prisma.task.findMany({
+    const tasks = await prisma.task.findMany({
       where: { userId, archivedAt: { not: null } },
       include: defaultInclude,
       orderBy: [{ archivedAt: 'desc' }],
     })
+    return attachLegacyWeeklyMany(tasks)
   }
 
   async findWeekTasks(userId: string, weekStartISO: string, weekEndISO: string) {
     const start = new Date(`${weekStartISO}T00:00:00.000Z`)
     const end = new Date(`${weekEndISO}T23:59:59.999Z`)
-    return prisma.task.findMany({
+    const tasks = await prisma.task.findMany({
       where: {
         userId,
         archivedAt: null,
@@ -105,17 +158,19 @@ class TasksRepository {
       include: defaultInclude,
       orderBy: defaultOrderBy,
     })
+    return attachLegacyWeeklyMany(tasks)
   }
 
   async findById(userId: string, taskId: string) {
-    return prisma.task.findFirst({
+    const task = await prisma.task.findFirst({
       where: { id: taskId, userId },
       include: defaultInclude,
     })
+    return attachLegacyWeekly(task)
   }
 
   async create(userId: string, data: Record<string, any>) {
-    return prisma.task.create({
+    const task = await prisma.task.create({
       data: {
         userId,
         title: data.title,
@@ -131,14 +186,15 @@ class TasksRepository {
         backlogState: data.backlogState,
         source: data.source,
         tags: data.tags || [],
-        weeklyGoalId: data.weeklyGoalId,
         isRecurring: data.isRecurring,
         recurrenceRule: data.recurrenceRule,
         recurringParentId: data.recurringParentId,
         recurrenceEndDate: data.recurrenceEndDate ? new Date(data.recurrenceEndDate) : undefined,
       },
-      include: defaultInclude,
     })
+    if (data.weeklyGoalId) await syncWeeklyLink(task.id, data.weeklyGoalId)
+    const hydrated = await prisma.task.findUnique({ where: { id: task.id }, include: defaultInclude })
+    return attachLegacyWeekly(hydrated)
   }
 
   async update(userId: string, taskId: string, data: Record<string, any>) {
@@ -158,7 +214,6 @@ class TasksRepository {
     if (data.estimatedDurationMinutes !== undefined) updateData.estimatedDurationMinutes = data.estimatedDurationMinutes
     if (data.backlogState !== undefined) updateData.backlogState = data.backlogState
     if (data.tags !== undefined) updateData.tags = data.tags
-    if (data.weeklyGoalId !== undefined) updateData.weeklyGoalId = data.weeklyGoalId || null
     if (data.archivedAt !== undefined) updateData.archivedAt = data.archivedAt ? new Date(data.archivedAt) : null
     if (data.orderInDay !== undefined) updateData.orderInDay = data.orderInDay
     if (data.isRecurring !== undefined) updateData.isRecurring = data.isRecurring
@@ -177,11 +232,12 @@ class TasksRepository {
       updateData.completedAt = null
     }
 
-    return prisma.task.update({
-      where: { id: taskId },
-      data: updateData,
-      include: defaultInclude,
-    })
+    await prisma.task.update({ where: { id: taskId }, data: updateData })
+    if (data.weeklyGoalId !== undefined) {
+      await syncWeeklyLink(taskId, (data.weeklyGoalId as string | null) || null)
+    }
+    const hydrated = await prisma.task.findUnique({ where: { id: taskId }, include: defaultInclude })
+    return attachLegacyWeekly(hydrated)
   }
 
   async delete(userId: string, taskId: string): Promise<boolean> {
@@ -247,7 +303,7 @@ class TasksRepository {
   async findRecurringTasks(userId: string) {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
-    return prisma.task.findMany({
+    const tasks = await prisma.task.findMany({
       where: {
         userId,
         isRecurring: true,
@@ -259,6 +315,7 @@ class TasksRepository {
       },
       include: defaultInclude,
     })
+    return attachLegacyWeeklyMany(tasks)
   }
 
   async findInstancesForDate(userId: string, parentId: string, date: Date) {
@@ -296,7 +353,7 @@ class TasksRepository {
   }
 
   async findByDateRange(userId: string, start: Date, end: Date) {
-    return prisma.task.findMany({
+    const tasks = await prisma.task.findMany({
       where: {
         userId,
         archivedAt: null,
@@ -308,6 +365,7 @@ class TasksRepository {
       include: defaultInclude,
       orderBy: defaultOrderBy,
     })
+    return attachLegacyWeeklyMany(tasks)
   }
 
   async findCompletedWithActualStart(userId: string, limit: number = 50) {

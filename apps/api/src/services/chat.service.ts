@@ -6,7 +6,6 @@ import { chatModel, taskModel } from '../lib/ai-models'
 import { z } from 'zod'
 import { calendarService } from './calendar.service'
 import { habitsService } from './habits.service'
-import { goalsService } from './goals.service'
 import { notesService } from './notes.service'
 import { tasksRepository } from '../repositories/tasks.repo'
 
@@ -207,17 +206,18 @@ Workflow:
             const lv = level ?? 'all'
             const out: Array<{ id: string; title: string; level: string; progress?: number; parentId?: string }> = []
 
-            if (lv === 'three-year' || lv === 'all') {
-              const { data } = await goalsService.listThreeYearGoals(userId, { limit: max, offset: 0 })
-              for (const g of data as any[]) out.push({ id: g.id, title: g.title, level: 'three-year', parentId: g.visionId ?? undefined })
-            }
-            if (lv === 'annual' || lv === 'all') {
-              const { data } = await goalsService.listAnnualGoals(userId, { limit: max, offset: 0 })
-              for (const g of data as any[]) out.push({ id: g.id, title: g.title, level: 'annual', progress: g.progress ?? 0, parentId: g.threeYearGoalId ?? undefined })
-            }
-            if (lv === 'quarterly' || lv === 'all') {
-              const { data } = await goalsService.listQuarterlyGoals(userId, { limit: max, offset: 0 })
-              for (const g of data as any[]) out.push({ id: g.id, title: g.title, level: 'quarterly', progress: g.progress ?? 0, parentId: g.annualGoalId ?? undefined })
+            const horizonMap = { 'three-year': 'THREE_YEAR', annual: 'ONE_YEAR', quarterly: 'QUARTER' } as const
+            const wantHorizons = lv === 'all'
+              ? (['THREE_YEAR', 'ONE_YEAR', 'QUARTER'] as const)
+              : [horizonMap[lv]] as const
+            const goals = await prisma.goal.findMany({
+              where: { userId, horizon: { in: wantHorizons as any }, status: 'ACTIVE' },
+              take: max,
+              orderBy: { createdAt: 'desc' },
+            })
+            for (const g of goals) {
+              const levelLabel = g.horizon === 'THREE_YEAR' ? 'three-year' : g.horizon === 'ONE_YEAR' ? 'annual' : 'quarterly'
+              out.push({ id: g.id, title: g.title, level: levelLabel, parentId: g.parentGoalId ?? undefined })
             }
             return { goals: out.slice(0, max) }
           },
@@ -499,17 +499,23 @@ Do NOT invent task or habit IDs — only reference IDs from the context above or
             targetFrequency: z.number().optional().describe('Target times per frequency period'),
           }),
           execute: async ({ name, description, frequencyType, targetFrequency }) => {
-            const habit = await prisma.habit.create({
+            const habit = await prisma.task.create({
               data: {
                 userId,
-                name,
+                kind: 'HABIT',
+                title: name,
                 description,
-                frequencyType: frequencyType || 'daily',
-                targetFrequency: targetFrequency || 1,
-                isActive: true,
+                tags: [],
+                habitMeta: {
+                  category: null,
+                  color: '#3B82F6',
+                  targetFrequency: targetFrequency || 1,
+                  frequencyType: frequencyType || 'daily',
+                  weekDays: [],
+                } as any,
               },
             })
-            return { success: true, habit: { id: habit.id, name: habit.name } }
+            return { success: true, habit: { id: habit.id, name: habit.title } }
           },
         }),
 
@@ -521,8 +527,8 @@ Do NOT invent task or habit IDs — only reference IDs from the context above or
           }),
           execute: async ({ habitId, notes }) => {
             // Verify the habit belongs to the user
-            const habit = await prisma.habit.findFirst({
-              where: { id: habitId, userId },
+            const habit = await prisma.task.findFirst({
+              where: { id: habitId, userId, kind: 'HABIT' },
             })
             if (!habit) return { success: false, error: 'Habit not found' }
 
@@ -530,9 +536,9 @@ Do NOT invent task or habit IDs — only reference IDs from the context above or
             today.setHours(0, 0, 0, 0)
 
             const log = await prisma.habitLog.upsert({
-              where: { habitId_date: { habitId, date: today } },
+              where: { taskId_date: { taskId: habitId, date: today } },
               create: {
-                habitId,
+                taskId: habitId,
                 userId,
                 date: today,
                 completedCount: 1,
@@ -543,7 +549,7 @@ Do NOT invent task or habit IDs — only reference IDs from the context above or
                 notes,
               },
             })
-            return { success: true, log: { id: log.id, habitName: habit.name, completedCount: log.completedCount } }
+            return { success: true, log: { id: log.id, habitName: habit.title, completedCount: log.completedCount } }
           },
         }),
       },
@@ -645,11 +651,11 @@ Keep it under 30 words. Be concrete and encouraging. No emojis.`,
     weekEnd.setDate(weekEnd.getDate() + 6)
     weekEnd.setHours(23, 59, 59, 999)
 
-    const [quarterlyGoals, habits, openTasks, workPreferences] = await Promise.all([
+    const [quarterlyGoals, habits, openTasks, workingHours] = await Promise.all([
       chatRepo.findActiveGoalsByUser(userId),
       chatRepo.findActiveHabits(userId),
       chatRepo.findOpenTasks(userId, 100),
-      prisma.userWorkPreferences.findFirst({ where: { userId } }),
+      prisma.workingHours.findMany({ where: { userId, channelId: null }, orderBy: { dayOfWeek: 'asc' } }),
     ])
 
     // Get calendar availability for the week
@@ -676,12 +682,11 @@ Keep it under 30 words. Be concrete and encouraging. No emojis.`,
 
     const goalContext = quarterlyGoals
       .slice(0, 5)
-      .map((g) => `- ${g.title} (progress: ${g.progress || 0}%)`)
+      .map((g) => `- ${g.title} (progress: ${Math.round((g.visionContribution ?? 0) * 100)}%)`)
       .join('\n')
 
-    const workHours = workPreferences
-      ? `${String(workPreferences.workStartHour).padStart(2, '0')}:00 - ${String(workPreferences.workEndHour).padStart(2, '0')}:00`
-      : '09:00 - 17:00'
+    const firstDay = workingHours[0]
+    const workHours = firstDay ? `${firstDay.startTime} - ${firstDay.endTime}` : '09:00 - 17:00'
 
     const result = await generateObject({
       model: taskModel,

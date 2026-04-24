@@ -12,6 +12,7 @@ import { calendarService } from './calendar.service'
 import { gamificationService } from './gamification.service'
 import { gamificationEvents } from './gamification/events'
 import { syncService } from './sync.service'
+import { webhooksService } from './webhooks.service'
 import { scheduleOptimizer } from './schedule-optimizer'
 import { validateLimit } from '../lib/limits'
 import { FEATURES } from '@repo/shared/constants'
@@ -299,6 +300,15 @@ class TasksService {
         metadata: { taskTitle: currentTask.title },
       })
       gamificationEvents.emit('task.completed', { userId, meta: { taskId } })
+      webhooksService
+        .dispatch(userId, 'task.completed', {
+          id: updatedTask.id,
+          title: updatedTask.title,
+          completedAt: (updatedTask as any).completedAt ?? new Date().toISOString(),
+          priority: updatedTask.priority,
+          weeklyGoalId: (updatedTask as any).weeklyGoalId ?? null,
+        })
+        .catch((err) => console.error('[WEBHOOK_TASK_COMPLETED]', err))
     } else if (input.status !== 'completed' && currentTask.status === 'completed') {
       gamificationEvents.emit('task.uncompleted', { userId, meta: { taskId } })
     }
@@ -667,7 +677,7 @@ ${taskHistory ? `Recent:\n${taskHistory}` : ''}`,
     // Get parent goal if exists
     let goalContext = ''
     if ((task as any).weeklyGoalId) {
-      const goal = await prisma.weeklyGoal.findUnique({
+      const goal = await prisma.goal.findUnique({
         where: { id: (task as any).weeklyGoalId },
         select: { title: true, description: true },
       })
@@ -677,8 +687,8 @@ ${taskHistory ? `Recent:\n${taskHistory}` : ''}`,
     }
 
     // Fetch user's active weekly goals for recommendation
-    const weeklyGoals = await prisma.weeklyGoal.findMany({
-      where: { userId },
+    const weeklyGoals = await prisma.goal.findMany({
+      where: { userId, horizon: 'WEEK' },
       select: { id: true, title: true, description: true },
       take: 10,
     })
@@ -739,8 +749,8 @@ Provide:
     if (!openTasks || openTasks.length === 0) return null
 
     // Get active goals for context
-    const weeklyGoals = await prisma.weeklyGoal.findMany({
-      where: { userId },
+    const weeklyGoals = await prisma.goal.findMany({
+      where: { userId, horizon: 'WEEK' },
       select: { id: true, title: true },
       take: 5,
     })
@@ -1032,17 +1042,19 @@ Pick the single best task to do next. Return its exact ID from the list.
     // Get goal progress if linked
     let goalProgress: { title: string; progress: number; tasksRemaining: number } | null = null
     if ((task as any).weeklyGoalId) {
-      const goal = await prisma.weeklyGoal.findUnique({
+      const goal = await prisma.goal.findUnique({
         where: { id: (task as any).weeklyGoalId },
-        include: { tasks: { where: { status: 'open' } } },
+        include: { taskLinks: { include: { task: true } } },
       })
       if (goal) {
-        const allTasks = await prisma.task.count({ where: { weeklyGoalId: goal.id } })
-        const completedTasks = await prisma.task.count({ where: { weeklyGoalId: goal.id, status: 'completed' } })
+        const linkedTasks = goal.taskLinks.map((l: any) => l.task)
+        const allTasks = linkedTasks.length
+        const completedTasks = linkedTasks.filter((t: any) => t.status === 'completed').length
+        const openTasks = linkedTasks.filter((t: any) => t.status === 'open').length
         goalProgress = {
           title: goal.title,
           progress: allTasks > 0 ? Math.round((completedTasks / allTasks) * 100) : 0,
-          tasksRemaining: goal.tasks.length,
+          tasksRemaining: openTasks,
         }
       }
     }
@@ -1097,7 +1109,7 @@ Pick the single best task to do next. Return its exact ID from the list.
     // Fetch parent goal context if linked via weeklyGoalId
     let goalContext = ''
     if ((task as any).weeklyGoalId) {
-      const goal = await prisma.weeklyGoal.findUnique({
+      const goal = await prisma.goal.findUnique({
         where: { id: (task as any).weeklyGoalId },
         select: { id: true, title: true, description: true },
       })

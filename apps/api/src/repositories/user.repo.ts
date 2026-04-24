@@ -54,42 +54,6 @@ class UserRepository {
     })
   }
 
-  // ── Work Preferences ───────────────────────────────────────────────────
-
-  async findWorkPreferences(userId: string) {
-    return prisma.userWorkPreferences.findFirst({ where: { userId } })
-  }
-
-  async upsertWorkPreferences(
-    userId: string,
-    data: Record<string, any>,
-  ) {
-    const existing = await prisma.userWorkPreferences.findFirst({ where: { userId } })
-
-    if (existing) {
-      return prisma.userWorkPreferences.update({
-        where: { id: existing.id },
-        data: {
-          ...data,
-          updatedAt: new Date(),
-        },
-      })
-    }
-
-    return prisma.userWorkPreferences.create({
-      data: {
-        userId,
-        timeZone: data.timeZone || 'America/New_York',
-        workStartHour: data.workStartHour ?? 9,
-        workEndHour: data.workEndHour ?? 17,
-        workDays: data.workDays || [1, 2, 3, 4, 5],
-        defaultTaskDurationMinutes: data.defaultTaskDurationMinutes ?? 30,
-        maxTasksPerDay: data.maxTasksPerDay ?? 10,
-        overflowStrategy: data.overflowStrategy || 'backlog',
-      },
-    })
-  }
-
   // ── Currency Settings ──────────────────────────────────────────────────
 
   async findCurrencySettings(userId: string) {

@@ -75,16 +75,16 @@ dashboardRoutes.openapi(summaryRoute, async (c) => {
         dueDate: { lt: dayStart },
       },
     }),
-    prisma.habit.findMany({
-      where: { userId, isActive: true },
+    prisma.task.findMany({
+      where: { userId, kind: 'HABIT', archivedAt: null },
       select: { id: true },
     }),
     prisma.habitLog.findMany({
       where: {
-        habit: { userId },
+        userId,
         date: { gte: new Date(`${today}T00:00:00.000Z`), lt: new Date(`${today}T23:59:59.999Z`) },
       },
-      select: { habitId: true, completedCount: true },
+      select: { taskId: true, completedCount: true },
     }),
     prisma.financeAccount.findMany({
       where: { userId, isActive: true },
@@ -98,7 +98,7 @@ dashboardRoutes.openapi(summaryRoute, async (c) => {
 
   const todayCompleted = todayTasks.filter((t) => t.status === 'completed').length
   const habitCompletedToday = new Set(
-    todayHabitLogs.filter((l) => (l.completedCount ?? 0) > 0).map((l) => l.habitId)
+    todayHabitLogs.filter((l: any) => (l.completedCount ?? 0) > 0).map((l: any) => l.taskId),
   ).size
   const totalBalance = accounts.reduce((sum, a) => sum + Number(a.currentBalance ?? 0), 0)
 

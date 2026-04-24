@@ -30,6 +30,7 @@ import { Progress } from '@/shared/components/ui/progress'
 import { SectionHeader } from '@/shared/components/SectionHeader'
 import type { PrimeVision, ThreeYearGoal, AnnualGoal, QuarterlyGoal } from '@repo/shared/types'
 import { LEVEL_BADGE, toArray, type LevelFilter, type UnifiedGoal } from './goals-shared'
+import { VisionEditor } from '@/features/vision/components/VisionEditor'
 
 export function MyGoalsView() {
   const { t } = useTranslation('goals')
@@ -43,6 +44,7 @@ export function MyGoalsView() {
       <GoalsNav />
       <SectionHeader sectionId="goals" title={t('tabMyGoals')} />
       <div className="mx-auto max-w-5xl px-6 pb-6 space-y-6">
+        <VisionEditor />
         <InactiveGoalsAlert />
         <GoalConflictsPanel />
         <GoalsList

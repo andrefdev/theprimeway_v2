@@ -24,6 +24,7 @@ import { ArchiveIcon } from 'lucide-react'
 import type { Task } from '@repo/shared/types'
 import { useLocale } from '@/i18n/useLocale'
 import { formatDate } from '@/i18n/format'
+import { VisionThreadChip } from '@/features/vision/components/VisionThreadChip'
 
 interface TaskItemProps {
   task: Task
@@ -129,6 +130,7 @@ export function TaskItem({
                       {task.description}
                     </p>
                   )}
+                  <VisionThreadChip taskId={task.id} />
                 </div>
 
                 <div className="flex items-center gap-2 flex-wrap pt-1">
@@ -178,6 +180,7 @@ export function TaskItem({
               <p className={`text-sm font-medium break-words line-clamp-3 ${isCompleted ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
                 {task.title}
               </p>
+              <VisionThreadChip taskId={task.id} />
               <div className="flex items-center gap-2 mt-1 flex-wrap">
                 {showDate && task.scheduledDate && (
                   <span className="text-[11px] text-muted-foreground">

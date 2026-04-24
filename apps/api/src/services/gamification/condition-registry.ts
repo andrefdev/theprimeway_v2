@@ -84,19 +84,19 @@ export async function buildAchievementContext(userId: string): Promise<Achieveme
     notesCreated,
     booksCompleted,
   ] = await Promise.all([
-    prisma.habitLog.count({ where: { habit: { userId }, completedCount: { gt: 0 } } }),
+    prisma.habitLog.count({ where: { userId, completedCount: { gt: 0 } } }),
     prisma.task.count({ where: { userId, status: 'completed' } }),
     prisma.task.count({ where: { userId, status: 'completed', priority: 'high' } }),
-    prisma.weeklyGoal.count({ where: { userId } }),
-    prisma.pomodoroSession.count({ where: { userId, status: 'completed' } }),
-    prisma.quarterlyGoal.findMany({ where: { userId }, select: { progress: true } }),
+    prisma.goal.count({ where: { userId, horizon: 'WEEK' } }),
+    prisma.workingSession.count({ where: { userId, kind: 'POMODORO', completed: true } }),
+    prisma.goal.findMany({ where: { userId, horizon: 'QUARTER' }, select: { visionContribution: true } }),
     prisma.dailyChallenge.count({ where: { userId, isCompleted: true } }),
     prisma.note.count({ where: { userId } }).catch(() => 0),
     prisma.userBook.count({ where: { userId, status: 'finished' } }).catch(() => 0),
   ])
 
-  const maxQuarterlyProgress = (quarterlyGoals as Array<{ progress: number | null }>).reduce(
-    (max, g) => Math.max(max, g.progress ?? 0),
+  const maxQuarterlyProgress = (quarterlyGoals as Array<{ visionContribution: number | null }>).reduce(
+    (max, g) => Math.max(max, Math.round((g.visionContribution ?? 0) * 100)),
     0,
   )
 
