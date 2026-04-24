@@ -8,6 +8,7 @@ import { tasksApi } from '@/features/tasks/api'
 import { schedulingApi } from '@/features/scheduling/api'
 import { schedulingKeys } from '@/features/scheduling/queries'
 import { VisionThreadChip } from '@/features/vision/components/VisionThreadChip'
+import { FocusSubtasksPanel } from './FocusSubtasksPanel'
 
 type Phase = 'preflight' | 'running' | 'paused' | 'completed'
 
@@ -277,7 +278,9 @@ export function FocusMode() {
             </div>
           </div>
         ) : (
-          <div className="max-w-3xl w-full text-center space-y-10">
+          <div className="w-full max-w-6xl flex items-start gap-8">
+            <div className="hidden md:block pt-4">{taskId && <FocusSubtasksPanel taskId={taskId} />}</div>
+            <div className="flex-1 text-center space-y-10">
             <div className="text-xs uppercase tracking-wide text-muted-foreground">
               {phase === 'paused' ? 'Paused' : over ? 'Overtime' : 'In focus'}
             </div>
@@ -322,6 +325,7 @@ export function FocusMode() {
               <Button variant="ghost" onClick={cutShort}>
                 <LogOut className="h-4 w-4 mr-1" /> Cut short
               </Button>
+            </div>
             </div>
           </div>
         )}
