@@ -6,6 +6,7 @@ import { tasksApi } from '@/features/tasks/api'
 import { tasksQueries } from '@/features/tasks/queries'
 import { PromptRitualDialog } from './PromptRitualDialog'
 import { AiRitualSummary } from './AiRitualSummary'
+import { FatigueSignal } from '@/features/fatigue/components/FatigueSignal'
 import type { RitualInstance } from '../api'
 import type { Task } from '@repo/shared/types'
 
@@ -65,6 +66,7 @@ export function DailyShutdownDialog({ instance, open, onClose }: Props) {
       hint={
         <div className="space-y-2">
           <p>Close the day cleanly. Reflect, then roll over what's left.</p>
+          <FatigueSignal variant="inline" />
           <AiRitualSummary
             instanceId={instance.id}
             label="Summarize my day"

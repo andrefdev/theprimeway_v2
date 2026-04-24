@@ -12,6 +12,7 @@ import { NextTaskCard } from '@/features/dashboard/components/NextTaskCard'
 import { WeeklyPlanCard } from '@/features/ai/components/WeeklyPlanCard'
 import { GamificationWidget } from '@/features/gamification/components/GamificationWidget'
 import { GoalsSummaryCard } from '@/features/goals/components/GoalsSummaryCard'
+import { FatigueSignal } from '@/features/fatigue/components/FatigueSignal'
 import { format } from 'date-fns'
 import { useLocale } from '@/i18n/useLocale'
 import type { Task } from '@repo/shared/types'
@@ -48,6 +49,7 @@ function DashboardPage() {
       <div className="mx-auto max-w-5xl px-6 pb-6 space-y-6">
         <DashboardStats summary={summary} />
         <OverdueTasksBanner summary={summary} />
+        <FatigueSignal />
         <NextTaskCard />
         <DashboardQuickActions />
         <TodayTasksList tasks={tasks} tasksQuery={tasksQuery} />
