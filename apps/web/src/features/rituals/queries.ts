@@ -4,7 +4,17 @@ import { ritualsApi, type RitualCreateInput, type RitualStatus } from './api'
 export const ritualsKeys = {
   today: ['rituals', 'today'] as const,
   week: ['rituals', 'week'] as const,
+  quarter: ['rituals', 'quarter'] as const,
+  year: ['rituals', 'year'] as const,
   list: ['rituals', 'list'] as const,
+}
+
+export function useRitualsQuarter() {
+  return useQuery({ queryKey: ritualsKeys.quarter, queryFn: ritualsApi.quarter, staleTime: 5 * 60_000 })
+}
+
+export function useRitualsYear() {
+  return useQuery({ queryKey: ritualsKeys.year, queryFn: ritualsApi.year, staleTime: 10 * 60_000 })
 }
 
 export function useRitualsList() {

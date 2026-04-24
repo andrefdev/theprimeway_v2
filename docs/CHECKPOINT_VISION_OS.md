@@ -90,7 +90,7 @@ Routes translate to HTTP 404/409/500 by reason.
 | `/api/working-sessions` | CRUD + range filters. PATCH fires `calendarService.updateSessionOnCalendar` |
 | `/api/working-hours` | CRUD + bulk PUT |
 | `/api/recurring-series` | CRUD + `POST /materialize` |
-| `/api/rituals` | CRUD + `GET /today` (auto-ensure DAILY_PLAN+DAILY_SHUTDOWN + materialize opportunistic) + `GET /week` (WEEKLY_PLAN+WEEKLY_REVIEW) + `POST /reflections` + `POST /instances/:id/ai-summary` + `POST /ai/suggest-weekly-objectives` |
+| `/api/rituals` | CRUD + `GET /today` (auto-ensure DAILY_PLAN+DAILY_SHUTDOWN + materialize opportunistic) + `GET /week` (WEEKLY_PLAN+WEEKLY_REVIEW) + `GET /quarter` (QUARTERLY_REVIEW scheduled last day of quarter) + `GET /year` (ANNUAL_REVIEW scheduled Dec 31) + `POST /reflections` + `POST /instances/:id/ai-summary` + `POST /ai/suggest-weekly-objectives` |
 | `/api/commands` | List + `POST /:id/undo` (real) |
 | `/api/scheduling` | `POST /auto-schedule`, `/deconflict`, `/tasks/:id/complete-early`, `/tasks/:id/timer-start` |
 | `/api/calendar` | `GET /events?from&to` for Compass |
@@ -207,6 +207,8 @@ Routes translate to HTTP 404/409/500 by reason.
 7. **Mobile companion app** (multi-week scope).
 8. **pgvector + RAG** for AI context retrieval across reflections (only when concrete use case emerges).
 9. ~~**Ritual customization UI**~~ ✅ 2026-04-24 — `RitualsManager` mounted in `/settings`. CRUD over user-owned rituals (create / edit kind+cadence+scheduledTime+steps+isEnabled / delete). System defaults shown read-only.
+
+11. ~~**Quarterly + Annual review rituals**~~ ✅ 2026-04-24 — `QUARTERLY_REVIEW` + `ANNUAL_REVIEW` templates with default prompts, `ensureQuarterlyInstance` / `ensureAnnualInstance` helpers (scheduled last day of quarter / Dec 31 at 17:00). `GET /rituals/quarter` + `GET /rituals/year`. Web: `PeriodReviewDialog` shared shell, `PeriodReviewLauncher` card on Vision surface, `PeriodReviewAutoOpen` triggers within last 7 days (quarter) / last 14 days (year). Uses existing `PromptRitualDialog` + `AiRitualSummary`. Completes the ritual cadence pyramid (daily → weekly → quarterly → annual).
 10. **Slack/Linear/Notion read-only integrations.**
 
 ---

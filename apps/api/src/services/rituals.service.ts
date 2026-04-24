@@ -17,6 +17,8 @@ import { recurringService } from './recurring.service'
 
 type DailyKind = 'DAILY_PLAN' | 'DAILY_SHUTDOWN'
 type WeeklyKind = 'WEEKLY_PLAN' | 'WEEKLY_REVIEW'
+type QuarterlyKind = 'QUARTERLY_REVIEW'
+type AnnualKind = 'ANNUAL_REVIEW'
 
 const DAILY_DEFAULTS: Record<DailyKind, { name: string; time: 'plan' | 'end'; steps: unknown[] }> = {
   DAILY_PLAN: {
@@ -35,6 +37,31 @@ const DAILY_DEFAULTS: Record<DailyKind, { name: string; time: 'plan' | 'end'; st
       { type: 'PROMPT', key: 'went_well', text: 'What went well today?' },
       { type: 'PROMPT', key: 'carry_over', text: 'Anything to carry over to tomorrow?' },
       { type: 'ROLLOVER_TASKS' },
+    ],
+  },
+}
+
+const QUARTERLY_DEFAULTS: Record<QuarterlyKind, { name: string; steps: unknown[] }> = {
+  QUARTERLY_REVIEW: {
+    name: 'Quarterly Review',
+    steps: [
+      { type: 'PROMPT', key: 'quarter_wins', text: 'What were your biggest wins this quarter?' },
+      { type: 'PROMPT', key: 'quarter_lessons', text: 'What did you learn? What did not work?' },
+      { type: 'PROMPT', key: 'retire_goals', text: 'Any 1-year or 3-year goals to retire or reframe?' },
+      { type: 'PROMPT', key: 'next_quarter_focus', text: 'Pick 2–3 quarterly goals for the next quarter.' },
+    ],
+  },
+}
+
+const ANNUAL_DEFAULTS: Record<AnnualKind, { name: string; steps: unknown[] }> = {
+  ANNUAL_REVIEW: {
+    name: 'Annual Review',
+    steps: [
+      { type: 'PROMPT', key: 'year_highlights', text: 'Highlights of the year — what are you proud of?' },
+      { type: 'PROMPT', key: 'year_lessons', text: 'What did you learn about yourself?' },
+      { type: 'PROMPT', key: 'vision_checkin', text: 'Does your 10-year vision still feel true? Anything to update?' },
+      { type: 'PROMPT', key: 'three_year_update', text: 'Update or retire 3-year goals based on what you learned.' },
+      { type: 'PROMPT', key: 'next_year_theme', text: 'A one-sentence theme for the coming year.' },
     ],
   },
 }
@@ -77,6 +104,21 @@ function weekBounds(ref: Date = new Date()) {
   start.setUTCDate(start.getUTCDate() - ((dow + 6) % 7))
   const end = new Date(start); end.setUTCDate(end.getUTCDate() + 7)
   return { start, end }
+}
+
+function quarterBounds(ref: Date = new Date()) {
+  const year = ref.getUTCFullYear()
+  const qIndex = Math.floor(ref.getUTCMonth() / 3) // 0..3
+  const start = new Date(Date.UTC(year, qIndex * 3, 1, 0, 0, 0, 0))
+  const end = new Date(Date.UTC(year, qIndex * 3 + 3, 1, 0, 0, 0, 0))
+  return { start, end, year, quarter: (qIndex + 1) as 1 | 2 | 3 | 4 }
+}
+
+function yearBounds(ref: Date = new Date()) {
+  const year = ref.getUTCFullYear()
+  const start = new Date(Date.UTC(year, 0, 1, 0, 0, 0, 0))
+  const end = new Date(Date.UTC(year + 1, 0, 1, 0, 0, 0, 0))
+  return { start, end, year }
 }
 
 // ---------------------------------------------------------------------------
@@ -167,6 +209,26 @@ class RitualsService {
     const { start, end } = weekBounds()
     const pending = await ritualsRepo.findPendingWeekly(userId, start, end)
     return { pending, plan, review }
+  }
+
+  // ── Ensure-quarter ───────────────────────────────────
+  async quarter(userId: string) {
+    const template = await this.ensureQuarterlyTemplate(userId)
+    const { start, year, quarter } = quarterBounds()
+    // Schedule the review on the last day of the quarter at 17:00.
+    const endOfQuarter = new Date(Date.UTC(year, (quarter - 1) * 3 + 3, 0, 17, 0, 0, 0))
+    const review = await this.ensureQuarterlyInstance(userId, template.id, start, endOfQuarter)
+    return { review, periodKey: `${year}-Q${quarter}` }
+  }
+
+  // ── Ensure-year ──────────────────────────────────────
+  async year(userId: string) {
+    const template = await this.ensureAnnualTemplate(userId)
+    const { start, year } = yearBounds()
+    // Schedule on Dec 31 at 17:00.
+    const endOfYear = new Date(Date.UTC(year, 11, 31, 17, 0, 0, 0))
+    const review = await this.ensureAnnualInstance(userId, template.id, start, endOfYear)
+    return { review, periodKey: `${year}` }
   }
 
   // ── Scoped AI ────────────────────────────────────────
@@ -347,6 +409,54 @@ Respond with 3–5 objectives that ladder up to the quarterly goals and address 
     const [hh, mm] = (scheduledTime ?? '08:00').split(':').map(Number)
     const scheduledFor = new Date(start)
     scheduledFor.setUTCHours(hh ?? 8, mm ?? 0, 0, 0)
+    return ritualsRepo.createInstance(userId, { ritualId, scheduledFor })
+  }
+
+  private async ensureQuarterlyTemplate(userId: string) {
+    const existing =
+      (await ritualsRepo.findEnabledByKind(userId, 'QUARTERLY_REVIEW')) ??
+      (await ritualsRepo.findEnabledByKind(null, 'QUARTERLY_REVIEW'))
+    if (existing) return existing
+    const cfg = QUARTERLY_DEFAULTS.QUARTERLY_REVIEW
+    return ritualsRepo.createForUser(userId, {
+      kind: 'QUARTERLY_REVIEW',
+      name: cfg.name,
+      cadence: 'QUARTERLY',
+      steps: cfg.steps,
+      isEnabled: true,
+    })
+  }
+
+  private async ensureAnnualTemplate(userId: string) {
+    const existing =
+      (await ritualsRepo.findEnabledByKind(userId, 'ANNUAL_REVIEW')) ??
+      (await ritualsRepo.findEnabledByKind(null, 'ANNUAL_REVIEW'))
+    if (existing) return existing
+    const cfg = ANNUAL_DEFAULTS.ANNUAL_REVIEW
+    return ritualsRepo.createForUser(userId, {
+      kind: 'ANNUAL_REVIEW',
+      name: cfg.name,
+      cadence: 'ANNUALLY',
+      steps: cfg.steps,
+      isEnabled: true,
+    })
+  }
+
+  private async ensureQuarterlyInstance(userId: string, ritualId: string, periodStart: Date, scheduledFor: Date) {
+    const existing = await ritualsRepo.findInstanceInRange(userId, ritualId, {
+      gte: periodStart,
+      lt: new Date(periodStart.getUTCFullYear(), periodStart.getUTCMonth() + 3, 1),
+    })
+    if (existing) return existing
+    return ritualsRepo.createInstance(userId, { ritualId, scheduledFor })
+  }
+
+  private async ensureAnnualInstance(userId: string, ritualId: string, periodStart: Date, scheduledFor: Date) {
+    const existing = await ritualsRepo.findInstanceInRange(userId, ritualId, {
+      gte: periodStart,
+      lt: new Date(Date.UTC(periodStart.getUTCFullYear() + 1, 0, 1)),
+    })
+    if (existing) return existing
     return ritualsRepo.createInstance(userId, { ritualId, scheduledFor })
   }
 

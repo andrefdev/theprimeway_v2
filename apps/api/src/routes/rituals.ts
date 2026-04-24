@@ -102,6 +102,16 @@ ritualsRoutes.get('/week', async (c) => {
   return c.json({ data: await ritualsService.week(userId) })
 })
 
+ritualsRoutes.get('/quarter', async (c) => {
+  const userId = c.get('user').userId
+  return c.json({ data: await ritualsService.quarter(userId) })
+})
+
+ritualsRoutes.get('/year', async (c) => {
+  const userId = c.get('user').userId
+  return c.json({ data: await ritualsService.year(userId) })
+})
+
 // ── Reflections ─────────────────────────────────────────
 ritualsRoutes.post('/reflections', async (c) => {
   const userId = c.get('user').userId

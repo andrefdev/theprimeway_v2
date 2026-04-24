@@ -82,6 +82,16 @@ export const ritualsApi = {
       .get<{ data: { pending: RitualInstance[]; plan: RitualInstance; review: RitualInstance } }>('/rituals/week')
       .then((r) => r.data.data),
 
+  quarter: () =>
+    api
+      .get<{ data: { review: RitualInstance; periodKey: string } }>('/rituals/quarter')
+      .then((r) => r.data.data),
+
+  year: () =>
+    api
+      .get<{ data: { review: RitualInstance; periodKey: string } }>('/rituals/year')
+      .then((r) => r.data.data),
+
   updateInstance: (
     id: string,
     body: { status?: RitualStatus; startedAt?: string; completedAt?: string; snapshot?: unknown },
