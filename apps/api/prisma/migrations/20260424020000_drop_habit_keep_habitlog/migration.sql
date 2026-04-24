@@ -1,3 +1,11 @@
+-- Phase 1 migration boundary: Habit model is dropped and HabitLog.habit_id is
+-- replaced by HabitLog.task_id (FK to Task{kind:HABIT}). Legacy habit_logs
+-- rows cannot be rebound because the Habit→Task rewrite has no deterministic
+-- mapping. Clear them — fresh logs will accumulate under the Task-based
+-- system. This also allows the subsequent ADD COLUMN task_id NOT NULL to
+-- succeed without a default (Prisma doesn't emit one for renamed FKs).
+TRUNCATE TABLE "habit_logs";
+
 -- DropForeignKey
 ALTER TABLE "habit_logs" DROP CONSTRAINT "habit_logs_habit_id_fkey";
 
