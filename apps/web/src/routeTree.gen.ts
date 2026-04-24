@@ -51,6 +51,7 @@ import { Route as AppGoalsTreeRouteImport } from './routes/_app/goals/tree'
 import { Route as AppGoalsQuarterlyRouteImport } from './routes/_app/goals/quarterly'
 import { Route as AppGoalsMineRouteImport } from './routes/_app/goals/mine'
 import { Route as AppGoalsMetricsRouteImport } from './routes/_app/goals/metrics'
+import { Route as AppGoalsMapRouteImport } from './routes/_app/goals/map'
 import { Route as AppFinancesSavingsRouteImport } from './routes/_app/finances/savings'
 import { Route as AppFinancesRecurringRouteImport } from './routes/_app/finances/recurring'
 import { Route as AppFinancesMonthlyRouteImport } from './routes/_app/finances/monthly'
@@ -268,6 +269,11 @@ const AppGoalsMetricsRoute = AppGoalsMetricsRouteImport.update({
   path: '/goals/metrics',
   getParentRoute: () => AppRoute,
 } as any)
+const AppGoalsMapRoute = AppGoalsMapRouteImport.update({
+  id: '/goals/map',
+  path: '/goals/map',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppFinancesSavingsRoute = AppFinancesSavingsRouteImport.update({
   id: '/finances/savings',
   path: '/finances/savings',
@@ -335,6 +341,7 @@ export interface FileRoutesByFullPath {
   '/finances/monthly': typeof AppFinancesMonthlyRoute
   '/finances/recurring': typeof AppFinancesRecurringRoute
   '/finances/savings': typeof AppFinancesSavingsRoute
+  '/goals/map': typeof AppGoalsMapRoute
   '/goals/metrics': typeof AppGoalsMetricsRoute
   '/goals/mine': typeof AppGoalsMineRoute
   '/goals/quarterly': typeof AppGoalsQuarterlyRoute
@@ -385,6 +392,7 @@ export interface FileRoutesByTo {
   '/finances/monthly': typeof AppFinancesMonthlyRoute
   '/finances/recurring': typeof AppFinancesRecurringRoute
   '/finances/savings': typeof AppFinancesSavingsRoute
+  '/goals/map': typeof AppGoalsMapRoute
   '/goals/metrics': typeof AppGoalsMetricsRoute
   '/goals/mine': typeof AppGoalsMineRoute
   '/goals/quarterly': typeof AppGoalsQuarterlyRoute
@@ -438,6 +446,7 @@ export interface FileRoutesById {
   '/_app/finances/monthly': typeof AppFinancesMonthlyRoute
   '/_app/finances/recurring': typeof AppFinancesRecurringRoute
   '/_app/finances/savings': typeof AppFinancesSavingsRoute
+  '/_app/goals/map': typeof AppGoalsMapRoute
   '/_app/goals/metrics': typeof AppGoalsMetricsRoute
   '/_app/goals/mine': typeof AppGoalsMineRoute
   '/_app/goals/quarterly': typeof AppGoalsQuarterlyRoute
@@ -490,6 +499,7 @@ export interface FileRouteTypes {
     | '/finances/monthly'
     | '/finances/recurring'
     | '/finances/savings'
+    | '/goals/map'
     | '/goals/metrics'
     | '/goals/mine'
     | '/goals/quarterly'
@@ -540,6 +550,7 @@ export interface FileRouteTypes {
     | '/finances/monthly'
     | '/finances/recurring'
     | '/finances/savings'
+    | '/goals/map'
     | '/goals/metrics'
     | '/goals/mine'
     | '/goals/quarterly'
@@ -592,6 +603,7 @@ export interface FileRouteTypes {
     | '/_app/finances/monthly'
     | '/_app/finances/recurring'
     | '/_app/finances/savings'
+    | '/_app/goals/map'
     | '/_app/goals/metrics'
     | '/_app/goals/mine'
     | '/_app/goals/quarterly'
@@ -919,6 +931,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppGoalsMetricsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/goals/map': {
+      id: '/_app/goals/map'
+      path: '/goals/map'
+      fullPath: '/goals/map'
+      preLoaderRoute: typeof AppGoalsMapRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/finances/savings': {
       id: '/_app/finances/savings'
       path: '/finances/savings'
@@ -999,6 +1018,7 @@ interface AppRouteChildren {
   AppFinancesMonthlyRoute: typeof AppFinancesMonthlyRoute
   AppFinancesRecurringRoute: typeof AppFinancesRecurringRoute
   AppFinancesSavingsRoute: typeof AppFinancesSavingsRoute
+  AppGoalsMapRoute: typeof AppGoalsMapRoute
   AppGoalsMetricsRoute: typeof AppGoalsMetricsRoute
   AppGoalsMineRoute: typeof AppGoalsMineRoute
   AppGoalsQuarterlyRoute: typeof AppGoalsQuarterlyRoute
@@ -1045,6 +1065,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppFinancesMonthlyRoute: AppFinancesMonthlyRoute,
   AppFinancesRecurringRoute: AppFinancesRecurringRoute,
   AppFinancesSavingsRoute: AppFinancesSavingsRoute,
+  AppGoalsMapRoute: AppGoalsMapRoute,
   AppGoalsMetricsRoute: AppGoalsMetricsRoute,
   AppGoalsMineRoute: AppGoalsMineRoute,
   AppGoalsQuarterlyRoute: AppGoalsQuarterlyRoute,
