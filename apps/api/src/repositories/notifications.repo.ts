@@ -60,18 +60,19 @@ class NotificationsRepository {
   }
 
   async findActiveHabitsWithTodayLogs(userId: string, todayStart: Date, tomorrowStart: Date) {
-    return prisma.habit.findMany({
-      where: { userId, isActive: true },
+    const tasks = await prisma.task.findMany({
+      where: { userId, kind: 'HABIT', archivedAt: null },
       select: {
         id: true,
-        name: true,
-        logs: {
+        title: true,
+        habitLogs: {
           where: { date: { gte: todayStart, lt: tomorrowStart } },
           select: { id: true, completedCount: true },
         },
       },
       take: 20,
     })
+    return tasks.map((t) => ({ id: t.id, name: t.title, logs: t.habitLogs }))
   }
 
   async findActiveDevices(whereClause: Record<string, unknown>) {

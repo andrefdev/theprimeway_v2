@@ -49,6 +49,9 @@ export const sidebarIcons = {
   notes: (cls, opts) => (
     <MinimalIcon name="ci:note" className={cls} size={opts?.size} />
   ),
+  brain: (cls, opts) => (
+    <MinimalIcon name="ci:lightning-02" className={cls} size={opts?.size} />
+  ),
   financesOverview: (cls, opts) => (
     <MinimalIcon
       name="ci:chart-bar-vertical-01"

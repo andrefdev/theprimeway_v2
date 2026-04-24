@@ -5,6 +5,10 @@ export interface UserSettings {
   theme: string
   timezone: string
   baseCurrency: string
+  // Scheduling (Vision-to-Execution OS)
+  workloadThresholdMinutes?: number
+  defaultTaskDurationMinutes?: number
+  autoSchedulingGapMinutes?: number
 }
 
 export interface PasswordChangeRequest {

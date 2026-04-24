@@ -13,6 +13,7 @@ export type GamificationEventType =
   | 'note.created'
   | 'book.finished'
   | 'quarterly.progress.updated'
+  | 'brain.entry.created'
 
 export interface GamificationEventPayload {
   userId: string

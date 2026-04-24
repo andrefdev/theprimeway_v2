@@ -28,9 +28,54 @@ interface NavItem {
   requiredFeature?: FeatureKey
 }
 
+/** Primary surfaces per Vision-to-Execution OS UX spec §6.1: Today / Compass / Vision / Library. */
 function useCoreNavItems() {
   const { t } = useTranslation('common')
 
+  return [
+    {
+      title: t('navToday'),
+      to: '/tasks/today',
+      icon: sidebarIcons.tasks(undefined, { size: 20 }),
+    },
+    {
+      title: t('navCompass'),
+      to: '/compass',
+      icon: sidebarIcons.weekPlanning(undefined, { size: 20 }),
+    },
+    {
+      title: t('navVision'),
+      to: '/goals',
+      icon: sidebarIcons.goals(undefined, { size: 20 }),
+    },
+  ] satisfies NavItem[]
+}
+
+/** Library children — habits + channels (spec §6.1: Library owns habits, channels, archive, filters). */
+function useLibraryNavItems() {
+  const { t } = useTranslation('common')
+  return [
+    {
+      title: t('navHabits'),
+      to: '/habits',
+      icon: sidebarIcons.habits(undefined, { size: 20 }),
+    },
+    {
+      title: 'Channels',
+      to: '/channels',
+      icon: sidebarIcons.habits(undefined, { size: 20 }),
+    },
+    {
+      title: 'Recurring',
+      to: '/recurring',
+      icon: sidebarIcons.habits(undefined, { size: 20 }),
+    },
+  ] satisfies NavItem[]
+}
+
+/** Tools (secondary): supporting surfaces that don't belong to the four primary. */
+function useToolsNavItems() {
+  const { t } = useTranslation('common')
   return [
     {
       title: t('navDashboard'),
@@ -38,32 +83,12 @@ function useCoreNavItems() {
       icon: sidebarIcons.dashboard(undefined, { size: 20 }),
     },
     {
-      title: t('navTasks'),
-      to: '/tasks/today',
-      icon: sidebarIcons.tasks(undefined, { size: 20 }),
-    },
-    {
-      title: t('navHabits'),
-      to: '/habits',
-      icon: sidebarIcons.habits(undefined, { size: 20 }),
-    },
-    {
-      title: t('navGoals'),
-      to: '/goals',
-      icon: sidebarIcons.goals(undefined, { size: 20 }),
-    },
-    {
       title: t('navPomodoro'),
       to: '/pomodoro',
       icon: sidebarIcons.pomodoro(undefined, { size: 20 }),
     },
     {
-      title: t('navCalendar'),
-      to: '/calendar',
-      icon: sidebarIcons.weekPlanning(undefined, { size: 20 }),
-    },
-    {
-      title: t('navAi', { defaultValue: 'AI Assistant' }),
+      title: t('navAI'),
       to: '/ai',
       icon: sidebarIcons.chat(undefined, { size: 20 }),
     },
@@ -88,6 +113,12 @@ function useSecondaryNavItems() {
       requiredFeature: FEATURES.NOTES_MODULE,
     },
     {
+      title: t('navBrain', { defaultValue: 'Brain' }),
+      to: '/brain',
+      icon: sidebarIcons.brain(undefined, { size: 20 }),
+      requiredFeature: FEATURES.BRAIN_MODULE,
+    },
+    {
       title: t('navReading'),
       to: '/reading',
       icon: sidebarIcons.reading(undefined, { size: 20 }),
@@ -106,6 +137,8 @@ export function AppSidebar() {
   const location = useRouterState({ select: (s) => s.location })
   const { toggleSidebar } = useSidebar()
   const coreItems = useCoreNavItems()
+  const libraryItems = useLibraryNavItems()
+  const toolsItems = useToolsNavItems()
   const secondaryItems = useSecondaryNavItems()
 
   function isActive(to: string) {
@@ -145,10 +178,44 @@ export function AppSidebar() {
 
       {/* Navigation */}
       <SidebarContent>
-        {/* Core modules */}
+        {/* Primary surfaces: Today / Compass / Vision */}
         <SidebarGroup>
           <SidebarMenu>
             {coreItems.map((item) => (
+              <SidebarMenuItem key={item.to}>
+                <SidebarMenuButton asChild isActive={isActive(item.to)}>
+                  <Link to={item.to as '/'}>
+                    {item.icon}
+                    <span className="text-sm">{item.title}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+        </SidebarGroup>
+
+        {/* Library */}
+        <SidebarGroup>
+          <SidebarGroupLabel>{t('navLibrary')}</SidebarGroupLabel>
+          <SidebarMenu>
+            {libraryItems.map((item) => (
+              <SidebarMenuItem key={item.to}>
+                <SidebarMenuButton asChild isActive={isActive(item.to)}>
+                  <Link to={item.to as '/'}>
+                    {item.icon}
+                    <span className="text-sm">{item.title}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+        </SidebarGroup>
+
+        {/* Tools */}
+        <SidebarGroup>
+          <SidebarGroupLabel>{t('navTools')}</SidebarGroupLabel>
+          <SidebarMenu>
+            {toolsItems.map((item) => (
               <SidebarMenuItem key={item.to}>
                 <SidebarMenuButton asChild isActive={isActive(item.to)}>
                   <Link to={item.to as '/'}>

@@ -16,9 +16,11 @@ import { FEATURES, CATEGORY_TO_PILLAR } from '@repo/shared/constants'
 import { generateObject } from 'ai'
 import { taskModel } from '../lib/ai-models'
 import { z } from 'zod'
-import type { Habit, HabitLog } from '@prisma/client'
+import type { HabitLog } from '@prisma/client'
+import type { HabitDTO as HabitDTOImport } from '../repositories/habits.repo'
+type HabitDTO = HabitDTOImport
 
-type HabitModel = Habit & { logs?: HabitLog[] }
+type HabitModel = HabitDTO & { logs?: HabitLog[] }
 type HabitLogModel = HabitLog
 
 // ---------------------------------------------------------------------------
@@ -228,18 +230,9 @@ class HabitsService {
 
   /** Create a new habit */
   async createHabit(userId: string, input: CreateHabitInput): Promise<HabitModel> {
-    // Validate goalId if provided
+    // Validate goalId if provided — accept any unified Goal owned by user
     if (input.goalId) {
-      const goal = await prisma.primeVision.findFirst({
-        where: {
-          OR: [
-            { id: input.goalId, userId },
-            { threeYearGoals: { some: { id: input.goalId, userId } } },
-            { threeYearGoals: { some: { annualGoals: { some: { id: input.goalId, userId } } } } },
-            { threeYearGoals: { some: { annualGoals: { some: { quarterlyGoals: { some: { id: input.goalId, userId } } } } } } },
-          ],
-        },
-      })
+      const goal = await prisma.goal.findFirst({ where: { id: input.goalId, userId } })
       if (!goal) {
         throw new Error('Goal not found or does not belong to user')
       }
@@ -281,19 +274,10 @@ class HabitsService {
     habitId: string,
     input: UpdateHabitInput,
   ): Promise<HabitModel | null> {
-    // Validate goalId if provided
+    // Validate goalId if provided (accepts any horizon on unified Goal model)
     if (input.goalId !== undefined) {
       if (input.goalId) {
-        const goal = await prisma.primeVision.findFirst({
-          where: {
-            OR: [
-              { id: input.goalId, userId },
-              { threeYearGoals: { some: { id: input.goalId, userId } } },
-              { threeYearGoals: { some: { annualGoals: { some: { id: input.goalId, userId } } } } },
-              { threeYearGoals: { some: { annualGoals: { some: { quarterlyGoals: { some: { id: input.goalId, userId } } } } } } },
-            ],
-          },
-        })
+        const goal = await prisma.goal.findFirst({ where: { id: input.goalId, userId } })
         if (!goal) {
           throw new Error('Goal not found or does not belong to user')
         }
@@ -445,14 +429,14 @@ class HabitsService {
   // Private: Stats calculation
   // ---------------------------------------------------------------------------
   private calculateHabitStats(
-    habits: Habit[],
+    habits: HabitDTO[],
     logs: Array<{ habitId: string; date: string; completedCount: number }>,
     startDate: string,
     endDate: string,
   ): HabitStatsResult {
     const today = new Date().toISOString().split('T')[0]!
 
-    const habitIsApplicable = (habit: Habit, dateStr: string) => {
+    const habitIsApplicable = (habit: HabitDTO, dateStr: string) => {
       const d = new Date(dateStr + 'T00:00:00Z')
       const dow = d.getUTCDay()
       const ft = habit.frequencyType
@@ -686,7 +670,7 @@ class HabitsService {
 
     // If habit already has a goal, return that
     if (habit.goalId) {
-      const linkedGoal = await prisma.weeklyGoal.findUnique({
+      const linkedGoal = await prisma.goal.findUnique({
         where: { id: habit.goalId },
         select: { id: true, title: true },
       })
@@ -695,20 +679,20 @@ class HabitsService {
       }
     }
 
-    // Fetch unlinked goals at different levels
+    // Fetch unlinked goals at different horizons
     const [weeklyGoals, quarterlyGoals, annualGoals] = await Promise.all([
-      prisma.weeklyGoal.findMany({
-        where: { userId },
+      prisma.goal.findMany({
+        where: { userId, horizon: 'WEEK' },
         select: { id: true, title: true, description: true },
         take: 10,
       }),
-      prisma.quarterlyGoal.findMany({
-        where: { userId },
+      prisma.goal.findMany({
+        where: { userId, horizon: 'QUARTER' },
         select: { id: true, title: true },
         take: 5,
       }),
-      prisma.annualGoal.findMany({
-        where: { userId },
+      prisma.goal.findMany({
+        where: { userId, horizon: 'ONE_YEAR' },
         select: { id: true, title: true },
         take: 3,
       }),
@@ -851,9 +835,9 @@ Return the hour (0-23) and minute (0-59).
   async suggestHabitsForGoals(userId: string): Promise<{ suggestions: Array<{ name: string; description: string; frequency: string; targetFrequency: number; goalTitle: string; goalId: string }> }> {
     // Get user's active goals
     const [threeYearGoals, annualGoals, quarterlyGoals] = await Promise.all([
-      prisma.threeYearGoal.findMany({ where: { userId }, select: { id: true, title: true }, take: 5 }),
-      prisma.annualGoal.findMany({ where: { userId }, select: { id: true, title: true }, take: 5 }),
-      prisma.quarterlyGoal.findMany({ where: { userId }, select: { id: true, title: true }, take: 5 }),
+      prisma.goal.findMany({ where: { userId, horizon: 'THREE_YEAR' }, select: { id: true, title: true }, take: 5 }),
+      prisma.goal.findMany({ where: { userId, horizon: 'ONE_YEAR' }, select: { id: true, title: true }, take: 5 }),
+      prisma.goal.findMany({ where: { userId, horizon: 'QUARTER' }, select: { id: true, title: true }, take: 5 }),
     ])
 
     // Get existing habits to avoid duplicates
@@ -972,8 +956,8 @@ For each stack, use the exact anchor habit ID from the list.
     })
 
     // Get pomodoro sessions by day
-    const pomodoros = await prisma.pomodoroSession.findMany({
-      where: { userId, isCompleted: true, createdAt: { gte: sixtyDaysAgo } },
+    const pomodoros = await prisma.workingSession.findMany({
+      where: { userId, kind: 'POMODORO', completed: true, createdAt: { gte: sixtyDaysAgo } },
       select: { createdAt: true },
     })
 
@@ -1084,12 +1068,12 @@ Return 2-5 correlations ordered by strength. Be specific about the data patterns
 
     const todayLogs = await prisma.habitLog.findMany({
       where: {
-        habitId: { in: habitIds },
+        taskId: { in: habitIds },
         date: todayDate,
       },
     })
 
-    const logsByHabit = new Map(todayLogs.map((l) => [l.habitId, l]))
+    const logsByHabit = new Map(todayLogs.map((l: any) => [l.taskId, l]))
 
     // 3. Fetch recent logs (last 60 days) to compute current streaks
     const recentLogs = await habitsRepository.findRecentLogs(habitIds, 60)
@@ -1201,13 +1185,20 @@ Return 2-5 correlations ordered by strength. Be specific about the data patterns
    * Safe to run multiple times — only updates rows whose category matches an old value.
    */
   async migrateCategoryToPillars(userId: string): Promise<{ migrated: number }> {
+    const tasks = await prisma.task.findMany({
+      where: { userId, kind: 'HABIT' },
+      select: { id: true, habitMeta: true },
+    })
     let count = 0
-    for (const [oldCat, newPillar] of Object.entries(CATEGORY_TO_PILLAR)) {
-      const result = await prisma.habit.updateMany({
-        where: { userId, category: oldCat },
-        data: { category: newPillar },
+    for (const t of tasks) {
+      const meta = ((t as any).habitMeta ?? {}) as any
+      const newPillar = CATEGORY_TO_PILLAR[meta.category as keyof typeof CATEGORY_TO_PILLAR]
+      if (!newPillar) continue
+      await prisma.task.update({
+        where: { id: t.id },
+        data: { habitMeta: { ...meta, category: newPillar } as any },
       })
-      count += result.count
+      count++
     }
     return { migrated: count }
   }

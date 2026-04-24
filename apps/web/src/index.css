@@ -335,7 +335,7 @@
  * Primary: Prime Blue #1C02FA · Accent/hover: Fenrir Blue #4A3AFF
  * Borders: Wolf Gray #D6D7D9 */
 :root {
-  --radius: 0.625rem;
+  --radius: 0.375rem;
 
   --background: oklch(0.99 0.002 270);
   --foreground: oklch(0.18 0.01 270);

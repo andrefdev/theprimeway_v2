@@ -219,20 +219,23 @@ class GoalsService {
       quarterlyGoals,
       weeklyGoals,
     ] = await Promise.all([
-      prisma.primeVision.count({ where: { userId } }),
-      prisma.threeYearGoal.count({ where: { userId } }),
-      prisma.annualGoal.findMany({
-        where: { userId },
-        select: { id: true, title: true, progress: true, targetDate: true },
-      }),
-      prisma.quarterlyGoal.findMany({
-        where: { userId },
-        select: { id: true, title: true, progress: true, endDate: true },
-      }),
-      prisma.weeklyGoal.findMany({
-        where: { userId },
-        select: { id: true, title: true, status: true, weekStartDate: true },
-      }),
+      prisma.vision.findUnique({ where: { userId } }).then((v: any) => (v ? 1 : 0)),
+      prisma.goal.count({ where: { userId, horizon: 'THREE_YEAR' } }),
+      prisma.goal.findMany({
+        where: { userId, horizon: 'ONE_YEAR' },
+        select: { id: true, title: true, visionContribution: true, endsOn: true },
+      }).then((rows: any[]) => rows.map((r: any) => ({ id: r.id, title: r.title, progress: Math.round((r.visionContribution ?? 0) * 100), targetDate: r.endsOn }))),
+      prisma.goal.findMany({
+        where: { userId, horizon: 'QUARTER' },
+        select: { id: true, title: true, visionContribution: true, endsOn: true },
+      }).then((rows: any[]) => rows.map((r: any) => ({ id: r.id, title: r.title, progress: Math.round((r.visionContribution ?? 0) * 100), endDate: r.endsOn }))),
+      prisma.goal.findMany({
+        where: { userId, horizon: 'WEEK' },
+        select: { id: true, title: true, description: true, startsOn: true },
+      }).then((rows: any[]) => rows.map((r: any) => {
+        const m = (r.description ?? '').match(/^\[ws:([^\]]+)\]/)
+        return { id: r.id, title: r.title, status: m ? m[1] : 'planned', weekStartDate: r.startsOn }
+      })),
     ])
 
     // Helper: compute health from progress (>70%=green, 40-70%=yellow, <40%=red)
@@ -256,15 +259,15 @@ class GoalsService {
       values.length === 0 ? 0 : Math.round(values.reduce((a, b) => a + b, 0) / values.length)
 
     // Map weekly goal statuses to progress for health computation
-    const weeklyProgressValues = weeklyGoals.map((wg) => {
+    const weeklyProgressValues = weeklyGoals.map((wg: { status: string | null }) => {
       if (wg.status === 'completed') return 100
       if (wg.status === 'in_progress') return 50
       if (wg.status === 'canceled') return 0
       return 0 // planned
     })
 
-    const annualProgressValues = annualGoals.map((g) => g.progress ?? 0)
-    const quarterlyProgressValues = quarterlyGoals.map((g) => g.progress ?? 0)
+    const annualProgressValues = annualGoals.map((g: { progress: number }) => g.progress ?? 0)
+    const quarterlyProgressValues = quarterlyGoals.map((g: { progress: number }) => g.progress ?? 0)
 
     // Build per-level summaries
     const levels = {
@@ -365,18 +368,26 @@ class GoalsService {
     let parentGoal: GoalRecord | null = null
 
     switch (goalLevel) {
-      case 'ThreeYearGoal':
-        parentGoal = await prisma.threeYearGoal.findUnique({ where: { id: goalId } })
+      case 'ThreeYearGoal': {
+        const g = await prisma.goal.findFirst({ where: { id: goalId, horizon: 'THREE_YEAR' } })
+        if (g) parentGoal = { id: g.id, userId: g.userId, title: g.title, description: g.description }
         break
-      case 'AnnualGoal':
-        parentGoal = await prisma.annualGoal.findUnique({ where: { id: goalId } })
+      }
+      case 'AnnualGoal': {
+        const g = await prisma.goal.findFirst({ where: { id: goalId, horizon: 'ONE_YEAR' } })
+        if (g) parentGoal = { id: g.id, userId: g.userId, title: g.title, description: g.description }
         break
-      case 'QuarterlyGoal':
-        parentGoal = await prisma.quarterlyGoal.findUnique({ where: { id: goalId } })
+      }
+      case 'QuarterlyGoal': {
+        const g = await prisma.goal.findFirst({ where: { id: goalId, horizon: 'QUARTER' } })
+        if (g) parentGoal = { id: g.id, userId: g.userId, title: g.title, description: g.description }
         break
-      case 'WeeklyGoal':
-        parentGoal = await prisma.weeklyGoal.findUnique({ where: { id: goalId } })
+      }
+      case 'WeeklyGoal': {
+        const g = await prisma.goal.findFirst({ where: { id: goalId, horizon: 'WEEK' } })
+        if (g) parentGoal = { id: g.id, userId: g.userId, title: g.title, description: g.description }
         break
+      }
       default:
         throw new Error(`Unsupported goal level: ${goalLevel}`)
     }
@@ -453,22 +464,12 @@ Rules:
     const cutoff = new Date()
     cutoff.setDate(cutoff.getDate() - inactiveDays)
 
-    // Find quarterly goals not updated recently
-    const quarterlyGoals = await prisma.quarterlyGoal.findMany({
+    // Find quarterly goals not updated recently (Goal{horizon: QUARTER})
+    const quarterlyGoals = await prisma.goal.findMany({
       where: {
         userId,
-        progress: { lt: 100 },
-      },
-      include: {
-        weeklyGoals: {
-          include: {
-            tasks: {
-              where: { updatedAt: { gte: cutoff } },
-              select: { id: true },
-              take: 1,
-            },
-          },
-        },
+        horizon: 'QUARTER',
+        visionContribution: { lt: 1 },
       },
     })
 
@@ -483,33 +484,38 @@ Rules:
     }> = []
 
     for (const qg of quarterlyGoals) {
-      // Check if any weekly goal or task had recent activity
-      const hasRecentTask = qg.weeklyGoals.some(wg => wg.tasks.length > 0)
+      const weeklyChildren: any[] = await prisma.goal.findMany({
+        where: { userId, horizon: 'WEEK', parentGoalId: qg.id },
+        include: { taskLinks: { include: { task: { select: { updatedAt: true } } } } },
+      })
+      const hasRecentTask = weeklyChildren.some((wg: any) =>
+        wg.taskLinks.some((l: any) => l.task.updatedAt && l.task.updatedAt >= cutoff),
+      )
       const goalUpdatedRecently = qg.updatedAt >= cutoff
-      const anyWeeklyUpdated = qg.weeklyGoals.some(wg => wg.updatedAt >= cutoff)
+      const anyWeeklyUpdated = weeklyChildren.some((wg: any) => wg.updatedAt >= cutoff)
 
       if (!hasRecentTask && !goalUpdatedRecently && !anyWeeklyUpdated) {
         const daysSinceActivity = Math.floor((Date.now() - qg.updatedAt.getTime()) / (1000 * 60 * 60 * 24))
         inactive.push({
           goalId: qg.id,
           title: qg.title,
-          progress: qg.progress || 0,
+          progress: Math.round((qg.visionContribution ?? 0) * 100),
           lastActivity: qg.updatedAt.toISOString(),
           daysSinceActivity,
-          weeklyGoalCount: qg.weeklyGoals.length,
+          weeklyGoalCount: weeklyChildren.length,
           urgency: daysSinceActivity > 30 ? 'high' : daysSinceActivity > 21 ? 'medium' : 'low',
         })
       }
     }
 
-    // Also check annual goals
-    const annualGoals = await prisma.annualGoal.findMany({
+    // Also check annual goals (Goal{horizon: ONE_YEAR})
+    const annualGoals = await prisma.goal.findMany({
       where: {
         userId,
+        horizon: 'ONE_YEAR',
         updatedAt: { lt: cutoff },
-        progress: { lt: 100 },
       },
-      select: { id: true, title: true, progress: true, updatedAt: true },
+      select: { id: true, title: true, visionContribution: true, updatedAt: true },
     })
 
     for (const ag of annualGoals) {
@@ -517,7 +523,7 @@ Rules:
       inactive.push({
         goalId: ag.id,
         title: ag.title,
-        progress: ag.progress || 0,
+        progress: Math.round((ag.visionContribution ?? 0) * 100),
         lastActivity: ag.updatedAt.toISOString(),
         daysSinceActivity,
         weeklyGoalCount: 0,
@@ -543,45 +549,33 @@ Rules:
     // Get the parent goal
     let parentGoal: any = null
     if (type === 'three-year') {
-      parentGoal = await prisma.primeVision.findUnique({ where: { id: goalId } })
+      parentGoal = await prisma.vision.findUnique({ where: { userId } })
     } else if (type === 'annual') {
-      parentGoal = await prisma.threeYearGoal.findUnique({ where: { id: goalId } })
+      parentGoal = await prisma.goal.findFirst({ where: { id: goalId, horizon: 'THREE_YEAR' } })
     } else if (type === 'quarterly') {
-      parentGoal = await prisma.annualGoal.findUnique({ where: { id: goalId } })
+      parentGoal = await prisma.goal.findFirst({ where: { id: goalId, horizon: 'ONE_YEAR' } })
     } else {
-      parentGoal = await prisma.quarterlyGoal.findUnique({ where: { id: goalId } })
+      parentGoal = await prisma.goal.findFirst({ where: { id: goalId, horizon: 'QUARTER' } })
     }
 
-    if (!parentGoal || parentGoal.userId !== userId) {
+    if (!parentGoal || (parentGoal.userId && parentGoal.userId !== userId)) {
       return { suggestions: [] }
     }
 
     // Get existing children to avoid duplicates
     let existingChildren: string[] = []
     if (type === 'three-year') {
-      const threeYears = await prisma.threeYearGoal.findMany({
-        where: { visionId: goalId },
-        select: { title: true },
-      })
-      existingChildren = threeYears.map((g) => g.title)
+      const rows = await prisma.goal.findMany({ where: { userId, horizon: 'THREE_YEAR' }, select: { title: true } })
+      existingChildren = rows.map((g: { title: string }) => g.title)
     } else if (type === 'annual') {
-      const annuals = await prisma.annualGoal.findMany({
-        where: { threeYearGoalId: goalId },
-        select: { title: true },
-      })
-      existingChildren = annuals.map((g) => g.title)
+      const rows = await prisma.goal.findMany({ where: { userId, horizon: 'ONE_YEAR', parentGoalId: goalId }, select: { title: true } })
+      existingChildren = rows.map((g: { title: string }) => g.title)
     } else if (type === 'quarterly') {
-      const quarterlies = await prisma.quarterlyGoal.findMany({
-        where: { annualGoalId: goalId },
-        select: { title: true },
-      })
-      existingChildren = quarterlies.map((g) => g.title)
+      const rows = await prisma.goal.findMany({ where: { userId, horizon: 'QUARTER', parentGoalId: goalId }, select: { title: true } })
+      existingChildren = rows.map((g: { title: string }) => g.title)
     } else {
-      const weeklies = await prisma.weeklyGoal.findMany({
-        where: { quarterlyGoalId: goalId },
-        select: { title: true },
-      })
-      existingChildren = weeklies.map((g) => g.title)
+      const rows = await prisma.goal.findMany({ where: { userId, horizon: 'WEEK', parentGoalId: goalId }, select: { title: true } })
+      existingChildren = rows.map((g: { title: string }) => g.title)
     }
 
     const result = await generateObject({
@@ -609,35 +603,35 @@ Make them specific, actionable, and aligned with the parent goal.
   }
 
   async detectConflicts(userId: string) {
-    // Get all active quarterly goals with their weekly goals and tasks
-    const quarterlyGoals = await prisma.quarterlyGoal.findMany({
-      where: { userId },
-      include: {
-        weeklyGoals: {
-          include: { tasks: { where: { status: 'open' } } },
-        },
-      },
+    // Get all active quarterly goals with their weekly children and open tasks
+    const quarterlyGoals = await prisma.goal.findMany({
+      where: { userId, horizon: 'QUARTER' },
     })
 
     if (quarterlyGoals.length < 2) {
       return { conflicts: [], overcommitment: null, summary: 'Need at least 2 quarterly goals for conflict analysis' }
     }
 
-    // Calculate load per goal
-    const goalSummaries = quarterlyGoals.map(qg => {
-      const openTasks = qg.weeklyGoals.flatMap(wg => wg.tasks).length
-      const weeklyGoalCount = qg.weeklyGoals.length
+    const goalSummaries = await Promise.all(quarterlyGoals.map(async (qg: any) => {
+      const weeklyChildren: any[] = await prisma.goal.findMany({
+        where: { userId, horizon: 'WEEK', parentGoalId: qg.id },
+        include: { taskLinks: { include: { task: { select: { status: true } } } } },
+      })
+      const openTasks = weeklyChildren.reduce(
+        (n: number, wg: any) => n + wg.taskLinks.filter((l: any) => l.task.status === 'open').length,
+        0,
+      )
       return {
         id: qg.id,
         title: qg.title,
-        progress: qg.progress || 0,
-        startDate: qg.startDate?.toISOString().split('T')[0] || 'unknown',
-        endDate: qg.endDate?.toISOString().split('T')[0] || 'unknown',
+        progress: Math.round((qg.visionContribution ?? 0) * 100),
+        startDate: qg.startsOn?.toISOString().split('T')[0] || 'unknown',
+        endDate: qg.endsOn?.toISOString().split('T')[0] || 'unknown',
         openTasks,
-        weeklyGoalCount,
+        weeklyGoalCount: weeklyChildren.length,
         objectives: qg.objectives,
       }
-    })
+    }))
 
     // Get total open tasks for overcommitment check
     const totalOpenTasks = await prisma.task.count({ where: { userId, status: 'open', archivedAt: null } })
@@ -663,7 +657,7 @@ Make them specific, actionable, and aligned with the parent goal.
       }),
       prompt: `Analyze these quarterly goals for conflicts and overcommitment:
 
-${goalSummaries.map(g => `Goal: "${g.title}" (${g.progress}% done, ${g.startDate} to ${g.endDate})
+${goalSummaries.map((g: any) => `Goal: "${g.title}" (${g.progress}% done, ${g.startDate} to ${g.endDate})
   - ${g.weeklyGoalCount} weekly goals, ${g.openTasks} open tasks
   - Objectives: ${JSON.stringify(g.objectives || {})}`).join('\n\n')}
 
@@ -693,17 +687,14 @@ Be constructive — suggest how to resolve each conflict.`,
     proposedFocuses: string[]
   }> {
     // Get all quarterly goals for the period
-    const quarterlyGoals = await prisma.quarterlyGoal.findMany({
-      where: {
-        userId,
-        // Estimate quarter dates (simplified - in production would use proper date logic)
-      },
+    const quarterlyGoals = await prisma.goal.findMany({
+      where: { userId, horizon: 'QUARTER', periodKey: `${year}-Q${quarter}` },
     })
 
     const goalSummaries = quarterlyGoals
       .map(
-        (g) =>
-          `- ${g.title}: ${g.progress || 0}% complete`,
+        (g: any) =>
+          `- ${g.title}: ${Math.round((g.visionContribution ?? 0) * 100)}% complete`,
       )
       .join('\n')
 
@@ -729,6 +720,29 @@ Provide:
     })
 
     return result.object
+  }
+
+  /** Weekly alignment: % of completed tasks in the week that have at least one goal link. */
+  async getWeeklyAlignment(userId: string, weekStartStr: string) {
+    const { findCompletedTasksForAlignment } = await import('../repositories/goals.repo')
+    const weekStart = new Date(`${weekStartStr.slice(0, 10)}T00:00:00.000Z`)
+    const weekEnd = new Date(weekStart)
+    weekEnd.setUTCDate(weekEnd.getUTCDate() + 7)
+    const completed = await findCompletedTasksForAlignment(userId, weekStart, weekEnd)
+    const total = completed.length
+    const aligned = completed.filter((t: { goalLinks: unknown[] }) => t.goalLinks.length > 0).length
+    const alignmentPct = total > 0 ? Math.round((aligned / total) * 100) : 0
+    return {
+      weekStart: weekStartStr,
+      total,
+      aligned,
+      unaligned: total - aligned,
+      alignmentPct,
+      sampleUnaligned: completed
+        .filter((t: { goalLinks: unknown[] }) => t.goalLinks.length === 0)
+        .slice(0, 5)
+        .map((t: { title: string }) => t.title),
+    }
   }
 }
 

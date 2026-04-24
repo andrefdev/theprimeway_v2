@@ -250,12 +250,12 @@ class CalendarService {
   }
 
   async getFreeSlots(userId: string, date: string, duration: number) {
-    // Get user's work preferences
-    const workPrefs = await prisma.userWorkPreferences.findFirst({
-      where: { userId },
+    // Get user's working hours (per-weekday rows; channelId=null = default)
+    const workingHoursRows = await prisma.workingHours.findMany({
+      where: { userId, channelId: null },
     })
 
-    if (!workPrefs) {
+    if (workingHoursRows.length === 0) {
       return { error: 'no_work_preferences' as const }
     }
 
@@ -264,10 +264,13 @@ class CalendarService {
     const dayOfWeek = dateObj.getDay()
 
     // Check if this is a work day
-    const workDays = (workPrefs.workDays as number[] | null) || [1, 2, 3, 4, 5] // Default: Mon-Fri
-    if (!workDays.includes(dayOfWeek)) {
+    const todayRow = workingHoursRows.find((r: { dayOfWeek: number }) => r.dayOfWeek === dayOfWeek)
+    if (!todayRow) {
       return { freeSlots: [] }
     }
+    const workStartHour = parseInt(todayRow.startTime.split(':')[0] ?? '9', 10)
+    const workEndHour = parseInt(todayRow.endTime.split(':')[0] ?? '17', 10)
+    const workPrefs = { workStartHour, workEndHour }
 
     // Create time range for the day in ISO format
     const dayStart = new Date(dateObj)
@@ -629,13 +632,13 @@ class CalendarService {
   }
 
   async generateTimeBlocks(userId: string, date: string) {
-    // 1. Fetch user's work preferences for scheduling bounds
-    const workPrefs = await prisma.userWorkPreferences.findFirst({
-      where: { userId },
+    // 1. Fetch user's working hours for scheduling bounds
+    const dow = new Date(date).getDay()
+    const todayRow = await prisma.workingHours.findFirst({
+      where: { userId, channelId: null, dayOfWeek: dow },
     })
-
-    const workStartHour = workPrefs?.workStartHour ?? 9
-    const workEndHour = workPrefs?.workEndHour ?? 17
+    const workStartHour = todayRow ? parseInt(todayRow.startTime.split(':')[0] ?? '9', 10) : 9
+    const workEndHour = todayRow ? parseInt(todayRow.endTime.split(':')[0] ?? '17', 10) : 17
 
     // 2. Fetch pending/in-progress tasks for the date (scheduled or due)
     const dayStart = new Date(`${date}T00:00:00.000Z`)
@@ -781,12 +784,13 @@ SCHEDULING RULES:
       ? `Most productive hours (by completed task count): ${sortedHours.join(', ')}`
       : 'No historical productivity data available.'
 
-    // 4. Fetch work preferences for scheduling bounds
-    const workPrefs = await prisma.userWorkPreferences.findFirst({
-      where: { userId },
+    // 4. Fetch working hours for scheduling bounds
+    const dow = new Date(date).getDay()
+    const todayRow = await prisma.workingHours.findFirst({
+      where: { userId, channelId: null, dayOfWeek: dow },
     })
-    const workStartHour = workPrefs?.workStartHour ?? 9
-    const workEndHour = workPrefs?.workEndHour ?? 17
+    const workStartHour = todayRow ? parseInt(todayRow.startTime.split(':')[0] ?? '9', 10) : 9
+    const workEndHour = todayRow ? parseInt(todayRow.endTime.split(':')[0] ?? '17', 10) : 17
 
     // 5. Build task info
     const taskDuration = (task as any).estimatedDurationMinutes ?? 30
@@ -904,6 +908,124 @@ SCHEDULING GUIDELINES:
       return null // no valid schedule
     }
     return body
+  }
+
+  /**
+   * Push a WorkingSession to the Google Calendar linked via Channel.timeboxToCalendarId.
+   * No-op if task has no channel or channel has no target calendar.
+   * Persists externalEventId / externalCalendarId on the session for later update/delete.
+   */
+  async pushSessionToCalendar(
+    sessionId: string,
+  ): Promise<{ ok: true; eventId: string } | { ok: false; reason: string }> {
+    const session = await prisma.workingSession.findUnique({
+      where: { id: sessionId },
+      include: { task: true },
+    })
+    if (!session) return { ok: false, reason: 'session_not_found' }
+    if (session.externalEventId) return { ok: true, eventId: session.externalEventId }
+    if (!session.task?.channelId) return { ok: false, reason: 'no_channel' }
+
+    const channel = await prisma.channel.findUnique({ where: { id: session.task.channelId } })
+    if (!channel?.timeboxToCalendarId) return { ok: false, reason: 'no_target_calendar' }
+
+    const calendar = await prisma.calendar.findUnique({
+      where: { id: channel.timeboxToCalendarId },
+      include: { account: true },
+    })
+    if (!calendar) return { ok: false, reason: 'calendar_not_found' }
+
+    const accessToken = await this.ensureAccessToken(calendar.calendarAccountId)
+    if (!accessToken) return { ok: false, reason: 'no_access_token' }
+
+    const body = {
+      summary: session.task.title,
+      description: 'Auto-scheduled by ThePrimeWay',
+      start: { dateTime: session.start.toISOString(), timeZone: 'UTC' },
+      end: { dateTime: session.end.toISOString(), timeZone: 'UTC' },
+      extendedProperties: { private: { theprimewaySessionId: session.id } },
+    }
+    const res = await fetch(
+      `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendar.providerCalendarId)}/events`,
+      {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      },
+    )
+    if (!res.ok) {
+      const txt = await res.text().catch(() => '')
+      return { ok: false, reason: `google_${res.status}:${txt.slice(0, 120)}` }
+    }
+    const data = (await res.json()) as { id?: string }
+    if (!data.id) return { ok: false, reason: 'no_event_id' }
+
+    await prisma.workingSession.update({
+      where: { id: session.id },
+      data: { externalCalendarId: calendar.id, externalEventId: data.id },
+    })
+    return { ok: true, eventId: data.id }
+  }
+
+  /** Remove a previously-pushed session from Google Calendar. Safe to call when unpushed. */
+  async removeSessionFromCalendar(sessionId: string): Promise<{ ok: boolean; reason?: string }> {
+    const session = await prisma.workingSession.findUnique({ where: { id: sessionId } })
+    if (!session) return { ok: true }
+    if (!session.externalEventId || !session.externalCalendarId) return { ok: true }
+    const calendar = await prisma.calendar.findUnique({
+      where: { id: session.externalCalendarId },
+    })
+    if (!calendar) return { ok: false, reason: 'calendar_not_found' }
+    const accessToken = await this.ensureAccessToken(calendar.calendarAccountId)
+    if (!accessToken) return { ok: false, reason: 'no_access_token' }
+    const res = await fetch(
+      `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendar.providerCalendarId)}/events/${encodeURIComponent(session.externalEventId)}`,
+      { method: 'DELETE', headers: { Authorization: `Bearer ${accessToken}` } },
+    )
+    // 410 Gone is fine (already deleted on Google)
+    if (!res.ok && res.status !== 410 && res.status !== 404) {
+      return { ok: false, reason: `google_${res.status}` }
+    }
+    await prisma.workingSession
+      .update({ where: { id: session.id }, data: { externalEventId: null, externalCalendarId: null } })
+      .catch(() => undefined)
+    return { ok: true }
+  }
+
+  /** Patch an existing event with session's current start/end. If unpushed, push now. */
+  async updateSessionOnCalendar(sessionId: string): Promise<{ ok: boolean; reason?: string }> {
+    const session = await prisma.workingSession.findUnique({
+      where: { id: sessionId },
+      include: { task: true },
+    })
+    if (!session) return { ok: false, reason: 'session_not_found' }
+    if (!session.externalEventId || !session.externalCalendarId) {
+      const pushed = await this.pushSessionToCalendar(sessionId)
+      return pushed.ok ? { ok: true } : { ok: false, reason: pushed.reason }
+    }
+    const calendar = await prisma.calendar.findUnique({ where: { id: session.externalCalendarId } })
+    if (!calendar) return { ok: false, reason: 'calendar_not_found' }
+    const accessToken = await this.ensureAccessToken(calendar.calendarAccountId)
+    if (!accessToken) return { ok: false, reason: 'no_access_token' }
+
+    const body = {
+      start: { dateTime: session.start.toISOString(), timeZone: 'UTC' },
+      end: { dateTime: session.end.toISOString(), timeZone: 'UTC' },
+      summary: session.task?.title ?? 'Working session',
+    }
+    const res = await fetch(
+      `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendar.providerCalendarId)}/events/${encodeURIComponent(session.externalEventId)}`,
+      {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      },
+    )
+    if (!res.ok) {
+      const txt = await res.text().catch(() => '')
+      return { ok: false, reason: `google_${res.status}:${txt.slice(0, 120)}` }
+    }
+    return { ok: true }
   }
 
   /** Create a Google Calendar event for a task, persist TaskCalendarBinding. */
@@ -1165,6 +1287,9 @@ SCHEDULING GUIDELINES:
       }
 
       for (const evt of body.items || []) {
+        await this.upsertCalendarEventCache(channel.calendarId, evt).catch((e) =>
+          console.error('[CAL_WATCH] upsert event cache error', e),
+        )
         await this.applyGoogleEventToTask(evt).catch((e) =>
           console.error('[CAL_WATCH] apply event error', e),
         )
@@ -1180,6 +1305,52 @@ SCHEDULING GUIDELINES:
       console.error('[CAL_WATCH] notification error', err)
       return { ok: false, reason: 'exception' }
     }
+  }
+
+  /**
+   * Mirror a Google Calendar event into the local `CalendarEvent` cache.
+   * Consumed by the scheduling engine as busy-block hard constraints.
+   */
+  private async upsertCalendarEventCache(calendarId: string, evt: any) {
+    if (!evt?.id) return
+    if (evt.status === 'cancelled') {
+      await prisma.calendarEvent.deleteMany({ where: { calendarId, externalId: evt.id } }).catch(() => undefined)
+      return
+    }
+    const startStr = evt.start?.dateTime ?? evt.start?.date
+    const endStr = evt.end?.dateTime ?? evt.end?.date
+    if (!startStr || !endStr) return
+    const start = new Date(startStr)
+    const end = new Date(endStr)
+    const isAllDay = !evt.start?.dateTime
+    // Google `transparency: transparent` = marked as Available (free) → not busy
+    const isBusy = (evt.transparency ?? 'opaque') === 'opaque'
+    // declined: user's attendee status is 'declined'
+    const selfAttendee = (evt.attendees ?? []).find((a: any) => a?.self === true)
+    const isDeclined = selfAttendee?.responseStatus === 'declined'
+
+    await prisma.calendarEvent.upsert({
+      where: { calendarId_externalId: { calendarId, externalId: evt.id } },
+      update: {
+        title: evt.summary ?? '(untitled)',
+        start,
+        end,
+        isBusy,
+        isDeclined,
+        isAllDay,
+        syncedAt: new Date(),
+      },
+      create: {
+        calendarId,
+        externalId: evt.id,
+        title: evt.summary ?? '(untitled)',
+        start,
+        end,
+        isBusy,
+        isDeclined,
+        isAllDay,
+      },
+    })
   }
 
   private async applyGoogleEventToTask(evt: any) {
@@ -1229,6 +1400,29 @@ SCHEDULING GUIDELINES:
       }
     }
     return { renewed, failed }
+  }
+
+  /** List cached CalendarEvent rows for [from, to] that are not declined. */
+  async listEventsInRange(userId: string, from: Date, to: Date) {
+    return prisma.calendarEvent.findMany({
+      where: {
+        calendar: { account: { userId } },
+        start: { lt: to },
+        end: { gt: from },
+        isDeclined: false,
+      },
+      select: {
+        id: true,
+        calendarId: true,
+        externalId: true,
+        title: true,
+        start: true,
+        end: true,
+        isBusy: true,
+        isAllDay: true,
+      },
+      orderBy: { start: 'asc' },
+    })
   }
 }
 

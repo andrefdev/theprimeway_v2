@@ -480,9 +480,9 @@ class GamificationService {
         where: { userId, status: 'completed', completedAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } },
         select: { priority: true },
       }),
-      prisma.habit.findMany({ where: { userId, isActive: true }, select: { name: true } }),
-      prisma.pomodoroSession.count({
-        where: { userId, isCompleted: true, createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } },
+      prisma.task.findMany({ where: { userId, kind: 'HABIT', archivedAt: null }, select: { title: true } }).then((rows: any[]) => rows.map((r: any) => ({ name: r.title }))),
+      prisma.workingSession.count({
+        where: { userId, kind: 'POMODORO', completed: true, createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } },
       }),
     ])
 
@@ -726,7 +726,7 @@ Rules:
     const habitLogs = await prisma.habitLog.count({
       where: { userId, date: { gte: sevenDaysAgo }, completedCount: { gt: 0 } },
     })
-    const activeHabits = await prisma.habit.count({ where: { userId, isActive: true } })
+    const activeHabits = await prisma.task.count({ where: { userId, kind: 'HABIT', archivedAt: null } })
     const habitRate = activeHabits > 0 ? habitLogs / (activeHabits * 7) : 0
 
     // Detect fatigue indicators

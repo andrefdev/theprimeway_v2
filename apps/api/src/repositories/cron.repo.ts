@@ -61,18 +61,33 @@ class CronRepository {
   }
 
   async findUsersWithHabitReminders() {
-    return prisma.user.findMany({
+    const users = await prisma.user.findMany({
       where: {
         notificationPreferences: { habitReminders: true },
-        habits: { some: { isActive: true } },
+        tasks: { some: { kind: 'HABIT', archivedAt: null } },
         devices: { some: { isActive: true } },
       },
       include: {
         notificationPreferences: true,
         settings: true,
-        habits: { where: { isActive: true } },
+        tasks: { where: { kind: 'HABIT', archivedAt: null } },
       },
     })
+    // Legacy shape: expose .habits adapted from task{kind:HABIT}
+    return users.map((u) => ({
+      ...u,
+      habits: u.tasks.map((t: any) => {
+        const m = (t.habitMeta ?? {}) as any
+        return {
+          id: t.id,
+          name: t.title,
+          targetFrequency: typeof m.targetFrequency === 'number' ? m.targetFrequency : 1,
+          frequencyType: m.frequencyType ?? null,
+          weekDays: m.weekDays ?? [],
+          isActive: true,
+        }
+      }),
+    }))
   }
 
   async findHabitLogsByUserAndDate(userId: string, todayStart: Date, todayEnd: Date) {

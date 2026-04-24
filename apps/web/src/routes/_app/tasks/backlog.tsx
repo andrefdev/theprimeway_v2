@@ -72,6 +72,15 @@ function TasksBacklogPage() {
     }
   }
 
+  async function handleArchive(task: Task) {
+    try {
+      await updateTask.mutateAsync({ id: task.id, data: { status: 'archived' } })
+      toast.success(t('taskArchived', { defaultValue: 'Task archived' }))
+    } catch {
+      toast.error(t('failedToUpdate'))
+    }
+  }
+
   async function scheduleTask(task: Task, date: string) {
     try {
       await updateTask.mutateAsync({
@@ -118,6 +127,7 @@ function TasksBacklogPage() {
                         onToggle={() => toggleTask(task)}
                         onEdit={() => openEdit(task)}
                         onDelete={() => handleDelete(task)}
+                        onArchive={() => handleArchive(task)}
                       />
                     </div>
                     <Button

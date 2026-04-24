@@ -6,19 +6,17 @@ import { featuresRepo } from '../repositories/features.repo'
 import { plansRepo, type PlanRow } from '../repositories/plans.repo'
 import { bustFeatureCache } from '../services/features.service'
 import { FEATURES } from '@repo/shared/constants'
-import { prisma } from '../lib/prisma'
 import { sendPushSchema } from '@repo/shared/validators'
 import { notificationsService } from '../services/notifications.service'
+import { adminService } from '../services/admin.service'
 
 export const adminRoutes = new OpenAPIHono<AppEnv>()
 
 // Admin auth middleware — verifies user has role='admin'
 const adminMiddleware = createMiddleware<AppEnv>(async (c, next) => {
   const userId = c.get('user').userId
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } })
-  if (user?.role !== 'admin') {
-    return c.json({ error: 'Forbidden' }, 403)
-  }
+  const ok = await adminService.isAdmin(userId)
+  if (!ok) return c.json({ error: 'Forbidden' }, 403)
   await next()
 })
 
@@ -167,34 +165,8 @@ const listUsersRoute = createRoute({
 
 adminRoutes.openapi(listUsersRoute, async (c) => {
   const { page, limit, search } = c.req.valid('query')
-
-  const where = search ? { email: { contains: search, mode: 'insensitive' as const } } : {}
-
-  const [users, total] = await Promise.all([
-    prisma.user.findMany({
-      where,
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-      },
-      skip: (page - 1) * limit,
-      take: limit,
-      orderBy: { id: 'desc' },
-    }),
-    prisma.user.count({ where }),
-  ])
-
-  return c.json(
-    {
-      data: users,
-      total,
-      page,
-      limit,
-    },
-    200,
-  )
+  const [users, total] = await adminService.listUsers({ page, limit, search })
+  return c.json({ data: users, total, page, limit }, 200)
 })
 
 // GET /api/admin/users/:userId — get single user details
@@ -226,27 +198,9 @@ const getUserRoute = createRoute({
 
 adminRoutes.openapi(getUserRoute, async (c) => {
   const { userId } = c.req.param()
-
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      id: true,
-      email: true,
-      name: true,
-      role: true,
-    },
-  })
-
-  if (!user) {
-    return c.json({ error: 'User not found' }, 404)
-  }
-
-  return c.json(
-    {
-      data: user,
-    },
-    200,
-  )
+  const user = await adminService.getUser(userId)
+  if (!user) return c.json({ error: 'User not found' }, 404)
+  return c.json({ data: user }, 200)
 })
 
 // GET /api/admin/users/:userId/subscription — get user subscription info
@@ -279,45 +233,9 @@ const getUserSubscriptionRoute = createRoute({
 
 adminRoutes.openapi(getUserSubscriptionRoute, async (c) => {
   const { userId } = c.req.param()
-
-  // Verify user exists
-  const user = await prisma.user.findUnique({ where: { id: userId } })
-  if (!user) {
-    return c.json({ error: 'User not found' }, 404)
-  }
-
-  // Get active subscription with plan details
-  const subscription = await prisma.userSubscription.findFirst({
-    where: { userId },
-    include: { plan: { select: { name: true } } },
-    orderBy: { id: 'desc' },
-  })
-
-  // Determine plan tier based on subscription status
-  let planTier = 'free'
-  let status = 'inactive'
-
-  if (subscription) {
-    status = subscription.status ?? 'pending'
-    if (subscription.status === 'active') {
-      planTier = 'premium'
-    } else if (subscription.status === 'trialing') {
-      planTier = 'trial'
-    }
-  }
-
-  return c.json(
-    {
-      data: {
-        userId,
-        planTier,
-        status,
-        currentPeriodStart: subscription?.startsAt ? subscription.startsAt.toISOString() : null,
-        currentPeriodEnd: subscription?.endsAt ? subscription.endsAt.toISOString() : null,
-      },
-    },
-    200,
-  )
+  const result = await adminService.getUserSubscription(userId)
+  if (!result.ok) return c.json({ error: 'User not found' }, 404)
+  return c.json({ data: result.data }, 200)
 })
 
 // ---------------------------------------------------------------------------
@@ -544,57 +462,12 @@ adminRoutes.openapi(setUserSubscriptionRoute, async (c) => {
     endsAt?: string | null
     reason?: string
   }
-
-  const user = await prisma.user.findUnique({ where: { id: userId } })
-  if (!user) return c.json({ error: 'User not found' }, 404)
-
-  let plan: { id: string; price: unknown; currency: string; billingInterval: string } | null = null
-  if (planId) {
-    const found = await prisma.subscriptionPlan.findUnique({ where: { id: planId } })
-    if (!found) return c.json({ error: 'Plan not found' }, 404)
-    plan = { id: found.id, price: found.price, currency: found.currency, billingInterval: found.billingInterval }
-  }
-
   const adminUserId = c.get('user').userId
-  const existing = await prisma.userSubscription.findFirst({
-    where: { userId },
-    orderBy: { id: 'desc' },
-  })
-
-  const now = new Date()
-  const metadata = {
-    source: 'manual',
-    setBy: adminUserId,
-    setAt: now.toISOString(),
-    reason: reason ?? null,
+  const result = await adminService.setUserSubscription(userId, { planId, status, endsAt, reason, adminUserId })
+  if (!result.ok) {
+    return c.json({ error: result.reason === 'plan_not_found' ? 'Plan not found' : 'User not found' }, 404)
   }
-
-  const subscription = existing
-    ? await prisma.userSubscription.update({
-        where: { id: existing.id },
-        data: {
-          planId: plan?.id ?? null,
-          status,
-          endsAt: endsAt ? new Date(endsAt) : existing.endsAt,
-          metadata,
-          updatedAt: now,
-        },
-      })
-    : await prisma.userSubscription.create({
-        data: {
-          userId,
-          planId: plan?.id ?? null,
-          status,
-          amount: (plan?.price as any) ?? 0,
-          currency: plan?.currency ?? 'USD',
-          billingInterval: plan?.billingInterval ?? 'monthly',
-          startsAt: now,
-          endsAt: endsAt ? new Date(endsAt) : null,
-          metadata,
-        },
-      })
-
-  return c.json({ data: subscription }, 200)
+  return c.json({ data: result.subscription }, 200)
 })
 
 // ---------------------------------------------------------------------------
@@ -615,113 +488,8 @@ const analyticsSummaryRoute = createRoute({
 })
 
 adminRoutes.openapi(analyticsSummaryRoute, async (c) => {
-  const now = new Date()
-  const day = 24 * 60 * 60 * 1000
-  const since7d = new Date(now.getTime() - 7 * day)
-  const since30d = new Date(now.getTime() - 30 * day)
-
-  const [
-    totalUsers,
-    admins,
-    subscriptionsByStatus,
-    subscriptionsByPlan,
-    activeFeatureOverrides,
-    usageAgg,
-    dau,
-    mau,
-    tasksLast30d,
-    habitsLast30d,
-    notesLast30d,
-    pomodoroLast30d,
-  ] = await Promise.all([
-    prisma.user.count(),
-    prisma.user.count({ where: { role: 'admin' } }),
-    prisma.userSubscription.groupBy({ by: ['status'], _count: { _all: true } }),
-    prisma.userSubscription.groupBy({ by: ['planId'], _count: { _all: true } }),
-    prisma.userFeatureOverride.groupBy({
-      by: ['featureKey', 'enabled'],
-      _count: { _all: true },
-    }),
-    prisma.userUsageStat.aggregate({
-      _sum: {
-        currentHabits: true,
-        currentGoals: true,
-        currentNotes: true,
-        currentTasks: true,
-        dailyPomodoroSessions: true,
-        dailyAiRequests: true,
-      },
-    }),
-    prisma.userUsageStat.count({ where: { updatedAt: { gte: since7d } } }),
-    prisma.userUsageStat.count({ where: { updatedAt: { gte: since30d } } }),
-    prisma.task.count({ where: { createdAt: { gte: since30d } } }),
-    prisma.habit.count({ where: { createdAt: { gte: since30d } } }),
-    prisma.note.count({ where: { createdAt: { gte: since30d } } }),
-    prisma.pomodoroSession.count({ where: { createdAt: { gte: since30d } } }),
-  ])
-
-  const plans = await prisma.subscriptionPlan.findMany({
-    select: { id: true, name: true, displayName: true },
-  })
-  const planById = new Map(plans.map((p) => [p.id, p]))
-
-  const byPlan = subscriptionsByPlan.map((row) => ({
-    planId: row.planId,
-    planName: row.planId ? planById.get(row.planId)?.name ?? 'unknown' : 'none',
-    displayName: row.planId ? planById.get(row.planId)?.displayName ?? 'Unknown' : 'No plan',
-    count: row._count._all,
-  }))
-
-  const byStatus = subscriptionsByStatus.map((row) => ({
-    status: row.status ?? 'unknown',
-    count: row._count._all,
-  }))
-
-  // Pivot feature overrides into { featureKey, enabled, disabled }
-  const overrideMap = new Map<string, { enabled: number; disabled: number }>()
-  for (const row of activeFeatureOverrides) {
-    const current = overrideMap.get(row.featureKey) ?? { enabled: 0, disabled: 0 }
-    if (row.enabled) current.enabled += row._count._all
-    else current.disabled += row._count._all
-    overrideMap.set(row.featureKey, current)
-  }
-  const featureOverrides = Array.from(overrideMap.entries()).map(([featureKey, counts]) => ({
-    featureKey,
-    ...counts,
-  }))
-
-  return c.json(
-    {
-      data: {
-        users: {
-          total: totalUsers,
-          admins,
-          dau7d: dau,
-          mau30d: mau,
-        },
-        subscriptions: {
-          byStatus,
-          byPlan,
-        },
-        usage: {
-          totalHabits: usageAgg._sum.currentHabits ?? 0,
-          totalGoals: usageAgg._sum.currentGoals ?? 0,
-          totalNotes: usageAgg._sum.currentNotes ?? 0,
-          totalTasks: usageAgg._sum.currentTasks ?? 0,
-          dailyPomodoroSessions: usageAgg._sum.dailyPomodoroSessions ?? 0,
-          dailyAiRequests: usageAgg._sum.dailyAiRequests ?? 0,
-        },
-        growth30d: {
-          tasks: tasksLast30d,
-          habits: habitsLast30d,
-          notes: notesLast30d,
-          pomodoro: pomodoroLast30d,
-        },
-        featureOverrides,
-      },
-    },
-    200,
-  )
+  const data = await adminService.analyticsSummary()
+  return c.json({ data }, 200)
 })
 
 // ---------------------------------------------------------------------------

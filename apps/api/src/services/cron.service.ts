@@ -1,6 +1,5 @@
 import { cronRepo } from '../repositories/cron.repo'
 import { chatService } from './chat.service'
-import { goalsService } from './goals.service'
 import { gamificationService } from './gamification.service'
 import { notificationsService } from './notifications.service'
 import { prisma } from '../lib/prisma'
@@ -299,10 +298,10 @@ class CronService {
     const quarter = (Math.floor(month / 3) + 1) as 1 | 2 | 3 | 4
     const year = now.getFullYear()
 
-    // Get all users with active quarterly goals
+    // Get all users with active QUARTER goals
     const users = await prisma.user.findMany({
       where: {
-        quarterlyGoals: { some: {} },
+        goals: { some: { horizon: 'QUARTER', status: 'ACTIVE' } },
       },
       select: { id: true, email: true, name: true, locale: true },
     })
@@ -311,7 +310,9 @@ class CronService {
 
     for (const user of users) {
       try {
-        await goalsService.getQuarterlyReview(user.id, quarter, year)
+        // Quarterly review generation deferred to Phase 3 (Rituals).
+        void quarter
+        void year
 
         // Check quarterly milestone achievements
         await gamificationService.checkAchievements(user.id)
@@ -377,20 +378,8 @@ class CronService {
         // Generate the weekly plan
         const plan = await chatService.weeklyPlanning(user.id, weekStartDate)
 
-        // Auto-create health snapshots for each quarterly goal
-        const quarterlyGoals = await prisma.quarterlyGoal.findMany({
-          where: { userId: user.id, status: { not: 'completed' } },
-          select: { id: true, progress: true },
-        })
-        for (const qg of quarterlyGoals) {
-          const momentum = qg.progress ?? 0
-          const status = momentum >= 75 ? 'positive' : momentum >= 40 ? 'neutral' : 'negative'
-          await prisma.goalHealthSnapshot.upsert({
-            where: { quarterlyGoalId_weekStart: { quarterlyGoalId: qg.id, weekStart: snapshotWeekStart } },
-            update: { momentumScore: momentum, status },
-            create: { userId: user.id, quarterlyGoalId: qg.id, weekStart: snapshotWeekStart, momentumScore: momentum, status },
-          })
-        }
+        // GoalHealthSnapshot dropped in Phase 1; reintroduce in Phase 3 rituals/reflections.
+        void snapshotWeekStart
 
         void plan
 
@@ -444,8 +433,8 @@ class CronService {
       const lang = (user.locale || 'en').startsWith('es') ? 'es' : 'en'
 
       // Check for quarterly goals in the current quarter
-      const quarterlyGoals = await prisma.quarterlyGoal.findMany({
-        where: { userId: user.id, year, quarter },
+      const quarterlyGoals = await prisma.goal.findMany({
+        where: { userId: user.id, horizon: 'QUARTER', periodKey: `${year}-Q${quarter}` },
         select: { id: true, objectives: true },
       })
 
@@ -468,7 +457,7 @@ class CronService {
         nudged++
       } else {
         // Goals exist — check if <50% have measurable targets (non-empty objectives)
-        const withTargets = quarterlyGoals.filter((g) => {
+        const withTargets = quarterlyGoals.filter((g: { objectives: unknown }) => {
           if (!g.objectives) return false
           const objs = g.objectives as unknown[]
           return Array.isArray(objs) && objs.length > 0

@@ -2,6 +2,8 @@ import { OpenAPIHono } from '@hono/zod-openapi'
 import { createMiddleware } from 'hono/factory'
 import { cronService } from '../services/cron.service'
 import { calendarService } from '../services/calendar.service'
+import { recurringService } from '../services/recurring.service'
+import { ritualsService } from '../services/rituals.service'
 
 export const cronRoutes = new OpenAPIHono()
 
@@ -93,6 +95,21 @@ cronRoutes.post('/calendar-watch-renew', async (c) => {
     return c.json({ data: result }, 200)
   } catch (err: any) {
     console.error('[CRON_CAL_WATCH_RENEW]', err)
+    return c.json({ error: err.message || 'Failed' }, 500)
+  }
+})
+
+// POST /materialize-daily — ensure daily rituals + materialize recurring series
+cronRoutes.post('/materialize-daily', async (c) => {
+  try {
+    const now = new Date()
+    const [rituals, recurring] = await Promise.all([
+      ritualsService.ensureDailyForAllUsers(now),
+      recurringService.materializeForAllUsers(now),
+    ])
+    return c.json({ data: { rituals, recurring } }, 200)
+  } catch (err: any) {
+    console.error('[CRON_MATERIALIZE_DAILY]', err)
     return c.json({ error: err.message || 'Failed' }, 500)
   }
 })

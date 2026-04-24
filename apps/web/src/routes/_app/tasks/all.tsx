@@ -97,6 +97,15 @@ function TasksAllPage() {
     }
   }
 
+  async function handleArchive(task: Task) {
+    try {
+      await updateTask.mutateAsync({ id: task.id, data: { status: 'archived' } })
+      toast.success(t('taskArchived', { defaultValue: 'Task archived' }))
+    } catch {
+      toast.error(t('failedToUpdate'))
+    }
+  }
+
   async function handleReschedule(task: Task, date: string) {
     try {
       await updateTask.mutateAsync({
@@ -159,6 +168,7 @@ function TasksAllPage() {
                     onToggle={toggleTask}
                     onEdit={openEdit}
                     onDelete={handleDelete}
+                    onArchive={handleArchive}
                   />
                 ))
               ) : (

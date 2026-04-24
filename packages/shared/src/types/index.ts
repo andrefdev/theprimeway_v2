@@ -34,3 +34,11 @@ export type { ChatThread, ChatMessage, Briefing } from './chat'
 export type { NotificationPreferences, PushSubscription, AppNotification, SmartReminder, BatchedNotification, BatchedNotificationsResponse } from './notifications'
 export type { SubscriptionPlan, SubscriptionStatus } from './subscriptions'
 export type { FeatureValue, ResolvedFeatureSet, FeaturesResponse } from './features'
+export type {
+  BrainEntry,
+  BrainEntryStatus,
+  BrainCrossLink,
+  BrainCrossLinkTarget,
+  BrainCrossLinkType,
+  BrainActionItem,
+} from './brain'

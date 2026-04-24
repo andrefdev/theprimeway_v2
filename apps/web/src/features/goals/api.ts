@@ -11,6 +11,14 @@ export const goalsApi = {
   getGoalTree: (params?: Record<string, string>) =>
     api.get<PrimeVision[]>('/goals/tree', { params }).then((r) => r.data),
 
+  // Weekly alignment (completed tasks linked to goals / total completed)
+  weeklyAlignment: (weekStart: string) =>
+    api
+      .get<{ data: { weekStart: string; total: number; aligned: number; unaligned: number; alignmentPct: number; sampleUnaligned: string[] } }>(
+        `/goals/weekly-alignment?weekStart=${encodeURIComponent(weekStart)}`,
+      )
+      .then((r) => r.data.data),
+
   // Visions
   listVisions: (params?: Record<string, string>) =>
     api.get<ListResponse<PrimeVision>>('/goals/visions', { params }).then((r) => r.data),

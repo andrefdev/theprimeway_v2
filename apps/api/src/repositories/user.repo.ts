@@ -54,42 +54,6 @@ class UserRepository {
     })
   }
 
-  // ── Work Preferences ───────────────────────────────────────────────────
-
-  async findWorkPreferences(userId: string) {
-    return prisma.userWorkPreferences.findFirst({ where: { userId } })
-  }
-
-  async upsertWorkPreferences(
-    userId: string,
-    data: Record<string, any>,
-  ) {
-    const existing = await prisma.userWorkPreferences.findFirst({ where: { userId } })
-
-    if (existing) {
-      return prisma.userWorkPreferences.update({
-        where: { id: existing.id },
-        data: {
-          ...data,
-          updatedAt: new Date(),
-        },
-      })
-    }
-
-    return prisma.userWorkPreferences.create({
-      data: {
-        userId,
-        timeZone: data.timeZone || 'America/New_York',
-        workStartHour: data.workStartHour ?? 9,
-        workEndHour: data.workEndHour ?? 17,
-        workDays: data.workDays || [1, 2, 3, 4, 5],
-        defaultTaskDurationMinutes: data.defaultTaskDurationMinutes ?? 30,
-        maxTasksPerDay: data.maxTasksPerDay ?? 10,
-        overflowStrategy: data.overflowStrategy || 'backlog',
-      },
-    })
-  }
-
   // ── Currency Settings ──────────────────────────────────────────────────
 
   async findCurrencySettings(userId: string) {
@@ -130,6 +94,28 @@ class UserRepository {
 
   async deleteUser(userId: string): Promise<void> {
     await prisma.user.delete({ where: { id: userId } })
+  }
+
+  // ── Section customizations ─────────────────────────────────────────────
+
+  listSectionCustomizations(userId: string) {
+    return prisma.sectionCustomization.findMany({ where: { userId } })
+  }
+
+  upsertSectionCustomization(
+    userId: string,
+    sectionId: string,
+    fields: Record<string, unknown>,
+  ) {
+    return prisma.sectionCustomization.upsert({
+      where: { userId_sectionId: { userId, sectionId } },
+      update: { ...fields, updatedAt: new Date() },
+      create: { userId, sectionId, ...fields },
+    })
+  }
+
+  deleteSectionCustomization(userId: string, sectionId: string) {
+    return prisma.sectionCustomization.deleteMany({ where: { userId, sectionId } })
   }
 }
 

@@ -13,4 +13,7 @@ export const onboardingApi = {
 
   savePreferences: (data: OnboardingPreferences) =>
     api.put('/user/settings', data).then((r) => r.data),
+
+  completeOnboarding: (data: { locale?: string; timezone?: string }) =>
+    api.post('/user/onboarding/complete', data).then((r) => r.data),
 }

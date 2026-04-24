@@ -1410,3 +1410,12 @@ goalsRoutes.openapi(inactiveRoute, (async (c: any) => {
   }
 }) as any)
 
+
+
+// ─── Weekly alignment % (completed tasks linked to a goal / total completed) ────
+goalsRoutes.get('/weekly-alignment', async (c) => {
+  const userId = c.get('user').userId
+  const weekStartStr = c.req.query('weekStart')
+  if (!weekStartStr) return c.json({ error: 'weekStart required' }, 400)
+  return c.json({ data: await goalsService.getWeeklyAlignment(userId, weekStartStr) })
+})
