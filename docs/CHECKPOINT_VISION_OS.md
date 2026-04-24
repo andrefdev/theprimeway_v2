@@ -19,7 +19,7 @@
 
 **API TS baseline:** 108 (pre-migration) → 98 → **90** (current, after admin/dashboard refactor)
 **Web TS:** **0**
-**Migrations applied:** 3 → **8**
+**Migrations applied:** 3 → **9** (last: `add_brain_entries_phase1`)
 
 ---
 
@@ -209,6 +209,8 @@ Routes translate to HTTP 404/409/500 by reason.
 9. ~~**Ritual customization UI**~~ ✅ 2026-04-24 — `RitualsManager` mounted in `/settings`. CRUD over user-owned rituals (create / edit kind+cadence+scheduledTime+steps+isEnabled / delete). System defaults shown read-only.
 
 12. ~~**Public API docs page**~~ ✅ 2026-04-24 — `/api-docs` page with endpoint list, auth instructions (X-API-Key + Bearer), webhook payload shape, HMAC-SHA256 verification snippet (Node.js), limits. Linked from ApiKeysCard + WebhooksCard in `/settings`.
+
+14. ~~**Second Brain Module — Phase 1 MVP**~~ ✅ 2026-04-24 — text-only capture + AI pipeline + cross-links. Schema: `BrainEntry` + `BrainCrossLink` (migration `add_brain_entries_phase1`). Backend: `brain.repo` + `brain.service` (fire-and-forget `processEntry` with `generateObject` on `taskModel` that fuzzy-resolves cross-link titles against user tasks/goals/habits/notes via new `lib/fuzzy-match.ts`) + `/api/brain/entries` CRUD + `/entries/:id/reprocess` + `/entries/:entryId/action-items/:index/apply` (one-click creates Task with `source: 'brain_entry'` + `action_for` cross-link). Feature gate `BRAIN_MODULE` active from day 1. `BRAIN_ENTRIES_LIMIT: 20` on free tier. +10 XP via `gamificationService.awardXp` + `brain.entry.created` event. Web: `/brain` route (capture card + feed + detail split), polling 2–3s while `status ∈ {pending,transcribing,analyzing}`, sidebar entry with gate. Sin audio/grafo (Fase 2).
 
 13. ~~**Anti-fatigue signals**~~ ✅ 2026-04-24 — `fatigueService.analyze(userId, windowDays=7)` computes ratio of low-priority + goal-unlinked completions, returns `{level: clear|mild|strong, message}`. `GET /api/fatigue?windowDays=N`. `FatigueSignal` component surfaces inline in Daily Shutdown ritual hint + card on Dashboard above GoalsSummary. Non-shaming copy (roadmap §10 risk on childish gamification).
 
