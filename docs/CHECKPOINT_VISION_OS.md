@@ -206,7 +206,7 @@ Routes translate to HTTP 404/409/500 by reason.
 6. ~~**Focus Mode polish**~~ 🟡 2026-04-24 — post-complete "What's the smallest next step?" prompt added (creates backlog task on submit). Subtasks panel still pending (needs Subtask CRUD routes).
 7. **Mobile companion app** (multi-week scope).
 8. **pgvector + RAG** for AI context retrieval across reflections (only when concrete use case emerges).
-9. **Ritual customization UI** — edit own prompts.
+9. ~~**Ritual customization UI**~~ ✅ 2026-04-24 — `RitualsManager` mounted in `/settings`. CRUD over user-owned rituals (create / edit kind+cadence+scheduledTime+steps+isEnabled / delete). System defaults shown read-only.
 10. **Slack/Linear/Notion read-only integrations.**
 
 ---

@@ -1,9 +1,43 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ritualsApi, type RitualStatus } from './api'
+import { ritualsApi, type RitualCreateInput, type RitualStatus } from './api'
 
 export const ritualsKeys = {
   today: ['rituals', 'today'] as const,
   week: ['rituals', 'week'] as const,
+  list: ['rituals', 'list'] as const,
+}
+
+export function useRitualsList() {
+  return useQuery({ queryKey: ritualsKeys.list, queryFn: ritualsApi.list })
+}
+
+export function useCreateRitual() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (input: RitualCreateInput) => ritualsApi.create(input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ritualsKeys.list }),
+  })
+}
+
+export function useUpdateRitual() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, input }: { id: string; input: Partial<RitualCreateInput> }) =>
+      ritualsApi.update(id, input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ritualsKeys.list })
+      qc.invalidateQueries({ queryKey: ritualsKeys.today })
+      qc.invalidateQueries({ queryKey: ritualsKeys.week })
+    },
+  })
+}
+
+export function useDeleteRitual() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => ritualsApi.remove(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ritualsKeys.list }),
+  })
 }
 
 export function useRitualsToday() {

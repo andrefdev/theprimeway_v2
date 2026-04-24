@@ -50,7 +50,28 @@ export interface RitualInstance {
   reflections: ReflectionEntry[]
 }
 
+export type RitualCadence = 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'ANNUALLY' | 'ON_DEMAND'
+
+export interface RitualCreateInput {
+  kind: RitualKind
+  name: string
+  cadence: RitualCadence
+  scheduledTime?: string
+  steps: RitualStep[]
+  isEnabled?: boolean
+}
+
 export const ritualsApi = {
+  list: () => api.get<{ data: Ritual[] }>('/rituals').then((r) => r.data.data),
+
+  create: (input: RitualCreateInput) =>
+    api.post<{ data: Ritual }>('/rituals', input).then((r) => r.data.data),
+
+  update: (id: string, input: Partial<RitualCreateInput>) =>
+    api.patch<{ data: Ritual }>(`/rituals/${id}`, input).then((r) => r.data.data),
+
+  remove: (id: string) => api.delete(`/rituals/${id}`).then((r) => r.data),
+
   today: () =>
     api
       .get<{ data: { pending: RitualInstance[]; plan: RitualInstance; shutdown: RitualInstance } }>('/rituals/today')

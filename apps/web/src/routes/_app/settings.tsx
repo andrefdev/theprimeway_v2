@@ -9,6 +9,7 @@ import { NotificationsPreferences } from '@/features/notifications/components/No
 import { GoogleCalendarSettings } from '@/features/calendar/components/GoogleCalendarSettings'
 import { ApiKeysCard } from '@/features/integrations/components/ApiKeysCard'
 import { WebhooksCard } from '@/features/integrations/components/WebhooksCard'
+import { RitualsManager } from '@/features/rituals/components/RitualsManager'
 import { useFeature } from '@/features/feature-flags/hooks'
 import { FEATURES } from '@repo/shared/constants'
 import { toast } from 'sonner'
@@ -45,6 +46,7 @@ function SettingsPage() {
 
         <NotificationsPreferences />
         <GoogleCalendarSettings />
+        <RitualsManager />
         <ApiKeysCard />
         <WebhooksCard />
         <ChangePasswordForm />
