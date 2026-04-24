@@ -208,6 +208,10 @@ Routes translate to HTTP 404/409/500 by reason.
 8. **pgvector + RAG** for AI context retrieval across reflections (only when concrete use case emerges).
 9. ~~**Ritual customization UI**~~ ✅ 2026-04-24 — `RitualsManager` mounted in `/settings`. CRUD over user-owned rituals (create / edit kind+cadence+scheduledTime+steps+isEnabled / delete). System defaults shown read-only.
 
+12. ~~**Public API docs page**~~ ✅ 2026-04-24 — `/api-docs` page with endpoint list, auth instructions (X-API-Key + Bearer), webhook payload shape, HMAC-SHA256 verification snippet (Node.js), limits. Linked from ApiKeysCard + WebhooksCard in `/settings`.
+
+13. ~~**Anti-fatigue signals**~~ ✅ 2026-04-24 — `fatigueService.analyze(userId, windowDays=7)` computes ratio of low-priority + goal-unlinked completions, returns `{level: clear|mild|strong, message}`. `GET /api/fatigue?windowDays=N`. `FatigueSignal` component surfaces inline in Daily Shutdown ritual hint + card on Dashboard above GoalsSummary. Non-shaming copy (roadmap §10 risk on childish gamification).
+
 11. ~~**Quarterly + Annual review rituals**~~ ✅ 2026-04-24 — `QUARTERLY_REVIEW` + `ANNUAL_REVIEW` templates with default prompts, `ensureQuarterlyInstance` / `ensureAnnualInstance` helpers (scheduled last day of quarter / Dec 31 at 17:00). `GET /rituals/quarter` + `GET /rituals/year`. Web: `PeriodReviewDialog` shared shell, `PeriodReviewLauncher` card on Vision surface, `PeriodReviewAutoOpen` triggers within last 7 days (quarter) / last 14 days (year). Uses existing `PromptRitualDialog` + `AiRitualSummary`. Completes the ritual cadence pyramid (daily → weekly → quarterly → annual).
 10. **Slack/Linear/Notion read-only integrations.**
 

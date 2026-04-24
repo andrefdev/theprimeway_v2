@@ -26,6 +26,7 @@ import { Route as AppNotificationsRouteImport } from './routes/_app/notification
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as AppCompassRouteImport } from './routes/_app/compass'
 import { Route as AppChannelsRouteImport } from './routes/_app/channels'
+import { Route as AppApiDocsRouteImport } from './routes/_app/api-docs'
 import { Route as AppAiRouteImport } from './routes/_app/ai'
 import { Route as AppSplatRouteImport } from './routes/_app/$'
 import { Route as AppTasksIndexRouteImport } from './routes/_app/tasks/index'
@@ -142,6 +143,11 @@ const AppCompassRoute = AppCompassRouteImport.update({
 const AppChannelsRoute = AppChannelsRouteImport.update({
   id: '/channels',
   path: '/channels',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppApiDocsRoute = AppApiDocsRouteImport.update({
+  id: '/api-docs',
+  path: '/api-docs',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAiRoute = AppAiRouteImport.update({
@@ -319,6 +325,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$': typeof AppSplatRoute
   '/ai': typeof AppAiRoute
+  '/api-docs': typeof AppApiDocsRoute
   '/channels': typeof AppChannelsRoute
   '/compass': typeof AppCompassRoute
   '/dashboard': typeof AppDashboardRoute
@@ -370,6 +377,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$': typeof AppSplatRoute
   '/ai': typeof AppAiRoute
+  '/api-docs': typeof AppApiDocsRoute
   '/channels': typeof AppChannelsRoute
   '/compass': typeof AppCompassRoute
   '/dashboard': typeof AppDashboardRoute
@@ -424,6 +432,7 @@ export interface FileRoutesById {
   '/_auth': typeof AuthRouteWithChildren
   '/_app/$': typeof AppSplatRoute
   '/_app/ai': typeof AppAiRoute
+  '/_app/api-docs': typeof AppApiDocsRoute
   '/_app/channels': typeof AppChannelsRoute
   '/_app/compass': typeof AppCompassRoute
   '/_app/dashboard': typeof AppDashboardRoute
@@ -477,6 +486,7 @@ export interface FileRouteTypes {
     | '/'
     | '/$'
     | '/ai'
+    | '/api-docs'
     | '/channels'
     | '/compass'
     | '/dashboard'
@@ -528,6 +538,7 @@ export interface FileRouteTypes {
     | '/'
     | '/$'
     | '/ai'
+    | '/api-docs'
     | '/channels'
     | '/compass'
     | '/dashboard'
@@ -581,6 +592,7 @@ export interface FileRouteTypes {
     | '/_auth'
     | '/_app/$'
     | '/_app/ai'
+    | '/_app/api-docs'
     | '/_app/channels'
     | '/_app/compass'
     | '/_app/dashboard'
@@ -754,6 +766,13 @@ declare module '@tanstack/react-router' {
       path: '/channels'
       fullPath: '/channels'
       preLoaderRoute: typeof AppChannelsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/api-docs': {
+      id: '/_app/api-docs'
+      path: '/api-docs'
+      fullPath: '/api-docs'
+      preLoaderRoute: typeof AppApiDocsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/ai': {
@@ -1000,6 +1019,7 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppSplatRoute: typeof AppSplatRoute
   AppAiRoute: typeof AppAiRoute
+  AppApiDocsRoute: typeof AppApiDocsRoute
   AppChannelsRoute: typeof AppChannelsRoute
   AppCompassRoute: typeof AppCompassRoute
   AppDashboardRoute: typeof AppDashboardRoute
@@ -1047,6 +1067,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppSplatRoute: AppSplatRoute,
   AppAiRoute: AppAiRoute,
+  AppApiDocsRoute: AppApiDocsRoute,
   AppChannelsRoute: AppChannelsRoute,
   AppCompassRoute: AppCompassRoute,
   AppDashboardRoute: AppDashboardRoute,

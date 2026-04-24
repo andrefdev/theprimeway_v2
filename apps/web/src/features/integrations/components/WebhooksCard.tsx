@@ -71,7 +71,8 @@ export function WebhooksCard() {
         <div>
           <h3 className="text-base font-semibold">Webhooks</h3>
           <p className="text-xs text-muted-foreground">
-            Receive POST notifications when events happen. Payloads are signed with HMAC-SHA256 in the <code className="font-mono">X-Primeway-Signature</code> header.
+            Receive POST notifications when events happen. Payloads are signed with HMAC-SHA256 in the <code className="font-mono">X-Primeway-Signature</code> header.{' '}
+            <a href="/api-docs" className="underline">Webhook docs →</a>
           </p>
         </div>
 

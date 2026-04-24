@@ -51,7 +51,8 @@ export function ApiKeysCard() {
         <div>
           <h3 className="text-base font-semibold">API keys</h3>
           <p className="text-xs text-muted-foreground">
-            Use these to call the Primeway API from scripts, Zapier, or other tools. Keys are shown once at creation — save them somewhere safe.
+            Use these to call the Primeway API from scripts, Zapier, or other tools. Keys are shown once at creation — save them somewhere safe.{' '}
+            <a href="/api-docs" className="underline">API docs →</a>
           </p>
         </div>
 
