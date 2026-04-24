@@ -7,6 +7,8 @@ import { ChangePasswordForm } from '@/features/settings/components/ChangePasswor
 import { DangerZone } from '@/features/settings/components/DangerZone'
 import { NotificationsPreferences } from '@/features/notifications/components/NotificationsPreferences'
 import { GoogleCalendarSettings } from '@/features/calendar/components/GoogleCalendarSettings'
+import { ApiKeysCard } from '@/features/integrations/components/ApiKeysCard'
+import { WebhooksCard } from '@/features/integrations/components/WebhooksCard'
 import { useFeature } from '@/features/feature-flags/hooks'
 import { FEATURES } from '@repo/shared/constants'
 import { toast } from 'sonner'
@@ -43,6 +45,8 @@ function SettingsPage() {
 
         <NotificationsPreferences />
         <GoogleCalendarSettings />
+        <ApiKeysCard />
+        <WebhooksCard />
         <ChangePasswordForm />
 
         {/* Only show DangerZone if export data is available */}
