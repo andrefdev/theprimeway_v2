@@ -728,6 +728,9 @@ model User {
   // Public API + webhooks (Phase 4)
   apiKeys  ApiKey[]
   webhooks Webhook[]
+
+  // Second Brain (Phase 4 MVP — text only)
+  brainEntries BrainEntry[]
 }
 
 // ---------------------------------------------------------------------------
@@ -1639,4 +1642,74 @@ model TimerEvent {
 enum TaskKind {
   TASK
   HABIT
+}
+
+// ---------------------------------------------------------------------------
+// Second Brain — Phase 1 MVP (text only; audio/graph come in Phase 2)
+// ---------------------------------------------------------------------------
+
+model BrainEntry {
+  id                String    @id @default(uuid())
+  userId            String    @map("user_id")
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Source (Phase 1 = text; audio fields pre-wired for Phase 2)
+  sourceType        String    @default("text") @map("source_type") // text | audio | whatsapp | import
+  sourceDevice      String?   @map("source_device")
+  audioUrl          String?   @map("audio_url")
+  audioDuration     Int?      @map("audio_duration")
+  audioSize         Int?      @map("audio_size")
+  rawTranscript     String?   @map("raw_transcript") // the user's text (for text) or transcript (for audio)
+  language          String?   @default("en")
+
+  // AI-produced output
+  title             String?
+  summary           String?
+  structuredContent String?   @map("structured_content")
+  topics            Json      @default("[]")
+  sentiment         String?
+  actionItems       Json      @default("[]") @map("action_items")
+  aiMetadata        Json?     @map("ai_metadata")
+
+  // Pipeline state
+  status            String    @default("pending") // pending | transcribing | analyzing | complete | failed
+  errorMessage      String?   @map("error_message")
+  processedAt       DateTime? @map("processed_at")
+
+  // User overrides
+  userTitle         String?   @map("user_title")
+  isPinned          Boolean   @default(false) @map("is_pinned")
+  isArchived        Boolean   @default(false) @map("is_archived")
+
+  deletedAt         DateTime? @map("deleted_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  crossLinks        BrainCrossLink[]
+
+  @@index([userId])
+  @@index([userId, status])
+  @@index([userId, deletedAt])
+  @@index([userId, createdAt])
+  @@map("brain_entries")
+}
+
+model BrainCrossLink {
+  id          String     @id @default(uuid())
+  userId      String     @map("user_id")
+  entryId     String     @map("entry_id")
+  entry       BrainEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+
+  targetType  String     @map("target_type") // task | goal | habit | note
+  targetId    String     @map("target_id")
+  linkType    String     @default("related") @map("link_type") // related | spawned_from | action_for | evidence_for
+  aiGenerated Boolean    @default(true) @map("ai_generated")
+
+  createdAt   DateTime   @default(now()) @map("created_at")
+
+  @@unique([entryId, targetType, targetId])
+  @@index([userId])
+  @@index([entryId])
+  @@index([targetType, targetId])
+  @@map("brain_cross_links")
 }
