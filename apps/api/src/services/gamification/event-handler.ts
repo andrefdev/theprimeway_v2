@@ -88,6 +88,7 @@ export function subscribeGamificationHandlers() {
     'note.created',
     'book.finished',
     'quarterly.progress.updated',
+    'brain.entry.created',
   ]
 
   for (const t of types) {

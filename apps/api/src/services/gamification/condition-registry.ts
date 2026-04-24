@@ -223,4 +223,5 @@ export const EVENT_TO_CONDITIONS: Record<GamificationEventType, string[]> = {
   'note.created': ['notes_created'],
   'book.finished': ['books_completed'],
   'quarterly.progress.updated': ['quarterly_progress'],
+  'brain.entry.created': [],
 }

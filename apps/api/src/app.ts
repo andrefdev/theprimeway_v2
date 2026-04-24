@@ -36,6 +36,7 @@ import { apiKeysRoutes } from './routes/api-keys'
 import { webhooksRoutes } from './routes/webhooks'
 import { subtasksRoutes } from './routes/subtasks'
 import { fatigueRoutes } from './routes/fatigue'
+import { brainRoutes } from './routes/brain'
 
 // Create app with OpenAPI support
 export const app = new OpenAPIHono<AppEnv>()
@@ -94,6 +95,7 @@ app.route('/api/api-keys', apiKeysRoutes)
 app.route('/api/webhooks', webhooksRoutes)
 app.route('/api', subtasksRoutes)
 app.route('/api/fatigue', fatigueRoutes)
+app.route('/api/brain', brainRoutes)
 
 // Swagger UI
 app.get('/docs', swaggerUI({ url: '/openapi.json' }))
