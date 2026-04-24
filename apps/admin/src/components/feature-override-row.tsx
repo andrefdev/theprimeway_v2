@@ -19,6 +19,7 @@ const FEATURE_NAMES: Record<FeatureKey, string> = {
   FINANCES_MODULE: 'Finances Module',
   NOTES_MODULE: 'Notes Module',
   HEALTH_MODULE: 'Health Module',
+  BRAIN_MODULE: 'Second Brain',
   ADVANCED_ANALYTICS: 'Advanced Analytics',
   CUSTOM_THEME_CREATION: 'Custom Theme Creation',
   CUSTOM_THEMES: 'Custom Themes',
@@ -29,6 +30,7 @@ const FEATURE_NAMES: Record<FeatureKey, string> = {
   NOTES_LIMIT: 'Max Notes',
   TASKS_LIMIT: 'Max Tasks',
   POMODORO_DAILY_LIMIT: 'Daily Pomodoro Sessions',
+  BRAIN_ENTRIES_LIMIT: 'Max Brain Entries',
 }
 
 export function FeatureOverrideRow({
