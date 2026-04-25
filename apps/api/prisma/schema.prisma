@@ -6,286 +6,6 @@ generator client {
   provider = "prisma-client-js"
 }
 
-model FinanceAccount {
-  id             String    @id @default(uuid())
-  userId         String?   @map("user_id")
-  user           User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name           String
-  type           String
-  bankName       String?   @map("bank_name")
-  accountNumber  String?   @map("account_number")
-  currency       String?   @default("USD")
-  initialBalance Decimal?  @default(0)
-  currentBalance Decimal?  @default(0)
-  creditLimit    Decimal?
-  isActive       Boolean?  @default(true) @map("is_active")
-  createdAt      DateTime? @default(now()) @map("created_at")
-  updatedAt      DateTime? @default(now()) @map("updated_at")
-
-  transactions         Transaction[]       @relation("TransactionAccount")
-  transferTransactions Transaction[]       @relation("TransactionTransferAccount")
-  savingsGoals         SavingsGoal[]
-  recurringExpenses    RecurringExpense[]
-  investmentHoldings   InvestmentHolding[]
-
-  @@index([userId])
-  @@map("accounts")
-}
-
-model Budget {
-  id           String    @id @default(uuid())
-  userId       String?   @map("user_id")
-  user         User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name         String
-  description  String?
-  periodType   String    @map("period_type")
-  startDate    DateTime  @map("start_date")
-  endDate      DateTime  @map("end_date")
-  totalAmount  Decimal   @map("total_amount")
-  currency     String?   @default("USD")
-  categoryType String    @default("expense") @map("category_type")
-  variability  String?   @map("variability")
-  isActive     Boolean?  @default(true) @map("is_active")
-  isArchived   Boolean?  @default(false) @map("is_archived")
-  createdAt    DateTime? @default(now()) @map("created_at")
-  updatedAt    DateTime? @default(now()) @map("updated_at")
-
-  transactions      Transaction[]
-  recurringExpenses RecurringExpense[]
-
-  @@index([userId])
-  @@map("budgets")
-}
-
-model IncomeSource {
-  id                   String    @id @default(uuid())
-  userId               String    @map("user_id")
-  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name                 String
-  type                 String    @default("fixed")
-  category             String?
-  frequency            String    @default("monthly") @map("frequency")
-  baseAmount           Decimal?  @map("base_amount")
-  currency             String?   @default("USD")
-  probability          Decimal?  @default(1.0) @map("probability")
-  estimationStrategy   String    @default("average") @map("estimation_strategy")
-  historicalWindowDays Int?      @default(90) @map("historical_window_days")
-  isActive             Boolean?  @default(true) @map("is_active")
-  notes                String?
-  createdAt            DateTime? @default(now()) @map("created_at")
-  updatedAt            DateTime? @default(now()) @map("updated_at")
-
-  transactions Transaction[]
-
-  @@index([userId])
-  @@map("income_sources")
-}
-
-model InvestmentHolding {
-  id              String          @id @default(uuid())
-  userId          String          @map("user_id")
-  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  accountId       String?         @map("account_id")
-  account         FinanceAccount? @relation(fields: [accountId], references: [id], onDelete: SetNull)
-  name            String
-  ticker          String?
-  category        String          @default("stock") // stock | etf | mutual_fund | crypto | bond | real_estate | other
-  quantity        Decimal         @default(0)
-  avgCostPrice    Decimal         @default(0) @map("avg_cost_price")
-  currentPrice    Decimal         @default(0) @map("current_price")
-  currency        String          @default("USD")
-  lastPriceUpdate DateTime?       @map("last_price_update")
-  notes           String?
-  createdAt       DateTime?       @default(now()) @map("created_at")
-  updatedAt       DateTime?       @default(now()) @map("updated_at")
-
-  @@index([userId])
-  @@index([accountId])
-  @@map("investment_holdings")
-}
-
-model RecurringExpense {
-  id          String    @id @default(uuid())
-  userId      String    @map("user_id")
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name        String
-  description String?
-  type        String    @default("fixed") // fixed | variable
-  category    String? // housing, utilities, subscriptions, transport, food, health, education, entertainment, other
-  frequency   String    @default("monthly") // weekly | biweekly | monthly | quarterly | yearly
-  baseAmount  Decimal?  @map("base_amount")
-  currency    String?   @default("USD")
-  dueDay      Int?      @map("due_day") // day of month (1-31)
-  isAutoPay   Boolean?  @default(false) @map("is_auto_pay")
-  budgetId    String?   @map("budget_id")
-  accountId   String?   @map("account_id")
-  isActive    Boolean?  @default(true) @map("is_active")
-  notes       String?
-  createdAt   DateTime? @default(now()) @map("created_at")
-  updatedAt   DateTime? @default(now()) @map("updated_at")
-
-  budget       Budget?         @relation(fields: [budgetId], references: [id], onDelete: SetNull)
-  account      FinanceAccount? @relation(fields: [accountId], references: [id], onDelete: SetNull)
-  transactions Transaction[]
-
-  @@index([userId])
-  @@index([budgetId])
-  @@index([accountId])
-  @@map("recurring_expenses")
-}
-
-model Debt {
-  id                String    @id @default(uuid())
-  userId            String    @map("user_id")
-  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name              String
-  description       String?
-  category          String?
-  totalAmount       Decimal   @map("total_amount")
-  paidAmount        Decimal?  @default(0) @map("paid_amount")
-  currency          String?   @default("USD")
-  creditor          String?
-  dueDate           DateTime? @map("due_date")
-  interestRate      Decimal?  @default(0) @map("interest_rate")
-  isActive          Boolean?  @default(true) @map("is_active")
-  paymentDay        Int?      @map("payment_day")
-  installmentAmount Decimal?  @map("installment_amount")
-  installmentCount  Int?      @map("installment_count")
-  isRecurring       Boolean?  @default(false) @map("is_recurring")
-  nextPaymentDate   DateTime? @map("next_payment_date")
-  debtType          String?   @default("owed") @map("debt_type")
-  createdAt         DateTime? @default(now()) @map("created_at")
-  updatedAt         DateTime? @default(now()) @map("updated_at")
-
-  transactions Transaction[]
-
-  @@index([userId])
-  @@map("debts")
-}
-
-model ExchangeRate {
-  id           String    @id @default(uuid())
-  fromCurrency String    @map("from_currency")
-  toCurrency   String    @map("to_currency")
-  rate         Decimal
-  date         DateTime
-  source       String    @default("api")
-  createdAt    DateTime? @default(now()) @map("created_at")
-  updatedAt    DateTime? @default(now()) @map("updated_at")
-
-  @@unique([fromCurrency, toCurrency, date])
-  @@index([fromCurrency, toCurrency, date])
-  @@map("exchange_rates")
-}
-
-model SavingsGoal {
-  id                  String    @id @default(uuid())
-  userId              String?   @map("user_id")
-  user                User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  accountId           String?   @map("account_id")
-  name                String
-  description         String?
-  targetAmount        Decimal   @map("target_amount")
-  currentAmount       Decimal?  @default(0) @map("current_amount")
-  currency            String?   @default("USD")
-  targetDate          DateTime? @map("target_date")
-  monthlyContribution Decimal?  @map("monthly_contribution")
-  status              String    @default("active")
-  createdAt           DateTime? @default(now()) @map("created_at")
-  updatedAt           DateTime? @default(now()) @map("updated_at")
-
-  account FinanceAccount? @relation(fields: [accountId], references: [id], onDelete: SetNull)
-
-  @@index([userId])
-  @@map("savings_goals")
-}
-
-model ImportBatch {
-  id                String    @id @default(uuid())
-  userId            String    @map("user_id")
-  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  batchName         String    @map("batch_name")
-  totalTransactions Int       @default(0) @map("total_transactions")
-  importedAt        DateTime? @default(now()) @map("imported_at")
-  status            String    @default("pending_review")
-  createdAt         DateTime? @default(now()) @map("created_at")
-  updatedAt         DateTime? @default(now()) @map("updated_at")
-
-  transactions Transaction[]
-
-  @@index([userId])
-  @@map("import_batches")
-}
-
-model UserCurrencySettings {
-  id                  String    @id @default(uuid())
-  userId              String    @map("user_id")
-  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  baseCurrency        String    @default("USD") @map("base_currency")
-  preferredCurrencies Json      @map("preferred_currencies")
-  createdAt           DateTime? @default(now()) @map("created_at")
-  updatedAt           DateTime? @default(now()) @map("updated_at")
-
-  @@unique([userId])
-  @@map("user_currency_settings")
-}
-
-model Transaction {
-  id                 String    @id @default(uuid())
-  userId             String    @map("user_id")
-  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  accountId          String    @map("account_id")
-  budgetId           String?   @map("budget_id")
-  debtId             String?   @map("debt_id")
-  incomeSourceId     String?   @map("income_source_id")
-  recurringExpenseId String?   @map("recurring_expense_id")
-  type               String
-  amount             Decimal
-  description        String
-  notes              String?
-  date               DateTime
-  isRecurring        Boolean?  @default(false) @map("is_recurring")
-  recurringPattern   String?   @map("recurring_pattern")
-  transferAccountId  String?   @map("transfer_account_id")
-  tags               Json
-  receiptUrl         String?   @map("receipt_url")
-  status             String    @default("pending")
-  reviewedAt         DateTime? @map("reviewed_at")
-  reviewedBy         String?   @map("reviewed_by")
-  exclusionReason    String?   @map("exclusion_reason")
-  sourceType         String    @default("manual") @map("source_type")
-  importBatchId      String?   @map("import_batch_id")
-  createdAt          DateTime? @default(now()) @map("created_at")
-  updatedAt          DateTime? @default(now()) @map("updated_at")
-  exchangeRate       Decimal?  @default(1.0) @map("exchange_rate")
-  currency           String?   @default("USD")
-  baseCurrencyAmount Decimal?  @map("base_currency_amount")
-  exchangeRateDate   DateTime? @map("exchange_rate_date")
-  isManualRate       Boolean?  @default(false) @map("is_manual_rate")
-
-  account          FinanceAccount    @relation("TransactionAccount", fields: [accountId], references: [id], onDelete: Cascade)
-  budget           Budget?           @relation(fields: [budgetId], references: [id], onDelete: SetNull)
-  debt             Debt?             @relation(fields: [debtId], references: [id], onDelete: SetNull)
-  incomeSource     IncomeSource?     @relation(fields: [incomeSourceId], references: [id], onDelete: SetNull)
-  recurringExpense RecurringExpense? @relation(fields: [recurringExpenseId], references: [id], onDelete: SetNull)
-  transferAccount  FinanceAccount?   @relation("TransactionTransferAccount", fields: [transferAccountId], references: [id], onDelete: SetNull)
-  importBatch      ImportBatch?      @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
-
-  @@index([userId])
-  @@index([userId, status])
-  @@index([userId, type])
-  @@index([userId, date])
-  @@index([userId, status, date])
-  @@index([accountId])
-  @@index([budgetId])
-  @@index([debtId])
-  @@index([incomeSourceId])
-  @@index([recurringExpenseId])
-  @@index([importBatchId])
-  @@index([date])
-  @@map("transactions")
-}
-
 model SubscriptionPlan {
   id                       String    @id @default(uuid())
   name                     String
@@ -304,7 +24,6 @@ model SubscriptionPlan {
   maxPomodoroSessionsDaily Int?      @default(10) @map("max_pomodoro_sessions_daily")
   hasAiAssistant           Boolean?  @default(false) @map("has_ai_assistant")
   hasReadingModule         Boolean?  @default(false) @map("has_reading_module")
-  hasFinancesModule        Boolean?  @default(false) @map("has_finances_module")
   hasNotesModule           Boolean?  @default(false) @map("has_notes_module")
   hasAdvancedAnalytics     Boolean?  @default(false) @map("has_advanced_analytics")
   hasCustomThemeCreation   Boolean?  @default(false) @map("has_custom_theme_creation")
@@ -313,7 +32,7 @@ model SubscriptionPlan {
   isActive                 Boolean?  @default(true) @map("is_active")
   sortOrder                Int?      @default(0) @map("sort_order")
   createdAt                DateTime? @default(now()) @map("created_at")
-  updatedAt                DateTime? @default(now()) @map("updated_at")
+  updatedAt                DateTime? @updatedAt @map("updated_at")
 
   subscriptions UserSubscription[]
 
@@ -365,7 +84,7 @@ model NoteCategory {
   color     String?   @default("#6B7280")
   icon      String?
   createdAt DateTime? @default(now()) @map("created_at")
-  updatedAt DateTime? @default(now()) @map("updated_at")
+  updatedAt DateTime? @updatedAt @map("updated_at")
 
   notes Note[]
 
@@ -380,12 +99,12 @@ model Note {
   categoryId String?   @map("category_id")
   title      String
   content    String?
-  tags       Json
+  tags       Json      @default("[]")
   isPinned   Boolean?  @default(false) @map("is_pinned")
   isArchived Boolean?  @default(false) @map("is_archived")
   deletedAt  DateTime? @map("deleted_at")
   createdAt  DateTime? @default(now()) @map("created_at")
-  updatedAt  DateTime? @default(now()) @map("updated_at")
+  updatedAt  DateTime? @updatedAt @map("updated_at")
 
   category NoteCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 
@@ -405,7 +124,7 @@ model Task {
   priority                 String    @default("medium")
   dueDate                  DateTime? @map("due_date")
   completedAt              DateTime? @map("completed_at")
-  tags                     Json
+  tags                     Json      @default("[]")
   estimatedDurationMinutes Int?      @map("estimated_duration_minutes")
   actualDurationMinutes    Int?      @default(0) @map("actual_duration_minutes")
   actualDurationSeconds    Int?      @default(0) @map("actual_duration_seconds")
@@ -443,7 +162,7 @@ model Task {
   habitMeta          Json?     @map("habit_meta") // { category, color, targetFrequency, frequencyType, weekDays } when kind=HABIT
 
   createdAt DateTime? @default(now()) @map("created_at")
-  updatedAt DateTime? @default(now()) @map("updated_at")
+  updatedAt DateTime? @updatedAt @map("updated_at")
 
   workingSessions    WorkingSession[]
   subtasks           Subtask[]
@@ -479,7 +198,7 @@ model HealthMetric {
   notes        String?
   metadata     Json?
   createdAt    DateTime? @default(now()) @map("created_at")
-  updatedAt    DateTime? @default(now()) @map("updated_at")
+  updatedAt    DateTime? @updatedAt @map("updated_at")
 
   @@index([userId, type, date])
   @@map("health_metrics")
@@ -497,7 +216,7 @@ model UserProfile {
   primaryGoal       String?   @map("primary_goal")
   lastProfileUpdate DateTime? @default(now()) @map("last_profile_update")
   createdAt         DateTime? @default(now()) @map("created_at")
-  updatedAt         DateTime? @default(now()) @map("updated_at")
+  updatedAt         DateTime? @updatedAt @map("updated_at")
 
   @@unique([userId])
   @@map("user_profiles")
@@ -544,7 +263,7 @@ model UserSettings {
   plannedTimeRecommendationsEnabled Boolean @default(true) @map("planned_time_recommendations_enabled")
 
   createdAt DateTime? @default(now()) @map("created_at")
-  updatedAt DateTime? @default(now()) @map("updated_at")
+  updatedAt DateTime? @updatedAt @map("updated_at")
 
   @@unique([userId])
   @@map("user_settings")
@@ -592,7 +311,7 @@ model UserSubscription {
   nextBillingDate            DateTime? @map("next_billing_date")
   metadata                   Json?     @map("metadata")
   createdAt                  DateTime? @default(now()) @map("created_at")
-  updatedAt                  DateTime? @default(now()) @map("updated_at")
+  updatedAt                  DateTime? @updatedAt @map("updated_at")
 
   plan     SubscriptionPlan?     @relation(fields: [planId], references: [id], onDelete: SetNull)
   webhooks LemonSqueezyWebhook[]
@@ -617,7 +336,7 @@ model UserUsageStat {
   dailyResetDate        DateTime? @map("daily_reset_date")
   monthlyResetDate      DateTime? @map("monthly_reset_date")
   createdAt             DateTime? @default(now()) @map("created_at")
-  updatedAt             DateTime? @default(now()) @map("updated_at")
+  updatedAt             DateTime? @updatedAt @map("updated_at")
 
   @@unique([userId])
   @@index([userId])
@@ -650,18 +369,6 @@ model User {
 
   accounts Account[]
   sessions Session[]
-
-  // Finance
-  financeAccounts    FinanceAccount[]
-  budgets            Budget[]
-  incomeSources      IncomeSource[]
-  recurringExpenses  RecurringExpense[]
-  investmentHoldings InvestmentHolding[]
-  debts              Debt[]
-  savingsGoals       SavingsGoal[]
-  importBatches      ImportBatch[]
-  currencySettings   UserCurrencySettings?
-  transactions       Transaction[]
 
   // Habits (habits are Task{kind:HABIT}; HabitLog retains per-day completion)
   habitLogs HabitLog[]
@@ -710,7 +417,7 @@ model User {
   dailyChallenges     DailyChallenge[]
 
   // Feature flags
-  role             String                @default("user") // "user" | "admin"
+  role             UserRole              @default(USER)
   featureOverrides UserFeatureOverride[]
 
   // Vision-to-Execution OS (Phase 1)
@@ -730,7 +437,13 @@ model User {
   webhooks Webhook[]
 
   // Second Brain (Phase 4 MVP — text only)
-  brainEntries BrainEntry[]
+  brainEntries    BrainEntry[]
+  brainCrossLinks BrainCrossLink[]
+}
+
+enum UserRole {
+  USER
+  ADMIN
 }
 
 // ---------------------------------------------------------------------------
@@ -762,7 +475,7 @@ model Webhook {
   lastDeliveryAt   DateTime? @map("last_delivery_at")
   lastDeliveryCode Int?      @map("last_delivery_code")
   createdAt        DateTime  @default(now()) @map("created_at")
-  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
 
   @@index([userId])
   @@map("webhooks")
@@ -866,9 +579,9 @@ model PushSubscription {
   userId    String    @map("user_id")
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   endpoint  String
-  keys      Json
+  keys      Json      @default("{}")
   createdAt DateTime? @default(now()) @map("created_at")
-  updatedAt DateTime? @default(now()) @map("updated_at")
+  updatedAt DateTime? @updatedAt @map("updated_at")
 
   @@unique([endpoint])
   @@index([userId])
@@ -897,7 +610,7 @@ model ChatThread {
   title         String?
   lastMessageAt DateTime? @map("last_message_at")
   createdAt     DateTime? @default(now()) @map("created_at")
-  updatedAt     DateTime? @default(now()) @map("updated_at")
+  updatedAt     DateTime? @updatedAt @map("updated_at")
 
   messages ChatMessage[]
 
@@ -933,7 +646,7 @@ model CalendarAccount {
   isPrimary               Boolean?  @default(false)
   defaultTargetCalendarId String?   @map("default_target_calendar_id")
   createdAt               DateTime? @default(now()) @map("created_at")
-  updatedAt               DateTime? @default(now()) @map("updated_at")
+  updatedAt               DateTime? @updatedAt @map("updated_at")
 
   calendars Calendar[]
 
@@ -950,7 +663,7 @@ model Calendar {
   isPrimary          Boolean?  @default(false)
   isSelectedForSync  Boolean?  @default(false)
   createdAt          DateTime? @default(now()) @map("created_at")
-  updatedAt          DateTime? @default(now()) @map("updated_at")
+  updatedAt          DateTime? @updatedAt @map("updated_at")
 
   account       CalendarAccount        @relation(fields: [calendarAccountId], references: [id], onDelete: Cascade)
   bindings      TaskCalendarBinding[]
@@ -990,7 +703,7 @@ model TaskCalendarBinding {
   lastSyncDirection        String?
   isActive                 Boolean?  @default(true)
   createdAt                DateTime? @default(now()) @map("created_at")
-  updatedAt                DateTime? @default(now()) @map("updated_at")
+  updatedAt                DateTime? @updatedAt @map("updated_at")
 
   task     Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
   calendar Calendar @relation(fields: [calendarId], references: [id], onDelete: Cascade)
@@ -1133,7 +846,7 @@ model SectionCustomization {
   iconType       String?   @default("default") @map("icon_type")
   iconValue      String?   @map("icon_value")
   createdAt      DateTime? @default(now()) @map("created_at")
-  updatedAt      DateTime? @default(now()) @map("updated_at")
+  updatedAt      DateTime? @updatedAt @map("updated_at")
 
   @@unique([userId, sectionId])
   @@index([userId])
@@ -1649,43 +1362,43 @@ enum TaskKind {
 // ---------------------------------------------------------------------------
 
 model BrainEntry {
-  id                String    @id @default(uuid())
-  userId            String    @map("user_id")
-  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(uuid())
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Source (Phase 1 = text; audio fields pre-wired for Phase 2)
-  sourceType        String    @default("text") @map("source_type") // text | audio | whatsapp | import
-  sourceDevice      String?   @map("source_device")
-  audioUrl          String?   @map("audio_url")
-  audioDuration     Int?      @map("audio_duration")
-  audioSize         Int?      @map("audio_size")
-  rawTranscript     String?   @map("raw_transcript") // the user's text (for text) or transcript (for audio)
-  language          String?   @default("en")
+  sourceType    String  @default("text") @map("source_type") // text | audio | whatsapp | import
+  sourceDevice  String? @map("source_device")
+  audioUrl      String? @map("audio_url")
+  audioDuration Int?    @map("audio_duration")
+  audioSize     Int?    @map("audio_size")
+  rawTranscript String? @map("raw_transcript") // the user's text (for text) or transcript (for audio)
+  language      String? @default("en")
 
   // AI-produced output
   title             String?
   summary           String?
-  structuredContent String?   @map("structured_content")
-  topics            Json      @default("[]")
+  structuredContent String? @map("structured_content")
+  topics            Json    @default("[]")
   sentiment         String?
-  actionItems       Json      @default("[]") @map("action_items")
-  aiMetadata        Json?     @map("ai_metadata")
+  actionItems       Json    @default("[]") @map("action_items")
+  aiMetadata        Json?   @map("ai_metadata")
 
   // Pipeline state
-  status            String    @default("pending") // pending | transcribing | analyzing | complete | failed
-  errorMessage      String?   @map("error_message")
-  processedAt       DateTime? @map("processed_at")
+  status       String    @default("pending") // pending | transcribing | analyzing | complete | failed
+  errorMessage String?   @map("error_message")
+  processedAt  DateTime? @map("processed_at")
 
   // User overrides
-  userTitle         String?   @map("user_title")
-  isPinned          Boolean   @default(false) @map("is_pinned")
-  isArchived        Boolean   @default(false) @map("is_archived")
+  userTitle  String? @map("user_title")
+  isPinned   Boolean @default(false) @map("is_pinned")
+  isArchived Boolean @default(false) @map("is_archived")
 
-  deletedAt         DateTime? @map("deleted_at")
-  createdAt         DateTime  @default(now()) @map("created_at")
-  updatedAt         DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
 
-  crossLinks        BrainCrossLink[]
+  crossLinks BrainCrossLink[]
 
   @@index([userId])
   @@index([userId, status])
@@ -1695,17 +1408,18 @@ model BrainEntry {
 }
 
 model BrainCrossLink {
-  id          String     @id @default(uuid())
-  userId      String     @map("user_id")
-  entryId     String     @map("entry_id")
-  entry       BrainEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  id      String     @id @default(uuid())
+  userId  String     @map("user_id")
+  user    User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entryId String     @map("entry_id")
+  entry   BrainEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
 
-  targetType  String     @map("target_type") // task | goal | habit | note
-  targetId    String     @map("target_id")
-  linkType    String     @default("related") @map("link_type") // related | spawned_from | action_for | evidence_for
-  aiGenerated Boolean    @default(true) @map("ai_generated")
+  targetType  String  @map("target_type") // task | goal | habit | note
+  targetId    String  @map("target_id")
+  linkType    String  @default("related") @map("link_type") // related | spawned_from | action_for | evidence_for
+  aiGenerated Boolean @default(true) @map("ai_generated")
 
-  createdAt   DateTime   @default(now()) @map("created_at")
+  createdAt DateTime @default(now()) @map("created_at")
 
   @@unique([entryId, targetType, targetId])
   @@index([userId])

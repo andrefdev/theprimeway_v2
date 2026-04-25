@@ -11,11 +11,4 @@ export const aiQueries = {
       queryFn: () => aiApi.getBriefing(),
       staleTime: CACHE_TIMES.long,
     }),
-
-  financeInsight: () =>
-    queryOptions({
-      queryKey: [...aiQueries.all(), 'finance-insight'],
-      queryFn: () => aiApi.getFinanceInsight(),
-      staleTime: CACHE_TIMES.long,
-    }),
 }

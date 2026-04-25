@@ -4,7 +4,6 @@ import { toast } from 'sonner'
 import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
 import { Badge } from '@/shared/components/ui/badge'
-import { SectionHeader } from '@/shared/components/SectionHeader'
 import { EmptyState } from '@/shared/components/ui/empty-state'
 import { SkeletonList } from '@/shared/components/ui/skeleton-list'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/shared/components/ui/select'
@@ -51,20 +50,15 @@ export function ChannelsManager() {
 
   return (
     <div>
-      <SectionHeader
-        sectionId="channels"
-        title="Channels & Contexts"
-        description="Organize your work. Link each channel to a Google Calendar to auto-publish scheduled sessions."
-        actions={
-          contexts.length === 0 && !loading ? (
-            <Button onClick={handleSeed} disabled={seedDefaults.isPending}>
-              {seedDefaults.isPending ? 'Seeding…' : 'Create defaults'}
-            </Button>
-          ) : null
-        }
-      />
+      {contexts.length === 0 && !loading && (
+        <div className="flex justify-end mb-4">
+          <Button onClick={handleSeed} disabled={seedDefaults.isPending}>
+            {seedDefaults.isPending ? 'Seeding…' : 'Create defaults'}
+          </Button>
+        </div>
+      )}
 
-      <div className="mx-auto max-w-4xl px-6 pb-6 space-y-6">
+      <div className="space-y-6">
         {loading && <SkeletonList lines={6} />}
 
         {!loading && contexts.length === 0 && (

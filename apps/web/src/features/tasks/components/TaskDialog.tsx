@@ -6,6 +6,8 @@ import { useCreateTask, useUpdateTask } from '../queries'
 import { useScheduleSuggestion } from '../hooks/use-schedule-suggestion'
 import { useEstimateTimebox } from '../hooks/use-estimate-timebox'
 import { useScheduleTask } from '../queries'
+import { useCreateRecurring } from '@/features/recurring/queries'
+import type { RecurrencePattern } from '@/features/recurring/api'
 import {
   Dialog,
   DialogContent,
@@ -61,10 +63,16 @@ export function TaskDialog({ open, onClose, task, defaultDate, defaultStart, def
   const { locale } = useLocale()
   const createTask = useCreateTask()
   const updateTask = useUpdateTask()
+  const createRecurring = useCreateRecurring()
   const estimateTimebox = useEstimateTimebox()
   const scheduleTask = useScheduleTask()
   const [showInsights, setShowInsights] = useState(false)
   const [showScheduleResult, setShowScheduleResult] = useState<{ start: string; end: string } | null>(null)
+  const [repeatEnabled, setRepeatEnabled] = useState(false)
+  const [repeatPattern, setRepeatPattern] = useState<RecurrencePattern>('DAILY')
+  const [repeatDays, setRepeatDays] = useState<number[]>([1, 2, 3, 4, 5])
+  const [repeatTime, setRepeatTime] = useState<string>('')
+  const [repeatEnd, setRepeatEnd] = useState<string>('')
   const isEdit = !!task
 
   const {
@@ -105,6 +113,11 @@ export function TaskDialog({ open, onClose, task, defaultDate, defaultStart, def
   // Reset form when dialog opens with new task
   useEffect(() => {
     if (!open) return
+    setRepeatEnabled(false)
+    setRepeatPattern('DAILY')
+    setRepeatDays([1, 2, 3, 4, 5])
+    setRepeatTime('')
+    setRepeatEnd('')
     if (task) {
       const hasTimes = !!(task.scheduledStart && task.scheduledEnd)
       form.reset({
@@ -140,17 +153,42 @@ export function TaskDialog({ open, onClose, task, defaultDate, defaultStart, def
       if (isEdit) {
         await updateTask.mutateAsync({ id: task.id, data })
         toast.success(t('taskUpdated'))
+      } else if (repeatEnabled) {
+        if (repeatPattern === 'WEEKLY' && repeatDays.length === 0) {
+          toast.error(t('selectAtLeastOneDay'))
+          return
+        }
+        const today = new Date()
+        const yyyy = today.getFullYear()
+        const mm = String(today.getMonth() + 1).padStart(2, '0')
+        const dd = String(today.getDate()).padStart(2, '0')
+        const startDate = data.scheduledDate || `${yyyy}-${mm}-${dd}`
+        await createRecurring.mutateAsync({
+          templateTaskJson: data as unknown as Record<string, unknown>,
+          pattern: repeatPattern,
+          daysOfWeek: repeatPattern === 'WEEKLY' ? repeatDays : undefined,
+          atRoughlyTime: repeatTime || undefined,
+          startDate,
+          endDate: repeatEnd || undefined,
+        })
+        toast.success(t('seriesCreated'))
       } else {
         await createTask.mutateAsync(data)
         toast.success(t('taskCreated'))
       }
       onClose()
     } catch {
-      toast.error(isEdit ? t('failedToUpdate') : t('failedToCreate'))
+      toast.error(
+        isEdit
+          ? t('failedToUpdate')
+          : repeatEnabled
+            ? t('failedToCreateSeries')
+            : t('failedToCreate'),
+      )
     }
   }
 
-  const isPending = createTask.isPending || updateTask.isPending
+  const isPending = createTask.isPending || updateTask.isPending || createRecurring.isPending
   const tags = form.watch('tags') ?? []
 
   function addTag(tag: string) {
@@ -449,6 +487,101 @@ export function TaskDialog({ open, onClose, task, defaultDate, defaultStart, def
               />
             </div>
 
+            {/* Repeat */}
+            {!isEdit && (
+              <div className="space-y-2 rounded-lg border border-border/40 p-3">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="repeatTask" className="cursor-pointer text-sm font-medium">
+                    {t('repeatTask')}
+                  </Label>
+                  <Switch
+                    id="repeatTask"
+                    checked={repeatEnabled}
+                    onCheckedChange={setRepeatEnabled}
+                  />
+                </div>
+                {repeatEnabled && (
+                  <div className="space-y-3 pt-1">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-muted-foreground">{t('repeatPattern')}</Label>
+                      <Select
+                        value={repeatPattern}
+                        onValueChange={(v) => setRepeatPattern(v as RecurrencePattern)}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="DAILY">{t('daily')}</SelectItem>
+                          <SelectItem value="WEEKDAYS">{t('weekdays')}</SelectItem>
+                          <SelectItem value="WEEKLY">{t('weekly')}</SelectItem>
+                          <SelectItem value="MONTHLY">{t('monthly')}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {repeatPattern === 'WEEKLY' && (
+                      <div className="space-y-1.5">
+                        <Label className="text-xs text-muted-foreground">{t('repeatDays')}</Label>
+                        <div className="flex flex-wrap gap-1">
+                          {[
+                            { v: 1, l: 'L' },
+                            { v: 2, l: 'M' },
+                            { v: 3, l: 'X' },
+                            { v: 4, l: 'J' },
+                            { v: 5, l: 'V' },
+                            { v: 6, l: 'S' },
+                            { v: 0, l: 'D' },
+                          ].map((d) => {
+                            const active = repeatDays.includes(d.v)
+                            return (
+                              <button
+                                key={d.v}
+                                type="button"
+                                onClick={() =>
+                                  setRepeatDays(
+                                    active ? repeatDays.filter((x) => x !== d.v) : [...repeatDays, d.v],
+                                  )
+                                }
+                                className={`h-8 w-8 rounded-md border text-xs font-medium transition-colors ${
+                                  active
+                                    ? 'border-primary bg-primary text-primary-foreground'
+                                    : 'border-border/60 hover:border-primary/50'
+                                }`}
+                              >
+                                {d.l}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs text-muted-foreground">{t('repeatTime')}</Label>
+                        <Input
+                          type="time"
+                          value={repeatTime}
+                          onChange={(e) => setRepeatTime(e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs text-muted-foreground">{t('repeatEnd')}</Label>
+                        <Input
+                          type="date"
+                          value={repeatEnd}
+                          onChange={(e) => setRepeatEnd(e.target.value)}
+                        />
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-muted-foreground">{t('repeatHint')}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Weekly Goal */}
             <div className="space-y-1.5">
               <Label>{t('weeklyGoal')}</Label>
@@ -571,7 +704,11 @@ export function TaskDialog({ open, onClose, task, defaultDate, defaultStart, def
               {t('cancel', { ns: 'common' })}
             </Button>
             <Button type="submit" disabled={isPending}>
-              {isEdit ? t('saveChanges') : t('createTask')}
+              {isEdit
+                ? t('saveChanges')
+                : repeatEnabled
+                  ? t('createSeries', { defaultValue: 'Create series' })
+                  : t('createTask')}
             </Button>
           </DialogFooter>
         </form>

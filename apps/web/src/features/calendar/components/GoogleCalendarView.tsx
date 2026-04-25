@@ -97,7 +97,7 @@ export function GoogleCalendarView() {
   }, [currentDate, mode, dateFnsLocale])
 
   return (
-    <div className="flex h-full min-h-[600px] flex-col bg-background">
+    <div className="flex h-full flex-col bg-background">
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-4 border-b border-border bg-background px-4 py-2 flex-shrink-0">
         <div className="flex items-center gap-2">

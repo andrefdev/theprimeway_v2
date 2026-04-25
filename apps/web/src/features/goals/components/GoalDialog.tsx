@@ -21,14 +21,21 @@ import { DatePicker } from '@/shared/components/ui/date-picker'
 import type { PrimeVision, ThreeYearGoal, AnnualGoal } from '@repo/shared/types'
 import { AREAS, type UnifiedGoal, type GoalLevel, toArray } from './goals-shared'
 
+export interface GoalDialogPrefillParent {
+  level: 'vision' | 'three-year' | 'annual'
+  id: string
+}
+
 export function GoalDialog({
   open,
   onClose,
   goal,
+  prefillParent,
 }: {
   open: boolean
   onClose: () => void
   goal: UnifiedGoal | null
+  prefillParent?: GoalDialogPrefillParent | null
 }) {
   const { t } = useTranslation('goals')
   const isEdit = !!goal
@@ -84,16 +91,33 @@ export function GoalDialog({
         setQuarter(goal.data.quarter)
       }
     } else {
-      setLevel('three-year')
       setTitle('')
       setDescription('')
-      setVisionId(visions[0]?.id ?? '')
       setArea('lifestyle')
-      setThreeYearGoalId(threeYearGoals[0]?.id ?? '')
       setTargetDate('')
-      setAnnualGoalId(annualGoals[0]?.id ?? '')
       setYear(currentYear)
       setQuarter(currentQuarter)
+      if (prefillParent?.level === 'vision') {
+        setLevel('three-year')
+        setVisionId(prefillParent.id)
+        setThreeYearGoalId(threeYearGoals[0]?.id ?? '')
+        setAnnualGoalId(annualGoals[0]?.id ?? '')
+      } else if (prefillParent?.level === 'three-year') {
+        setLevel('annual')
+        setVisionId(visions[0]?.id ?? '')
+        setThreeYearGoalId(prefillParent.id)
+        setAnnualGoalId(annualGoals[0]?.id ?? '')
+      } else if (prefillParent?.level === 'annual') {
+        setLevel('quarterly')
+        setVisionId(visions[0]?.id ?? '')
+        setThreeYearGoalId(threeYearGoals[0]?.id ?? '')
+        setAnnualGoalId(prefillParent.id)
+      } else {
+        setLevel('three-year')
+        setVisionId(visions[0]?.id ?? '')
+        setThreeYearGoalId(threeYearGoals[0]?.id ?? '')
+        setAnnualGoalId(annualGoals[0]?.id ?? '')
+      }
     }
   }
   if (open !== prevOpen) setPrevOpen(open)

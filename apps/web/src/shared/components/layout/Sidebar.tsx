@@ -15,8 +15,7 @@ import {
   SidebarRail,
   useSidebar,
 } from '@/shared/components/ui/sidebar'
-import { PanelLeftClose, HelpCircle, ChevronDown } from 'lucide-react'
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/shared/components/ui/collapsible'
+import { PanelLeftClose, HelpCircle } from 'lucide-react'
 import { useFeatures } from '@/features/feature-flags/hooks'
 import { FEATURES } from '@repo/shared/constants'
 import type { FeatureKey } from '@repo/shared/constants'
@@ -28,53 +27,7 @@ interface NavItem {
   requiredFeature?: FeatureKey
 }
 
-/** Primary surfaces per Vision-to-Execution OS UX spec §6.1: Today / Compass / Vision / Library. */
-function useCoreNavItems() {
-  const { t } = useTranslation('common')
-
-  return [
-    {
-      title: t('navToday'),
-      to: '/tasks/today',
-      icon: sidebarIcons.tasks(undefined, { size: 20 }),
-    },
-    {
-      title: t('navCompass'),
-      to: '/compass',
-      icon: sidebarIcons.weekPlanning(undefined, { size: 20 }),
-    },
-    {
-      title: t('navVision'),
-      to: '/goals',
-      icon: sidebarIcons.goals(undefined, { size: 20 }),
-    },
-  ] satisfies NavItem[]
-}
-
-/** Library children — habits + channels (spec §6.1: Library owns habits, channels, archive, filters). */
-function useLibraryNavItems() {
-  const { t } = useTranslation('common')
-  return [
-    {
-      title: t('navHabits'),
-      to: '/habits',
-      icon: sidebarIcons.habits(undefined, { size: 20 }),
-    },
-    {
-      title: 'Channels',
-      to: '/channels',
-      icon: sidebarIcons.habits(undefined, { size: 20 }),
-    },
-    {
-      title: 'Recurring',
-      to: '/recurring',
-      icon: sidebarIcons.habits(undefined, { size: 20 }),
-    },
-  ] satisfies NavItem[]
-}
-
-/** Tools (secondary): supporting surfaces that don't belong to the four primary. */
-function useToolsNavItems() {
+function useMainNavItems() {
   const { t } = useTranslation('common')
   return [
     {
@@ -83,9 +36,24 @@ function useToolsNavItems() {
       icon: sidebarIcons.dashboard(undefined, { size: 20 }),
     },
     {
+      title: t('navToday'),
+      to: '/tasks/today',
+      icon: sidebarIcons.today(undefined, { size: 20 }),
+    },
+    {
       title: t('navPomodoro'),
       to: '/pomodoro',
       icon: sidebarIcons.pomodoro(undefined, { size: 20 }),
+    },
+    {
+      title: t('navCalendar'),
+      to: '/calendar',
+      icon: sidebarIcons.weekPlanning(undefined, { size: 20 }),
+    },
+    {
+      title: t('navGoals'),
+      to: '/goals',
+      icon: sidebarIcons.goals(undefined, { size: 20 }),
     },
     {
       title: t('navAI'),
@@ -95,17 +63,27 @@ function useToolsNavItems() {
   ] satisfies NavItem[]
 }
 
-function useSecondaryNavItems() {
+function useRoutinesNavItems() {
+  const { t } = useTranslation('common')
+  return [
+    {
+      title: t('navHabits'),
+      to: '/habits',
+      icon: sidebarIcons.habits(undefined, { size: 20 }),
+    },
+    {
+      title: t('navRituals'),
+      to: '/rituals',
+      icon: sidebarIcons.rituals(undefined, { size: 20 }),
+    },
+  ] satisfies NavItem[]
+}
+
+function useModulesNavItems() {
   const { t } = useTranslation('common')
   const { features } = useFeatures()
 
   const items: NavItem[] = [
-    {
-      title: t('navFinances'),
-      to: '/finances',
-      icon: sidebarIcons.finances(undefined, { size: 20 }),
-      requiredFeature: FEATURES.FINANCES_MODULE,
-    },
     {
       title: t('navNotes'),
       to: '/notes',
@@ -132,14 +110,18 @@ function useSecondaryNavItems() {
   })
 }
 
+function useFooterNavItems(): NavItem[] {
+  return []
+}
+
 export function AppSidebar() {
   const { t } = useTranslation('common')
   const location = useRouterState({ select: (s) => s.location })
   const { toggleSidebar } = useSidebar()
-  const coreItems = useCoreNavItems()
-  const libraryItems = useLibraryNavItems()
-  const toolsItems = useToolsNavItems()
-  const secondaryItems = useSecondaryNavItems()
+  const mainItems = useMainNavItems()
+  const routinesItems = useRoutinesNavItems()
+  const modulesItems = useModulesNavItems()
+  const footerItems = useFooterNavItems()
 
   function isActive(to: string) {
     if (to === '/dashboard') {
@@ -151,7 +133,6 @@ export function AppSidebar() {
 
   return (
     <ShadcnSidebar collapsible="offcanvas" variant="inset" className="border-r-0">
-      {/* Header */}
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem className="relative">
@@ -176,12 +157,10 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarHeader>
 
-      {/* Navigation */}
       <SidebarContent>
-        {/* Primary surfaces: Today / Compass / Vision */}
         <SidebarGroup>
           <SidebarMenu>
-            {coreItems.map((item) => (
+            {mainItems.map((item) => (
               <SidebarMenuItem key={item.to}>
                 <SidebarMenuButton asChild isActive={isActive(item.to)}>
                   <Link to={item.to as '/'}>
@@ -194,11 +173,10 @@ export function AppSidebar() {
           </SidebarMenu>
         </SidebarGroup>
 
-        {/* Library */}
         <SidebarGroup>
-          <SidebarGroupLabel>{t('navLibrary')}</SidebarGroupLabel>
+          <SidebarGroupLabel>{t('navRoutines')}</SidebarGroupLabel>
           <SidebarMenu>
-            {libraryItems.map((item) => (
+            {routinesItems.map((item) => (
               <SidebarMenuItem key={item.to}>
                 <SidebarMenuButton asChild isActive={isActive(item.to)}>
                   <Link to={item.to as '/'}>
@@ -211,60 +189,42 @@ export function AppSidebar() {
           </SidebarMenu>
         </SidebarGroup>
 
-        {/* Tools */}
-        <SidebarGroup>
-          <SidebarGroupLabel>{t('navTools')}</SidebarGroupLabel>
-          <SidebarMenu>
-            {toolsItems.map((item) => (
-              <SidebarMenuItem key={item.to}>
-                <SidebarMenuButton asChild isActive={isActive(item.to)}>
-                  <Link to={item.to as '/'}>
-                    {item.icon}
-                    <span className="text-sm">{item.title}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
-        </SidebarGroup>
-
-        {/* Secondary modules — collapsible */}
-        {secondaryItems.length > 0 && (
-          <Collapsible defaultOpen={false} className="group/collapsible">
-            <SidebarGroup>
-              <CollapsibleTrigger asChild>
-                <SidebarGroupLabel className="cursor-pointer select-none">
-                  {t('navMore')}
-                  <ChevronDown className="ml-auto size-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
-                </SidebarGroupLabel>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <SidebarMenu>
-                  {secondaryItems.map((item) => (
-                    <SidebarMenuItem key={item.to}>
-                      <SidebarMenuButton asChild isActive={isActive(item.to)}>
-                        <Link to={item.to as '/'}>
-                          {item.icon}
-                          <span className="text-sm">{item.title}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </CollapsibleContent>
-            </SidebarGroup>
-          </Collapsible>
+        {modulesItems.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel>{t('navModules')}</SidebarGroupLabel>
+            <SidebarMenu>
+              {modulesItems.map((item) => (
+                <SidebarMenuItem key={item.to}>
+                  <SidebarMenuButton asChild isActive={isActive(item.to)}>
+                    <Link to={item.to as '/'}>
+                      {item.icon}
+                      <span className="text-sm">{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroup>
         )}
       </SidebarContent>
 
-      {/* Footer */}
       <SidebarFooter>
         <SidebarMenu>
+          {footerItems.map((item) => (
+            <SidebarMenuItem key={item.to}>
+              <SidebarMenuButton size="sm" asChild isActive={isActive(item.to)}>
+                <Link to={item.to as '/'}>
+                  {item.icon}
+                  <span>{item.title}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
           <SidebarMenuItem>
             <SidebarMenuButton size="sm" asChild>
               <a href="https://theprimeway.com/help" target="_blank" rel="noopener noreferrer">
                 <HelpCircle className="size-4" />
-                <span>{t('help')}</span>
+                <span>{t('navHelp')}</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>

@@ -28,7 +28,6 @@ export interface Plan {
   maxPomodoroSessionsDaily: number | null
   hasAiAssistant: boolean | null
   hasReadingModule: boolean | null
-  hasFinancesModule: boolean | null
   hasNotesModule: boolean | null
   hasAdvancedAnalytics: boolean | null
   hasCustomThemeCreation: boolean | null

@@ -39,32 +39,6 @@ class ChatRepository {
     })
   }
 
-  async findPendingTransactions(userId: string, limit: number) {
-    return prisma.transaction.findMany({
-      where: { userId, status: 'pending' },
-      take: limit,
-    })
-  }
-
-  async findRecentTransactions(userId: string, since: Date, limit: number) {
-    return prisma.transaction.findMany({
-      where: { userId, date: { gte: since } },
-      take: limit,
-    })
-  }
-
-  async findActiveBudgets(userId: string) {
-    return prisma.budget.findMany({
-      where: { userId, isActive: true },
-    })
-  }
-
-  async findActiveSavingsGoals(userId: string) {
-    return prisma.savingsGoal.findMany({
-      where: { userId, status: 'active' },
-    })
-  }
-
   async findActiveGoalsByUser(userId: string) {
     return prisma.goal.findMany({
       where: { userId, horizon: 'QUARTER', status: 'ACTIVE' },

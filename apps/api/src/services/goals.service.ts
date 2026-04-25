@@ -183,27 +183,10 @@ class GoalsService {
     return goalsRepository.deleteFocusHabitLink(userId, id)
   }
 
-  // ─── Focus Links — Finances ─────────────────────────────────────────────────
-
-  async listFocusFinanceLinks(quarterlyGoalId: string) {
-    return goalsRepository.findFocusFinanceLinks(quarterlyGoalId)
-  }
-
-  async createFocusFinanceLink(userId: string, input: {
-    quarterlyGoalId: string; savingsGoalId?: string; budgetId?: string;
-    type: string; targetAmount?: number
-  }) {
-    return goalsRepository.createFocusFinanceLink(userId, input)
-  }
-
   // ─── Goal Tree ──────────────────────────────────────────────────────────────
 
   async getGoalTree(userId: string, filters?: { visionId?: string; threeYearId?: string }) {
     return goalsRepository.findGoalTree(userId, filters)
-  }
-
-  async deleteFocusFinanceLink(userId: string, id: string) {
-    return goalsRepository.deleteFocusFinanceLink(userId, id)
   }
 
   // ─── Dashboard Summary ──────────────────────────────────────────────────────

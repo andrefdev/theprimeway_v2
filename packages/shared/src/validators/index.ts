@@ -66,27 +66,6 @@ export { subscriptionActionSchema, checkoutSchema } from './subscriptions'
 export type { SubscriptionActionInput, CheckoutInput } from './subscriptions'
 
 export {
-  createAccountSchema,
-  updateAccountSchema,
-  createTransactionSchema,
-  updateTransactionSchema,
-  createBudgetSchema,
-  updateBudgetSchema,
-  createSavingsGoalSchema,
-  updateSavingsGoalSchema,
-} from './finances'
-export type {
-  CreateAccountInput,
-  UpdateAccountInput,
-  CreateTransactionInput,
-  UpdateTransactionInput,
-  CreateBudgetInput,
-  UpdateBudgetInput,
-  CreateSavingsGoalInput,
-  UpdateSavingsGoalInput,
-} from './finances'
-
-export {
   createGoalSchema,
   updateGoalSchema,
   createVisionSchema,
@@ -113,11 +92,9 @@ export {
   updateProfileSchema,
   updateSettingsSchema,
   updateWorkPreferencesSchema,
-  updateCurrencySchema,
 } from './user'
 export type {
   UpdateProfileInput,
   UpdateSettingsInput,
   UpdateWorkPreferencesInput,
-  UpdateCurrencyInput,
 } from './user'

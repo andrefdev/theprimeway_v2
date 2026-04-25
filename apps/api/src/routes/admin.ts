@@ -259,7 +259,6 @@ const planBodySchema = z.object({
   maxPomodoroSessionsDaily: z.number().int().nullable().optional(),
   hasAiAssistant: z.boolean().optional(),
   hasReadingModule: z.boolean().optional(),
-  hasFinancesModule: z.boolean().optional(),
   hasNotesModule: z.boolean().optional(),
   hasAdvancedAnalytics: z.boolean().optional(),
   hasCustomThemeCreation: z.boolean().optional(),

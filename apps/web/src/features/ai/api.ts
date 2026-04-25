@@ -18,9 +18,6 @@ export const aiApi = {
   getBriefing: () =>
     api.get<{ data: Briefing }>('/chat/briefing').then((r) => r.data),
 
-  getFinanceInsight: () =>
-    api.get<{ data: { insight: string } }>('/chat/finance-insight').then((r) => r.data),
-
   getWeeklyPlan: (weekStartDate: string) =>
     api.post<{ data: any }>('/chat/weekly-plan', { weekStartDate }).then((r) => r.data),
 }

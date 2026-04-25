@@ -13,7 +13,6 @@ const BILLING_OPTIONS = [
 const BOOLEAN_FIELDS: Array<{ key: keyof PlanInput; label: string; description?: string }> = [
   { key: 'hasAiAssistant', label: 'AI Assistant' },
   { key: 'hasReadingModule', label: 'Reading Module' },
-  { key: 'hasFinancesModule', label: 'Finances Module' },
   { key: 'hasNotesModule', label: 'Notes Module' },
   { key: 'hasAdvancedAnalytics', label: 'Advanced Analytics' },
   { key: 'hasCustomThemeCreation', label: 'Custom Theme Creation' },
@@ -46,7 +45,6 @@ function initialState(plan?: Plan): FormState {
       maxPomodoroSessionsDaily: 10,
       hasAiAssistant: false,
       hasReadingModule: false,
-      hasFinancesModule: false,
       hasNotesModule: false,
       hasAdvancedAnalytics: false,
       hasCustomThemeCreation: false,

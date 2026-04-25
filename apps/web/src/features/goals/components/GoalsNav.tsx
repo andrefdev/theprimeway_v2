@@ -9,9 +9,7 @@ export function GoalsNav() {
       basePath="/goals/tree"
       items={[
         { to: '/goals/tree', label: t('tabTree') },
-        { to: '/goals/map', label: t('tabMap', { defaultValue: 'Map' }) },
-        { to: '/goals/mine', label: t('tabMyGoals') },
-        { to: '/goals/quarterly', label: t('tabQuarterly') },
+        { to: '/goals/mine', label: t('tabList', { defaultValue: 'List' }) },
         { to: '/goals/weekly', label: t('tabWeekly') },
         { to: '/goals/metrics', label: t('tabMetrics') },
       ]}

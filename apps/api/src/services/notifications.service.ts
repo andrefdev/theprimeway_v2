@@ -6,7 +6,7 @@ import * as Sentry from '@sentry/node'
 
 interface AppNotification {
   id: string
-  type: 'overdue_task' | 'habit_missed' | 'pending_transaction'
+  type: 'overdue_task' | 'habit_missed'
   title: string
   message: string
   href: string
@@ -279,7 +279,7 @@ class NotificationsService {
 
     // Auto-dismiss stale derived notifications (source entity no longer applies).
     await notificationsRepo.pruneStale(userId, {
-      keepTypes: ['overdue_task', 'habit_missed', 'pending_transaction', 'smart_reminder'],
+      keepTypes: ['overdue_task', 'habit_missed', 'smart_reminder'],
       keepEntityIds,
     })
 
@@ -405,10 +405,9 @@ class NotificationsService {
     // Group notifications by type
     const overdueTasks = notifications.filter((n) => n.type === 'overdue_task')
     const missedHabits = notifications.filter((n) => n.type === 'habit_missed')
-    const pendingTx = notifications.filter((n) => n.type === 'pending_transaction')
 
     const batched: Array<{
-      type: 'batch_tasks' | 'batch_habits' | 'batch_transactions' | 'smart_reminder'
+      type: 'batch_tasks' | 'batch_habits' | 'smart_reminder'
       title: string
       message: string
       count: number
@@ -452,19 +451,6 @@ class NotificationsService {
                 .join(', ') + (missedHabits.length > 3 ? '...' : ''),
         count: missedHabits.length,
         items: missedHabits.map((h) => ({ id: h.id, title: h.title, href: h.href })),
-      })
-    }
-
-    if (pendingTx.length > 0) {
-      batched.push({
-        type: 'batch_transactions',
-        title: `${pendingTx.length} pending transactions`,
-        message: pendingTx
-          .slice(0, 3)
-          .map((t) => t.title)
-          .join(', '),
-        count: pendingTx.length,
-        items: pendingTx.map((t) => ({ id: t.id, title: t.title, href: t.href })),
       })
     }
 

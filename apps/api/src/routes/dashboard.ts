@@ -31,10 +31,6 @@ const summaryRoute = createRoute({
                 activeCount: z.number(),
                 completedToday: z.number(),
               }),
-              finances: z.object({
-                totalBalance: z.number(),
-                accountCount: z.number(),
-              }),
               gamification: z.object({
                 level: z.number(),
                 totalXp: z.number(),

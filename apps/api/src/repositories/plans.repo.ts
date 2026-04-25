@@ -19,7 +19,6 @@ const adminSelect = {
   maxPomodoroSessionsDaily: true,
   hasAiAssistant: true,
   hasReadingModule: true,
-  hasFinancesModule: true,
   hasNotesModule: true,
   hasAdvancedAnalytics: true,
   hasCustomThemeCreation: true,

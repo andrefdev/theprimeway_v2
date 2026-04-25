@@ -39,7 +39,6 @@ function planDefaults(plan: Record<string, unknown> | null | undefined): Resolve
     // Module-specific gates
     [FEATURES.AI_ASSISTANT]: bool('hasAiAssistant', false),
     [FEATURES.READING_MODULE]: bool('hasReadingModule', false),
-    [FEATURES.FINANCES_MODULE]: bool('hasFinancesModule', false),
     [FEATURES.NOTES_MODULE]: bool('hasNotesModule', false),
     // Transversal features
     [FEATURES.ADVANCED_ANALYTICS]: bool('hasAdvancedAnalytics', false),

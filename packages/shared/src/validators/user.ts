@@ -25,12 +25,6 @@ export const updateWorkPreferencesSchema = z.object({
   overflowStrategy: z.string().optional(),
 })
 
-export const updateCurrencySchema = z.object({
-  baseCurrency: z.string().optional(),
-  preferredCurrencies: z.array(z.string()).optional(),
-})
-
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>
 export type UpdateSettingsInput = z.infer<typeof updateSettingsSchema>
 export type UpdateWorkPreferencesInput = z.infer<typeof updateWorkPreferencesSchema>
-export type UpdateCurrencyInput = z.infer<typeof updateCurrencySchema>

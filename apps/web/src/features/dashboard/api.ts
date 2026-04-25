@@ -10,10 +10,6 @@ export interface DashboardSummary {
     activeCount: number
     completedToday: number
   }
-  finances: {
-    totalBalance: number
-    accountCount: number
-  }
   gamification: {
     level: number
     totalXp: number

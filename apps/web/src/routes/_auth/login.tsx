@@ -18,7 +18,7 @@ import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
 import { Label } from '@/shared/components/ui/label'
 import { EyeIcon, EyeOffIcon, Loader2Icon } from 'lucide-react'
-import logoSvg from '@/shared/assets/logo.svg'
+import logoSvg from '@/shared/assets/logo_full_text.png'
 
 export const Route = createFileRoute('/_auth/login')({
   component: AuthPage,
@@ -31,10 +31,7 @@ function AuthPage() {
     <div className="space-y-8">
       {/* Brand — only visible on mobile (desktop shows left panel) */}
       <div className="flex flex-col items-center gap-3 lg:hidden">
-        <img src={logoSvg} alt="The Prime Way" className="h-10 w-10" />
-        <h1 className="text-lg font-semibold tracking-tight text-foreground">
-          The Prime Way
-        </h1>
+        <img src={logoSvg} alt="The Prime Way" className="h-8 w-auto" />
       </div>
 
       {/* Desktop heading */}

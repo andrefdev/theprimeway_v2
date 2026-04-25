@@ -19,10 +19,6 @@ const defaultFeatureMessages: Record<FeatureKey, { title: string; description: s
     title: 'Reading Module Unlock',
     description: 'Track and manage your reading goals. Upgrade to Premium to access this feature.',
   },
-  FINANCES_MODULE: {
-    title: 'Finances Module Unlock',
-    description: 'Manage your accounts, debts, income, and investments. Upgrade to Premium to access this feature.',
-  },
   NOTES_MODULE: {
     title: 'Notes Module Unlock',
     description: 'Create and organize unlimited notes. Upgrade to Premium to access this feature.',
@@ -83,7 +79,6 @@ const defaultFeatureMessages: Record<FeatureKey, { title: string; description: s
 
 const featureKeyToTranslationKey: Record<string, string> = {
   READING_MODULE: 'upgradePromptReading',
-  FINANCES_MODULE: 'upgradePromptFinances',
   NOTES_MODULE: 'upgradePromptNotes',
   CUSTOM_THEME_CREATION: 'upgradePromptCustomTheme',
   ADVANCED_ANALYTICS: 'upgradePromptAdvancedAnalytics',

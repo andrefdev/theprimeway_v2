@@ -23,19 +23,19 @@ export function MobileBottomNav() {
 
   const mainItems = [
     {
-      href: '/',
+      href: '/dashboard',
       icon: sidebarIcons.dashboard('h-5 w-5', {}),
       label: t('navDashboard'),
     },
     {
-      href: '/tasks',
-      icon: sidebarIcons.tasks('h-5 w-5', {}),
-      label: t('navTasks'),
+      href: '/tasks/today',
+      icon: sidebarIcons.today('h-5 w-5', {}),
+      label: t('navToday'),
     },
     {
-      href: '/habits',
-      icon: sidebarIcons.habits('h-5 w-5', {}),
-      label: t('navHabits'),
+      href: '/calendar',
+      icon: sidebarIcons.weekPlanning('h-5 w-5', {}),
+      label: t('navCalendar'),
     },
     {
       href: '/goals',
@@ -46,19 +46,24 @@ export function MobileBottomNav() {
 
   const moreItems = [
     {
+      href: '/ai',
+      icon: sidebarIcons.chat('h-5 w-5', {}),
+      label: t('navAI'),
+    },
+    {
+      href: '/habits',
+      icon: sidebarIcons.habits('h-5 w-5', {}),
+      label: t('navHabits'),
+    },
+    {
+      href: '/rituals',
+      icon: sidebarIcons.rituals('h-5 w-5', {}),
+      label: t('navRituals'),
+    },
+    {
       href: '/pomodoro',
       icon: sidebarIcons.pomodoro('h-5 w-5', {}),
       label: t('navPomodoro'),
-    },
-    {
-      href: '/calendar',
-      icon: sidebarIcons.weekPlanning('h-5 w-5', {}),
-      label: t('navCalendar'),
-    },
-    {
-      href: '/finances',
-      icon: sidebarIcons.finances('h-5 w-5', {}),
-      label: t('navFinances'),
     },
     {
       href: '/notes',
@@ -69,6 +74,11 @@ export function MobileBottomNav() {
       href: '/reading',
       icon: sidebarIcons.reading('h-5 w-5', {}),
       label: t('navReading'),
+    },
+    {
+      href: '/settings',
+      icon: sidebarIcons.settings('h-5 w-5', {}),
+      label: t('navSettings'),
     },
   ]
 
