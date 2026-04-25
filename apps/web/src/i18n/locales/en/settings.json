@@ -1,5 +1,10 @@
 {
   "title": "Settings",
+  "tabGeneral": "General",
+  "tabNotifications": "Notifications",
+  "tabChannels": "Channels & contexts",
+  "tabIntegrations": "Integrations",
+  "tabAccount": "Account",
   "preferences": "Preferences",
   "language": "Language",
   "theme": "Theme",

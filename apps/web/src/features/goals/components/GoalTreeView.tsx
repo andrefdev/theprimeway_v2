@@ -3,9 +3,11 @@ import { useQuery } from '@tanstack/react-query'
 import { goalsQueries } from '../queries'
 import { GoalNode } from './GoalNode'
 import { GoalDetailPanel } from './GoalDetailPanel'
+import { GoalDialog, type GoalDialogPrefillParent } from './GoalDialog'
+import { Button } from '@/shared/components/ui/button'
 import { SkeletonList } from '@/shared/components/ui/skeleton-list'
-import { EmptyState } from '@/shared/components/ui/empty-state'
 import { QueryError } from '@/shared/components/QueryError'
+import { PlusIcon } from '@/shared/components/Icons'
 import { useTranslation } from 'react-i18next'
 import type { PrimeVision, ThreeYearGoal, AnnualGoal, QuarterlyGoal, WeeklyGoal } from '@repo/shared/types'
 
@@ -34,6 +36,8 @@ export function GoalTreeView() {
   const treeQuery = useQuery(goalsQueries.tree())
   const [expandedNodes, setExpandedNodes] = useState<ExpandedState>({})
   const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null)
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [prefillParent, setPrefillParent] = useState<GoalDialogPrefillParent | null>(null)
 
   const visions = (treeQuery.data ?? []) as GoalWithNesting[]
 
@@ -58,15 +62,47 @@ export function GoalTreeView() {
   }
 
   if (!visions || visions.length === 0) {
-    return (
-      <EmptyState
-        title={t('noVision')}
-        description={t('noVisionDescription')}
-      />
-    )
+    // VisionEditor above the tree already prompts the user to create one.
+    return null
+  }
+
+  function levelOf(goalId: string): GoalDialogPrefillParent['level'] | null {
+    for (const v of visions) {
+      if (v.id === goalId) return 'vision'
+      for (const ty of v.threeYearGoals ?? []) {
+        if (ty.id === goalId) return 'three-year'
+        for (const an of ty.annualGoals ?? []) {
+          if (an.id === goalId) return 'annual'
+        }
+      }
+    }
+    return null
+  }
+
+  function openAddChild(parentId: string) {
+    const lvl = levelOf(parentId)
+    if (!lvl) return
+    setPrefillParent({ level: lvl, id: parentId })
+    setDialogOpen(true)
+  }
+
+  function openCreateRoot() {
+    setPrefillParent(null)
+    setDialogOpen(true)
+  }
+
+  function closeDialog() {
+    setDialogOpen(false)
+    setPrefillParent(null)
   }
 
   return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-end">
+        <Button onClick={openCreateRoot}>
+          <PlusIcon /> {t('newGoal')}
+        </Button>
+      </div>
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Tree View */}
       <div className="lg:col-span-2 space-y-6">
@@ -82,6 +118,7 @@ export function GoalTreeView() {
               isExpanded={expandedNodes[vision.id] ?? true}
               onToggle={() => toggleNode(vision.id)}
               onSelect={() => setSelectedGoalId(vision.id)}
+              onAddChild={openAddChild}
             />
 
             {/* Three-Year Goals */}
@@ -97,6 +134,7 @@ export function GoalTreeView() {
                     isExpanded={expandedNodes[threeYearGoal.id] ?? true}
                     onToggle={() => toggleNode(threeYearGoal.id)}
                     onSelect={() => setSelectedGoalId(threeYearGoal.id)}
+                    onAddChild={openAddChild}
                   />
 
                   {/* Annual Goals */}
@@ -112,6 +150,7 @@ export function GoalTreeView() {
                           isExpanded={expandedNodes[annualGoal.id] ?? false}
                           onToggle={() => toggleNode(annualGoal.id)}
                           onSelect={() => setSelectedGoalId(annualGoal.id)}
+                          onAddChild={openAddChild}
                         />
 
                         {/* Quarterly Goals */}
@@ -158,6 +197,13 @@ export function GoalTreeView() {
       {selectedGoalId && (
         <GoalDetailPanel goalId={selectedGoalId} onClose={() => setSelectedGoalId(null)} />
       )}
+    </div>
+      <GoalDialog
+        open={dialogOpen}
+        onClose={closeDialog}
+        goal={null}
+        prefillParent={prefillParent}
+      />
     </div>
   )
 }

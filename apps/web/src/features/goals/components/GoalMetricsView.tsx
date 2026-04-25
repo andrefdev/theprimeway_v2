@@ -52,7 +52,7 @@ export function GoalMetricsView() {
     return (
       <div>
         <GoalsNav />
-        <SectionHeader sectionId="goals" title={t('tabMetrics')} />
+        <SectionHeader sectionId="goals" title={t('title')} />
         <div className="mx-auto max-w-5xl px-6 pb-6">
           <SkeletonList lines={6} />
         </div>
@@ -63,7 +63,7 @@ export function GoalMetricsView() {
   return (
     <div>
       <GoalsNav />
-      <SectionHeader sectionId="goals" title={t('tabMetrics')} />
+      <SectionHeader sectionId="goals" title={t('title')} />
       <div className="mx-auto max-w-5xl px-6 pb-6 space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <MetricCard label={t('tabRoadmap')} value={`${activeThreeYear.length}`} sub={`${archivedThreeYear.length} ${t('archived', { ns: 'common', defaultValue: 'archived' })}`} />

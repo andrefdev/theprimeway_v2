@@ -10,11 +10,10 @@
 import { userRepository } from '../repositories/user.repo'
 import { channelsService } from './channels.service'
 import { workingHoursService } from './working-hours.service'
-import type { UserSettings, UserProfile, UserCurrencySettings } from '@prisma/client'
+import type { UserSettings, UserProfile } from '@prisma/client'
 
 type SettingsModel = UserSettings
 type ProfileModel = UserProfile
-type CurrencySettingsModel = UserCurrencySettings
 
 // ---------------------------------------------------------------------------
 // Types
@@ -32,11 +31,6 @@ export interface UpdateProfileInput {
   profilePicture?: string
   bio?: string
   primaryGoal?: string
-}
-
-export interface UpdateCurrencyInput {
-  baseCurrency?: string
-  preferredCurrencies?: string[]
 }
 
 // ---------------------------------------------------------------------------
@@ -75,37 +69,6 @@ class UserService {
 
   async upsertProfile(userId: string, input: UpdateProfileInput): Promise<ProfileModel> {
     return userRepository.upsertProfile(userId, input as Record<string, unknown>)
-  }
-
-  // ── Currency Settings ──────────────────────────────────────────────────
-
-  async getCurrencySettings(userId: string): Promise<CurrencySettingsModel | null> {
-    const settings = await userRepository.findCurrencySettings(userId)
-    if (settings) return settings
-
-    // No settings exist — verify user exists before creating defaults
-    const exists = await userRepository.userExists(userId)
-    if (!exists) return null // signal 404
-
-    // Create default settings
-    return userRepository.upsertCurrencySettings(userId, {
-      baseCurrency: 'USD',
-      preferredCurrencies: ['USD', 'PEN'],
-    })
-  }
-
-  async updateCurrencySettings(
-    userId: string,
-    input: UpdateCurrencyInput,
-  ): Promise<CurrencySettingsModel> {
-    return userRepository.upsertCurrencySettings(userId, {
-      baseCurrency: input.baseCurrency,
-      preferredCurrencies: input.preferredCurrencies,
-    })
-  }
-
-  async deleteCurrencySettings(userId: string): Promise<void> {
-    await userRepository.deleteCurrencySettings(userId)
   }
 
   // ── Delete User ────────────────────────────────────────────────────────

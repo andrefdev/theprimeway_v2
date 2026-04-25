@@ -105,26 +105,6 @@ chatRoutes.openapi(briefingRoute, async (c) => {
 })
 
 // ---------------------------------------------------------------------------
-// GET /finance-insight
-// ---------------------------------------------------------------------------
-const financeInsightRoute = createRoute({
-  method: 'get',
-  path: '/finance-insight',
-  tags: ['Chat'],
-  summary: 'Get finance insight',
-  security: [{ Bearer: [] }],
-  responses: {
-    200: { content: { 'application/json': { schema: z.object({ data: z.any() }) } }, description: 'Finance insight' },
-  },
-})
-
-chatRoutes.openapi(financeInsightRoute, async (c) => {
-  const userId = c.get('user').userId
-  const data = await chatService.getFinanceInsight(userId)
-  return c.json({ data }, 200)
-})
-
-// ---------------------------------------------------------------------------
 // POST /weekly-plan
 // ---------------------------------------------------------------------------
 const weeklyPlanRoute = createRoute({

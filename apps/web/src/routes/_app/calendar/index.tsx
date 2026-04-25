@@ -6,5 +6,9 @@ export const Route = createFileRoute('/_app/calendar/')({
 })
 
 function CalendarPage() {
-  return <GoogleCalendarView />
+  return (
+    <div className="h-[calc(100dvh-3.5rem)]">
+      <GoogleCalendarView />
+    </div>
+  )
 }

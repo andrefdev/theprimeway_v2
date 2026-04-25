@@ -2,7 +2,7 @@ import { Suspense } from 'react'
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/shared/stores/auth.store'
-import logo_full_text from '@/shared/assets/logo_full_text.webp'
+import logo_full_text from '@/shared/assets/logo_full_text.png'
 
 export const Route = createFileRoute('/_auth')({
   beforeLoad: () => {
@@ -25,11 +25,8 @@ function AuthLayout() {
         <div className="absolute inset-0 bg-linear-to-br from-primary/15 via-transparent to-primary/5" />
 
         <div className="relative z-10 flex flex-col items-center gap-2 px-12 text-center">
-          <img src={logo_full_text} alt="" className="h-50 w-auto brightness-0 invert opacity-90" />
+          <img src={logo_full_text} alt="" className="h-24 w-auto brightness-0 invert opacity-90" />
           <div>
-            <h2 className="text-2xl font-semibold tracking-tight text-white">
-              The Prime Way
-            </h2>
             <p className="mt-2 max-w-xs text-sm text-neutral-400">
               {t('brandTagline', { defaultValue: 'Your personal system for goals, habits, and productivity.' })}
             </p>

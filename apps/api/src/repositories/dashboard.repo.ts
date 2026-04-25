@@ -28,13 +28,6 @@ class DashboardRepository {
     })
   }
 
-  activeAccounts(userId: string) {
-    return prisma.financeAccount.findMany({
-      where: { userId, isActive: true },
-      select: { currentBalance: true },
-    })
-  }
-
   gamificationProfile(userId: string) {
     return prisma.gamificationProfile.findFirst({
       where: { userId },

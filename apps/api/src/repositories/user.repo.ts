@@ -54,35 +54,6 @@ class UserRepository {
     })
   }
 
-  // ── Currency Settings ──────────────────────────────────────────────────
-
-  async findCurrencySettings(userId: string) {
-    return prisma.userCurrencySettings.findUnique({ where: { userId } })
-  }
-
-  async upsertCurrencySettings(
-    userId: string,
-    data: { baseCurrency?: string; preferredCurrencies?: string[] },
-  ) {
-    return prisma.userCurrencySettings.upsert({
-      where: { userId },
-      update: {
-        baseCurrency: data.baseCurrency,
-        preferredCurrencies: data.preferredCurrencies,
-        updatedAt: new Date(),
-      },
-      create: {
-        userId,
-        baseCurrency: data.baseCurrency || 'USD',
-        preferredCurrencies: data.preferredCurrencies || ['USD', 'PEN'],
-      },
-    })
-  }
-
-  async deleteCurrencySettings(userId: string): Promise<void> {
-    await prisma.userCurrencySettings.delete({ where: { userId } })
-  }
-
   // ── User existence check ───────────────────────────────────────────────
 
   async userExists(userId: string): Promise<boolean> {

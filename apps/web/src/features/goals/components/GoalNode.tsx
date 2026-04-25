@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronDown, ChevronRight } from 'lucide-react'
+import { ChevronDown, ChevronRight, Plus } from 'lucide-react'
 import { Progress } from '@/shared/components/ui/progress'
 import { Badge } from '@/shared/components/ui/badge'
 import { Button } from '@/shared/components/ui/button'
@@ -14,6 +14,7 @@ interface GoalNodeProps {
   isExpanded: boolean
   onToggle: () => void
   onSelect: (goalId: string) => void
+  onAddChild?: (goalId: string) => void
 }
 
 type HealthStatus = 'green' | 'yellow' | 'red'
@@ -78,6 +79,7 @@ export function GoalNode({
   isExpanded,
   onToggle,
   onSelect,
+  onAddChild,
 }: GoalNodeProps) {
   const [isHovered, setIsHovered] = useState(false)
   const healthStatus = getHealthStatus(progress)
@@ -146,6 +148,22 @@ export function GoalNode({
               <Progress value={progress} className="h-1.5" />
             </div>
           </div>
+
+          {/* Add child action — only for parent levels */}
+          {onAddChild && level !== 'quarterly' && level !== 'weekly' && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={(e) => {
+                e.stopPropagation()
+                onAddChild(id)
+              }}
+              title="Add child goal"
+            >
+              <Plus size={14} className="text-muted-foreground" />
+            </Button>
+          )}
         </div>
       </div>
     </div>

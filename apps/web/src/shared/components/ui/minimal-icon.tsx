@@ -1,4 +1,5 @@
 import { Icon } from '@iconify/react'
+import { Brain, Repeat, Hash, Settings as SettingsIcon, RefreshCw, Bell } from 'lucide-react'
 import { cn } from '@/shared/lib/utils'
 
 export interface MinimalIconProps {
@@ -43,33 +44,11 @@ export const sidebarIcons = {
   goals: (cls, opts) => (
     <MinimalIcon name="ci:radio-fill" className={cls} size={opts?.size} />
   ),
-  finances: (cls, opts) => (
-    <MinimalIcon name="ci:credit-card-01" className={cls} size={opts?.size} />
-  ),
   notes: (cls, opts) => (
     <MinimalIcon name="ci:note" className={cls} size={opts?.size} />
   ),
   brain: (cls, opts) => (
-    <MinimalIcon name="ci:lightning-02" className={cls} size={opts?.size} />
-  ),
-  financesOverview: (cls, opts) => (
-    <MinimalIcon
-      name="ci:chart-bar-vertical-01"
-      className={cls}
-      size={opts?.size}
-    />
-  ),
-  financesTransactions: (cls, opts) => (
-    <MinimalIcon name="ci:transfer" className={cls} size={opts?.size} />
-  ),
-  financesAccounts: (cls, opts) => (
-    <MinimalIcon name="ci:credit-card-01" className={cls} size={opts?.size} />
-  ),
-  financesBudgets: (cls, opts) => (
-    <MinimalIcon name="ci:edit-pencil-01" className={cls} size={opts?.size} />
-  ),
-  financesDebts: (cls, opts) => (
-    <MinimalIcon name="ci:credit-card" className={cls} size={opts?.size} />
+    <Brain className={cn('text-foreground', cls)} size={opts?.size ?? 20} strokeWidth={1.75} />
   ),
   health: (cls, opts) => (
     <MinimalIcon name="ci:heart-fill" className={cls} size={opts?.size} />
@@ -130,5 +109,20 @@ export const sidebarIcons = {
   ),
   alebot: (cls, opts) => (
     <MinimalIcon name="ci:user-circle" className={cls} size={opts?.size} />
+  ),
+  recurring: (cls, opts) => (
+    <RefreshCw className={cn('text-foreground', cls)} size={opts?.size ?? 20} strokeWidth={1.75} />
+  ),
+  channels: (cls, opts) => (
+    <Hash className={cn('text-foreground', cls)} size={opts?.size ?? 20} strokeWidth={1.75} />
+  ),
+  rituals: (cls, opts) => (
+    <Repeat className={cn('text-foreground', cls)} size={opts?.size ?? 20} strokeWidth={1.75} />
+  ),
+  bell: (cls, opts) => (
+    <Bell className={cn('text-foreground', cls)} size={opts?.size ?? 20} strokeWidth={1.75} />
+  ),
+  settings: (cls, opts) => (
+    <SettingsIcon className={cn('text-foreground', cls)} size={opts?.size ?? 20} strokeWidth={1.75} />
   ),
 } satisfies Record<string, IconFactory>

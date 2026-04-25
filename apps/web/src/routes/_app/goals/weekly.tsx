@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
-import { WeeklyGoalsList } from '@/features/goals/components/WeeklyGoals'
 import { GoalsNav } from '@/features/goals/components/GoalsNav'
+import { WeeklyGoalsList } from '@/features/goals/components/WeeklyGoalsList'
 import { SectionHeader } from '@/shared/components/SectionHeader'
 
 export const Route = createFileRoute('/_app/goals/weekly')({
@@ -13,7 +13,7 @@ function WeeklyPage() {
   return (
     <div>
       <GoalsNav />
-      <SectionHeader sectionId="goals" title={t('tabWeekly')} />
+      <SectionHeader sectionId="goals" title={t('title')} />
       <div className="mx-auto max-w-5xl px-6 pb-6">
         <WeeklyGoalsList />
       </div>

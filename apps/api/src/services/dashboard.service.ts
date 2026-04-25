@@ -7,12 +7,11 @@ class DashboardService {
     const dayStart = new Date(`${today}T00:00:00.000Z`)
     const dayEnd = new Date(`${today}T23:59:59.999Z`)
 
-    const [todayTasks, overdueCount, activeHabits, todayHabitLogs, accounts, gamProfile] = await Promise.all([
+    const [todayTasks, overdueCount, activeHabits, todayHabitLogs, gamProfile] = await Promise.all([
       dashboardRepo.todayTasks(userId, dayStart, dayEnd),
       dashboardRepo.overdueCount(userId, dayStart),
       dashboardRepo.activeHabits(userId),
       dashboardRepo.todayHabitLogs(userId, dayStart, dayEnd),
-      dashboardRepo.activeAccounts(userId),
       dashboardRepo.gamificationProfile(userId),
     ])
 
@@ -22,7 +21,6 @@ class DashboardService {
         .filter((l: { completedCount: number | null }) => (l.completedCount ?? 0) > 0)
         .map((l: { taskId: string }) => l.taskId),
     ).size
-    const totalBalance = accounts.reduce((sum: number, a: { currentBalance: unknown }) => sum + Number(a.currentBalance ?? 0), 0)
 
     return {
       tasks: {
@@ -33,10 +31,6 @@ class DashboardService {
       habits: {
         activeCount: activeHabits.length,
         completedToday: habitCompletedToday,
-      },
-      finances: {
-        totalBalance,
-        accountCount: accounts.length,
       },
       gamification: {
         level: gamProfile?.level ?? 1,

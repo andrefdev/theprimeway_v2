@@ -9,7 +9,8 @@ import { NotificationsPreferences } from '@/features/notifications/components/No
 import { GoogleCalendarSettings } from '@/features/calendar/components/GoogleCalendarSettings'
 import { ApiKeysCard } from '@/features/integrations/components/ApiKeysCard'
 import { WebhooksCard } from '@/features/integrations/components/WebhooksCard'
-import { RitualsManager } from '@/features/rituals/components/RitualsManager'
+import { ChannelsManager } from '@/features/channels/components/ChannelsManager'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/components/ui/tabs'
 import { useFeature } from '@/features/feature-flags/hooks'
 import { FEATURES } from '@repo/shared/constants'
 import { toast } from 'sonner'
@@ -37,24 +38,46 @@ function SettingsPage() {
   }
 
   return (
-    <div>
-      <div className="mx-auto max-w-2xl p-6 space-y-6">
-        <h2 className="text-xl font-bold text-foreground">{t('title')}</h2>
+    <div className="mx-auto max-w-4xl px-4 py-6 space-y-6">
+      <h1 className="text-2xl font-semibold">{t('title')}</h1>
 
-        {/* Preferences form: show limited version for all, full version if premium */}
-        <PreferencesForm settings={settings} saving={saving} onSettingsChange={update} isPremium={customThemeCreationFeature.enabled} />
+      <Tabs defaultValue="general" className="w-full">
+        <TabsList className="flex flex-wrap h-auto justify-start gap-1">
+          <TabsTrigger value="general">{t('tabGeneral')}</TabsTrigger>
+          <TabsTrigger value="notifications">{t('tabNotifications')}</TabsTrigger>
+          <TabsTrigger value="channels">{t('tabChannels')}</TabsTrigger>
+          <TabsTrigger value="integrations">{t('tabIntegrations')}</TabsTrigger>
+          <TabsTrigger value="account">{t('tabAccount')}</TabsTrigger>
+        </TabsList>
 
-        <NotificationsPreferences />
-        <GoogleCalendarSettings />
-        <RitualsManager />
-        <ApiKeysCard />
-        <WebhooksCard />
-        <ChangePasswordForm />
+        <TabsContent value="general" className="space-y-6 pt-4">
+          <PreferencesForm
+            settings={settings}
+            saving={saving}
+            onSettingsChange={update}
+            isPremium={customThemeCreationFeature.enabled}
+          />
+        </TabsContent>
 
-        {/* Only show DangerZone if export data is available */}
-        {exportDataFeature.enabled && <DangerZone />}
-      </div>
+        <TabsContent value="notifications" className="space-y-6 pt-4">
+          <NotificationsPreferences />
+        </TabsContent>
+
+        <TabsContent value="channels" className="space-y-6 pt-4">
+          <ChannelsManager />
+        </TabsContent>
+
+        <TabsContent value="integrations" className="space-y-6 pt-4">
+          <GoogleCalendarSettings />
+          <ApiKeysCard />
+          <WebhooksCard />
+        </TabsContent>
+
+        <TabsContent value="account" className="space-y-6 pt-4">
+          <ChangePasswordForm />
+          {exportDataFeature.enabled && <DangerZone />}
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
-

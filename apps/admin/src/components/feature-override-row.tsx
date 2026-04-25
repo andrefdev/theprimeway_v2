@@ -16,7 +16,6 @@ interface FeatureOverrideRowProps {
 const FEATURE_NAMES: Record<FeatureKey, string> = {
   AI_ASSISTANT: 'AI Assistant',
   READING_MODULE: 'Reading Module',
-  FINANCES_MODULE: 'Finances Module',
   NOTES_MODULE: 'Notes Module',
   HEALTH_MODULE: 'Health Module',
   BRAIN_MODULE: 'Second Brain',

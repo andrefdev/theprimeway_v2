@@ -1,8 +1,6 @@
 export { GoalNode } from './GoalNode'
 export { GoalTreeView } from './GoalTreeView'
 export { GoalDetailPanel } from './GoalDetailPanel'
-export { QuarterlyGoals } from './QuarterlyGoals'
-export { WeeklyGoalsList } from './WeeklyGoals'
 export { JourneyView } from './JourneyView'
 export { GoalDialog } from './GoalDialog'
 export { MyGoalsView } from './MyGoalsView'

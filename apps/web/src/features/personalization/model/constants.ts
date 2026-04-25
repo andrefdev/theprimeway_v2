@@ -5,10 +5,10 @@ export const DEFAULT_SECTION_EMOJIS: Record<SectionId, string> = {
   tasks: '\u2705',
   habits: '\uD83D\uDD01',
   goals: '\uD83C\uDFAF',
-  finances: '\uD83D\uDCB0',
   notes: '\uD83D\uDCDD',
   reading: '\uD83D\uDCDA',
   calendar: '\uD83D\uDCC5',
+  rituals: '\uD83D\uDD2E',
   ai: '\uD83E\uDD16',
 }
 
@@ -17,10 +17,10 @@ export const DEFAULT_SECTION_ICONS: Record<SectionId, string> = {
   tasks: 'ci:list-check',
   habits: 'ci:check-all',
   goals: 'ci:radio-fill',
-  finances: 'ci:credit-card-01',
   notes: 'ci:note',
   reading: 'ci:book-open',
   calendar: 'ci:calendar',
+  rituals: 'ci:repeat',
   ai: 'ci:chat',
 }
 

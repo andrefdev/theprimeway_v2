@@ -12,7 +12,6 @@ import { taskRoutes } from './routes/tasks'
 import { habitRoutes } from './routes/habits'
 import { notesRoutes } from './routes/notes'
 import { goalsRoutes } from './routes/goals'
-import { financesRoutes } from './routes/finances'
 import { pomodoroRoutes } from './routes/pomodoro'
 import { calendarRoutes } from './routes/calendar'
 import { chatRoutes } from './routes/chat'
@@ -69,7 +68,6 @@ app.route('/api/tasks', taskRoutes)
 app.route('/api/habits', habitRoutes)
 app.route('/api/notes', notesRoutes)
 app.route('/api/goals', goalsRoutes)
-app.route('/api/finances', financesRoutes)
 app.route('/api/pomodoro', pomodoroRoutes)
 app.route('/api/calendar', calendarRoutes)
 app.route('/api/chat', chatRoutes)

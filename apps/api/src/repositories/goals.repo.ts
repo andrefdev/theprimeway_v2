@@ -525,22 +525,6 @@ class GoalsRepo {
     return true
   }
 
-  async findFocusFinanceLinks(_quarterlyGoalId: string) {
-    return [] as Array<unknown>
-  }
-
-  async createFocusFinanceLink(_userId: string, data: { quarterlyGoalId: string; savingsGoalId?: string; budgetId?: string; type: string; targetAmount?: number }) {
-    return {
-      id: `finance_${data.quarterlyGoalId}_${data.savingsGoalId ?? data.budgetId ?? 'none'}`,
-      ...data,
-      createdAt: new Date(),
-    }
-  }
-
-  async deleteFocusFinanceLink(_userId: string, _id: string): Promise<boolean> {
-    return true
-  }
-
   // ─── Goal Tree — assemble nested tree from unified Goal + legacy Quarterly/Weekly ─
 
   async findGoalTree(userId: string, _filters?: { visionId?: string; threeYearId?: string }) {

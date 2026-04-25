@@ -13,6 +13,8 @@ import { SectionHeader } from '@/shared/components/SectionHeader'
 import { TasksNav } from '@/features/tasks/components/TasksNav'
 import { SkeletonList } from '@/shared/components/ui/skeleton-list'
 import { EmptyState } from '@/shared/components/ui/empty-state'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/components/ui/tabs'
+import { RecurringManager } from '@/features/recurring/components/RecurringManager'
 import { toast } from 'sonner'
 import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -139,58 +141,69 @@ function TasksAllPage() {
         }
       />
       <div className="mx-auto max-w-5xl px-6 pb-6 space-y-6">
-        <FilterBar search={search} onSearchChange={setSearch} searchPlaceholder={t('searchPlaceholder')}>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="max-w-[160px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {STATUS_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </FilterBar>
+        <Tabs defaultValue="tasks" className="w-full">
+          <TabsList>
+            <TabsTrigger value="tasks">{t('tabAll', { defaultValue: 'Tasks' })}</TabsTrigger>
+            <TabsTrigger value="recurring">{t('recurring')}</TabsTrigger>
+          </TabsList>
 
-        {groupedQuery.isLoading && <SkeletonList lines={8} />}
-        {groupedQuery.isError && <QueryError message={t('failedToLoad')} onRetry={() => groupedQuery.refetch()} />}
+          <TabsContent value="tasks" className="space-y-6 pt-4">
+            <FilterBar search={search} onSearchChange={setSearch} searchPlaceholder={t('searchPlaceholder')}>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="max-w-[160px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATUS_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FilterBar>
 
-        {!groupedQuery.isLoading && !groupedQuery.isError && (
-          <div className={showArchive && archive.length > 0 ? "grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6" : "grid grid-cols-1 gap-6"}>
-            {/* Main grouped list */}
-            <div className="space-y-3">
-              {filteredGroups.length > 0 ? (
-                filteredGroups.map((group) => (
-                  <TaskGroup
-                    key={group.date_key}
-                    dateKey={group.date_key}
-                    tasks={group.tasks}
-                    onToggle={toggleTask}
-                    onEdit={openEdit}
-                    onDelete={handleDelete}
-                    onArchive={handleArchive}
-                  />
-                ))
-              ) : (
-                <EmptyState
-                  title={search || statusFilter !== 'all' ? t('noMatchingTasks') : t('noTasks')}
-                  description={search || statusFilter !== 'all' ? t('tryFilters') : t('createFromToday')}
-                />
-              )}
-            </div>
+            {groupedQuery.isLoading && <SkeletonList lines={8} />}
+            {groupedQuery.isError && <QueryError message={t('failedToLoad')} onRetry={() => groupedQuery.refetch()} />}
 
-            {/* Archive sidebar */}
-            {showArchive && archive.length > 0 && (
-              <div>
-                <ArchivePanel
-                  tasks={archive}
-                  onReschedule={handleReschedule}
-                  onDelete={handleDelete}
-                />
+            {!groupedQuery.isLoading && !groupedQuery.isError && (
+              <div className={showArchive && archive.length > 0 ? 'grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6' : 'grid grid-cols-1 gap-6'}>
+                <div className="space-y-3">
+                  {filteredGroups.length > 0 ? (
+                    filteredGroups.map((group) => (
+                      <TaskGroup
+                        key={group.date_key}
+                        dateKey={group.date_key}
+                        tasks={group.tasks}
+                        onToggle={toggleTask}
+                        onEdit={openEdit}
+                        onDelete={handleDelete}
+                        onArchive={handleArchive}
+                      />
+                    ))
+                  ) : (
+                    <EmptyState
+                      title={search || statusFilter !== 'all' ? t('noMatchingTasks') : t('noTasks')}
+                      description={search || statusFilter !== 'all' ? t('tryFilters') : t('createFromToday')}
+                    />
+                  )}
+                </div>
+
+                {showArchive && archive.length > 0 && (
+                  <div>
+                    <ArchivePanel
+                      tasks={archive}
+                      onReschedule={handleReschedule}
+                      onDelete={handleDelete}
+                    />
+                  </div>
+                )}
               </div>
             )}
-          </div>
-        )}
+          </TabsContent>
+
+          <TabsContent value="recurring" className="space-y-6 pt-4">
+            <RecurringManager />
+          </TabsContent>
+        </Tabs>
       </div>
 
       <TaskDialog

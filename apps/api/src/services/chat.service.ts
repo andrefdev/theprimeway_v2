@@ -619,32 +619,6 @@ Keep it under 30 words. Be concrete and encouraging. No emojis.`,
     }
   }
 
-  async getFinanceInsight(userId: string) {
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-
-    const [transactions, budgets, savingsGoals] = await Promise.all([
-      chatRepo.findRecentTransactions(userId, thirtyDaysAgo, 50),
-      chatRepo.findActiveBudgets(userId),
-      chatRepo.findActiveSavingsGoals(userId),
-    ])
-
-    const totalExpenses = transactions
-      .filter((t) => t.type === 'expense')
-      .reduce((s, t) => s + Number(t.amount), 0)
-    const totalIncome = transactions
-      .filter((t) => t.type === 'income')
-      .reduce((s, t) => s + Number(t.amount), 0)
-
-    return {
-      insight: null,
-      totalExpenses,
-      totalIncome,
-      activeBudgets: budgets.length,
-      activeSavingsGoals: savingsGoals.length,
-      _note: 'AI-generated insight text requires OpenAI integration. Financial stats are live.',
-    }
-  }
-
   async weeklyPlanning(userId: string, weekStartDate: string) {
     const weekStart = new Date(weekStartDate)
     const weekEnd = new Date(weekStart)
