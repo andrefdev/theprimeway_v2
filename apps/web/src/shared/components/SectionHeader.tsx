@@ -12,8 +12,6 @@ const SECTION_COVERS: Record<string, string> = {
   tasks:        'from-blue-500/20 via-cyan-500/10 to-transparent',
   habits:       'from-emerald-500/20 via-green-500/10 to-transparent',
   goals:        'from-amber-500/20 via-orange-500/10 to-transparent',
-  notes:        'from-violet-500/20 via-purple-500/10 to-transparent',
-  reading:      'from-rose-500/20 via-pink-500/10 to-transparent',
   calendar:     'from-sky-500/20 via-blue-500/10 to-transparent',
   rituals:      'from-purple-500/20 via-fuchsia-500/10 to-transparent',
   pomodoro:     'from-red-500/20 via-orange-500/10 to-transparent',
@@ -30,7 +28,7 @@ const SECTION_EMOJIS: Record<string, string> = {
 
 const PERSONALIZABLE_SECTIONS = new Set<string>([
   'dashboard', 'tasks', 'habits', 'goals',
-  'notes', 'reading', 'calendar', 'rituals', 'pomodoro', 'ai',
+  'calendar', 'rituals', 'pomodoro', 'ai',
 ])
 
 interface SectionHeaderProps {

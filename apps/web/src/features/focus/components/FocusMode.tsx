@@ -2,11 +2,12 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Button } from '@/shared/components/ui/button'
-import { X, Pause, Play, Check, LogOut } from 'lucide-react'
+import { X, Pause, Play, Check, LogOut, Timer } from 'lucide-react'
 import { useFocusStore } from '../focus-store'
 import { tasksApi } from '@/features/tasks/api'
 import { schedulingApi } from '@/features/scheduling/api'
 import { schedulingKeys } from '@/features/scheduling/queries'
+import { useStartTimer } from '@/features/tasks/queries'
 import { VisionThreadChip } from '@/features/vision/components/VisionThreadChip'
 import { FocusSubtasksPanel } from './FocusSubtasksPanel'
 
@@ -40,6 +41,7 @@ export function FocusMode() {
   const startRef = useRef<number | null>(null)
   const pauseStartRef = useRef<number | null>(null)
   const qc = useQueryClient()
+  const startBackendTimer = useStartTimer()
 
   // Reset every time we open a new focus session
   useEffect(() => {
@@ -130,6 +132,17 @@ export function FocusMode() {
     close()
   }
 
+  async function switchToTimerBar() {
+    if (!taskId) return
+    try {
+      await startBackendTimer.mutateAsync(taskId)
+      toast.success('Timer running in top bar')
+      close()
+    } catch (err) {
+      toast.error((err as Error).message || 'Could not start timer')
+    }
+  }
+
   // Keyboard: Space = pause/resume, Enter = complete, Esc = cut short. Only when running/paused.
   useEffect(() => {
     if (!open) return
@@ -164,12 +177,18 @@ export function FocusMode() {
       <div className="flex items-center justify-between px-6 py-3 border-b border-border/40">
         <div className="text-xs text-muted-foreground uppercase tracking-wide">Focus mode</div>
         <div className="flex items-center gap-2">
-          <kbd className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-mono">Space</kbd>
-          <span className="text-[11px] text-muted-foreground">pause</span>
-          <kbd className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-mono">Enter</kbd>
-          <span className="text-[11px] text-muted-foreground">complete</span>
-          <kbd className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-mono">Esc</kbd>
-          <span className="text-[11px] text-muted-foreground">cut short</span>
+          {(phase === 'running' || phase === 'paused') && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={switchToTimerBar}
+              disabled={startBackendTimer.isPending}
+              title="Exit focus mode but keep timer running in the top bar"
+            >
+              <Timer className="h-4 w-4 mr-1" />
+              Switch to timer bar
+            </Button>
+          )}
           <Button variant="ghost" size="sm" onClick={close} aria-label="Close">
             <X className="h-4 w-4" />
           </Button>

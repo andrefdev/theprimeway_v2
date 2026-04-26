@@ -26,14 +26,6 @@ export function DashboardQuickActions() {
             <span className="text-sm">{t('startFocus')}</span>
           </Button>
         </Link>
-        {/*
-        <Link to="/notes">
-          <Button variant="ghost" className="w-full justify-start gap-3 border border-transparent py-6 hover:border-border hover:bg-muted/40">
-            <FileText className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm">{t('addNote')}</span>
-          </Button>
-        </Link>
-        */}
       </div>
       <TaskDialog open={taskDialogOpen} onClose={() => setTaskDialogOpen(false)} />
     </>

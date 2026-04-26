@@ -17,10 +17,6 @@ const featureMessages: Record<FeatureKey, { title: string; description: string }
     title: 'AI Assistant Unlock',
     description: 'Get unlimited AI-powered insights and support. Upgrade to Premium to access this feature.',
   },
-  HEALTH_MODULE: {
-    title: 'Health Module Unlock',
-    description: 'Track your health metrics and wellness goals. Upgrade to Premium to access this feature.',
-  },
   ADVANCED_ANALYTICS: {
     title: 'Advanced Analytics Unlock',
     description: 'Deep dive into your productivity metrics and insights. Upgrade to Premium to access this feature.',
@@ -44,10 +40,6 @@ const featureMessages: Record<FeatureKey, { title: string; description: string }
   GOALS_LIMIT: {
     title: 'Goal Limit Reached',
     description: "You've reached the maximum number of goals for your plan. Upgrade to Premium for unlimited goals.",
-  },
-  NOTES_LIMIT: {
-    title: 'Note Limit Reached',
-    description: "You've reached the maximum number of notes for your plan. Upgrade to Premium for unlimited notes.",
   },
   TASKS_LIMIT: {
     title: 'Task Limit Reached',

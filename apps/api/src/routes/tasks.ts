@@ -45,6 +45,10 @@ const createTaskSchema = z.object({
   source: z.string().optional(),
   tags: z.array(z.string()).optional(),
   weeklyGoalId: z.string().optional(),
+  channelId: z.string().nullish(),
+  scheduledBucket: z
+    .enum(['TODAY', 'TOMORROW', 'NEXT_WEEK', 'NEXT_MONTH', 'NEXT_QUARTER', 'NEXT_YEAR', 'SOMEDAY', 'NEVER'])
+    .nullish(),
   isRecurring: z.boolean().optional(),
   recurrenceRule: z.string().optional(),
   recurrenceEndDate: z.string().optional(),

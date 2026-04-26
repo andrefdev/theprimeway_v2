@@ -41,6 +41,8 @@ export interface CreateTaskInput {
   source?: string
   tags?: string[]
   weeklyGoalId?: string
+  channelId?: string | null
+  scheduledBucket?: string | null
   isRecurring?: boolean
   recurrenceRule?: string
   recurrenceEndDate?: string
@@ -60,6 +62,8 @@ export interface UpdateTaskInput {
   backlogState?: string
   tags?: string[]
   weeklyGoalId?: string
+  channelId?: string | null
+  scheduledBucket?: string | null
   archivedAt?: string | null
   orderInDay?: number
   isRecurring?: boolean
@@ -194,6 +198,8 @@ class TasksService {
       priority: input.priority || 'medium',
       tags: input.tags || [],
       weeklyGoalId: input.weeklyGoalId,
+      channelId: input.channelId,
+      scheduledBucket: input.scheduledBucket,
       isAllDay: input.isAllDay,
       estimatedDurationMinutes: input.estimatedDuration,
       backlogState: input.backlogState,
@@ -256,6 +262,8 @@ class TasksService {
     if (input.backlogState !== undefined) data.backlogState = input.backlogState
     if (input.tags !== undefined) data.tags = input.tags
     if (input.weeklyGoalId !== undefined) data.weeklyGoalId = input.weeklyGoalId
+    if (input.channelId !== undefined) data.channelId = input.channelId
+    if (input.scheduledBucket !== undefined) data.scheduledBucket = input.scheduledBucket
     if (input.archivedAt !== undefined) data.archivedAt = input.archivedAt
     if (input.orderInDay !== undefined) data.orderInDay = input.orderInDay
     if (input.isRecurring !== undefined) data.isRecurring = input.isRecurring

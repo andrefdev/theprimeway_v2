@@ -6,7 +6,6 @@ import { chatModel, taskModel } from '../lib/ai-models'
 import { z } from 'zod'
 import { calendarService } from './calendar.service'
 import { habitsService } from './habits.service'
-import { notesService } from './notes.service'
 import { tasksRepository } from '../repositories/tasks.repo'
 
 // ---------------------------------------------------------------------------
@@ -81,13 +80,13 @@ ${taskContext || '(no open tasks)'}
 User's active habits:
 ${habitContext || '(no active habits)'}
 
-Available tools span tasks, habits, goals, notes, calendar, and pomodoro.
+Available tools span tasks, habits, goals, calendar, and pomodoro.
 
-Read tools (run automatically, no confirmation): listTasks, listHabits, listGoals, listNotes, listCalendarEvents, findFreeSlots.
-Write tools (require user approval in UI): createTask, updateTask, deleteTask, completeTask, createHabit, updateHabit, logHabit, createGoal, updateGoalProgress, createTimeBlock, createNote, updateNote, deleteNote, startPomodoro.
+Read tools (run automatically, no confirmation): listTasks, listHabits, listGoals, listCalendarEvents, findFreeSlots.
+Write tools (require user approval in UI): createTask, updateTask, deleteTask, completeTask, createHabit, updateHabit, logHabit, createGoal, updateGoalProgress, createTimeBlock, startPomodoro.
 
 Workflow:
-1. If you need current data (list of habits, goals, notes, events, free slots), call a read tool first — do NOT guess IDs.
+1. If you need current data (list of habits, goals, events, free slots), call a read tool first — do NOT guess IDs.
 2. Propose writes only after you have the relevant IDs. The user will accept or reject; summarize the outcome afterward.
 3. Do NOT invent IDs. Use IDs from context above or from tool results.`
   }
@@ -223,30 +222,6 @@ Workflow:
           },
         }),
 
-        listNotes: tool({
-          description: "List the user's recent notes",
-          inputSchema: z.object({
-            limit: z.number().optional(),
-            search: z.string().optional(),
-          }),
-          execute: async ({ limit, search }) => {
-            const { data } = await notesService.listNotes(userId, {
-              limit: limit ?? 20,
-              offset: 0,
-              search,
-            } as any)
-            return {
-              notes: data.map((n: any) => ({
-                id: n.id,
-                title: n.title,
-                snippet: typeof n.content === 'string' ? n.content.slice(0, 160) : undefined,
-                isPinned: n.isPinned,
-                updatedAt: n.updatedAt,
-              })),
-            }
-          },
-        }),
-
         listCalendarEvents: tool({
           description: 'List calendar events between two ISO timestamps',
           inputSchema: z.object({
@@ -351,33 +326,6 @@ Workflow:
             startTime: z.string().describe('HH:MM (24h)'),
             endTime: z.string().describe('HH:MM (24h)'),
             description: z.string().optional(),
-          }),
-        }),
-
-        createNote: tool({
-          description: 'Propose creating a new note. Requires user approval.',
-          inputSchema: z.object({
-            title: z.string(),
-            content: z.string(),
-            tags: z.array(z.string()).optional(),
-          }),
-        }),
-
-        updateNote: tool({
-          description: 'Propose updating a note. Requires user approval.',
-          inputSchema: z.object({
-            noteId: z.string(),
-            noteTitle: z.string().describe('Current title for display'),
-            title: z.string().optional(),
-            content: z.string().optional(),
-          }),
-        }),
-
-        deleteNote: tool({
-          description: 'Propose deleting a note. Requires user approval.',
-          inputSchema: z.object({
-            noteId: z.string(),
-            noteTitle: z.string().describe('For display'),
           }),
         }),
 

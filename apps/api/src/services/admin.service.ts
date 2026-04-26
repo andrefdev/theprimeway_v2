@@ -107,7 +107,6 @@ class AdminService {
       mau,
       tasksLast30d,
       habitsLast30d,
-      notesLast30d,
       pomodoroLast30d,
       plans,
     ] = await Promise.all([
@@ -121,7 +120,6 @@ class AdminService {
       adminRepo.activeUsersSince(since30d),
       adminRepo.tasksCreatedSince(since30d),
       adminRepo.habitsCreatedSince(since30d),
-      adminRepo.notesCreatedSince(since30d),
       adminRepo.pomodoroCreatedSince(since30d),
       adminRepo.listPlansBrief(),
     ])
@@ -161,7 +159,6 @@ class AdminService {
       usage: {
         totalHabits: usageAgg._sum.currentHabits ?? 0,
         totalGoals: usageAgg._sum.currentGoals ?? 0,
-        totalNotes: usageAgg._sum.currentNotes ?? 0,
         totalTasks: usageAgg._sum.currentTasks ?? 0,
         dailyPomodoroSessions: usageAgg._sum.dailyPomodoroSessions ?? 0,
         dailyAiRequests: usageAgg._sum.dailyAiRequests ?? 0,
@@ -169,7 +166,6 @@ class AdminService {
       growth30d: {
         tasks: tasksLast30d,
         habits: habitsLast30d,
-        notes: notesLast30d,
         pomodoro: pomodoroLast30d,
       },
       featureOverrides,

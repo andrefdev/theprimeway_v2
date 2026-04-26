@@ -1,5 +1,18 @@
 import { z } from 'zod'
 
+export const TASK_BUCKETS = [
+  'TODAY',
+  'TOMORROW',
+  'NEXT_WEEK',
+  'NEXT_MONTH',
+  'NEXT_QUARTER',
+  'NEXT_YEAR',
+  'SOMEDAY',
+  'NEVER',
+] as const
+
+export const taskBucketSchema = z.enum(TASK_BUCKETS)
+
 export const createTaskSchema = z.object({
   title: z.string().min(1),
   description: z.string().optional(),
@@ -8,10 +21,12 @@ export const createTaskSchema = z.object({
   scheduledDate: z.string().optional(),
   scheduledStart: z.string().optional(),
   scheduledEnd: z.string().optional(),
+  scheduledBucket: taskBucketSchema.nullish(),
   isAllDay: z.boolean().optional(),
   estimatedDuration: z.number().optional(),
   tags: z.array(z.string()).optional().default([]),
   weeklyGoalId: z.string().optional(),
+  channelId: z.string().nullish(),
   isRecurring: z.boolean().optional(),
   recurrenceRule: z.string().optional(),
   recurrenceEndDate: z.string().optional(),

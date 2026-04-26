@@ -85,22 +85,10 @@ function useModulesNavItems() {
 
   const items: NavItem[] = [
     {
-      title: t('navNotes'),
-      to: '/notes',
-      icon: sidebarIcons.notes(undefined, { size: 20 }),
-      requiredFeature: FEATURES.NOTES_MODULE,
-    },
-    {
       title: t('navBrain', { defaultValue: 'Brain' }),
       to: '/brain',
       icon: sidebarIcons.brain(undefined, { size: 20 }),
       requiredFeature: FEATURES.BRAIN_MODULE,
-    },
-    {
-      title: t('navReading'),
-      to: '/reading',
-      icon: sidebarIcons.reading(undefined, { size: 20 }),
-      requiredFeature: FEATURES.READING_MODULE,
     },
   ]
 

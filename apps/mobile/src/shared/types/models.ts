@@ -201,7 +201,6 @@ export interface SubscriptionPlan {
   billingInterval: 'monthly' | 'yearly';
   maxHabits?: number;
   maxGoals?: number;
-  maxNotes?: number;
   maxTasks?: number;
   hasAiAssistant?: boolean;
   hasAdvancedAnalytics?: boolean;

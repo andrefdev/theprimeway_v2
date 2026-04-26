@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog'
 import { Button } from '@/shared/components/ui/button'
 import { toast } from 'sonner'
@@ -27,16 +27,7 @@ export function PromptRitualDialog({ instance, open, onClose, title, finalStep, 
   const updateInstance = useUpdateRitualInstance()
   const addReflection = useAddReflection()
 
-  useEffect(() => {
-    if (open && instance.status === 'PENDING') {
-      updateInstance
-        .mutateAsync({ id: instance.id, body: { status: 'IN_PROGRESS', startedAt: new Date().toISOString() } })
-        .catch(() => undefined)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open])
-
-  const current = prompts[idx]
+const current = prompts[idx]
   const totalSteps = prompts.length + (finalStep ? 1 : 0)
   const stepNumber = onFinalStep ? totalSteps : idx + 1
 

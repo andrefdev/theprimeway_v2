@@ -15,18 +15,6 @@ const defaultFeatureMessages: Record<FeatureKey, { title: string; description: s
     title: 'AI Assistant Unlock',
     description: 'Get unlimited AI-powered insights and support. Upgrade to Premium to access this feature.',
   },
-  READING_MODULE: {
-    title: 'Reading Module Unlock',
-    description: 'Track and manage your reading goals. Upgrade to Premium to access this feature.',
-  },
-  NOTES_MODULE: {
-    title: 'Notes Module Unlock',
-    description: 'Create and organize unlimited notes. Upgrade to Premium to access this feature.',
-  },
-  HEALTH_MODULE: {
-    title: 'Health Module Unlock',
-    description: 'Track your health metrics and wellness goals. Upgrade to Premium to access this feature.',
-  },
   ADVANCED_ANALYTICS: {
     title: 'Advanced Analytics Unlock',
     description: 'Deep dive into your productivity metrics and insights. Upgrade to Premium to access this feature.',
@@ -55,10 +43,6 @@ const defaultFeatureMessages: Record<FeatureKey, { title: string; description: s
     title: 'Goal Limit Reached',
     description: "You've reached the maximum number of goals for your plan. Upgrade to Premium for unlimited goals.",
   },
-  NOTES_LIMIT: {
-    title: 'Note Limit Reached',
-    description: "You've reached the maximum number of notes for your plan. Upgrade to Premium for unlimited notes.",
-  },
   TASKS_LIMIT: {
     title: 'Task Limit Reached',
     description: "You've reached the maximum number of tasks for your plan. Upgrade to Premium for unlimited tasks.",
@@ -78,8 +62,6 @@ const defaultFeatureMessages: Record<FeatureKey, { title: string; description: s
 }
 
 const featureKeyToTranslationKey: Record<string, string> = {
-  READING_MODULE: 'upgradePromptReading',
-  NOTES_MODULE: 'upgradePromptNotes',
   CUSTOM_THEME_CREATION: 'upgradePromptCustomTheme',
   ADVANCED_ANALYTICS: 'upgradePromptAdvancedAnalytics',
 }

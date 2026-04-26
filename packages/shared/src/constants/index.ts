@@ -18,17 +18,6 @@ export const POMODORO_DEFAULTS = {
   sessionsBeforeLongBreak: 4,
 } as const
 
-// --- Finances ---
-export const FINANCE_ACCOUNT_TYPES = ['checking', 'savings', 'credit_card', 'investment', 'cash', 'other'] as const
-export const TRANSACTION_TYPES = ['income', 'expense', 'transfer'] as const
-export const BUDGET_PERIODS = ['weekly', 'monthly', 'quarterly', 'yearly'] as const
-export const SUPPORTED_CURRENCIES = ['USD', 'PEN'] as const
-export const DEFAULT_BASE_CURRENCY = 'USD'
-
-// --- Reading ---
-export const READING_STATUSES = ['to_read', 'reading', 'completed', 'on_hold', 'dropped'] as const
-export const READING_PRIORITIES = ['low', 'medium', 'high'] as const
-
 // --- Goals ---
 export const GOAL_STATUSES = ['not-started', 'in-progress', 'completed', 'on-hold'] as const
 export const GOAL_TYPES = ['short-term', 'long-term'] as const
@@ -55,7 +44,6 @@ export const GAMIFICATION_XP_SOURCES = [
   'challenge_completed',
   'goal_completed',
   'pomodoro_completed',
-  'book_finished',
   'daily_login',
 ] as const
 

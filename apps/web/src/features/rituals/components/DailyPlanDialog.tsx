@@ -42,14 +42,7 @@ export function DailyPlanDialog({ instance, open, onClose }: Props) {
     setSelectedTaskIds(new Set(openTasks.map((t) => t.id)))
   }, [openTasks])
 
-  useEffect(() => {
-    if (open && instance.status === 'PENDING') {
-      updateInstance.mutateAsync({ id: instance.id, body: { status: 'IN_PROGRESS', startedAt: new Date().toISOString() } }).catch(() => undefined)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open])
-
-  async function saveHighlightAndAdvance() {
+async function saveHighlightAndAdvance() {
     if (highlight.trim()) {
       try {
         await addReflection.mutateAsync({ ritualInstanceId: instance.id, promptKey: 'highlight', body: highlight.trim() })

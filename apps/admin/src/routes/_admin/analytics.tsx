@@ -159,7 +159,6 @@ function AnalyticsPage() {
           <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
             <Kpi label="Habits" value={usage.totalHabits} icon={Activity} />
             <Kpi label="Goals" value={usage.totalGoals} icon={Activity} />
-            <Kpi label="Notes" value={usage.totalNotes} icon={Activity} />
             <Kpi label="Tasks" value={usage.totalTasks} icon={Activity} />
             <Kpi label="Pomodoros (day)" value={usage.dailyPomodoroSessions} icon={Activity} />
             <Kpi label="AI reqs (day)" value={usage.dailyAiRequests} icon={Activity} />
@@ -176,7 +175,6 @@ function AnalyticsPage() {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Kpi label="Tasks" value={growth30d.tasks} icon={TrendingUp} />
             <Kpi label="Habits" value={growth30d.habits} icon={TrendingUp} />
-            <Kpi label="Notes" value={growth30d.notes} icon={TrendingUp} />
             <Kpi label="Pomodoros" value={growth30d.pomodoro} icon={TrendingUp} />
           </div>
         </CardContent>

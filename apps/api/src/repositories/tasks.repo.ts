@@ -190,6 +190,8 @@ class TasksRepository {
         recurrenceRule: data.recurrenceRule,
         recurringParentId: data.recurringParentId,
         recurrenceEndDate: data.recurrenceEndDate ? new Date(data.recurrenceEndDate) : undefined,
+        scheduledBucket: data.scheduledBucket ?? undefined,
+        channelId: data.channelId ?? undefined,
       },
     })
     if (data.weeklyGoalId) await syncWeeklyLink(task.id, data.weeklyGoalId)
@@ -224,6 +226,8 @@ class TasksRepository {
     if (data.actualEnd !== undefined) updateData.actualEnd = data.actualEnd ? new Date(data.actualEnd) : null
     if (data.actualDurationMinutes !== undefined) updateData.actualDurationMinutes = data.actualDurationMinutes
     if (data.actualDurationSeconds !== undefined) updateData.actualDurationSeconds = data.actualDurationSeconds
+    if (data.scheduledBucket !== undefined) updateData.scheduledBucket = data.scheduledBucket
+    if (data.channelId !== undefined) updateData.channelId = data.channelId
 
     // Auto-set completedAt
     if (data.status === 'completed' && !existing.completedAt) {

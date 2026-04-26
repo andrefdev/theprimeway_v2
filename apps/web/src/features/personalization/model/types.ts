@@ -3,8 +3,6 @@ export const SECTION_IDS = [
   'tasks',
   'habits',
   'goals',
-  'notes',
-  'reading',
   'calendar',
   'rituals',
   'ai',

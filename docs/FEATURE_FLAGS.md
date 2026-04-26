@@ -66,34 +66,31 @@ Defined in `packages/shared/src/constants/features.ts`:
 export const FEATURES = {
   // Module-specific gates (free users don't have access)
   AI_ASSISTANT: 'AI_ASSISTANT',
-  READING_MODULE: 'READING_MODULE',
-  FINANCES_MODULE: 'FINANCES_MODULE',
-  NOTES_MODULE: 'NOTES_MODULE',
-  
+  BRAIN_MODULE: 'BRAIN_MODULE',
+
   // Transversal features (applies to multiple modules)
   ADVANCED_ANALYTICS: 'ADVANCED_ANALYTICS',
   CUSTOM_THEME_CREATION: 'CUSTOM_THEME_CREATION',  // Ability to create custom themes
+  CUSTOM_THEMES: 'CUSTOM_THEMES',
   EXPORT_DATA: 'EXPORT_DATA',
   PRIORITY_SUPPORT: 'PRIORITY_SUPPORT',
-  
+
   // Numeric limit gates (the gate fires when usage hits the cap)
   HABITS_LIMIT: 'HABITS_LIMIT',      // -1 = unlimited
   GOALS_LIMIT: 'GOALS_LIMIT',
-  NOTES_LIMIT: 'NOTES_LIMIT',
   TASKS_LIMIT: 'TASKS_LIMIT',
   POMODORO_DAILY_LIMIT: 'POMODORO_DAILY_LIMIT',
+  BRAIN_ENTRIES_LIMIT: 'BRAIN_ENTRIES_LIMIT',
 };
 ```
 
 **Module Gates:**
 - `AI_ASSISTANT` — Entire AI Assistant module (/ai)
-- `READING_MODULE` — Book reading tracker (/reading)
-- `FINANCES_MODULE` — Financial management (/finances)
-- `NOTES_MODULE` — Notes application (/notes)
+- `BRAIN_MODULE` — Second Brain module (/brain)
 
 **Transversal Features:**
-- `ADVANCED_ANALYTICS` — Analytics features across all modules (dashboard, finances, reading, etc.)
-- `CUSTOM_THEME_CREATION` — Ability to create custom themes (light/dark mode is always free)
+- `ADVANCED_ANALYTICS` — Analytics features across all modules
+- `CUSTOM_THEME_CREATION` — Ability to create custom themes (light/dark is always free)
 - `EXPORT_DATA` — Data export functionality
 - `PRIORITY_SUPPORT` — Priority support access
 

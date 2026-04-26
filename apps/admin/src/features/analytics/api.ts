@@ -23,7 +23,6 @@ export interface AnalyticsSummary {
   usage: {
     totalHabits: number
     totalGoals: number
-    totalNotes: number
     totalTasks: number
     dailyPomodoroSessions: number
     dailyAiRequests: number
@@ -31,7 +30,6 @@ export interface AnalyticsSummary {
   growth30d: {
     tasks: number
     habits: number
-    notes: number
     pomodoro: number
   }
   featureOverrides: { featureKey: string; enabled: number; disabled: number }[]

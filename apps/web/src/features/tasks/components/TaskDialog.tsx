@@ -1,7 +1,8 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { createTaskSchema, type CreateTaskInput } from '@repo/shared/validators'
-import type { Task } from '@repo/shared/types'
+import { createTaskSchema, type CreateTaskInput, TASK_BUCKETS } from '@repo/shared/validators'
+import type { Task, TaskBucket } from '@repo/shared/types'
+import { channelsApi } from '@/features/capture/channels-api'
 import { useCreateTask, useUpdateTask } from '../queries'
 import { useScheduleSuggestion } from '../hooks/use-schedule-suggestion'
 import { useEstimateTimebox } from '../hooks/use-estimate-timebox'
@@ -90,6 +91,13 @@ export function TaskDialog({ open, onClose, task, defaultDate, defaultStart, def
     ...goalsQueries.weeklyGoals(),
   })
 
+  const { data: channelsData = [] } = useQuery({
+    queryKey: ['channels', 'list'],
+    queryFn: channelsApi.list,
+  })
+
+  const [showExactTimes, setShowExactTimes] = useState(false)
+
   const form = useForm<CreateTaskInput>({
     resolver: zodResolver(createTaskSchema),
     defaultValues: {
@@ -113,6 +121,7 @@ export function TaskDialog({ open, onClose, task, defaultDate, defaultStart, def
   // Reset form when dialog opens with new task
   useEffect(() => {
     if (!open) return
+    setShowExactTimes(false)
     setRepeatEnabled(false)
     setRepeatPattern('DAILY')
     setRepeatDays([1, 2, 3, 4, 5])
@@ -127,11 +136,14 @@ export function TaskDialog({ open, onClose, task, defaultDate, defaultStart, def
         scheduledDate: task.scheduledDate ?? undefined,
         scheduledStart: task.scheduledStart ?? undefined,
         scheduledEnd: task.scheduledEnd ?? undefined,
+        scheduledBucket: (task as any).scheduledBucket ?? undefined,
+        channelId: (task as any).channelId ?? undefined,
         isAllDay: (task as any).isAllDay ?? !hasTimes,
         estimatedDuration: task.estimatedDuration ?? undefined,
         tags: task.tags ?? [],
         weeklyGoalId: (task as any).weeklyGoalId ?? undefined,
       })
+      if (hasTimes) setShowExactTimes(true)
     } else {
       const hasTimes = !!(defaultStart && defaultEnd)
       form.reset({
@@ -295,27 +307,72 @@ export function TaskDialog({ open, onClose, task, defaultDate, defaultStart, def
               </div>
             </div>
 
+            {/* Bucket + Channel */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label>{t('bucket', { defaultValue: 'When' })}</Label>
+                <Select
+                  value={form.watch('scheduledBucket') ?? 'none'}
+                  onValueChange={(v) => form.setValue('scheduledBucket', v !== 'none' ? (v as TaskBucket) : null)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder={t('selectBucket', { defaultValue: 'Pick' })} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">{t('none')}</SelectItem>
+                    {TASK_BUCKETS.map((b) => (
+                      <SelectItem key={b} value={b}>
+                        {t(`bucket_${b}`, { defaultValue: bucketLabel(b) })}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>{t('channel', { defaultValue: 'Channel' })}</Label>
+                <Select
+                  value={form.watch('channelId') ?? 'none'}
+                  onValueChange={(v) => form.setValue('channelId', v !== 'none' ? v : null)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder={t('selectChannel', { defaultValue: 'Channel' })} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">{t('none')}</SelectItem>
+                    {channelsData.map((c: any) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        #{c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
             {/* Scheduled Date / Time */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <Label>{t('scheduledDate')}</Label>
                 <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-1.5">
-                    <Switch
-                      id="isAllDay"
-                      checked={form.watch('isAllDay') ?? true}
-                      onCheckedChange={(v) => {
-                        form.setValue('isAllDay', v)
-                        if (v) {
-                          form.setValue('scheduledStart', undefined)
-                          form.setValue('scheduledEnd', undefined)
-                        }
-                      }}
-                    />
-                    <Label htmlFor="isAllDay" className="text-xs text-muted-foreground cursor-pointer">
-                      {t('allDay')}
-                    </Label>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const next = !showExactTimes
+                      setShowExactTimes(next)
+                      if (!next) {
+                        form.setValue('scheduledStart', undefined)
+                        form.setValue('scheduledEnd', undefined)
+                        form.setValue('isAllDay', true)
+                      } else {
+                        form.setValue('isAllDay', false)
+                      }
+                    }}
+                    className="text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+                  >
+                    {showExactTimes
+                      ? t('hideExactTimes', { defaultValue: 'Use timebox only' })
+                      : t('showExactTimes', { defaultValue: 'Pick exact time' })}
+                  </button>
                   {isEdit && task && (
                     <Button
                       type="button"
@@ -354,7 +411,7 @@ export function TaskDialog({ open, onClose, task, defaultDate, defaultStart, def
                 </div>
               </div>
 
-              {(form.watch('isAllDay') ?? true) ? (
+              {!showExactTimes ? (
                 <DatePicker
                   date={parseLocalDate(form.watch('scheduledDate'))}
                   onDateChange={(d) => {
@@ -715,6 +772,20 @@ export function TaskDialog({ open, onClose, task, defaultDate, defaultStart, def
       </DialogContent>
     </Dialog>
   )
+}
+
+function bucketLabel(b: string): string {
+  switch (b) {
+    case 'TODAY': return 'Today'
+    case 'TOMORROW': return 'Tomorrow'
+    case 'NEXT_WEEK': return 'Next week'
+    case 'NEXT_MONTH': return 'Next month'
+    case 'NEXT_QUARTER': return 'Next quarter'
+    case 'NEXT_YEAR': return 'Next year'
+    case 'SOMEDAY': return 'Someday'
+    case 'NEVER': return 'Never'
+    default: return b
+  }
 }
 
 function parseLocalDate(dateString?: string): Date | undefined {

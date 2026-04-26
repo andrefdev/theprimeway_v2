@@ -10,8 +10,6 @@ export type GamificationEventType =
   | 'streak.updated'
   | 'rank.updated'
   | 'challenge.completed'
-  | 'note.created'
-  | 'book.finished'
   | 'quarterly.progress.updated'
   | 'brain.entry.created'
 

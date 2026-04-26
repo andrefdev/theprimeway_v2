@@ -20,14 +20,11 @@ export type {
   ResetPasswordInput,
 } from './auth'
 
-export { createTaskSchema, updateTaskSchema } from './task'
+export { createTaskSchema, updateTaskSchema, taskBucketSchema, TASK_BUCKETS } from './task'
 export type { CreateTaskInput, UpdateTaskInput } from './task'
 
 export { createHabitSchema, updateHabitSchema, upsertHabitLogSchema } from './habit'
 export type { CreateHabitInput, UpdateHabitInput, UpsertHabitLogInput } from './habit'
-
-export { createNoteSchema, updateNoteSchema } from './note'
-export type { CreateNoteInput, UpdateNoteInput } from './note'
 
 export { updateCalendarSchema, googleCallbackSchema, syncCalendarSchema } from './calendar'
 export type { UpdateCalendarInput, GoogleCallbackInput, SyncCalendarInput } from './calendar'
@@ -50,14 +47,6 @@ export type {
 
 export { createPomodoroSessionSchema, updatePomodoroSessionSchema } from './pomodoro'
 export type { CreatePomodoroSessionInput, UpdatePomodoroSessionInput } from './pomodoro'
-
-export {
-  addBookSchema,
-  updateBookSchema,
-  createReadingGoalSchema,
-  updateReadingGoalSchema,
-} from './reading'
-export type { AddBookInput, UpdateBookInput, CreateReadingGoalInput, UpdateReadingGoalInput } from './reading'
 
 export { registerDeviceSchema, updatePreferencesSchema, sendPushSchema } from './notifications'
 export type { RegisterDeviceInput, UpdatePreferencesInput, SendPushInput } from './notifications'

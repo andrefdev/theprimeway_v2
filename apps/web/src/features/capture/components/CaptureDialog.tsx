@@ -51,6 +51,7 @@ export function CaptureDialog({ open, onClose }: Props) {
         title: parsed.title,
         ...(parsed.plannedMinutes ? { estimatedDurationMinutes: parsed.plannedMinutes } : {}),
         ...(parsed.day ? { scheduledDate: parsed.day } : {}),
+        ...(parsed.bucket ? { scheduledBucket: parsed.bucket } : {}),
         ...(matchedChannel ? ({ channelId: matchedChannel.id } as any) : {}),
       } as any)
       if (schedule && parsed.day) {
@@ -113,7 +114,13 @@ export function CaptureDialog({ open, onClose }: Props) {
           />
           <PreviewRow
             label="Day"
-            value={parsed.day ?? <span className="text-muted-foreground">—</span>}
+            value={
+              parsed.day
+                ? parsed.day
+                : parsed.bucket
+                  ? <span className="capitalize">{parsed.bucket.toLowerCase().replace(/_/g, ' ')}</span>
+                  : <span className="text-muted-foreground">—</span>
+            }
           />
           <PreviewRow
             label="Channel"

@@ -1,5 +1,14 @@
 export type TaskStatus = 'open' | 'completed' | 'archived'
 export type TaskPriority = 'low' | 'medium' | 'high'
+export type TaskBucket =
+  | 'TODAY'
+  | 'TOMORROW'
+  | 'NEXT_WEEK'
+  | 'NEXT_MONTH'
+  | 'NEXT_QUARTER'
+  | 'NEXT_YEAR'
+  | 'SOMEDAY'
+  | 'NEVER'
 
 export interface Task {
   id: string
@@ -12,6 +21,8 @@ export interface Task {
   scheduledDate: string | null
   scheduledStart: string | null
   scheduledEnd: string | null
+  scheduledBucket: TaskBucket | null
+  channelId: string | null
   estimatedDuration: number | null
   completedAt: string | null
   isArchived: boolean

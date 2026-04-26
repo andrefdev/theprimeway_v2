@@ -18,7 +18,6 @@ import { useCompletionImpact } from '@/features/tasks/hooks/use-completion-impac
 import { useAutoSchedule } from '@/features/scheduling/queries'
 import { WorkingSessionsPanel } from '@/features/scheduling/components/WorkingSessionsPanel'
 import { WorkloadCounter } from '@/features/scheduling/components/WorkloadCounter'
-import { useTodayShortcuts } from '@/features/scheduling/hooks/use-today-shortcuts'
 import { useRitualsToday } from '@/features/rituals/queries'
 import { DailyPlanDialog } from '@/features/rituals/components/DailyPlanDialog'
 import { DailyShutdownDialog } from '@/features/rituals/components/DailyShutdownDialog'
@@ -38,7 +37,6 @@ export function TasksToday() {
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
   const [planDismissed, setPlanDismissed] = useState(false)
   const [planOpen, setPlanOpen] = useState(false)
   const [shutdownDismissed, setShutdownDismissed] = useState(false)
@@ -60,7 +58,6 @@ export function TasksToday() {
   }, [pendingShutdown, shutdownDismissed, planOpen])
 
   const tasks = tasksQuery.data?.data ?? []
-  useTodayShortcuts({ day: today, tasks, selectedTaskId, setSelectedTaskId })
   const openTasks = tasks.filter((task: Task) => task.status === 'open')
   const completedTasks = tasks.filter((task: Task) => task.status === 'completed')
   const unscheduledOpen = openTasks.filter((t: Task) => !t.scheduledStart)
@@ -160,14 +157,6 @@ export function TasksToday() {
         {tasksQuery.isLoading && <SkeletonList lines={8} />}
         {tasksQuery.isError && <QueryError message={t('failedToLoad')} onRetry={() => tasksQuery.refetch()} />}
 
-        {openTasks.length > 0 && (
-          <SelectedTaskBar
-            selected={selectedTaskId ? tasks.find((t: Task) => t.id === selectedTaskId) ?? null : null}
-            onClear={() => setSelectedTaskId(null)}
-            onPickFirst={() => setSelectedTaskId(openTasks[0]?.id ?? null)}
-          />
-        )}
-
         <WorkingSessionsPanel day={today} />
 
         {!tasksQuery.isLoading && !tasksQuery.isError && tasks.length > 0 && (
@@ -214,43 +203,3 @@ export function TasksToday() {
   )
 }
 
-function SelectedTaskBar({
-  selected,
-  onClear,
-  onPickFirst,
-}: {
-  selected: Task | null
-  onClear: () => void
-  onPickFirst: () => void
-}) {
-  return (
-    <div className="flex items-center justify-between rounded-md border border-border/50 bg-muted/30 px-3 py-2 text-xs">
-      {selected ? (
-        <>
-          <span className="truncate">
-            <span className="text-muted-foreground">Selected:</span> <span className="font-medium">{selected.title}</span>
-          </span>
-          <span className="flex items-center gap-3 text-muted-foreground">
-            <kbd className="rounded bg-background px-1.5 py-0.5 font-mono text-[10px]">X</kbd> schedule
-            <kbd className="rounded bg-background px-1.5 py-0.5 font-mono text-[10px]">⇧X</kbd> no-split
-            <kbd className="rounded bg-background px-1.5 py-0.5 font-mono text-[10px]">C</kbd> complete
-            <kbd className="rounded bg-background px-1.5 py-0.5 font-mono text-[10px]">F</kbd> focus
-            <button onClick={onClear} className="hover:text-foreground">clear</button>
-          </span>
-        </>
-      ) : (
-        <>
-          <span className="text-muted-foreground">
-            Press <kbd className="rounded bg-background px-1.5 py-0.5 font-mono text-[10px]">↓</kbd> to select a task, then{' '}
-            <kbd className="rounded bg-background px-1.5 py-0.5 font-mono text-[10px]">X</kbd> /{' '}
-            <kbd className="rounded bg-background px-1.5 py-0.5 font-mono text-[10px]">C</kbd> /{' '}
-            <kbd className="rounded bg-background px-1.5 py-0.5 font-mono text-[10px]">F</kbd>.
-          </span>
-          <button onClick={onPickFirst} className="text-muted-foreground hover:text-foreground">
-            select first
-          </button>
-        </>
-      )}
-    </div>
-  )
-}

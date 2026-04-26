@@ -17,7 +17,7 @@ import { gamificationEvents } from './gamification/events'
 import { gamificationService } from './gamification.service'
 import { bestMatch } from '../lib/fuzzy-match'
 
-type TargetType = 'task' | 'goal' | 'habit' | 'note'
+type TargetType = 'task' | 'goal' | 'habit'
 type LinkType = 'related' | 'spawned_from' | 'action_for' | 'evidence_for'
 
 interface ActionItem {
@@ -116,7 +116,7 @@ class BrainService {
         return
       }
 
-      const [tasks, goals, habits, notes] = await Promise.all([
+      const [tasks, goals, habits] = await Promise.all([
         prisma.task.findMany({
           where: { userId, status: 'open', kind: 'TASK', archivedAt: null },
           select: { id: true, title: true },
@@ -133,18 +133,11 @@ class BrainService {
           select: { id: true, title: true },
           take: 20,
         }),
-        prisma.note.findMany({
-          where: { userId, deletedAt: null },
-          select: { id: true, title: true },
-          orderBy: { updatedAt: 'desc' },
-          take: 20,
-        }),
       ])
 
       const taskCandidates: Candidate[] = tasks.map((t: { id: string; title: string }) => ({ id: t.id, title: t.title }))
       const goalCandidates: Candidate[] = goals.map((g: { id: string; title: string }) => ({ id: g.id, title: g.title }))
       const habitCandidates: Candidate[] = habits.map((h: { id: string; title: string }) => ({ id: h.id, title: h.title }))
-      const noteCandidates: Candidate[] = notes.map((n: { id: string; title: string | null }) => ({ id: n.id, title: n.title ?? '' }))
 
       const { generateObject } = await import('ai')
       const { z: zod } = await import('zod')
@@ -166,9 +159,6 @@ ${goalCandidates.map((g) => `- ${g.title}`).join('\n') || '(none)'}
 
 ACTIVE HABITS:
 ${habitCandidates.map((h) => `- ${h.title}`).join('\n') || '(none)'}
-
-RECENT NOTES:
-${noteCandidates.map((n) => `- ${n.title}`).join('\n') || '(none)'}
 
 Produce structured output:
 - title: a crisp 3-8 word summary of the thought
@@ -194,7 +184,7 @@ Produce structured output:
         crossLinks: zod
           .array(
             zod.object({
-              targetType: zod.enum(['task', 'goal', 'habit', 'note']),
+              targetType: zod.enum(['task', 'goal', 'habit']),
               targetTitle: zod.string().min(1),
               linkType: zod.enum(['related', 'spawned_from', 'action_for', 'evidence_for']),
             }),
@@ -212,7 +202,6 @@ Produce structured output:
         task: taskCandidates,
         goal: goalCandidates,
         habit: habitCandidates,
-        note: noteCandidates,
       }
       for (const link of out.crossLinks) {
         const pool = pools[link.targetType as TargetType]
@@ -281,15 +270,14 @@ Produce structured output:
 
   private async hydrateCrossLinks(userId: string, links: any[]): Promise<any[]> {
     if (!links || links.length === 0) return []
-    const byType = { task: [] as string[], goal: [] as string[], habit: [] as string[], note: [] as string[] }
+    const byType = { task: [] as string[], goal: [] as string[], habit: [] as string[] }
     for (const l of links) {
       if (l.targetType === 'task') byType.task.push(l.targetId)
       else if (l.targetType === 'goal') byType.goal.push(l.targetId)
       else if (l.targetType === 'habit') byType.habit.push(l.targetId)
-      else if (l.targetType === 'note') byType.note.push(l.targetId)
     }
 
-    const [tasks, goals, habits, notes] = await Promise.all([
+    const [tasks, goals, habits] = await Promise.all([
       byType.task.length
         ? prisma.task.findMany({ where: { userId, id: { in: byType.task } }, select: { id: true, title: true } })
         : Promise.resolve([]),
@@ -302,13 +290,10 @@ Produce structured output:
             select: { id: true, title: true },
           })
         : Promise.resolve([]),
-      byType.note.length
-        ? prisma.note.findMany({ where: { userId, id: { in: byType.note } }, select: { id: true, title: true } })
-        : Promise.resolve([]),
     ])
 
     const byId = new Map<string, { id: string; title: string }>()
-    for (const arr of [tasks, goals, habits, notes]) for (const x of arr as any[]) byId.set(x.id, x)
+    for (const arr of [tasks, goals, habits]) for (const x of arr as any[]) byId.set(x.id, x)
     return links.map((l) => ({ ...l, target: byId.get(l.targetId) ?? null }))
   }
 }
