@@ -62,7 +62,7 @@ export function ShortTextCell<TData>({
 }: CellVariantProps<TData>) {
   const navigate = useNavigate()
   const { pathname } = useLocation()
-  const { t } = useTranslation('notes')
+  const { t } = useTranslation('common')
   const initialValue = cell.getValue() as string
   const [value, setValue] = React.useState(initialValue)
   const cellRef = React.useRef<HTMLDivElement>(null)
@@ -967,7 +967,7 @@ export function MultiSelectCell<TData>({
   isSelected,
   readOnly,
 }: CellVariantProps<TData>) {
-  const { t } = useTranslation('notes')
+  const { t } = useTranslation('common')
   const cellValue = React.useMemo(() => {
     const value = cell.getValue() as string[]
     return value ?? []

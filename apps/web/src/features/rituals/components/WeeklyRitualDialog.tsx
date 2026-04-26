@@ -71,11 +71,6 @@ export function WeeklyPlanDialog({ instance, open, onClose }: Props) {
         setRationale(null)
       }
     }
-    if (open && instance.status === 'PENDING') {
-      updateInstance
-        .mutateAsync({ id: instance.id, body: { status: 'IN_PROGRESS', startedAt: new Date().toISOString() } })
-        .catch(() => undefined)
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, instance.id])
 

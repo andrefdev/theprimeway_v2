@@ -19,12 +19,11 @@ model SubscriptionPlan {
   trialPeriodDays          Int?      @default(14) @map("trial_period_days")
   maxHabits                Int?      @default(5) @map("max_habits")
   maxGoals                 Int?      @default(3) @map("max_goals")
-  maxNotes                 Int?      @default(50) @map("max_notes")
   maxTasks                 Int?      @default(20) @map("max_tasks")
   maxPomodoroSessionsDaily Int?      @default(10) @map("max_pomodoro_sessions_daily")
+  maxBrainEntries          Int?      @default(20) @map("max_brain_entries")
   hasAiAssistant           Boolean?  @default(false) @map("has_ai_assistant")
-  hasReadingModule         Boolean?  @default(false) @map("has_reading_module")
-  hasNotesModule           Boolean?  @default(false) @map("has_notes_module")
+  hasBrainModule           Boolean?  @default(false) @map("has_brain_module")
   hasAdvancedAnalytics     Boolean?  @default(false) @map("has_advanced_analytics")
   hasCustomThemeCreation   Boolean?  @default(false) @map("has_custom_theme_creation")
   hasExportData            Boolean?  @default(false) @map("has_export_data")
@@ -76,44 +75,6 @@ model LemonSqueezyWebhook {
   @@map("lemon_squeezy_webhooks")
 }
 
-model NoteCategory {
-  id        String    @id @default(uuid())
-  userId    String?   @map("user_id")
-  user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name      String
-  color     String?   @default("#6B7280")
-  icon      String?
-  createdAt DateTime? @default(now()) @map("created_at")
-  updatedAt DateTime? @updatedAt @map("updated_at")
-
-  notes Note[]
-
-  @@index([userId])
-  @@map("note_categories")
-}
-
-model Note {
-  id         String    @id @default(uuid())
-  userId     String?   @map("user_id")
-  user       User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  categoryId String?   @map("category_id")
-  title      String
-  content    String?
-  tags       Json      @default("[]")
-  isPinned   Boolean?  @default(false) @map("is_pinned")
-  isArchived Boolean?  @default(false) @map("is_archived")
-  deletedAt  DateTime? @map("deleted_at")
-  createdAt  DateTime? @default(now()) @map("created_at")
-  updatedAt  DateTime? @updatedAt @map("updated_at")
-
-  category NoteCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-
-  @@index([userId])
-  @@index([categoryId])
-  @@index([userId, deletedAt])
-  @@map("notes")
-}
-
 model Task {
   id                       String    @id @default(uuid())
   userId                   String?   @map("user_id")
@@ -160,6 +121,7 @@ model Task {
   originalDay        DateTime? @map("original_day") @db.Date
   recurringSeriesId  String?   @map("recurring_series_id")
   habitMeta          Json?     @map("habit_meta") // { category, color, targetFrequency, frequencyType, weekDays } when kind=HABIT
+  scheduledBucket    TaskBucket? @map("scheduled_bucket")
 
   createdAt DateTime? @default(now()) @map("created_at")
   updatedAt DateTime? @updatedAt @map("updated_at")
@@ -180,28 +142,11 @@ model Task {
   @@index([userId, scheduledDate])
   @@index([userId, day])
   @@index([userId, kind])
+  @@index([userId, scheduledBucket])
   @@index([channelId])
   @@index([recurringSeriesId])
   @@index([recurringParentId])
   @@map("tasks")
-}
-
-model HealthMetric {
-  id           String    @id @default(uuid())
-  userId       String?   @map("user_id")
-  user         User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type         String
-  unit         String?
-  numericValue Decimal?  @map("numeric_value")
-  stringValue  String?   @map("string_value")
-  date         DateTime
-  notes        String?
-  metadata     Json?
-  createdAt    DateTime? @default(now()) @map("created_at")
-  updatedAt    DateTime? @updatedAt @map("updated_at")
-
-  @@index([userId, type, date])
-  @@map("health_metrics")
 }
 
 model UserProfile {
@@ -373,16 +318,9 @@ model User {
   // Habits (habits are Task{kind:HABIT}; HabitLog retains per-day completion)
   habitLogs HabitLog[]
 
-  // Notes
-  noteCategories NoteCategory[]
-  notes          Note[]
-
   // Tasks
   tasks            Task[]
   calendarAccounts CalendarAccount[]
-
-  // Health
-  healthMetrics HealthMetric[]
 
   // Profile & Settings
   profile              UserProfile?
@@ -392,10 +330,6 @@ model User {
 
   // Chat
   chatThreads ChatThread[]
-
-  // Reading
-  userBooks    UserBook[]
-  readingGoals ReadingGoal[]
 
   // System
   pushSubscriptions       PushSubscription[]
@@ -748,7 +682,7 @@ model UserOnboarding {
   userId         String    @unique @map("user_id")
   user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   isCompleted    Boolean   @default(false) @map("is_completed")
-  currentStep    String    @default("goals") // goals | habits | tasks | finances | notes | completed
+  currentStep    String    @default("goals") // goals | habits | tasks | completed
   skippedSteps   Json?     @map("skipped_steps") // Array of skipped step IDs
   completedSteps Json?     @map("completed_steps") // Array of completed step IDs with timestamps
   dismissedAt    DateTime? @map("dismissed_at")
@@ -756,81 +690,6 @@ model UserOnboarding {
   updatedAt      DateTime  @updatedAt @map("updated_at")
 
   @@map("user_onboarding")
-}
-
-// ─── Reading / Biblioteca ───────────────────────────────────────
-
-model BookMaster {
-  id             String   @id @default(uuid())
-  source         String   @default("open_library")
-  workKey        String   @unique @map("work_key")
-  editionKey     String?  @map("edition_key")
-  title          String
-  subtitle       String?
-  description    String?
-  authors        Json     @default("[]")
-  coverUrl       String?  @map("cover_url")
-  pages          Int?
-  publishYear    Int?     @map("publish_year")
-  language       String?
-  subjects       Json     @default("[]")
-  isbnList       Json     @default("[]") @map("isbn_list")
-  openLibraryUrl String?  @map("open_library_url")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
-
-  userBooks UserBook[]
-
-  @@index([workKey])
-  @@map("book_masters")
-}
-
-model UserBook {
-  id     String     @id @default(uuid())
-  userId String     @map("user_id")
-  user   User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  bookId String     @map("book_id")
-  book   BookMaster @relation(fields: [bookId], references: [id], onDelete: Cascade)
-
-  status             String    @default("to_read")
-  priority           String    @default("medium")
-  plannedQuarter     String?   @map("planned_quarter")
-  plannedStartDate   DateTime? @map("planned_start_date")
-  targetFinishDate   DateTime? @map("target_finish_date")
-  startedAt          DateTime? @map("started_at")
-  finishedAt         DateTime? @map("finished_at")
-  currentPage        Int?      @map("current_page")
-  totalPagesSnapshot Int?      @map("total_pages_snapshot")
-  progressPercent    Int       @default(0) @map("progress_percent")
-  rating             Int?
-  review             String?
-  notes              String?
-  tags               Json      @default("[]")
-  favorite           Boolean   @default(false)
-  createdAt          DateTime  @default(now()) @map("created_at")
-  updatedAt          DateTime  @updatedAt @map("updated_at")
-
-  @@unique([userId, bookId])
-  @@index([userId])
-  @@index([userId, status])
-  @@index([userId, plannedQuarter])
-  @@map("user_books")
-}
-
-model ReadingGoal {
-  id          String   @id @default(uuid())
-  userId      String   @map("user_id")
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  periodType  String   @map("period_type")
-  targetBooks Int      @map("target_books")
-  startDate   DateTime @map("start_date")
-  endDate     DateTime @map("end_date")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-
-  @@index([userId])
-  @@index([userId, periodType])
-  @@map("reading_goals")
 }
 
 // ─── Personalization ───────────────────────────────────────────────
@@ -1355,6 +1214,17 @@ model TimerEvent {
 enum TaskKind {
   TASK
   HABIT
+}
+
+enum TaskBucket {
+  TODAY
+  TOMORROW
+  NEXT_WEEK
+  NEXT_MONTH
+  NEXT_QUARTER
+  NEXT_YEAR
+  SOMEDAY
+  NEVER
 }
 
 // ---------------------------------------------------------------------------

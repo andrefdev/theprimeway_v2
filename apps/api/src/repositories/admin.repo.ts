@@ -77,7 +77,6 @@ class AdminRepository {
       _sum: {
         currentHabits: true,
         currentGoals: true,
-        currentNotes: true,
         currentTasks: true,
         dailyPomodoroSessions: true,
         dailyAiRequests: true,
@@ -95,10 +94,6 @@ class AdminRepository {
 
   habitsCreatedSince(since: Date) {
     return prisma.task.count({ where: { kind: 'HABIT', createdAt: { gte: since } } })
-  }
-
-  notesCreatedSince(since: Date) {
-    return prisma.note.count({ where: { createdAt: { gte: since } } })
   }
 
   pomodoroCreatedSince(since: Date) {

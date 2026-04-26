@@ -15,9 +15,6 @@ interface FeatureOverrideRowProps {
 // Friendly names for features
 const FEATURE_NAMES: Record<FeatureKey, string> = {
   AI_ASSISTANT: 'AI Assistant',
-  READING_MODULE: 'Reading Module',
-  NOTES_MODULE: 'Notes Module',
-  HEALTH_MODULE: 'Health Module',
   BRAIN_MODULE: 'Second Brain',
   ADVANCED_ANALYTICS: 'Advanced Analytics',
   CUSTOM_THEME_CREATION: 'Custom Theme Creation',
@@ -26,7 +23,6 @@ const FEATURE_NAMES: Record<FeatureKey, string> = {
   PRIORITY_SUPPORT: 'Priority Support',
   HABITS_LIMIT: 'Max Habits',
   GOALS_LIMIT: 'Max Goals',
-  NOTES_LIMIT: 'Max Notes',
   TASKS_LIMIT: 'Max Tasks',
   POMODORO_DAILY_LIMIT: 'Daily Pomodoro Sessions',
   BRAIN_ENTRIES_LIMIT: 'Max Brain Entries',

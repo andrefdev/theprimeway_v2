@@ -12,8 +12,7 @@ const BILLING_OPTIONS = [
 
 const BOOLEAN_FIELDS: Array<{ key: keyof PlanInput; label: string; description?: string }> = [
   { key: 'hasAiAssistant', label: 'AI Assistant' },
-  { key: 'hasReadingModule', label: 'Reading Module' },
-  { key: 'hasNotesModule', label: 'Notes Module' },
+  { key: 'hasBrainModule', label: 'Second Brain' },
   { key: 'hasAdvancedAnalytics', label: 'Advanced Analytics' },
   { key: 'hasCustomThemeCreation', label: 'Custom Theme Creation' },
   { key: 'hasExportData', label: 'Export Data' },
@@ -23,9 +22,9 @@ const BOOLEAN_FIELDS: Array<{ key: keyof PlanInput; label: string; description?:
 const LIMIT_FIELDS: Array<{ key: keyof PlanInput; label: string }> = [
   { key: 'maxHabits', label: 'Max Habits' },
   { key: 'maxGoals', label: 'Max Goals' },
-  { key: 'maxNotes', label: 'Max Notes' },
   { key: 'maxTasks', label: 'Max Tasks' },
   { key: 'maxPomodoroSessionsDaily', label: 'Daily Pomodoro Sessions' },
+  { key: 'maxBrainEntries', label: 'Max Brain Entries' },
 ]
 
 function initialState(plan?: Plan): FormState {
@@ -40,12 +39,11 @@ function initialState(plan?: Plan): FormState {
       trialPeriodDays: 14,
       maxHabits: 5,
       maxGoals: 3,
-      maxNotes: 50,
       maxTasks: 20,
       maxPomodoroSessionsDaily: 10,
+      maxBrainEntries: 20,
       hasAiAssistant: false,
-      hasReadingModule: false,
-      hasNotesModule: false,
+      hasBrainModule: false,
       hasAdvancedAnalytics: false,
       hasCustomThemeCreation: false,
       hasExportData: false,

@@ -1,6 +1,6 @@
 export type BrainEntryStatus = 'pending' | 'transcribing' | 'analyzing' | 'complete' | 'failed'
 
-export type BrainCrossLinkTarget = 'task' | 'goal' | 'habit' | 'note'
+export type BrainCrossLinkTarget = 'task' | 'goal' | 'habit'
 export type BrainCrossLinkType = 'related' | 'spawned_from' | 'action_for' | 'evidence_for'
 
 export interface BrainActionItem {

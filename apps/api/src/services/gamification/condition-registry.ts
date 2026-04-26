@@ -25,8 +25,6 @@ export interface AchievementContext {
     pomodoroSessions: number
     maxQuarterlyProgress: number
     challengesCompleted: number
-    notesCreated: number
-    booksCompleted: number
   }
 }
 
@@ -81,8 +79,6 @@ export async function buildAchievementContext(userId: string): Promise<Achieveme
     pomodoroSessions,
     quarterlyGoals,
     challengesCompleted,
-    notesCreated,
-    booksCompleted,
   ] = await Promise.all([
     prisma.habitLog.count({ where: { userId, completedCount: { gt: 0 } } }),
     prisma.task.count({ where: { userId, status: 'completed' } }),
@@ -91,8 +87,6 @@ export async function buildAchievementContext(userId: string): Promise<Achieveme
     prisma.workingSession.count({ where: { userId, kind: 'POMODORO', completed: true } }),
     prisma.goal.findMany({ where: { userId, horizon: 'QUARTER' }, select: { visionContribution: true } }),
     prisma.dailyChallenge.count({ where: { userId, isCompleted: true } }),
-    prisma.note.count({ where: { userId } }).catch(() => 0),
-    prisma.userBook.count({ where: { userId, status: 'finished' } }).catch(() => 0),
   ])
 
   const maxQuarterlyProgress = (quarterlyGoals as Array<{ visionContribution: number | null }>).reduce(
@@ -118,8 +112,6 @@ export async function buildAchievementContext(userId: string): Promise<Achieveme
       pomodoroSessions,
       maxQuarterlyProgress,
       challengesCompleted,
-      notesCreated,
-      booksCompleted,
     },
   }
 }
@@ -194,16 +186,6 @@ registerCondition('challenges_completed', (c, ctx) => {
   return progressResult(ctx.counts.challengesCompleted, target)
 })
 
-registerCondition('notes_created', (c, ctx) => {
-  const target = numeric(c.value)
-  return progressResult(ctx.counts.notesCreated, target)
-})
-
-registerCondition('books_completed', (c, ctx) => {
-  const target = numeric(c.value)
-  return progressResult(ctx.counts.booksCompleted, target)
-})
-
 // ---------------------------------------------------------------------------
 // Event → condition types map — which condition types are affected by which
 // domain events. Used by handleDomainEvent to re-evaluate only relevant rules.
@@ -220,8 +202,6 @@ export const EVENT_TO_CONDITIONS: Record<GamificationEventType, string[]> = {
   'streak.updated': ['streak_days', 'longest_streak'],
   'rank.updated': ['reach_rank'],
   'challenge.completed': ['challenges_completed'],
-  'note.created': ['notes_created'],
-  'book.finished': ['books_completed'],
   'quarterly.progress.updated': ['quarterly_progress'],
   'brain.entry.created': [],
 }

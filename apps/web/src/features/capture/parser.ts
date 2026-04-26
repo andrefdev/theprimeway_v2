@@ -14,12 +14,36 @@
  * Also accepts @YYYY-MM-DD.
  */
 
+export type ParsedBucket =
+  | 'TODAY'
+  | 'TOMORROW'
+  | 'NEXT_WEEK'
+  | 'NEXT_MONTH'
+  | 'NEXT_QUARTER'
+  | 'NEXT_YEAR'
+  | 'SOMEDAY'
+  | 'NEVER'
+
 export interface ParsedCapture {
   title: string
   plannedMinutes?: number
   channelName?: string
   /** yyyy-mm-dd, resolved against `reference` */
   day?: string
+  bucket?: ParsedBucket
+}
+
+const BUCKET_TOKENS: Record<string, ParsedBucket> = {
+  nextweek: 'NEXT_WEEK',
+  'next-week': 'NEXT_WEEK',
+  nextmonth: 'NEXT_MONTH',
+  'next-month': 'NEXT_MONTH',
+  nextquarter: 'NEXT_QUARTER',
+  'next-quarter': 'NEXT_QUARTER',
+  nextyear: 'NEXT_YEAR',
+  'next-year': 'NEXT_YEAR',
+  someday: 'SOMEDAY',
+  never: 'NEVER',
 }
 
 const DURATION_RE = /(?:^|\s)(\d+)h(\d+)m(?=\s|$)|(?:^|\s)(\d+)h(?=\s|$)|(?:^|\s)(\d+)m(?=\s|$)/i
@@ -54,10 +78,17 @@ export function parseCapture(text: string, reference: Date = new Date()): Parsed
 
   const day = rest.match(DAY_RE)
   if (day) {
-    const resolved = resolveDay(day[1]!.toLowerCase(), reference)
-    if (resolved) {
-      out.day = resolved
+    const token = day[1]!.toLowerCase()
+    const bucket = BUCKET_TOKENS[token]
+    if (bucket) {
+      out.bucket = bucket
       rest = rest.replace(day[0], ' ').trim()
+    } else {
+      const resolved = resolveDay(token, reference)
+      if (resolved) {
+        out.day = resolved
+        rest = rest.replace(day[0], ' ').trim()
+      }
     }
   }
 

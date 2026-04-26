@@ -10,13 +10,11 @@ import { healthRoutes } from './routes/health'
 import { userRoutes } from './routes/user'
 import { taskRoutes } from './routes/tasks'
 import { habitRoutes } from './routes/habits'
-import { notesRoutes } from './routes/notes'
 import { goalsRoutes } from './routes/goals'
 import { pomodoroRoutes } from './routes/pomodoro'
 import { calendarRoutes } from './routes/calendar'
 import { chatRoutes } from './routes/chat'
 import { gamificationRoutes } from './routes/gamification'
-import { readingRoutes } from './routes/reading'
 import { subscriptionRoutes } from './routes/subscriptions'
 import { notificationRoutes } from './routes/notifications'
 import { cronRoutes } from './routes/cron'
@@ -66,13 +64,11 @@ app.route('/api/auth', authRoutes)
 app.route('/api/user', userRoutes)
 app.route('/api/tasks', taskRoutes)
 app.route('/api/habits', habitRoutes)
-app.route('/api/notes', notesRoutes)
 app.route('/api/goals', goalsRoutes)
 app.route('/api/pomodoro', pomodoroRoutes)
 app.route('/api/calendar', calendarRoutes)
 app.route('/api/chat', chatRoutes)
 app.route('/api/gamification', gamificationRoutes)
-app.route('/api/reading', readingRoutes)
 app.route('/api/subscriptions', subscriptionRoutes)
 app.route('/api/notifications', notificationRoutes)
 app.route('/api/cron', cronRoutes)

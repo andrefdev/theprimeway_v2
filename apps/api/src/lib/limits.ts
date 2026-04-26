@@ -18,11 +18,6 @@ const LIMIT_MAPPING = {
     usageField: 'currentGoals',
     errorMessage: 'You have reached your goal limit for this plan.',
   },
-  [FEATURES.NOTES_LIMIT]: {
-    planField: 'maxNotes',
-    usageField: 'currentNotes',
-    errorMessage: 'You have reached your note limit for this plan.',
-  },
   [FEATURES.TASKS_LIMIT]: {
     planField: 'maxTasks',
     usageField: 'currentTasks',

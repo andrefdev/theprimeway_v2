@@ -38,19 +38,19 @@ function planDefaults(plan: Record<string, unknown> | null | undefined): Resolve
   return {
     // Module-specific gates
     [FEATURES.AI_ASSISTANT]: bool('hasAiAssistant', false),
-    [FEATURES.READING_MODULE]: bool('hasReadingModule', false),
-    [FEATURES.NOTES_MODULE]: bool('hasNotesModule', false),
+    [FEATURES.BRAIN_MODULE]: bool('hasBrainModule', false),
     // Transversal features
     [FEATURES.ADVANCED_ANALYTICS]: bool('hasAdvancedAnalytics', false),
     [FEATURES.CUSTOM_THEME_CREATION]: bool('hasCustomThemeCreation', false),
+    [FEATURES.CUSTOM_THEMES]: bool('hasCustomThemeCreation', false),
     [FEATURES.EXPORT_DATA]: bool('hasExportData', false),
     [FEATURES.PRIORITY_SUPPORT]: bool('hasPrioritySupport', false),
     // Numeric limits
     [FEATURES.HABITS_LIMIT]: limit('maxHabits', 5),
     [FEATURES.GOALS_LIMIT]: limit('maxGoals', 3),
-    [FEATURES.NOTES_LIMIT]: limit('maxNotes', 50),
     [FEATURES.TASKS_LIMIT]: limit('maxTasks', 20),
     [FEATURES.POMODORO_DAILY_LIMIT]: limit('maxPomodoroSessionsDaily', 10),
+    [FEATURES.BRAIN_ENTRIES_LIMIT]: limit('maxBrainEntries', 20),
   } as ResolvedFeatureSet
 }
 

@@ -19,7 +19,6 @@ const LABELS: Record<string, { title: string; verb: string }> = {
   listTasks: { title: 'List tasks', verb: '' },
   listHabits: { title: 'List habits', verb: '' },
   listGoals: { title: 'List goals', verb: '' },
-  listNotes: { title: 'List notes', verb: '' },
   listCalendarEvents: { title: 'List calendar events', verb: '' },
   findFreeSlots: { title: 'Find free slots', verb: '' },
   // writes
@@ -33,9 +32,6 @@ const LABELS: Record<string, { title: string; verb: string }> = {
   createGoal: { title: 'Create goal', verb: 'Create' },
   updateGoalProgress: { title: 'Update goal progress', verb: 'Update' },
   createTimeBlock: { title: 'Schedule time block', verb: 'Schedule' },
-  createNote: { title: 'Create note', verb: 'Create' },
-  updateNote: { title: 'Update note', verb: 'Update' },
-  deleteNote: { title: 'Delete note', verb: 'Delete' },
   startPomodoro: { title: 'Start pomodoro', verb: 'Start' },
 }
 
@@ -43,7 +39,6 @@ const READ_ONLY_TOOLS = new Set([
   'listTasks',
   'listHabits',
   'listGoals',
-  'listNotes',
   'listCalendarEvents',
   'findFreeSlots',
 ])

@@ -44,9 +44,6 @@ export const sidebarIcons = {
   goals: (cls, opts) => (
     <MinimalIcon name="ci:radio-fill" className={cls} size={opts?.size} />
   ),
-  notes: (cls, opts) => (
-    <MinimalIcon name="ci:note" className={cls} size={opts?.size} />
-  ),
   brain: (cls, opts) => (
     <Brain className={cn('text-foreground', cls)} size={opts?.size ?? 20} strokeWidth={1.75} />
   ),
@@ -61,21 +58,6 @@ export const sidebarIcons = {
   ),
   chat: (cls, opts) => (
     <MinimalIcon name="ci:chat" className={cls} size={opts?.size} />
-  ),
-  reading: (cls, opts) => (
-    <MinimalIcon name="ci:book-open" className={cls} size={opts?.size} />
-  ),
-  readingExplore: (cls, opts) => (
-    <MinimalIcon name="ci:search" className={cls} size={opts?.size} />
-  ),
-  readingLibrary: (cls, opts) => (
-    <MinimalIcon name="ci:layers" className={cls} size={opts?.size} />
-  ),
-  readingPlan: (cls, opts) => (
-    <MinimalIcon name="ci:calendar" className={cls} size={opts?.size} />
-  ),
-  readingGoals: (cls, opts) => (
-    <MinimalIcon name="ci:radio-fill" className={cls} size={opts?.size} />
   ),
   collapseOpen: (cls, opts) => (
     <MinimalIcon name="ci:menu-alt-01" className={cls} size={opts?.size} />

@@ -28,7 +28,7 @@ export interface BrainEntryUserPatch {
 }
 
 export interface CrossLinkInput {
-  targetType: 'task' | 'goal' | 'habit' | 'note'
+  targetType: 'task' | 'goal' | 'habit'
   targetId: string
   linkType: 'related' | 'spawned_from' | 'action_for' | 'evidence_for'
   aiGenerated?: boolean

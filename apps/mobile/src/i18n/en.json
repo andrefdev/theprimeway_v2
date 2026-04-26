@@ -227,9 +227,7 @@
     "habits": "Habits",
     "goals": "Goals",
     "finances": "Finances",
-    "notes": "Notes",
     "pomodoro": "Pomodoro",
-    "health": "Health",
     "ai": "AI Assistant",
     "settings": "Settings",
     "profile": "Profile",
@@ -242,7 +240,6 @@
     "calendar": "Calendar",
     "home": "Home",
     "aiChat": "AI Chat",
-    "reading": "Reading",
     "premium": "Premium",
     "subscription": "Subscription",
     "notifications": "Notifications",
@@ -1622,109 +1619,6 @@
         "body": "Focus session in progress"
       }
     },
-    "notes": {
-      "title": "Notes",
-      "newNote": "New Note",
-      "sidebar": {
-        "allNotes": "All Notes",
-        "categories": "Categories",
-        "pinned": "Pinned",
-        "archived": "Archived"
-      },
-      "categories": {
-        "createCategory": "Create Category",
-        "createCategoryDescription": "Create a new category for your notes",
-        "editCategory": "Edit Category",
-        "editCategoryDescription": "Edit category details",
-        "categoryName": "Category Name",
-        "categoryNamePlaceholder": "e.g., Work",
-        "categoryColor": "Color",
-        "categoryIcon": "Icon",
-        "optional": "(Optional)",
-        "iconHint": "Pick an icon",
-        "deleteCategory": "Delete Category",
-        "deleteCategoryConfirm": "Are you sure you want to delete category \"{{categoryName}}\"?",
-        "deleteCategoryWarning": "All notes in this category will be uncategorized.",
-        "deletingCategory": "Deleting...",
-        "updateCategory": "Update Category",
-        "messages": {
-          "categoryCreated": "Category created",
-          "categoryCreatedDescription": "Category created successfully",
-          "categoryUpdated": "Category updated",
-          "categoryUpdatedDescription": "Category updated successfully",
-          "categoryDeleted": "Category deleted",
-          "categoryDeletedDescription": "Category deleted successfully"
-        },
-        "searchIcons": "Search icons",
-        "icons": "Icons",
-        "emojis": "Emojis",
-        "preview": "Preview"
-      },
-      "actions": {
-        "cancel": "Cancel",
-        "save": "Save",
-        "saving": "Saving...",
-        "expand": "Expand",
-        "edit": "Edit",
-        "delete": "Delete",
-        "archive": "Archive",
-        "unarchive": "Unarchive",
-        "back": "Back",
-        "more": "More options",
-        "pin": "Pin",
-        "unpin": "Unpin",
-        "share": "Share"
-      },
-      "bulkActions": {
-        "selectedCount": "{{count}} selected",
-        "selectAll": "Select all",
-        "clearSelection": "Clear selection",
-        "changeCategory": "Change category",
-        "deleteSelected": "Delete selected"
-      },
-      "messages": {
-        "error": "Error",
-        "errorDescription": "Something went wrong. Please try again.",
-        "noteCreated": "Note created successfully",
-        "noteUpdated": "Note updated successfully",
-        "noteDeleted": "Note deleted successfully",
-        "errorCreatingNote": "Failed to create note",
-        "errorUpdatingNote": "Failed to update note",
-        "errorDeletingNote": "Failed to delete note",
-        "success": "Success"
-      },
-      "filterByTags": "Filter by Tags",
-      "filterByTagsDescription": "Select tags to filter notes",
-      "searchTags": "Search tags...",
-      "availableTags": "Available Tags",
-      "selectedTags": "Selected Tags",
-      "noTagsAvailable": "No tags available",
-      "noTagsFound": "No tags found matching your search",
-      "clearAll": "Clear all",
-      "selectAll": "Select all",
-      "noNotesDescription": "Create a note to get started.",
-      "close": "Close",
-      "search": "Search notes...",
-      "noNotes": "No notes found",
-      "pinned": "Pinned",
-      "errorLoadingTitle": "Could not load notes",
-      "errorLoadingDescription": "Check your connection and try again",
-      "editor": {
-        "placeholder": "Start typing...",
-        "titlePlaceholder": "Note title",
-        "contentPlaceholder": "Start writing... supports **bold**, *italic*, # headings, - lists, > quotes",
-        "tapToWrite": "Tap to start writing..."
-      },
-      "tags": "Tags",
-      "editDescription": "Edit your note details",
-      "createDescription": "Create a new note",
-      "noteTitle": "Note Title",
-      "noteContent": "Content",
-      "tagsPlaceholder": "Add tags...",
-      "selectCategory": "Select category",
-      "noCategory": "No category",
-      "deleteConfirm": "Are you sure you want to delete this note?"
-    },
     "calendar": {
       "title": "Calendar",
       "description": "View your schedule at a glance",
@@ -1907,10 +1801,6 @@
           "title": "Track Transactions",
           "description": "Monitor your income and expenses."
         },
-        "notes": {
-          "title": "Take Notes",
-          "description": "Capture your ideas and thoughts."
-        },
         "notifications": {
           "title": "Stay on Track",
           "description": "Enable notifications to never miss a task or habit."
@@ -1998,7 +1888,6 @@
           "habits": "Habits",
           "goals": "Goals",
           "finances": "Finances",
-          "notes": "Notes",
           "calendar": "Calendar"
         }
       }
@@ -2042,36 +1931,9 @@
       "logoutError": "Error signing out",
       "version": "Version {version}"
     },
-    "reading": {
-      "title": "Reading",
-      "tabs": {
-        "library": "Library",
-        "explore": "Explore",
-        "plan": "Plan",
-        "goals": "Goals"
-      },
-      "searchPlaceholder": "Search books...",
-      "stats": {
-        "toRead": "To Read",
-        "reading": "Reading",
-        "done": "Done",
-        "favorites": "Favorites"
-      },
-      "emptyLibrary": "Your library is empty",
-      "emptyLibraryDescription": "Search for books to add to your reading list",
-      "searchBooks": "Search Books"
-    },
     "more": {
       "title": "More",
       "version": "The Prime Way v{version}"
-    },
-    "health": {
-      "title": "Health",
-      "metrics": {
-        "weight": "Weight",
-        "sleep": "Sleep",
-        "water": "Water"
-      }
     }
   }
 }

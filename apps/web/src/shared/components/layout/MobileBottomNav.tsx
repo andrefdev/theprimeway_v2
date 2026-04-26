@@ -66,16 +66,6 @@ export function MobileBottomNav() {
       label: t('navPomodoro'),
     },
     {
-      href: '/notes',
-      icon: sidebarIcons.notes('h-5 w-5', {}),
-      label: t('navNotes'),
-    },
-    {
-      href: '/reading',
-      icon: sidebarIcons.reading('h-5 w-5', {}),
-      label: t('navReading'),
-    },
-    {
       href: '/settings',
       icon: sidebarIcons.settings('h-5 w-5', {}),
       label: t('navSettings'),

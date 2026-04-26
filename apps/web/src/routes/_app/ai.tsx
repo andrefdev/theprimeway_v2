@@ -16,14 +16,12 @@ import { useAuthStore } from '@/shared/stores/auth.store'
 import { tasksApi } from '@/features/tasks/api'
 import { habitsApi } from '@/features/habits/api'
 import { goalsApi } from '@/features/goals/api'
-import { notesApi } from '@/features/notes/api'
 import { calendarApi } from '@/features/calendar/api'
 import { pomodoroApi } from '@/features/pomodoro/api'
 import { useQueryClient } from '@tanstack/react-query'
 import { tasksQueries } from '@/features/tasks/queries'
 import { habitsQueries } from '@/features/habits/queries'
 import { goalsQueries } from '@/features/goals/queries'
-import { notesQueries } from '@/features/notes/queries'
 import { calendarQueries } from '@/features/calendar/queries'
 import { pomodoroQueries } from '@/features/pomodoro/queries'
 
@@ -190,34 +188,6 @@ function AiPage() {
           result = { success: true, eventId: (res as any)?.eventId }
           qc.invalidateQueries({ queryKey: calendarQueries.all() })
           toast.success(t('timeBlockCreated', { ns: 'calendar', defaultValue: 'Time block scheduled' }))
-          break
-        }
-        case 'createNote': {
-          const note = await notesApi.create({
-            title: args.title,
-            content: args.content,
-            tags: args.tags,
-          } as any)
-          result = { success: true, note: { id: (note as any).data?.id ?? (note as any).id } }
-          qc.invalidateQueries({ queryKey: notesQueries.all() })
-          toast.success(t('noteCreated', { ns: 'notes', defaultValue: 'Note created' }))
-          break
-        }
-        case 'updateNote': {
-          const patch: Record<string, unknown> = {}
-          if (args.title !== undefined) patch.title = args.title
-          if (args.content !== undefined) patch.content = args.content
-          const note = await notesApi.update(args.noteId, patch as any)
-          result = { success: true, note: { id: (note as any).data?.id ?? (note as any).id } }
-          qc.invalidateQueries({ queryKey: notesQueries.all() })
-          toast.success(t('noteUpdated', { ns: 'notes', defaultValue: 'Note updated' }))
-          break
-        }
-        case 'deleteNote': {
-          await notesApi.delete(args.noteId)
-          result = { success: true, noteId: args.noteId }
-          qc.invalidateQueries({ queryKey: notesQueries.all() })
-          toast.success(t('noteDeleted', { ns: 'notes', defaultValue: 'Note deleted' }))
           break
         }
         case 'startPomodoro': {

@@ -23,12 +23,11 @@ export interface Plan {
   trialPeriodDays: number | null
   maxHabits: number | null
   maxGoals: number | null
-  maxNotes: number | null
   maxTasks: number | null
   maxPomodoroSessionsDaily: number | null
+  maxBrainEntries: number | null
   hasAiAssistant: boolean | null
-  hasReadingModule: boolean | null
-  hasNotesModule: boolean | null
+  hasBrainModule: boolean | null
   hasAdvancedAnalytics: boolean | null
   hasCustomThemeCreation: boolean | null
   hasExportData: boolean | null

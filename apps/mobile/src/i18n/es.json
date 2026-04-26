@@ -227,9 +227,7 @@
     "habits": "Habitos",
     "goals": "Objetivos",
     "finances": "Finanzas",
-    "notes": "Notas",
     "pomodoro": "Pomodoro",
-    "health": "Salud",
     "ai": "Asistente IA",
     "settings": "Configuracion",
     "profile": "Perfil",
@@ -242,7 +240,6 @@
     "calendar": "Calendario",
     "home": "Inicio",
     "aiChat": "Chat IA",
-    "reading": "Lectura",
     "premium": "Premium",
     "subscription": "Suscripcion",
     "notifications": "Notificaciones",
@@ -1602,109 +1599,6 @@
         "body": "Sesion de enfoque en progreso"
       }
     },
-    "notes": {
-      "title": "Notas",
-      "newNote": "Nueva Nota",
-      "sidebar": {
-        "allNotes": "Todas las Notas",
-        "categories": "Categorias",
-        "pinned": "Fijadas",
-        "archived": "Archivadas"
-      },
-      "categories": {
-        "createCategory": "Crear Categoria",
-        "createCategoryDescription": "Crea una nueva categoria para tus notas",
-        "editCategory": "Editar Categoria",
-        "editCategoryDescription": "Editar detalles de la categoria",
-        "categoryName": "Nombre de la Categoria",
-        "categoryNamePlaceholder": "ej. Trabajo",
-        "categoryColor": "Color",
-        "categoryIcon": "Icono",
-        "optional": "(Opcional)",
-        "iconHint": "Elige un icono",
-        "deleteCategory": "Eliminar Categoria",
-        "deleteCategoryConfirm": "Estas seguro de que quieres eliminar la categoria \"{{categoryName}}\"?",
-        "deleteCategoryWarning": "Todas las notas en esta categoria quedaran sin categoria.",
-        "deletingCategory": "Eliminando...",
-        "updateCategory": "Actualizar Categoria",
-        "messages": {
-          "categoryCreated": "Categoria creada",
-          "categoryCreatedDescription": "Categoria creada correctamente",
-          "categoryUpdated": "Categoria actualizada",
-          "categoryUpdatedDescription": "Categoria actualizada correctamente",
-          "categoryDeleted": "Categoria eliminada",
-          "categoryDeletedDescription": "Categoria eliminada correctamente"
-        },
-        "searchIcons": "Buscar iconos",
-        "icons": "Iconos",
-        "emojis": "Emojis",
-        "preview": "Vista previa"
-      },
-      "actions": {
-        "cancel": "Cancelar",
-        "save": "Guardar",
-        "saving": "Guardando...",
-        "expand": "Expandir",
-        "edit": "Editar",
-        "delete": "Eliminar",
-        "archive": "Archivar",
-        "unarchive": "Desarchivar",
-        "back": "Atras",
-        "more": "Mas opciones",
-        "pin": "Fijar",
-        "unpin": "Desfijar",
-        "share": "Compartir"
-      },
-      "bulkActions": {
-        "selectedCount": "{{count}} seleccionados",
-        "selectAll": "Seleccionar todo",
-        "clearSelection": "Limpiar seleccion",
-        "changeCategory": "Cambiar categoria",
-        "deleteSelected": "Eliminar seleccionados"
-      },
-      "messages": {
-        "error": "Error",
-        "errorDescription": "Algo salio mal. Por favor, intentelo de nuevo.",
-        "noteCreated": "Nota creada exitosamente",
-        "noteUpdated": "Nota actualizada exitosamente",
-        "noteDeleted": "Nota eliminada exitosamente",
-        "errorCreatingNote": "Error al crear la nota",
-        "errorUpdatingNote": "Error al actualizar la nota",
-        "errorDeletingNote": "Error al eliminar la nota",
-        "success": "Exito"
-      },
-      "filterByTags": "Filtrar por Etiquetas",
-      "filterByTagsDescription": "Selecciona etiquetas para filtrar notas",
-      "searchTags": "Buscar etiquetas...",
-      "availableTags": "Etiquetas Disponibles",
-      "selectedTags": "Etiquetas Seleccionadas",
-      "noTagsAvailable": "No hay etiquetas disponibles",
-      "noTagsFound": "No se encontraron etiquetas",
-      "clearAll": "Limpiar todas",
-      "selectAll": "Seleccionar todas",
-      "noNotesDescription": "Crea una nota para comenzar.",
-      "close": "Cerrar",
-      "search": "Buscar notas...",
-      "noNotes": "No se encontraron notas",
-      "pinned": "Fijada",
-      "errorLoadingTitle": "No se pudieron cargar las notas",
-      "errorLoadingDescription": "Verifica tu conexion e intentalo de nuevo",
-      "editor": {
-        "placeholder": "Empieza a escribir...",
-        "titlePlaceholder": "Titulo de la nota",
-        "contentPlaceholder": "Empieza a escribir... soporta **negritas**, *cursiva*, # encabezados, - listas, > citas",
-        "tapToWrite": "Toca para empezar a escribir..."
-      },
-      "tags": "Etiquetas",
-      "editDescription": "Edita los detalles de tu nota",
-      "createDescription": "Crea una nueva nota",
-      "noteTitle": "Titulo de la nota",
-      "noteContent": "Contenido",
-      "tagsPlaceholder": "Anadir etiquetas...",
-      "selectCategory": "Seleccionar categoria",
-      "noCategory": "Sin categoria",
-      "deleteConfirm": "Estas seguro de que quieres eliminar esta nota?"
-    },
     "calendar": {
       "title": "Calendario",
       "description": "Ve tu agenda de un vistazo",
@@ -1887,10 +1781,6 @@
           "title": "Rastrea Transacciones",
           "description": "Monitorea tus ingresos y gastos."
         },
-        "notes": {
-          "title": "Toma Notas",
-          "description": "Captura tus ideas y pensamientos."
-        },
         "notifications": {
           "title": "Mantente al Dia",
           "description": "Activa las notificaciones para no perderte tareas ni habitos."
@@ -1978,7 +1868,6 @@
           "habits": "Habitos",
           "goals": "Objetivos",
           "finances": "Finanzas",
-          "notes": "Notas",
           "calendar": "Calendario"
         }
       }
@@ -2022,36 +1911,9 @@
       "logoutError": "Error al cerrar sesion",
       "version": "Version {version}"
     },
-    "reading": {
-      "title": "Lectura",
-      "tabs": {
-        "library": "Biblioteca",
-        "explore": "Explorar",
-        "plan": "Plan",
-        "goals": "Metas"
-      },
-      "searchPlaceholder": "Buscar libros...",
-      "stats": {
-        "toRead": "Por Leer",
-        "reading": "Leyendo",
-        "done": "Leidos",
-        "favorites": "Favoritos"
-      },
-      "emptyLibrary": "Tu biblioteca esta vacia",
-      "emptyLibraryDescription": "Busca libros para agregar a tu lista de lectura",
-      "searchBooks": "Buscar Libros"
-    },
     "more": {
       "title": "Mas",
       "version": "The Prime Way v{version}"
-    },
-    "health": {
-      "title": "Salud",
-      "metrics": {
-        "weight": "Peso",
-        "sleep": "Sueno",
-        "water": "Agua"
-      }
     }
   }
 }

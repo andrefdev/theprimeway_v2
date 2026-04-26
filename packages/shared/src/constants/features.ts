@@ -5,9 +5,6 @@
 export const FEATURES = {
   // Module-specific gates (free users don't have access)
   AI_ASSISTANT: 'AI_ASSISTANT',
-  READING_MODULE: 'READING_MODULE',
-  NOTES_MODULE: 'NOTES_MODULE',
-  HEALTH_MODULE: 'HEALTH_MODULE',
   BRAIN_MODULE: 'BRAIN_MODULE',
 
   // Transversal features (applies to multiple modules)
@@ -20,7 +17,6 @@ export const FEATURES = {
   // Numeric limit gates (the gate fires when usage hits the cap)
   HABITS_LIMIT: 'HABITS_LIMIT',
   GOALS_LIMIT: 'GOALS_LIMIT',
-  NOTES_LIMIT: 'NOTES_LIMIT',
   TASKS_LIMIT: 'TASKS_LIMIT',
   POMODORO_DAILY_LIMIT: 'POMODORO_DAILY_LIMIT',
   BRAIN_ENTRIES_LIMIT: 'BRAIN_ENTRIES_LIMIT',
