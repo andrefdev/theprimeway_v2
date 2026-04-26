@@ -2,7 +2,8 @@ import { cn } from '@/shared/utils/cn';
 import { Text } from '@/shared/components/ui/text';
 import { Icon } from '@/shared/components/ui/icon';
 import { PILLAR_MAP } from '@/shared/constants/pillars';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
+import { PressableCard } from '@/shared/components/ui/pressable-card';
 import { router } from 'expo-router';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import {
@@ -48,12 +49,9 @@ export function ThreeYearGoalCard({ threeYearGoal, className }: ThreeYearGoalCar
   };
 
   return (
-    <Pressable
+    <PressableCard
       onPress={handlePress}
-      className={cn(
-        'rounded-xl border border-border bg-card p-4 active:opacity-80',
-        className
-      )}
+      className={cn('rounded-xl', className)}
     >
       {/* Icon + Area Name */}
       <View className="mb-3 flex-row items-center gap-2">
@@ -88,6 +86,6 @@ export function ThreeYearGoalCard({ threeYearGoal, className }: ThreeYearGoalCar
           {annualGoalCount} {t('annualGoal.title')}
         </Text>
       </View>
-    </Pressable>
+    </PressableCard>
   );
 }

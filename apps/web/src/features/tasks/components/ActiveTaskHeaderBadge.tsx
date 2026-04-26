@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { Timer, Square, ExternalLink, Check } from 'lucide-react'
+import { Timer, Square, ExternalLink, Check, Maximize2 } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
 import { tasksQueries } from '../queries'
 import { useStopTimer, useUpdateTask } from '../queries'
+import { useFocusStore } from '@/features/focus/focus-store'
 import {
   Dialog,
   DialogContent,
@@ -181,6 +182,17 @@ export function ActiveTaskHeaderBadge() {
               </Button>
               <Button
                 variant="default"
+                onClick={() => {
+                  useFocusStore.getState().start(activeTask.id)
+                  setOpen(false)
+                }}
+                className="gap-2"
+              >
+                <Maximize2 className="h-4 w-4" />
+                {t('openInFocus', { defaultValue: 'Open in focus' })}
+              </Button>
+              <Button
+                variant="outline"
                 onClick={handleComplete}
                 disabled={stopTimer.isPending || updateTask.isPending}
                 className="gap-2"

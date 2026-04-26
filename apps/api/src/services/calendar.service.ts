@@ -64,7 +64,7 @@ class CalendarService {
   }
 
   getGoogleOAuthUrl() {
-    const clientId = process.env.GOOGLE_CLIENT_ID
+    const clientId = process.env.AUTH_GOOGLE_ID
     const redirectUri = process.env.GOOGLE_CALENDAR_REDIRECT_URI
 
     if (!clientId || !redirectUri) return null
@@ -78,8 +78,8 @@ class CalendarService {
   }
 
   async handleGoogleCallback(userId: string, code: string) {
-    const clientId = process.env.GOOGLE_CLIENT_ID
-    const clientSecret = process.env.GOOGLE_CLIENT_SECRET
+    const clientId = process.env.AUTH_GOOGLE_ID
+    const clientSecret = process.env.AUTH_GOOGLE_SECRET
     const redirectUri = process.env.GOOGLE_CALENDAR_REDIRECT_URI
 
     if (!clientId || !clientSecret || !redirectUri) {
@@ -1179,8 +1179,8 @@ SCHEDULING GUIDELINES:
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-          client_id: process.env.GOOGLE_CLIENT_ID || '',
-          client_secret: process.env.GOOGLE_CLIENT_SECRET || '',
+          client_id: process.env.AUTH_GOOGLE_ID || '',
+          client_secret: process.env.AUTH_GOOGLE_SECRET || '',
           refresh_token: refreshToken,
           grant_type: 'refresh_token',
         }),

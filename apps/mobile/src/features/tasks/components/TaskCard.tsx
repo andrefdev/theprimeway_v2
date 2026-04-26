@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { Button } from '@/shared/components/ui/button';
+import { PressableCard } from '@/shared/components/ui/pressable-card';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import Animated, {
   FadeIn,
@@ -108,14 +109,11 @@ export function TaskCard({ task, onToggleComplete, onPress, onTimer, onLongPress
         overshootRight={false}
         rightThreshold={60}
       >
-      <Pressable
+      <PressableCard
         onPress={handlePress}
         onLongPress={onLongPress}
         delayLongPress={250}
-        className={cn(
-          'relative overflow-hidden rounded-2xl border border-border bg-card p-4',
-          isCompleted && 'opacity-60'
-        )}
+        className={cn('relative overflow-hidden', isCompleted && 'opacity-60')}
       >
         {/* Top row: Title + Checkbox */}
         <View className="flex-row items-start justify-between gap-3 mb-3">
@@ -192,7 +190,7 @@ export function TaskCard({ task, onToggleComplete, onPress, onTimer, onLongPress
             </Button>
           </View>
         )}
-      </Pressable>
+      </PressableCard>
       </Swipeable>
     </Animated.View>
   );
