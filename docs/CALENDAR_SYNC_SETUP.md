@@ -19,8 +19,8 @@ Schema changes:
 
 | Variable | Required | Used by | Notes |
 |---|---|---|---|
-| `GOOGLE_CLIENT_ID` | yes | OAuth connect + refresh | Existing. |
-| `GOOGLE_CLIENT_SECRET` | yes | OAuth token exchange | Existing. |
+| `AUTH_GOOGLE_ID` | yes | OAuth connect + refresh | Shared with login OAuth. |
+| `AUTH_GOOGLE_SECRET` | yes | OAuth token exchange | Shared with login OAuth. |
 | `GOOGLE_CALENDAR_REDIRECT_URI` | yes | OAuth callback | Public URL of the web page that handles the `?code=` exchange. Must match exactly one of the OAuth client's Authorized redirect URIs in Google Cloud Console. Point it at the settings page — the web UI (`GoogleCalendarSettings` in `apps/web/src/features/calendar/components/GoogleCalendarSettings.tsx`) reads `code` from the query string on mount and POSTs it to `/api/calendar/google/callback`. Examples: prod `https://app.theprimeway.app/settings`, dev `http://localhost:5173/settings`. |
 | `GOOGLE_CALENDAR_WEBHOOK_URL` | **new — required for Google→App sync** | `subscribeWatchChannel` | Public HTTPS base URL (no trailing slash). Example: `https://api.theprimeway.app`. Falls back to `API_BASE_URL` if unset. The webhook path `/api/calendar/google/webhook` is appended automatically. Google rejects non-HTTPS and IP addresses. |
 | `API_BASE_URL` | optional | Fallback for webhook base | Used if `GOOGLE_CALENDAR_WEBHOOK_URL` is unset. |

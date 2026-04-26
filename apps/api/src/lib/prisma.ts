@@ -1,10 +1,11 @@
 // Default import works with CJS modules in Node ESM (named imports don't)
 import PrismaClientPkg from '@prisma/client'
+import type { PrismaClient as PrismaClientType } from '@prisma/client'
 const { PrismaClient } = PrismaClientPkg
 import { Pool as PgPool } from 'pg'
 import { PrismaPg } from '@prisma/adapter-pg'
 
-const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient }
+const globalForPrisma = globalThis as unknown as { prisma?: PrismaClientType }
 
 const createPrismaClient = () => {
   const pool = new PgPool({ connectionString: process.env.DATABASE_URL })

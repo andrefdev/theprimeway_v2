@@ -1,8 +1,9 @@
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { View, TextInput, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator } from 'react-native';
 import { Text } from '@/shared/components/ui/text';
 import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
 import { cn } from '@/shared/utils/cn';
 import { registerSchema, type RegisterFormData } from '../types';
 import { useTranslation } from '@/shared/hooks/useTranslation';
@@ -31,11 +32,8 @@ export function RegisterForm({ onSubmit, isLoading }: RegisterFormProps) {
           control={control}
           name="name"
           render={({ field: { onChange, onBlur, value } }) => (
-            <TextInput
-              className={cn(
-                'h-11 rounded-md border border-input bg-background px-3 text-base text-foreground',
-                errors.name && 'border-destructive'
-              )}
+            <Input
+              className={cn('h-11', errors.name && 'border-destructive')}
               placeholder={t('namePlaceholder')}
               placeholderTextColor="hsl(0 0% 63.9%)"
               autoCapitalize="words"
@@ -55,11 +53,8 @@ export function RegisterForm({ onSubmit, isLoading }: RegisterFormProps) {
           control={control}
           name="email"
           render={({ field: { onChange, onBlur, value } }) => (
-            <TextInput
-              className={cn(
-                'h-11 rounded-md border border-input bg-background px-3 text-base text-foreground',
-                errors.email && 'border-destructive'
-              )}
+            <Input
+              className={cn('h-11', errors.email && 'border-destructive')}
               placeholder={t('emailPlaceholder')}
               placeholderTextColor="hsl(0 0% 63.9%)"
               keyboardType="email-address"
@@ -80,11 +75,8 @@ export function RegisterForm({ onSubmit, isLoading }: RegisterFormProps) {
           control={control}
           name="password"
           render={({ field: { onChange, onBlur, value } }) => (
-            <TextInput
-              className={cn(
-                'h-11 rounded-md border border-input bg-background px-3 text-base text-foreground',
-                errors.password && 'border-destructive'
-              )}
+            <Input
+              className={cn('h-11', errors.password && 'border-destructive')}
               placeholder={t('passwordPlaceholder')}
               placeholderTextColor="hsl(0 0% 63.9%)"
               secureTextEntry

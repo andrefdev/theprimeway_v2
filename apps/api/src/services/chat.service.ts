@@ -521,7 +521,16 @@ Do NOT invent task or habit IDs — only reference IDs from the context above or
     const todayEnd = new Date()
     todayEnd.setHours(23, 59, 59, 999)
 
-    const [openTasks, completedTasksToday, habits, habitLogs] = await Promise.all([
+    const [
+      openTasks,
+      completedTasksToday,
+      habits,
+      habitLogs,
+      topTasks,
+      weekGoal,
+      todayEvents,
+      streak,
+    ] = await Promise.all([
       chatRepo.findOpenTasks(userId, 20),
       prisma.task.count({
         where: {
@@ -532,24 +541,54 @@ Do NOT invent task or habit IDs — only reference IDs from the context above or
       }),
       chatRepo.findActiveHabits(userId),
       chatRepo.findHabitLogsByDate(userId, todayStart, todayEnd),
+      chatRepo.findTopTasksForBriefing(userId, todayStart, 3),
+      chatRepo.findActiveWeekGoal(userId, todayStart),
+      calendarService.listEventsInRange(userId, todayStart, todayEnd).catch(() => [] as any[]),
+      chatRepo.findCurrentGamificationStreak(userId),
     ])
 
     const habitsCompleted = habitLogs.filter((l) => (l.completedCount ?? 0) > 0).length
     const tasksToday = openTasks.length + completedTasksToday
     const habitsToday = habits.length
+    const upcomingEvents = Array.isArray(todayEvents) ? todayEvents.length : 0
+
+    const topTasksLines = topTasks
+      .map((t: any) => {
+        const time = t.scheduledStart
+          ? new Date(t.scheduledStart).toLocaleTimeString('en-US', {
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: false,
+            })
+          : null
+        const dur = t.estimatedDurationMinutes ?? t.plannedTimeMinutes
+        const meta = [
+          time ? `at ${time}` : null,
+          dur ? `${dur}m` : null,
+          t.priority && t.priority !== 'medium' ? `${t.priority} priority` : null,
+          t.dueDate ? `due ${new Date(t.dueDate).toISOString().split('T')[0]}` : null,
+        ].filter(Boolean).join(', ')
+        return `- ${t.title}${meta ? ` (${meta})` : ''}`
+      })
+      .join('\n')
 
     let summary = ''
     try {
       const res = await generateText({
         model: chatModel,
-        prompt: `Write a friendly one-sentence daily briefing for a productivity app user.
-Today: ${todayStart.toISOString().split('T')[0]}
-Open tasks: ${openTasks.length}
-Tasks completed today: ${completedTasksToday}
-Active habits: ${habitsToday}
-Habits completed today: ${habitsCompleted}
+        prompt: `You write daily briefings for a productivity app. Output 2-3 short sentences (max 60 words). Be concrete, name the first task, suggest a sensible order. No emojis, no greetings, no sign-offs.
 
-Keep it under 30 words. Be concrete and encouraging. No emojis.`,
+Today: ${todayStart.toISOString().split('T')[0]}
+Open tasks: ${openTasks.length} (${completedTasksToday} done already)
+Habits today: ${habitsCompleted}/${habitsToday}
+Calendar events today: ${upcomingEvents}
+Current streak: ${streak} day${streak === 1 ? '' : 's'}
+${weekGoal ? `Weekly goal: ${weekGoal.title}` : 'No weekly goal set.'}
+
+Top tasks for today:
+${topTasksLines || '(no tasks scheduled or queued)'}
+
+Write the briefing now. Lead with the single most important task to start with by name.`,
       })
       summary = res.text.trim()
     } catch {
@@ -562,8 +601,8 @@ Keep it under 30 words. Be concrete and encouraging. No emojis.`,
       tasksToday,
       habitsCompleted,
       habitsToday,
-      upcomingEvents: 0,
-      streak: 0,
+      upcomingEvents,
+      streak,
     }
   }
 

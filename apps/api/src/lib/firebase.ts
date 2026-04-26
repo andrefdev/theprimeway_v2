@@ -1,4 +1,5 @@
 import admin from 'firebase-admin'
+import type { Messaging } from 'firebase-admin/messaging'
 import * as Sentry from '@sentry/node'
 
 let initialized = false
@@ -38,7 +39,7 @@ export function isPushEnabled() {
   return enabled
 }
 
-export function getMessaging() {
+export function getMessaging(): Messaging | null {
   init()
   if (!enabled) return null
   return admin.messaging()

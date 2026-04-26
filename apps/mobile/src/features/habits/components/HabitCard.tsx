@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { Text } from '@/shared/components/ui/text';
 import { Icon } from '@/shared/components/ui/icon';
+import { PressableCard } from '@/shared/components/ui/pressable-card';
 import { cn } from '@/shared/utils/cn';
 import { Flame, Check } from 'lucide-react-native';
 import { XpFloater } from '@/features/gamification/components/XpFloater';
@@ -141,13 +142,7 @@ export function HabitCard({
   };
 
   return (
-    <Pressable
-      onPress={onPress}
-      className={cn(
-        'rounded-2xl border border-border bg-card p-4',
-        className
-      )}
-    >
+    <PressableCard onPress={onPress} className={className}>
       {/* Header: Title + Streak + Toggle Button */}
       <View className="flex-row items-start justify-between gap-3 mb-3">
         <View className="flex-1">
@@ -207,6 +202,6 @@ export function HabitCard({
           </Text>
         </View>
       )}
-    </Pressable>
+    </PressableCard>
   );
 }

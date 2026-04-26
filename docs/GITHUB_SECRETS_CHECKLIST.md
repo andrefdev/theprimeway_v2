@@ -1,6 +1,7 @@
 # GitHub Secrets Configuration Checklist
 
-This document lists all 35 GitHub Secrets required for ThePrimeWay deployment via GitHub Actions.
+This document lists all 41 GitHub Secrets required for ThePrimeWay deployment via GitHub Actions.
+(`GITHUB_TOKEN` is auto-provided by GitHub, not counted.)
 
 ---
 
@@ -11,7 +12,7 @@ This document lists all 35 GitHub Secrets required for ThePrimeWay deployment vi
 3. Enter name and value exactly as listed below
 4. Click **Add secret**
 
-Repeat for all 35 secrets.
+Repeat for all 41 secrets.
 
 ---
 
@@ -125,13 +126,19 @@ These are injected at **Docker build time**, not secrets (visible in bundle), bu
 
 ---
 
-### AI & LLM (1 secret)
+### AI & LLM (2 secrets)
 
-- [ ] **OPENAI_API_KEY**
-  - Description: OpenAI API key
-  - Example: `sk-proj-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`
+- [ ] **ANTHROPIC_API_KEY**
+  - Description: Anthropic API key (Claude — chat + fast model)
+  - Example: `sk-ant-api03-xxxxxxxxxxxxxxxxxxxx`
   - Type: Secret
-  - **Source**: [OpenAI Platform](https://platform.openai.com/account/api-keys)
+  - **Source**: [Anthropic Console](https://console.anthropic.com/settings/keys)
+
+- [ ] **DEEPSEEK_API_KEY**
+  - Description: DeepSeek API key (used by `taskModel` for cheaper bulk inference)
+  - Example: `sk-xxxxxxxxxxxxxxxxxxxxxxxx`
+  - Type: Secret
+  - **Source**: [DeepSeek Platform](https://platform.deepseek.com/api_keys)
 
 ---
 
@@ -263,11 +270,40 @@ Baked into SPA bundle at Docker build (visible in browser, not secrets). Also in
 
 ---
 
+### Internal Service Auth (2 secrets)
+
+- [ ] **ADMIN_API_KEY**
+  - Description: Bearer token used by privileged admin endpoints / scripts
+  - Example: `openssl rand -hex 32`
+  - Type: Secret
+
+- [ ] **CRON_SECRET**
+  - Description: Shared secret used by cron jobs / scheduled task runners to call internal endpoints
+  - Example: `openssl rand -hex 32`
+  - Type: Secret
+
+---
+
+### Observability - Sentry (2 secrets)
+
+- [ ] **SENTRY_DSN**
+  - Description: Sentry DSN for the API runtime
+  - Example: `https://abc123@o123456.ingest.sentry.io/1234567`
+  - Type: Secret
+  - **Source**: [Sentry Project Settings → Client Keys](https://sentry.io/)
+
+- [ ] **VITE_SENTRY_DSN**
+  - Description: Sentry DSN for the SPA (baked into bundle, visible in browser)
+  - Example: `https://def456@o123456.ingest.sentry.io/7654321`
+  - Type: Plain text
+
+---
+
 ## Verification Steps
 
-After adding all 35 secrets:
+After adding all 41 secrets:
 
-1. **Count**: Go to Settings → Secrets → Actions. Should show **35 secrets** listed.
+1. **Count**: Go to Settings → Secrets → Actions. Should show **41 secrets** listed.
 
 2. **Test values**: Ensure each secret is non-empty:
    ```bash
@@ -296,7 +332,7 @@ Periodically rotate sensitive secrets:
   - Google: Can create multiple Client IDs; deprecate old one after rotation
   - Apple: Generate new client secret (expires yearly)
 
-- [ ] **API keys** (OPENAI, RAPIDAPI, LEMON_SQUEEZY): If compromised
+- [ ] **API keys** (ANTHROPIC, DEEPSEEK, RAPIDAPI, LEMON_SQUEEZY): If compromised
   - Revoke in provider dashboard
   - Generate new key
   - Update GitHub Secret
@@ -351,7 +387,10 @@ When pasting multi-line values:
 | JWT_SECRET | Generate: `openssl rand -base64 32` |
 | GOOGLE_* | [Google Cloud Console](https://console.cloud.google.com) |
 | APPLE_* | [Apple Developer](https://developer.apple.com) |
-| OPENAI_API_KEY | [OpenAI Platform](https://platform.openai.com) |
+| ANTHROPIC_API_KEY | [Anthropic Console](https://console.anthropic.com/settings/keys) |
+| DEEPSEEK_API_KEY | [DeepSeek Platform](https://platform.deepseek.com/api_keys) |
+| ADMIN_API_KEY / CRON_SECRET | Generate: `openssl rand -hex 32` |
+| SENTRY_DSN / VITE_SENTRY_DSN | [Sentry Project Settings](https://sentry.io/) |
 | SMTP_* | Your email provider (Gmail, SendGrid, etc.) |
 | LEMON_SQUEEZY_* | [Lemon Squeezy](https://app.lemonsqueezy.com) |
 | FIREBASE_* | [Firebase Console](https://console.firebase.google.com) |

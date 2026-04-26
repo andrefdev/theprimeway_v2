@@ -2,7 +2,8 @@ import { cn } from '@/shared/utils/cn';
 import { Text } from '@/shared/components/ui/text';
 import { Icon } from '@/shared/components/ui/icon';
 import { ChevronRight, Calendar } from 'lucide-react-native';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
+import { PressableCard } from '@/shared/components/ui/pressable-card';
 import { router } from 'expo-router';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import type { AnnualGoal } from '@shared/types/models';
@@ -27,12 +28,9 @@ export function AnnualGoalItem({ goal, color = '#3b82f6', className }: AnnualGoa
     : null;
 
   return (
-    <Pressable
+    <PressableCard
       onPress={handlePress}
-      className={cn(
-        'flex-row items-center rounded-xl border border-border bg-card p-4 active:opacity-80',
-        className
-      )}
+      className={cn('flex-row items-center rounded-xl', className)}
     >
       {/* Color Indicator */}
       <View className="mr-3 h-10 w-1 rounded-full" style={{ backgroundColor: color }} />
@@ -71,6 +69,6 @@ export function AnnualGoalItem({ goal, color = '#3b82f6', className }: AnnualGoa
 
       {/* Chevron */}
       <Icon as={ChevronRight} size={16} className="ml-2 text-muted-foreground" />
-    </Pressable>
+    </PressableCard>
   );
 }

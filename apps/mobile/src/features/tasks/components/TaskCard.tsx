@@ -1,5 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
+import { Button } from '@/shared/components/ui/button';
+import { PressableCard } from '@/shared/components/ui/pressable-card';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import Animated, {
   FadeIn,
@@ -107,14 +109,11 @@ export function TaskCard({ task, onToggleComplete, onPress, onTimer, onLongPress
         overshootRight={false}
         rightThreshold={60}
       >
-      <Pressable
+      <PressableCard
         onPress={handlePress}
         onLongPress={onLongPress}
         delayLongPress={250}
-        className={cn(
-          'relative overflow-hidden rounded-2xl border border-border bg-card p-4',
-          isCompleted && 'opacity-60'
-        )}
+        className={cn('relative overflow-hidden', isCompleted && 'opacity-60')}
       >
         {/* Top row: Title + Checkbox */}
         <View className="flex-row items-start justify-between gap-3 mb-3">
@@ -179,17 +178,19 @@ export function TaskCard({ task, onToggleComplete, onPress, onTimer, onLongPress
         {/* Timer button — if not completed */}
         {!isCompleted && onTimer && (
           <View className="flex-row justify-end">
-            <Pressable
+            <Button
+              variant="ghost"
+              size="sm"
               onPress={handleTimer}
-              className="flex-row items-center gap-1.5 px-3 py-2 rounded-lg bg-primary/10 active:bg-primary/20"
+              className="h-auto gap-1.5 rounded-lg bg-primary/10 px-3 py-2 active:bg-primary/20"
               hitSlop={4}
             >
               <Icon as={Play} size={14} className="text-primary" />
               <Text className="text-xs font-medium text-primary">Start</Text>
-            </Pressable>
+            </Button>
           </View>
         )}
-      </Pressable>
+      </PressableCard>
       </Swipeable>
     </Animated.View>
   );
