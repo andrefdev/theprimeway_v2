@@ -1,7 +1,7 @@
 import { notificationsRepo } from '../repositories/notifications.repo'
 import { gamificationService } from './gamification.service'
 import { calendarService } from './calendar.service'
-import { getMessaging, isPushEnabled } from '../lib/firebase'
+import { sendExpoPush, isPushEnabled } from '../lib/expo-push'
 import * as Sentry from '@sentry/node'
 
 interface AppNotification {
@@ -306,43 +306,16 @@ class NotificationsService {
     userId: string,
     payload: { title: string; body: string; url?: string; tag?: string; image?: string },
   ) {
-    const messaging = getMessaging()
-    if (!messaging) return { success_count: 0, failure_count: 0, skipped: true }
+    if (!isPushEnabled()) return { success_count: 0, failure_count: 0, skipped: true }
 
     const devices = await notificationsRepo.findActiveDeviceTokensForUser(userId)
     const tokens = devices.map((d: { fcmToken: string }) => d.fcmToken).filter(Boolean)
     if (tokens.length === 0) return { success_count: 0, failure_count: 0 }
 
-    const res = await messaging.sendEachForMulticast({
-      tokens,
-      notification: {
-        title: payload.title,
-        body: payload.body,
-        ...(payload.image ? { imageUrl: payload.image } : {}),
-      },
-      data: {
-        ...(payload.url ? { url: payload.url } : {}),
-        ...(payload.tag ? { tag: payload.tag } : {}),
-      },
-      webpush: payload.url
-        ? { fcmOptions: { link: payload.url } }
-        : undefined,
-    })
+    const res = await sendExpoPush(tokens, payload)
 
-    // Clean up invalid tokens.
     await Promise.all(
-      res.responses.map(async (r, i) => {
-        if (r.success) return
-        const code = r.error?.code ?? ''
-        if (
-          code === 'messaging/registration-token-not-registered' ||
-          code === 'messaging/invalid-registration-token' ||
-          code === 'messaging/invalid-argument'
-        ) {
-          const token = tokens[i]
-          if (token) await notificationsRepo.markDeviceInactive(token)
-        }
-      }),
+      res.invalidTokens.map((token) => notificationsRepo.markDeviceInactive(token)),
     )
 
     return { success_count: res.successCount, failure_count: res.failureCount }
@@ -500,10 +473,9 @@ class NotificationsService {
       }
     }
 
-    const messaging = getMessaging()
-    if (!messaging) {
+    if (!isPushEnabled()) {
       return {
-        message: 'Push disabled (firebase credentials missing)',
+        message: 'Push disabled (expo-server-sdk init failed)',
         total_devices: devices.length,
         success_count: 0,
         failure_count: 0,
@@ -512,56 +484,23 @@ class NotificationsService {
 
     const tokens = devices.map((d: { fcmToken: string }) => d.fcmToken).filter(Boolean)
 
-    // FCM limits multicast to 500 tokens per call — chunk to support broadcasts.
-    const FCM_MULTICAST_LIMIT = 500
-    const chunks: string[][] = []
-    for (let i = 0; i < tokens.length; i += FCM_MULTICAST_LIMIT) {
-      chunks.push(tokens.slice(i, i + FCM_MULTICAST_LIMIT))
-    }
+    const res = await sendExpoPush(tokens, {
+      title: body.title,
+      body: body.body,
+      url: body.url,
+      tag: body.tag,
+      image: body.image,
+      data: body.data,
+    })
 
-    const messagePayload = {
-      notification: {
-        title: body.title,
-        body: body.body,
-        ...(body.image ? { imageUrl: body.image } : {}),
-      },
-      data: {
-        ...(body.url ? { url: body.url } : {}),
-        ...(body.tag ? { tag: body.tag } : {}),
-        ...(body.data ? { payload: JSON.stringify(body.data) } : {}),
-      },
-      webpush: body.url ? { fcmOptions: { link: body.url } } : undefined,
-    }
-
-    let successCount = 0
-    let failureCount = 0
-
-    for (const chunkTokens of chunks) {
-      const res = await messaging.sendEachForMulticast({ tokens: chunkTokens, ...messagePayload })
-      successCount += res.successCount
-      failureCount += res.failureCount
-
-      // Prune invalid tokens
-      await Promise.all(
-        res.responses.map(async (r, i) => {
-          if (r.success) return
-          const code = r.error?.code ?? ''
-          if (
-            code === 'messaging/registration-token-not-registered' ||
-            code === 'messaging/invalid-registration-token' ||
-            code === 'messaging/invalid-argument'
-          ) {
-            const token = chunkTokens[i]
-            if (token) await notificationsRepo.markDeviceInactive(token)
-          }
-        }),
-      )
-    }
+    await Promise.all(
+      res.invalidTokens.map((token) => notificationsRepo.markDeviceInactive(token)),
+    )
 
     return {
       total_devices: devices.length,
-      success_count: successCount,
-      failure_count: failureCount,
+      success_count: res.successCount,
+      failure_count: res.failureCount,
     }
   }
 }
