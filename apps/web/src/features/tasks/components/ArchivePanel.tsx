@@ -41,7 +41,6 @@ export function ArchivePanel({ tasks, onReschedule, onDelete }: ArchivePanelProp
                 <TaskItem
                   task={task}
                   onToggle={() => {}}
-                  size="sm"
                 />
               </div>
               <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

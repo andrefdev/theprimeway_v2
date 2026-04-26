@@ -32,7 +32,6 @@ interface TaskItemProps {
   onEdit?: () => void
   onDelete?: () => void
   onArchive?: () => void
-  size?: 'sm' | 'md'
   showDate?: boolean
   dragHandle?: React.ReactNode
 }
@@ -49,14 +48,12 @@ export function TaskItem({
   onEdit,
   onDelete,
   onArchive,
-  size = 'md',
   showDate,
   dragHandle,
 }: TaskItemProps) {
   const { locale } = useLocale()
   const [confirmOpen, setConfirmOpen] = useState(false)
   const isCompleted = task.status === 'completed'
-  const paddingClass = size === 'sm' ? 'px-3 py-2' : 'px-4 py-3'
   const priorityStyle =
     PRIORITY_COLOR[task.priority] || {
       bg: 'bg-slate-100 dark:bg-slate-800',
@@ -111,70 +108,13 @@ export function TaskItem({
     </AlertDialog>
   ) : null
 
-  // For kanban view (size='md'), use a card layout
-  if (size === 'md') {
-    return (
-      <>
-        <ContextMenu>
-          <ContextMenuTrigger asChild>
-            <div className="group rounded-md border border-border/50 bg-card hover:border-border transition-all hover:shadow-md overflow-hidden">
-              <div className="p-4 space-y-3">
-                {dragHandle && <div className="flex justify-end -mt-2 -mr-2">{dragHandle}</div>}
-
-                <div className="space-y-1.5">
-                  <p className={`text-sm font-medium leading-snug break-words line-clamp-3 ${isCompleted ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
-                    {task.title}
-                  </p>
-                  {task.description && (
-                    <p className="text-xs text-muted-foreground line-clamp-2">
-                      {task.description}
-                    </p>
-                  )}
-                  <VisionThreadChip taskId={task.id} />
-                </div>
-
-                <div className="flex items-center gap-2 flex-wrap pt-1">
-                  {task.estimatedDuration && (
-                    <Badge variant="outline" className="text-[10px]">
-                      {task.estimatedDuration >= 60
-                        ? `${Math.floor(task.estimatedDuration / 60)}h${task.estimatedDuration % 60 ? ` ${task.estimatedDuration % 60}m` : ''}`
-                        : `${task.estimatedDuration}m`}
-                    </Badge>
-                  )}
-                  {task.priority && (
-                    <Badge className={`text-[10px] font-semibold capitalize ${priorityStyle.bg} ${priorityStyle.text} border-0`}>
-                      {task.priority}
-                    </Badge>
-                  )}
-                  {task.status === 'completed' && (
-                    <Badge className="text-[10px] bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-0">
-                      done
-                    </Badge>
-                  )}
-                </div>
-
-                <div className="flex items-center justify-between pt-2 border-t border-border/30">
-                  <CompletionToggle completed={isCompleted} onClick={onToggle} size="sm" />
-                  <TaskTimerButton task={task} />
-                </div>
-              </div>
-            </div>
-          </ContextMenuTrigger>
-          {menu}
-        </ContextMenu>
-        {confirmDialog}
-      </>
-    )
-  }
-
-  // Original list view (size='sm') — horizontal compact layout
   return (
     <>
       <ContextMenu>
         <ContextMenuTrigger asChild>
-          <div className={`group flex items-center gap-3 rounded-md border border-border/50 bg-card/50 transition-all hover:bg-card hover:border-border ${paddingClass}`}>
+          <div className="group flex items-center gap-3 rounded-md border border-border/50 bg-card/50 transition-all hover:bg-card hover:border-border px-3 py-2">
             {dragHandle}
-            <CompletionToggle completed={isCompleted} onClick={onToggle} size={size} />
+            <CompletionToggle completed={isCompleted} onClick={onToggle} size="sm" />
 
             <div className="flex-1 min-w-0">
               <p className={`text-sm font-medium break-words line-clamp-3 ${isCompleted ? 'text-muted-foreground line-through' : 'text-foreground'}`}>

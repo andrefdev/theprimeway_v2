@@ -1,5 +1,5 @@
 use std::sync::Mutex;
-use tauri::{Manager, AppHandle, WebviewWindow, WindowEvent};
+use tauri::{Manager, Emitter, AppHandle, WebviewWindow, WindowEvent};
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{TrayIconBuilder, TrayIconEvent};
 use tauri_plugin_positioner::{WindowExt, Position};

@@ -21,11 +21,13 @@ interface QuickTaskDialogProps {
   onClose: () => void
   defaultDate?: string
   defaultBucket?: TaskBucket | null
+  defaultStart?: string
+  defaultEnd?: string
 }
 
 const DURATION_PRESETS = [15, 30, 45, 60, 90, 120]
 
-export function QuickTaskDialog({ open, onClose, defaultDate, defaultBucket }: QuickTaskDialogProps) {
+export function QuickTaskDialog({ open, onClose, defaultDate, defaultBucket, defaultStart, defaultEnd }: QuickTaskDialogProps) {
   const { t } = useTranslation('tasks')
   const createTask = useCreateTask()
 
@@ -36,12 +38,17 @@ export function QuickTaskDialog({ open, onClose, defaultDate, defaultBucket }: Q
   useEffect(() => {
     if (!open) return
     setTitle('')
-    setDuration(undefined)
+    let inferredDuration: number | undefined
+    if (defaultStart && defaultEnd) {
+      const ms = new Date(defaultEnd).getTime() - new Date(defaultStart).getTime()
+      if (Number.isFinite(ms) && ms > 0) inferredDuration = Math.round(ms / 60_000)
+    }
+    setDuration(inferredDuration)
     setDateValue({
       scheduledDate: defaultDate ?? null,
       scheduledBucket: defaultBucket ?? (defaultDate ? 'TODAY' : null),
     })
-  }, [open, defaultDate, defaultBucket])
+  }, [open, defaultDate, defaultBucket, defaultStart, defaultEnd])
 
   async function submit(e?: React.FormEvent) {
     e?.preventDefault()
@@ -54,6 +61,8 @@ export function QuickTaskDialog({ open, onClose, defaultDate, defaultBucket }: Q
         estimatedDuration: duration,
         scheduledDate: dateValue.scheduledDate ?? undefined,
         scheduledBucket: dateValue.scheduledBucket ?? null,
+        scheduledStart: defaultStart,
+        scheduledEnd: defaultEnd,
         tags: [],
       } as any)
       toast.success(t('taskCreated'))

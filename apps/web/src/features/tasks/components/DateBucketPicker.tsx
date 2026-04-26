@@ -56,8 +56,9 @@ const PRESETS: Array<{
 function activeKey(v: DateBucketValue): string | null {
   // Custom = scheduledDate set but doesn't match today/tomorrow
   if (v.scheduledDate) {
-    if (v.scheduledDate === todayStr() && v.scheduledBucket === 'TODAY') return 'today'
-    if (v.scheduledDate === tomorrowStr() && v.scheduledBucket === 'TOMORROW') return 'tomorrow'
+    const datePart = v.scheduledDate.includes('T') ? v.scheduledDate.split('T')[0]! : v.scheduledDate
+    if (datePart === todayStr() && v.scheduledBucket === 'TODAY') return 'today'
+    if (datePart === tomorrowStr() && v.scheduledBucket === 'TOMORROW') return 'tomorrow'
     return 'custom'
   }
   if (v.scheduledBucket === 'NEXT_WEEK') return 'next_week'
@@ -69,7 +70,7 @@ function activeKey(v: DateBucketValue): string | null {
 function summary(v: DateBucketValue): string {
   const k = activeKey(v)
   if (k === 'custom' && v.scheduledDate) {
-    const [y, m, d] = v.scheduledDate.split('-').map(Number) as [number, number, number]
+    const [y, m, d] = (v.scheduledDate.includes('T') ? v.scheduledDate.split('T')[0]! : v.scheduledDate).split('-').map(Number) as [number, number, number]
     return format(new Date(y, m - 1, d), 'PPP')
   }
   const preset = PRESETS.find((p) => p.key === k)
@@ -92,7 +93,13 @@ export function DateBucketPicker({ value, onChange, className }: DateBucketPicke
           {summary(value)}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-72 p-2" align="start">
+      <PopoverContent
+        className="w-auto p-2"
+        align="start"
+        side="bottom"
+        sideOffset={4}
+        avoidCollisions={false}
+      >
         <div className="grid grid-cols-2 gap-1">
           {PRESETS.map((p) => (
             <button
@@ -103,7 +110,7 @@ export function DateBucketPicker({ value, onChange, className }: DateBucketPicke
                 setOpen(false)
               }}
               className={cn(
-                'rounded-md px-3 py-2 text-left text-sm transition-colors',
+                'rounded-md px-2 py-1 text-left text-xs transition-colors',
                 k === p.key
                   ? 'bg-primary/10 text-primary border border-primary/30'
                   : 'hover:bg-accent',
@@ -113,10 +120,11 @@ export function DateBucketPicker({ value, onChange, className }: DateBucketPicke
             </button>
           ))}
         </div>
-        <div className="mt-2 border-t pt-2">
-          <div className="px-1 pb-1 text-xs text-muted-foreground">Or pick a date</div>
+        <div className="mt-2 border-t pt-1">
+          <div className="px-1 pb-0.5 text-[10px] text-muted-foreground">Or pick a date</div>
           <Calendar
             mode="single"
+            className="p-0"
             selected={
               value.scheduledDate
                 ? (() => {

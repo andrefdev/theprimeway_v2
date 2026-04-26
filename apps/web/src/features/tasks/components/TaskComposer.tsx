@@ -20,7 +20,7 @@ import {
   CommandList,
 } from '@/shared/components/ui/command'
 import { DatePicker } from '@/shared/components/ui/date-picker'
-import { Calendar as CalendarIcon, Clock as ClockIcon, ArrowUp as ArrowUpIcon } from 'lucide-react'
+import { Calendar as CalendarIcon, Clock as ClockIcon, ArrowUp as ArrowUpIcon, Check as CheckIcon } from 'lucide-react'
 import { TargetIcon } from '@/shared/components/Icons'
 import { useCreateTask } from '../queries'
 import { channelsApi } from '@/features/capture/channels-api'
@@ -148,7 +148,7 @@ export function TaskComposer({ defaultBucket, onCreated, placeholder }: TaskComp
         onKeyDown={onKeyDown}
         placeholder={placeholder ?? t('composer.placeholder', { defaultValue: 'Task description…' })}
         rows={2}
-        className="resize-none border-0 bg-transparent p-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 text-base"
+        className="resize-none border-0 bg-transparent px-2 py-2 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 text-base leading-relaxed placeholder:text-muted-foreground/70"
       />
 
       <div className="mt-3 flex items-center gap-1.5 flex-wrap">
@@ -165,26 +165,31 @@ export function TaskComposer({ defaultBucket, onCreated, placeholder }: TaskComp
               <CommandList>
                 <CommandEmpty>{t('common:noResults', { defaultValue: 'No results' })}</CommandEmpty>
                 <CommandGroup>
-                  {BUCKETS.map((b) => (
-                    <CommandItem
-                      key={b.key}
-                      onSelect={() => {
-                        setBucket(b.key)
-                        setExactDate(undefined)
-                        setBucketOpen(false)
-                      }}
-                      className="flex items-center justify-between"
-                    >
-                      <span className="flex items-center gap-2">
-                        {b.shortcut && (
-                          <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-border/60 text-[10px] font-semibold text-muted-foreground">
-                            {b.shortcut}
-                          </span>
-                        )}
-                        {t(b.labelKey, { defaultValue: bucketFallback(b.key) })}
-                      </span>
-                    </CommandItem>
-                  ))}
+                  {BUCKETS.map((b) => {
+                    const isActive = bucket === b.key && bucket !== 'EXACT_DATE'
+                    return (
+                      <CommandItem
+                        key={b.key}
+                        value={b.key}
+                        onSelect={() => {
+                          setBucket(b.key)
+                          setExactDate(undefined)
+                          setBucketOpen(false)
+                        }}
+                        className={`flex items-center justify-between ${isActive ? 'bg-primary/10 text-primary aria-selected:bg-primary/15' : ''}`}
+                      >
+                        <span className="flex items-center gap-2">
+                          {b.shortcut && (
+                            <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-border/60 text-[10px] font-semibold text-muted-foreground">
+                              {b.shortcut}
+                            </span>
+                          )}
+                          {t(b.labelKey, { defaultValue: bucketFallback(b.key) })}
+                        </span>
+                        {isActive && <CheckIcon className="size-3.5" />}
+                      </CommandItem>
+                    )
+                  })}
                 </CommandGroup>
                 <div className="border-t border-border/40 p-2">
                   <p className="px-2 pb-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">

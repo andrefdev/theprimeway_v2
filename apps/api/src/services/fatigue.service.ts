@@ -34,7 +34,7 @@ class FatigueService {
       where: { userId, status: 'completed', completedAt: { gte: since } },
       select: {
         priority: true,
-        goalLinks: { select: { id: true }, take: 1 },
+        goalLinks: { select: { goalId: true }, take: 1 },
       },
     })
 

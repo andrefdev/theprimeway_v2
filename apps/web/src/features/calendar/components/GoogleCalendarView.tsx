@@ -20,6 +20,8 @@ import { useLocale } from '@/i18n/useLocale'
 import { cn } from '@/shared/lib/utils'
 import { useCalendarItems, getItemsForDay, type CalendarItem } from '../hooks/use-calendar-items'
 import { TaskDialog } from '@/features/tasks/components/TaskDialog'
+import { QuickTaskDialog } from '@/features/tasks/components/QuickTaskDialog'
+import type { Task } from '@repo/shared/types'
 
 const SLOT_MINUTES = 30
 
@@ -54,6 +56,7 @@ export function GoogleCalendarView() {
   const [currentDate, setCurrentDate] = useState(() => new Date())
   const [mode, setMode] = useState<ViewMode>('week')
   const [slotDialog, setSlotDialog] = useState<{ start: Date; end: Date } | null>(null)
+  const [editingTask, setEditingTask] = useState<Task | null>(null)
   const today = new Date()
 
   const range = useMemo(() => {
@@ -158,17 +161,28 @@ export function GoogleCalendarView() {
               const end = new Date(start.getTime() + 30 * 60_000)
               setSlotDialog({ start, end })
             }}
+            onItemClick={(item) => {
+              if (item.type === 'task' && item.task) setEditingTask(item.task)
+            }}
           />
         )}
       </div>
 
       {slotDialog && (
-        <TaskDialog
+        <QuickTaskDialog
           open
           onClose={() => setSlotDialog(null)}
           defaultDate={format(slotDialog.start, 'yyyy-MM-dd')}
           defaultStart={slotDialog.start.toISOString()}
           defaultEnd={slotDialog.end.toISOString()}
+        />
+      )}
+
+      {editingTask && (
+        <TaskDialog
+          open
+          onClose={() => setEditingTask(null)}
+          task={editingTask}
         />
       )}
     </div>
@@ -188,11 +202,13 @@ function TimeGrid({
   items,
   today,
   onSlotClick,
+  onItemClick,
 }: {
   days: Date[]
   items: CalendarItem[]
   today: Date
   onSlotClick: (start: Date) => void
+  onItemClick: (item: CalendarItem) => void
 }) {
   const { dateFnsLocale } = useLocale()
   const { t } = useTranslation('calendar')
@@ -333,6 +349,7 @@ function TimeGrid({
                   <div
                     key={item.id}
                     data-event
+                    onClick={(e) => { e.stopPropagation(); onItemClick(item) }}
                     className={cn(
                       'absolute rounded-md border-l-[3px] px-1.5 py-0.5 overflow-hidden cursor-pointer hover:shadow-md transition-shadow',
                       colorClass,

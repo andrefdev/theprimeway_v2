@@ -118,11 +118,16 @@ export function DayPlanner({
                   onEdit={() => onEdit(task)}
                   onDelete={() => onDelete(task)}
                   onArchive={onArchive ? () => onArchive(task) : undefined}
-                  size="sm"
                 />
               </div>
               {task.status === 'open' && (
-                <AutoScheduleButton taskId={task.id} day={date} label="X" variant="ghost" size="sm" />
+                <AutoScheduleButton
+                  taskId={task.id}
+                  day={date}
+                  variant="ghost"
+                  iconOnly
+                  tooltip={t('autoScheduleBestSlot', { defaultValue: 'Auto-schedule in best slot' })}
+                />
               )}
             </div>
           ))}
@@ -270,7 +275,6 @@ function SortableTaskItem({
         onEdit={onEdit}
         onDelete={onDelete}
         onArchive={onArchive}
-        size="sm"
         dragHandle={dragHandle}
       />
     </div>

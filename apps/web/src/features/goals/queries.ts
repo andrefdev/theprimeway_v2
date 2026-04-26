@@ -49,11 +49,14 @@ export const goalsQueries = {
   weeklyGoals: (params?: { quarterlyGoalId?: string; weekStartDate?: string }) =>
     queryOptions({
       queryKey: [...goalsQueries.all(), 'weekly', params],
-      queryFn: () => {
+      queryFn: async () => {
         const p: Record<string, string> = {}
         if (params?.quarterlyGoalId) p.quarterlyGoalId = params.quarterlyGoalId
         if (params?.weekStartDate) p.weekStartDate = params.weekStartDate
-        return goalsApi.listWeeklyGoals(Object.keys(p).length > 0 ? p : undefined)
+        const res: any = await goalsApi.listWeeklyGoals(Object.keys(p).length > 0 ? p : undefined)
+        if (Array.isArray(res)) return res
+        if (Array.isArray(res?.data)) return res.data
+        return []
       },
       staleTime: CACHE_TIMES.standard,
     }),

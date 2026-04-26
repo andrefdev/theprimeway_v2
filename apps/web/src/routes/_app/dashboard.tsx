@@ -46,7 +46,7 @@ function DashboardPage() {
         description={format(new Date(), 'EEEE, MMMM d, yyyy', { locale: dateFnsLocale })}
       />
       <div className="mx-auto max-w-5xl px-6 pb-6 space-y-6">
-        <DashboardStats summary={summary} />
+        <DashboardStats summary={summary} loading={summaryQuery.isLoading} />
         <OverdueTasksBanner summary={summary} />
         <FatigueSignal />
         <NextTaskCard />

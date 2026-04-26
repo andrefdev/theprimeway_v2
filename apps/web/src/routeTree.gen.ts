@@ -29,8 +29,6 @@ import { Route as AppAiRouteImport } from './routes/_app/ai'
 import { Route as AppSplatRouteImport } from './routes/_app/$'
 import { Route as AppTasksIndexRouteImport } from './routes/_app/tasks/index'
 import { Route as AppRitualsIndexRouteImport } from './routes/_app/rituals/index'
-import { Route as AppReadingIndexRouteImport } from './routes/_app/reading/index'
-import { Route as AppNotesIndexRouteImport } from './routes/_app/notes/index'
 import { Route as AppHabitsIndexRouteImport } from './routes/_app/habits/index'
 import { Route as AppGoalsIndexRouteImport } from './routes/_app/goals/index'
 import { Route as AppCalendarIndexRouteImport } from './routes/_app/calendar/index'
@@ -40,9 +38,6 @@ import { Route as AppTasksStatsRouteImport } from './routes/_app/tasks/stats'
 import { Route as AppTasksBacklogRouteImport } from './routes/_app/tasks/backlog'
 import { Route as AppTasksAllRouteImport } from './routes/_app/tasks/all'
 import { Route as AppRitualsKindRouteImport } from './routes/_app/rituals/$kind'
-import { Route as AppReadingLibraryRouteImport } from './routes/_app/reading/library'
-import { Route as AppNotesTrashRouteImport } from './routes/_app/notes/trash'
-import { Route as AppNotesNoteIdRouteImport } from './routes/_app/notes/$noteId'
 import { Route as AppHabitsTrackerRouteImport } from './routes/_app/habits/tracker'
 import { Route as AppHabitsStatsRouteImport } from './routes/_app/habits/stats'
 import { Route as AppHabitsListRouteImport } from './routes/_app/habits/list'
@@ -149,16 +144,6 @@ const AppRitualsIndexRoute = AppRitualsIndexRouteImport.update({
   path: '/rituals/',
   getParentRoute: () => AppRoute,
 } as any)
-const AppReadingIndexRoute = AppReadingIndexRouteImport.update({
-  id: '/reading/',
-  path: '/reading/',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppNotesIndexRoute = AppNotesIndexRouteImport.update({
-  id: '/notes/',
-  path: '/notes/',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppHabitsIndexRoute = AppHabitsIndexRouteImport.update({
   id: '/habits/',
   path: '/habits/',
@@ -202,21 +187,6 @@ const AppTasksAllRoute = AppTasksAllRouteImport.update({
 const AppRitualsKindRoute = AppRitualsKindRouteImport.update({
   id: '/rituals/$kind',
   path: '/rituals/$kind',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppReadingLibraryRoute = AppReadingLibraryRouteImport.update({
-  id: '/reading/library',
-  path: '/reading/library',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppNotesTrashRoute = AppNotesTrashRouteImport.update({
-  id: '/notes/trash',
-  path: '/notes/trash',
-  getParentRoute: () => AppRoute,
-} as any)
-const AppNotesNoteIdRoute = AppNotesNoteIdRouteImport.update({
-  id: '/notes/$noteId',
-  path: '/notes/$noteId',
   getParentRoute: () => AppRoute,
 } as any)
 const AppHabitsTrackerRoute = AppHabitsTrackerRouteImport.update({
@@ -279,9 +249,6 @@ export interface FileRoutesByFullPath {
   '/habits/list': typeof AppHabitsListRoute
   '/habits/stats': typeof AppHabitsStatsRoute
   '/habits/tracker': typeof AppHabitsTrackerRoute
-  '/notes/$noteId': typeof AppNotesNoteIdRoute
-  '/notes/trash': typeof AppNotesTrashRoute
-  '/reading/library': typeof AppReadingLibraryRoute
   '/rituals/$kind': typeof AppRitualsKindRoute
   '/tasks/all': typeof AppTasksAllRoute
   '/tasks/backlog': typeof AppTasksBacklogRoute
@@ -291,8 +258,6 @@ export interface FileRoutesByFullPath {
   '/calendar/': typeof AppCalendarIndexRoute
   '/goals/': typeof AppGoalsIndexRoute
   '/habits/': typeof AppHabitsIndexRoute
-  '/notes/': typeof AppNotesIndexRoute
-  '/reading/': typeof AppReadingIndexRoute
   '/rituals/': typeof AppRitualsIndexRoute
   '/tasks/': typeof AppTasksIndexRoute
 }
@@ -320,9 +285,6 @@ export interface FileRoutesByTo {
   '/habits/list': typeof AppHabitsListRoute
   '/habits/stats': typeof AppHabitsStatsRoute
   '/habits/tracker': typeof AppHabitsTrackerRoute
-  '/notes/$noteId': typeof AppNotesNoteIdRoute
-  '/notes/trash': typeof AppNotesTrashRoute
-  '/reading/library': typeof AppReadingLibraryRoute
   '/rituals/$kind': typeof AppRitualsKindRoute
   '/tasks/all': typeof AppTasksAllRoute
   '/tasks/backlog': typeof AppTasksBacklogRoute
@@ -332,8 +294,6 @@ export interface FileRoutesByTo {
   '/calendar': typeof AppCalendarIndexRoute
   '/goals': typeof AppGoalsIndexRoute
   '/habits': typeof AppHabitsIndexRoute
-  '/notes': typeof AppNotesIndexRoute
-  '/reading': typeof AppReadingIndexRoute
   '/rituals': typeof AppRitualsIndexRoute
   '/tasks': typeof AppTasksIndexRoute
 }
@@ -364,9 +324,6 @@ export interface FileRoutesById {
   '/_app/habits/list': typeof AppHabitsListRoute
   '/_app/habits/stats': typeof AppHabitsStatsRoute
   '/_app/habits/tracker': typeof AppHabitsTrackerRoute
-  '/_app/notes/$noteId': typeof AppNotesNoteIdRoute
-  '/_app/notes/trash': typeof AppNotesTrashRoute
-  '/_app/reading/library': typeof AppReadingLibraryRoute
   '/_app/rituals/$kind': typeof AppRitualsKindRoute
   '/_app/tasks/all': typeof AppTasksAllRoute
   '/_app/tasks/backlog': typeof AppTasksBacklogRoute
@@ -376,8 +333,6 @@ export interface FileRoutesById {
   '/_app/calendar/': typeof AppCalendarIndexRoute
   '/_app/goals/': typeof AppGoalsIndexRoute
   '/_app/habits/': typeof AppHabitsIndexRoute
-  '/_app/notes/': typeof AppNotesIndexRoute
-  '/_app/reading/': typeof AppReadingIndexRoute
   '/_app/rituals/': typeof AppRitualsIndexRoute
   '/_app/tasks/': typeof AppTasksIndexRoute
 }
@@ -407,9 +362,6 @@ export interface FileRouteTypes {
     | '/habits/list'
     | '/habits/stats'
     | '/habits/tracker'
-    | '/notes/$noteId'
-    | '/notes/trash'
-    | '/reading/library'
     | '/rituals/$kind'
     | '/tasks/all'
     | '/tasks/backlog'
@@ -419,8 +371,6 @@ export interface FileRouteTypes {
     | '/calendar/'
     | '/goals/'
     | '/habits/'
-    | '/notes/'
-    | '/reading/'
     | '/rituals/'
     | '/tasks/'
   fileRoutesByTo: FileRoutesByTo
@@ -448,9 +398,6 @@ export interface FileRouteTypes {
     | '/habits/list'
     | '/habits/stats'
     | '/habits/tracker'
-    | '/notes/$noteId'
-    | '/notes/trash'
-    | '/reading/library'
     | '/rituals/$kind'
     | '/tasks/all'
     | '/tasks/backlog'
@@ -460,8 +407,6 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/goals'
     | '/habits'
-    | '/notes'
-    | '/reading'
     | '/rituals'
     | '/tasks'
   id:
@@ -491,9 +436,6 @@ export interface FileRouteTypes {
     | '/_app/habits/list'
     | '/_app/habits/stats'
     | '/_app/habits/tracker'
-    | '/_app/notes/$noteId'
-    | '/_app/notes/trash'
-    | '/_app/reading/library'
     | '/_app/rituals/$kind'
     | '/_app/tasks/all'
     | '/_app/tasks/backlog'
@@ -503,8 +445,6 @@ export interface FileRouteTypes {
     | '/_app/calendar/'
     | '/_app/goals/'
     | '/_app/habits/'
-    | '/_app/notes/'
-    | '/_app/reading/'
     | '/_app/rituals/'
     | '/_app/tasks/'
   fileRoutesById: FileRoutesById
@@ -657,20 +597,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRitualsIndexRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/reading/': {
-      id: '/_app/reading/'
-      path: '/reading'
-      fullPath: '/reading/'
-      preLoaderRoute: typeof AppReadingIndexRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/notes/': {
-      id: '/_app/notes/'
-      path: '/notes'
-      fullPath: '/notes/'
-      preLoaderRoute: typeof AppNotesIndexRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/habits/': {
       id: '/_app/habits/'
       path: '/habits'
@@ -732,27 +658,6 @@ declare module '@tanstack/react-router' {
       path: '/rituals/$kind'
       fullPath: '/rituals/$kind'
       preLoaderRoute: typeof AppRitualsKindRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/reading/library': {
-      id: '/_app/reading/library'
-      path: '/reading/library'
-      fullPath: '/reading/library'
-      preLoaderRoute: typeof AppReadingLibraryRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/notes/trash': {
-      id: '/_app/notes/trash'
-      path: '/notes/trash'
-      fullPath: '/notes/trash'
-      preLoaderRoute: typeof AppNotesTrashRouteImport
-      parentRoute: typeof AppRoute
-    }
-    '/_app/notes/$noteId': {
-      id: '/_app/notes/$noteId'
-      path: '/notes/$noteId'
-      fullPath: '/notes/$noteId'
-      preLoaderRoute: typeof AppNotesNoteIdRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/habits/tracker': {
@@ -826,9 +731,6 @@ interface AppRouteChildren {
   AppHabitsListRoute: typeof AppHabitsListRoute
   AppHabitsStatsRoute: typeof AppHabitsStatsRoute
   AppHabitsTrackerRoute: typeof AppHabitsTrackerRoute
-  AppNotesNoteIdRoute: typeof AppNotesNoteIdRoute
-  AppNotesTrashRoute: typeof AppNotesTrashRoute
-  AppReadingLibraryRoute: typeof AppReadingLibraryRoute
   AppRitualsKindRoute: typeof AppRitualsKindRoute
   AppTasksAllRoute: typeof AppTasksAllRoute
   AppTasksBacklogRoute: typeof AppTasksBacklogRoute
@@ -838,8 +740,6 @@ interface AppRouteChildren {
   AppCalendarIndexRoute: typeof AppCalendarIndexRoute
   AppGoalsIndexRoute: typeof AppGoalsIndexRoute
   AppHabitsIndexRoute: typeof AppHabitsIndexRoute
-  AppNotesIndexRoute: typeof AppNotesIndexRoute
-  AppReadingIndexRoute: typeof AppReadingIndexRoute
   AppRitualsIndexRoute: typeof AppRitualsIndexRoute
   AppTasksIndexRoute: typeof AppTasksIndexRoute
 }
@@ -863,9 +763,6 @@ const AppRouteChildren: AppRouteChildren = {
   AppHabitsListRoute: AppHabitsListRoute,
   AppHabitsStatsRoute: AppHabitsStatsRoute,
   AppHabitsTrackerRoute: AppHabitsTrackerRoute,
-  AppNotesNoteIdRoute: AppNotesNoteIdRoute,
-  AppNotesTrashRoute: AppNotesTrashRoute,
-  AppReadingLibraryRoute: AppReadingLibraryRoute,
   AppRitualsKindRoute: AppRitualsKindRoute,
   AppTasksAllRoute: AppTasksAllRoute,
   AppTasksBacklogRoute: AppTasksBacklogRoute,
@@ -875,8 +772,6 @@ const AppRouteChildren: AppRouteChildren = {
   AppCalendarIndexRoute: AppCalendarIndexRoute,
   AppGoalsIndexRoute: AppGoalsIndexRoute,
   AppHabitsIndexRoute: AppHabitsIndexRoute,
-  AppNotesIndexRoute: AppNotesIndexRoute,
-  AppReadingIndexRoute: AppReadingIndexRoute,
   AppRitualsIndexRoute: AppRitualsIndexRoute,
   AppTasksIndexRoute: AppTasksIndexRoute,
 }

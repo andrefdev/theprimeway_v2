@@ -155,7 +155,6 @@ export function WeekPlanner({
               onToggle={() => {}}
               onEdit={() => {}}
               onDelete={() => {}}
-              size="sm"
             />
           </div>
         ) : null}
@@ -323,7 +322,6 @@ function SortableWeekTask({
         onEdit={onEdit}
         onDelete={onDelete}
         onArchive={onArchive}
-        size="sm"
         dragHandle={dragHandle}
       />
     </div>

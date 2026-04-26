@@ -6,7 +6,6 @@ import { channelsApi } from '@/features/capture/channels-api'
 import { useCreateTask, useUpdateTask } from '../queries'
 import { useScheduleSuggestion } from '../hooks/use-schedule-suggestion'
 import { useEstimateTimebox } from '../hooks/use-estimate-timebox'
-import { useScheduleTask } from '../queries'
 import { useCreateRecurring } from '@/features/recurring/queries'
 import type { RecurrencePattern } from '@/features/recurring/api'
 import {
@@ -28,13 +27,14 @@ import {
   SelectContent,
   SelectItem,
 } from '@/shared/components/ui/select'
+import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover'
+import { Hash, Check } from 'lucide-react'
 import { DurationCombobox } from './DurationCombobox'
-import { DatePicker } from '@/shared/components/ui/date-picker'
-import { DateTimePicker } from '@/shared/components/ui/date-time-picker'
+import { DateBucketPicker } from './DateBucketPicker'
 import { Switch } from '@/shared/components/ui/switch'
 import { Checkbox } from '@/shared/components/ui/checkbox'
 import { toast } from 'sonner'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import { tasksQueries } from '../queries'
@@ -67,7 +67,6 @@ export function TaskDialog({ open, onClose, task, defaultDate, defaultStart, def
   const updateTask = useUpdateTask()
   const createRecurring = useCreateRecurring()
   const estimateTimebox = useEstimateTimebox()
-  const scheduleTask = useScheduleTask()
   const [showInsights, setShowInsights] = useState(false)
   const [showScheduleResult, setShowScheduleResult] = useState<{ start: string; end: string } | null>(null)
   const [repeatEnabled, setRepeatEnabled] = useState(false)
@@ -97,8 +96,6 @@ export function TaskDialog({ open, onClose, task, defaultDate, defaultStart, def
     queryFn: channelsApi.list,
   })
 
-  const [showExactTimes, setShowExactTimes] = useState(false)
-
   const form = useForm<CreateTaskInput>({
     resolver: zodResolver(createTaskSchema),
     defaultValues: {
@@ -114,15 +111,42 @@ export function TaskDialog({ open, onClose, task, defaultDate, defaultStart, def
 
   const scheduledDate = form.watch('scheduledDate')
   const estimatedDuration = form.watch('estimatedDuration')
+  const title = form.watch('title')
+  const description = form.watch('description')
   const { data: scheduleSuggestion, isLoading: isSuggestionLoading } = useScheduleSuggestion(
     scheduledDate,
     estimatedDuration,
   )
 
+  const userTouchedDuration = useRef(false)
+  const lastEstimatedTitle = useRef<string>('')
+
+  // Auto-estimate duration as title is typed (debounced).
+  useEffect(() => {
+    if (!open || isEdit) return
+    if (userTouchedDuration.current) return
+    const trimmed = (title ?? '').trim()
+    if (trimmed.length < 3) return
+    if (trimmed === lastEstimatedTitle.current) return
+    const handle = setTimeout(async () => {
+      try {
+        const result = await estimateTimebox.mutateAsync({ title: trimmed, description })
+        if (!userTouchedDuration.current) {
+          lastEstimatedTitle.current = trimmed
+          form.setValue('estimatedDuration', result.minutes)
+        }
+      } catch {
+        // silent — keep manual fallback via duration combobox
+      }
+    }, 700)
+    return () => clearTimeout(handle)
+  }, [title, description, open, isEdit, estimateTimebox, form])
+
   // Reset form when dialog opens with new task
   useEffect(() => {
     if (!open) return
-    setShowExactTimes(false)
+    userTouchedDuration.current = false
+    lastEstimatedTitle.current = ''
     setRepeatEnabled(false)
     setRepeatPattern('DAILY')
     setRepeatDays([1, 2, 3, 4, 5])
@@ -144,7 +168,6 @@ export function TaskDialog({ open, onClose, task, defaultDate, defaultStart, def
         tags: task.tags ?? [],
         weeklyGoalId: (task as any).weeklyGoalId ?? undefined,
       })
-      if (hasTimes) setShowExactTimes(true)
     } else {
       const hasTimes = !!(defaultStart && defaultEnd)
       form.reset({
@@ -154,6 +177,8 @@ export function TaskDialog({ open, onClose, task, defaultDate, defaultStart, def
         scheduledDate: defaultDate,
         scheduledStart: defaultStart,
         scheduledEnd: defaultEnd,
+        scheduledBucket: undefined,
+        channelId: undefined,
         isAllDay: !hasTimes,
         estimatedDuration: undefined,
         tags: [],
@@ -163,6 +188,12 @@ export function TaskDialog({ open, onClose, task, defaultDate, defaultStart, def
 
   async function onSubmit(data: CreateTaskInput) {
     try {
+      // Auto-fill best time slot when user didn't set exact start/end.
+      if (!data.scheduledStart && !data.scheduledEnd && data.scheduledDate && data.estimatedDuration && scheduleSuggestion) {
+        data.scheduledStart = scheduleSuggestion.start
+        data.scheduledEnd = scheduleSuggestion.end
+        data.isAllDay = false
+      }
       if (isEdit) {
         await updateTask.mutateAsync({ id: task.id, data })
         toast.success(t('taskUpdated'))
@@ -271,213 +302,88 @@ export function TaskDialog({ open, onClose, task, defaultDate, defaultStart, def
                 </Select>
               </div>
 
-              <div className="space-y-0 -mt-2">
+              <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <Label>{t('estimatedDuration')}</Label>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={async () => {
-                      const title = form.watch('title')
-                      const description = form.watch('description')
-                      if (!title) {
-                        toast.error(t('enterTitleFirst'))
-                        return
-                      }
-                      try {
-                        const result = await estimateTimebox.mutateAsync({ title, description })
-                        form.setValue('estimatedDuration', result.minutes)
-                        toast.success(t('estimatedResult', { minutes: result.minutes, rationale: result.rationale }))
-                      } catch {
-                        toast.error(t('failedToEstimate'))
-                      }
-                    }}
-                    disabled={estimateTimebox.isPending}
-                    className="text-xs"
-                  >
-                    {estimateTimebox.isPending ? t('common:loading', { defaultValue: 'Loading...' }) : t('suggest')}
-                  </Button>
+                  {estimateTimebox.isPending && (
+                    <span className="text-[10px] text-muted-foreground">
+                      {t('common:loading', { defaultValue: 'Loading...' })}
+                    </span>
+                  )}
                 </div>
                 <DurationCombobox
                   value={form.watch('estimatedDuration')}
-                  onChange={(v) => form.setValue('estimatedDuration', v)}
+                  onChange={(v) => {
+                    userTouchedDuration.current = true
+                    form.setValue('estimatedDuration', v)
+                  }}
                   presets={DURATION_PRESETS}
                   placeholder={t('selectDuration')}
                 />
               </div>
             </div>
 
-            {/* Bucket + Channel */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label>{t('bucket', { defaultValue: 'When' })}</Label>
-                <Select
-                  value={form.watch('scheduledBucket') ?? 'none'}
-                  onValueChange={(v) => form.setValue('scheduledBucket', v !== 'none' ? (v as TaskBucket) : null)}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder={t('selectBucket', { defaultValue: 'Pick' })} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">{t('none')}</SelectItem>
-                    {TASK_BUCKETS.map((b) => (
-                      <SelectItem key={b} value={b}>
-                        {t(`bucket_${b}`, { defaultValue: bucketLabel(b) })}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label>{t('channel', { defaultValue: 'Channel' })}</Label>
-                <Select
-                  value={form.watch('channelId') ?? 'none'}
-                  onValueChange={(v) => form.setValue('channelId', v !== 'none' ? v : null)}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder={t('selectChannel', { defaultValue: 'Channel' })} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">{t('none')}</SelectItem>
-                    {channelsData.map((c: any) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        #{c.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Scheduled Date / Time */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <Label>{t('scheduledDate')}</Label>
-                <div className="flex items-center gap-3">
-                  <Button
-                    type="button"
-                    variant="link"
-                    size="xs"
-                    onClick={() => {
-                      const next = !showExactTimes
-                      setShowExactTimes(next)
-                      if (!next) {
-                        form.setValue('scheduledStart', undefined)
-                        form.setValue('scheduledEnd', undefined)
-                        form.setValue('isAllDay', true)
-                      } else {
-                        form.setValue('isAllDay', false)
-                      }
-                    }}
-                    className="text-muted-foreground hover:text-foreground"
-                  >
-                    {showExactTimes
-                      ? t('hideExactTimes', { defaultValue: 'Use timebox only' })
-                      : t('showExactTimes', { defaultValue: 'Pick exact time' })}
-                  </Button>
-                  {isEdit && task && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={async () => {
-                        try {
-                          const result = await scheduleTask.mutateAsync({
-                            taskId: task.id,
-                            duration: form.watch('estimatedDuration'),
-                          })
-                          if (result.slot) {
-                            setShowScheduleResult(result.slot)
-                            const startDate = new Date(result.slot.start)
-                            const year = startDate.getFullYear()
-                            const month = String(startDate.getMonth() + 1).padStart(2, '0')
-                            const day = String(startDate.getDate()).padStart(2, '0')
-                            form.setValue('scheduledDate', `${year}-${month}-${day}`)
-                            form.setValue('scheduledStart', result.slot.start)
-                            form.setValue('scheduledEnd', result.slot.end)
-                            form.setValue('isAllDay', false)
-                            toast.success(t('foundOptimalSlot'))
-                          } else {
-                            toast.error(t('noSlotsFound'))
-                          }
-                        } catch {
-                          toast.error(t('failedToFindSlot'))
-                        }
-                      }}
-                      disabled={scheduleTask.isPending}
-                      className="text-xs"
-                    >
-                      {scheduleTask.isPending ? t('common:loading', { defaultValue: 'Loading...' }) : t('findBestTime')}
-                    </Button>
-                  )}
-                </div>
-              </div>
-
-              {!showExactTimes ? (
-                <DatePicker
-                  date={parseLocalDate(form.watch('scheduledDate'))}
-                  onDateChange={(d) => {
-                    if (!d) {
-                      form.setValue('scheduledDate', undefined)
-                      return
-                    }
-                    const year = d.getFullYear()
-                    const month = String(d.getMonth() + 1).padStart(2, '0')
-                    const day = String(d.getDate()).padStart(2, '0')
-                    form.setValue('scheduledDate', `${year}-${month}-${day}`)
-                  }}
-                  placeholder={t('pickDate')}
+            {/* When + Channel */}
+            <div className="flex items-end gap-2">
+              <div className="space-y-1.5 flex-1">
+                <Label>{t('scheduledDate', { defaultValue: 'When' })}</Label>
+                <DateBucketPicker
                   className="w-full"
+                  value={{
+                    scheduledDate: form.watch('scheduledDate') ?? null,
+                    scheduledBucket: (form.watch('scheduledBucket') as TaskBucket | null | undefined) ?? null,
+                  }}
+                  onChange={(next) => {
+                    form.setValue('scheduledDate', next.scheduledDate ?? undefined)
+                    form.setValue('scheduledBucket', next.scheduledBucket ?? null)
+                  }}
                 />
-              ) : (
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">{t('startTime')}</Label>
-                    <DateTimePicker
-                      value={form.watch('scheduledStart') ? new Date(form.watch('scheduledStart')!) : undefined}
-                      onChange={(d) => {
-                        if (!d) {
-                          form.setValue('scheduledStart', undefined)
-                          return
-                        }
-                        form.setValue('scheduledStart', d.toISOString())
-                        const year = d.getFullYear()
-                        const month = String(d.getMonth() + 1).padStart(2, '0')
-                        const day = String(d.getDate()).padStart(2, '0')
-                        form.setValue('scheduledDate', `${year}-${month}-${day}`)
-                        const endStr = form.watch('scheduledEnd')
-                        const duration = form.watch('estimatedDuration')
-                        if (!endStr && duration) {
-                          const end = new Date(d.getTime() + duration * 60_000)
-                          form.setValue('scheduledEnd', end.toISOString())
-                        }
-                      }}
-                      placeholder={t('pickDateTime')}
-                      className="w-full"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs text-muted-foreground">{t('endTime')}</Label>
-                    <DateTimePicker
-                      value={form.watch('scheduledEnd') ? new Date(form.watch('scheduledEnd')!) : undefined}
-                      onChange={(d) => {
-                        form.setValue('scheduledEnd', d ? d.toISOString() : undefined)
-                      }}
-                      placeholder={t('pickDateTime')}
-                      className="w-full"
-                    />
-                    {(() => {
-                      const s = form.watch('scheduledStart')
-                      const e = form.watch('scheduledEnd')
-                      if (s && e && new Date(e) <= new Date(s)) {
-                        return <p className="text-xs text-destructive">{t('endMustBeAfterStart')}</p>
-                      }
-                      return null
-                    })()}
-                  </div>
-                </div>
-              )}
+              </div>
+              {(() => {
+                const channelId = form.watch('channelId')
+                const selected = channelsData.find((c: any) => c.id === channelId)
+                return (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        title={selected ? `#${selected.name}` : t('selectChannel', { defaultValue: 'Channel' })}
+                        className={selected ? 'text-primary' : 'text-muted-foreground'}
+                      >
+                        <Hash className="h-4 w-4" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent align="end" className="w-56 p-1">
+                      <button
+                        type="button"
+                        onClick={() => form.setValue('channelId', null)}
+                        className="flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
+                      >
+                        <span className="text-muted-foreground">{t('none')}</span>
+                        {!channelId && <Check className="h-3.5 w-3.5" />}
+                      </button>
+                      {channelsData.map((c: any) => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => form.setValue('channelId', c.id)}
+                          className="flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
+                        >
+                          <span>#{c.name}</span>
+                          {channelId === c.id && <Check className="h-3.5 w-3.5" />}
+                        </button>
+                      ))}
+                      {channelsData.length === 0 && (
+                        <p className="px-2 py-1.5 text-xs text-muted-foreground">
+                          {t('noChannels', { defaultValue: 'No channels' })}
+                        </p>
+                      )}
+                    </PopoverContent>
+                  </Popover>
+                )
+              })()}
             </div>
 
             {/* Schedule Result */}
