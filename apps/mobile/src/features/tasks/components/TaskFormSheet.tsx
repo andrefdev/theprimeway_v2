@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Alert, View, TextInput, Pressable, Platform, ActivityIndicator } from 'react-native';
+import { Alert, View, Pressable, Platform, ActivityIndicator } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { FormSheet } from '@/shared/components/ui/form-sheet';
 import { Text } from '@/shared/components/ui/text';
 import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
 import { Icon } from '@/shared/components/ui/icon';
 import { Calendar, Clock, Sparkles, Target, X } from 'lucide-react-native';
 import { useCreateTask } from '../hooks/useTasks';
@@ -68,8 +69,8 @@ export function TaskFormSheet({ isOpen, onClose }: TaskFormSheetProps) {
     <FormSheet isOpen={isOpen} onClose={onClose} title="New Task">
       {/* Title */}
       <View className="flex-row items-center gap-2">
-        <TextInput
-          className="flex-1 rounded-xl border border-border bg-card px-4 py-3.5 text-base font-medium text-foreground"
+        <Input
+          className="flex-1 h-auto rounded-xl py-3.5 text-base font-medium"
           placeholder="What do you need to do?"
           placeholderTextColor="hsl(210, 10%, 55%)"
           value={title}
@@ -161,8 +162,8 @@ export function TaskFormSheet({ isOpen, onClose }: TaskFormSheetProps) {
       </View>
 
       {/* Description */}
-      <TextInput
-        className="min-h-[70px] rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground"
+      <Input
+        className="min-h-[70px] h-auto rounded-xl py-3 text-sm"
         placeholder="Add details..."
         placeholderTextColor="hsl(210, 10%, 55%)"
         multiline

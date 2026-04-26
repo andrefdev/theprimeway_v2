@@ -117,7 +117,7 @@ const getOverridesRoute = createRoute({
 adminRoutes.openapi(getOverridesRoute, async (c) => {
   const { userId } = c.req.param()
   const overrides = await featuresRepo.findOverridesByUser(userId)
-  const data = overrides.map((override) => ({
+  const data = overrides.map((override: { createdAt: { toISOString: () => any }; updatedAt: { toISOString: () => any } }) => ({
     ...override,
     createdAt: override.createdAt?.toISOString() ?? '',
     updatedAt: override.updatedAt?.toISOString() ?? '',

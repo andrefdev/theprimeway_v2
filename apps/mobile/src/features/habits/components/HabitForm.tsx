@@ -2,13 +2,13 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   View,
-  TextInput,
   Pressable,
   ActivityIndicator,
   ScrollView,
 } from 'react-native';
 import { Text } from '@/shared/components/ui/text';
 import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
 import { cn } from '@/shared/utils/cn';
 import { habitFormSchema, type HabitFormData } from '../types';
 import { useTranslation } from '@/shared/hooks/useTranslation';
@@ -115,11 +115,8 @@ export function HabitForm({
           control={control}
           name="name"
           render={({ field: { onChange, onBlur, value } }) => (
-            <TextInput
-              className={cn(
-                'h-11 rounded-md border border-input bg-background px-3 text-base text-foreground',
-                errors.name && 'border-destructive',
-              )}
+            <Input
+              className={cn('h-11', errors.name && 'border-destructive')}
               placeholder={t('habitNamePlaceholder')}
               placeholderTextColor="hsl(0 0% 63.9%)"
               onBlur={onBlur}
@@ -144,8 +141,8 @@ export function HabitForm({
           control={control}
           name="description"
           render={({ field: { onChange, onBlur, value } }) => (
-            <TextInput
-              className="h-20 rounded-md border border-input bg-background px-3 pt-2 text-base text-foreground"
+            <Input
+              className="h-20 pt-2"
               placeholder={t('habitDescriptionFormPlaceholder')}
               placeholderTextColor="hsl(0 0% 63.9%)"
               multiline

@@ -1,9 +1,10 @@
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { View, TextInput, ScrollView, ActivityIndicator, Pressable, Platform } from 'react-native';
+import { View, ScrollView, ActivityIndicator, Pressable, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Text } from '@/shared/components/ui/text';
 import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
 import { Icon } from '@/shared/components/ui/icon';
 import { cn } from '@/shared/utils/cn';
 import { taskFormSchema, type TaskFormData } from '../types';
@@ -90,11 +91,8 @@ export function TaskForm({ initialData, onSubmit, isLoading, submitLabel, defaul
         control={control}
         name="title"
         render={({ field: { onChange, onBlur, value } }) => (
-          <TextInput
-            className={cn(
-              'rounded-xl border border-border bg-card px-4 py-3.5 text-base font-medium text-foreground',
-              errors.title && 'border-destructive'
-            )}
+          <Input
+            className={cn('h-auto rounded-xl py-3.5 text-base font-medium', errors.title && 'border-destructive')}
             placeholder="What do you need to do?"
             placeholderTextColor="hsl(210, 10%, 55%)"
             autoCapitalize="sentences"
@@ -208,8 +206,8 @@ export function TaskForm({ initialData, onSubmit, isLoading, submitLabel, defaul
         control={control}
         name="description"
         render={({ field: { onChange, onBlur, value } }) => (
-          <TextInput
-            className="min-h-[80px] rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground"
+          <Input
+            className="min-h-[80px] h-auto rounded-xl py-3 text-sm"
             placeholder="Add details..."
             placeholderTextColor="hsl(210, 10%, 55%)"
             multiline
@@ -225,8 +223,8 @@ export function TaskForm({ initialData, onSubmit, isLoading, submitLabel, defaul
       <View>
         <View className="flex-row items-center gap-2">
           <Icon as={Tag} size={14} className="text-muted-foreground" />
-          <TextInput
-            className="h-10 flex-1 text-sm text-foreground"
+          <Input
+            className="flex-1 border-0 bg-transparent shadow-none"
             placeholder="Add tag..."
             placeholderTextColor="hsl(210, 10%, 55%)"
             value={tagInput}

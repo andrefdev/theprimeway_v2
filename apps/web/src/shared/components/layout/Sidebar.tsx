@@ -27,7 +27,7 @@ interface NavItem {
   requiredFeature?: FeatureKey
 }
 
-function useMainNavItems() {
+function usePlanDoItems() {
   const { t } = useTranslation('common')
   return [
     {
@@ -36,14 +36,9 @@ function useMainNavItems() {
       icon: sidebarIcons.dashboard(undefined, { size: 20 }),
     },
     {
-      title: t('navToday'),
+      title: t('navTasks', { defaultValue: 'Tasks' }),
       to: '/tasks/today',
       icon: sidebarIcons.today(undefined, { size: 20 }),
-    },
-    {
-      title: t('navPomodoro'),
-      to: '/pomodoro',
-      icon: sidebarIcons.pomodoro(undefined, { size: 20 }),
     },
     {
       title: t('navCalendar'),
@@ -51,25 +46,25 @@ function useMainNavItems() {
       icon: sidebarIcons.weekPlanning(undefined, { size: 20 }),
     },
     {
-      title: t('navGoals'),
-      to: '/goals',
-      icon: sidebarIcons.goals(undefined, { size: 20 }),
+      title: t('navPomodoro'),
+      to: '/pomodoro',
+      icon: sidebarIcons.pomodoro(undefined, { size: 20 }),
     },
-    {
-      title: t('navAI'),
-      to: '/ai',
-      icon: sidebarIcons.chat(undefined, { size: 20 }),
-    },
-  ] satisfies NavItem[]
-}
-
-function useRoutinesNavItems() {
-  const { t } = useTranslation('common')
-  return [
     {
       title: t('navHabits'),
       to: '/habits',
       icon: sidebarIcons.habits(undefined, { size: 20 }),
+    },
+  ] satisfies NavItem[]
+}
+
+function useDirectionItems() {
+  const { t } = useTranslation('common')
+  return [
+    {
+      title: t('navGoals'),
+      to: '/goals',
+      icon: sidebarIcons.goals(undefined, { size: 20 }),
     },
     {
       title: t('navRituals'),
@@ -79,7 +74,7 @@ function useRoutinesNavItems() {
   ] satisfies NavItem[]
 }
 
-function useModulesNavItems() {
+function useKnowledgeItems() {
   const { t } = useTranslation('common')
   const { features } = useFeatures()
 
@@ -98,6 +93,17 @@ function useModulesNavItems() {
   })
 }
 
+function useAssistItems() {
+  const { t } = useTranslation('common')
+  return [
+    {
+      title: t('navAI'),
+      to: '/ai',
+      icon: sidebarIcons.chat(undefined, { size: 20 }),
+    },
+  ] satisfies NavItem[]
+}
+
 function useFooterNavItems(): NavItem[] {
   return []
 }
@@ -106,9 +112,10 @@ export function AppSidebar() {
   const { t } = useTranslation('common')
   const location = useRouterState({ select: (s) => s.location })
   const { toggleSidebar } = useSidebar()
-  const mainItems = useMainNavItems()
-  const routinesItems = useRoutinesNavItems()
-  const modulesItems = useModulesNavItems()
+  const planDoItems = usePlanDoItems()
+  const directionItems = useDirectionItems()
+  const knowledgeItems = useKnowledgeItems()
+  const assistItems = useAssistItems()
   const footerItems = useFooterNavItems()
 
   function isActive(to: string) {
@@ -147,8 +154,9 @@ export function AppSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
+          <SidebarGroupLabel>{t('navPlanDo')}</SidebarGroupLabel>
           <SidebarMenu>
-            {mainItems.map((item) => (
+            {planDoItems.map((item) => (
               <SidebarMenuItem key={item.to}>
                 <SidebarMenuButton asChild isActive={isActive(item.to)}>
                   <Link to={item.to as '/'}>
@@ -162,9 +170,9 @@ export function AppSidebar() {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>{t('navRoutines')}</SidebarGroupLabel>
+          <SidebarGroupLabel>{t('navDirection')}</SidebarGroupLabel>
           <SidebarMenu>
-            {routinesItems.map((item) => (
+            {directionItems.map((item) => (
               <SidebarMenuItem key={item.to}>
                 <SidebarMenuButton asChild isActive={isActive(item.to)}>
                   <Link to={item.to as '/'}>
@@ -177,11 +185,11 @@ export function AppSidebar() {
           </SidebarMenu>
         </SidebarGroup>
 
-        {modulesItems.length > 0 && (
+        {knowledgeItems.length > 0 && (
           <SidebarGroup>
-            <SidebarGroupLabel>{t('navModules')}</SidebarGroupLabel>
+            <SidebarGroupLabel>{t('navKnowledge')}</SidebarGroupLabel>
             <SidebarMenu>
-              {modulesItems.map((item) => (
+              {knowledgeItems.map((item) => (
                 <SidebarMenuItem key={item.to}>
                   <SidebarMenuButton asChild isActive={isActive(item.to)}>
                     <Link to={item.to as '/'}>
@@ -194,6 +202,22 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroup>
         )}
+
+        <SidebarGroup>
+          <SidebarGroupLabel>{t('navAssist')}</SidebarGroupLabel>
+          <SidebarMenu>
+            {assistItems.map((item) => (
+              <SidebarMenuItem key={item.to}>
+                <SidebarMenuButton asChild isActive={isActive(item.to)}>
+                  <Link to={item.to as '/'}>
+                    {item.icon}
+                    <span className="text-sm">{item.title}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+        </SidebarGroup>
       </SidebarContent>
 
       <SidebarFooter>
