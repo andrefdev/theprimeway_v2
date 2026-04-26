@@ -313,13 +313,13 @@ jobs:
         run: |
           sleep 10
           curl --fail --retry 10 --retry-delay 3 --retry-max-time 60 \
-            https://staging-api.theprimeway.app/api/health
+            https://api.theprimeway.app/api/health
 
       - name: Health check - Web
         run: |
           sleep 5
           curl --fail --retry 10 --retry-delay 3 --retry-max-time 60 \
-            https://staging.theprimeway.app
+            https://app.theprimeway.app
 
       - name: Health check - Admin
         run: |

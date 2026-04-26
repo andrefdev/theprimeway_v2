@@ -14,7 +14,7 @@
 set -euo pipefail
 
 ENV_FILE="${ENV_FILE:-/var/www/theprimeway/.env}"
-API_BASE="${API_BASE:-https://staging-api.theprimeway.app}"
+API_BASE="${API_BASE:-https://api.theprimeway.app}"
 LOG_FILE="${LOG_FILE:-/var/log/theprimeway-cron.log}"
 
 BEGIN_MARKER="# BEGIN theprimeway-cron (managed by install-cron.sh)"
