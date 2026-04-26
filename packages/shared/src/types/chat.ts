@@ -13,13 +13,3 @@ export interface ChatMessage {
   content: string
   createdAt: string
 }
-
-export interface Briefing {
-  tasksToday: number
-  tasksCompleted: number
-  habitsToday: number
-  habitsCompleted: number
-  upcomingEvents: number
-  streak: number
-  summary: string | null
-}

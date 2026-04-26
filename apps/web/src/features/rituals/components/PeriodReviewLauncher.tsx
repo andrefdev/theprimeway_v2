@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Button } from '@/shared/components/ui/button'
+import { Card, CardContent } from '@/shared/components/ui/card'
 import { Calendar } from 'lucide-react'
 import { useRitualsQuarter, useRitualsYear } from '../queries'
 import { PeriodReviewDialog } from './PeriodReviewDialog'
@@ -15,7 +16,8 @@ export function PeriodReviewLauncher() {
   const [yearOpen, setYearOpen] = useState(false)
 
   return (
-    <div className="rounded-md border border-border/50 bg-card p-4 space-y-3">
+    <Card>
+      <CardContent className="p-4 space-y-3">
       <div>
         <h3 className="text-base font-semibold">Periodic reviews</h3>
         <p className="text-xs text-muted-foreground">
@@ -73,6 +75,7 @@ export function PeriodReviewLauncher() {
           periodLabel={year.periodKey}
         />
       )}
-    </div>
+      </CardContent>
+    </Card>
   )
 }

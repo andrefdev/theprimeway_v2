@@ -7,7 +7,6 @@ import { OverdueTasksBanner } from '@/features/dashboard/components/OverdueTasks
 import { DashboardQuickActions } from '@/features/dashboard/components/DashboardQuickActions'
 import { TodayTasksList } from '@/features/dashboard/components/TodayTasksList'
 import { SectionHeader } from '@/shared/components/SectionHeader'
-import { BriefingCard } from '@/features/ai/components/BriefingCard'
 import { NextTaskCard } from '@/features/dashboard/components/NextTaskCard'
 import { WeeklyPlanCard } from '@/features/ai/components/WeeklyPlanCard'
 import { GamificationWidget } from '@/features/gamification/components/GamificationWidget'
@@ -55,10 +54,7 @@ function DashboardPage() {
         <TodayTasksList tasks={tasks} tasksQuery={tasksQuery} />
         <GoalsSummaryCard />
         <WeeklyPlanCard />
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <BriefingCard />
-          <GamificationWidget />
-        </div>
+        <GamificationWidget />
       </div>
     </div>
   )

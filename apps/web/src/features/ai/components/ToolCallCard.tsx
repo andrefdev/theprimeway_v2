@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { CheckIcon, XIcon } from 'lucide-react'
 import { Button } from '@/shared/components/ui/button'
 import { Badge } from '@/shared/components/ui/badge'
+import { Card } from '@/shared/components/ui/card'
 import { cn } from '@/shared/lib/utils'
 
 interface ToolCallCardProps {
@@ -75,12 +76,12 @@ export function ToolCallCard({
   }
 
   return (
-    <div
+    <Card
       className={cn(
-        'rounded-xl border bg-card px-4 py-3 text-sm',
-        resultStatus === 'success' && 'border-emerald-500/30',
-        resultStatus === 'rejected' && 'border-muted',
-        resultStatus === 'error' && 'border-destructive/50',
+        'rounded-xl px-4 py-3 text-sm',
+        resultStatus === 'success' && 'ring-emerald-500/30',
+        resultStatus === 'rejected' && 'ring-muted',
+        resultStatus === 'error' && 'ring-destructive/50',
       )}
     >
       <div className="flex items-center justify-between gap-2">
@@ -129,7 +130,7 @@ export function ToolCallCard({
           </Button>
         </div>
       )}
-    </div>
+    </Card>
   )
 }
 

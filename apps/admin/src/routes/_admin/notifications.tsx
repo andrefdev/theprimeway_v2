@@ -11,6 +11,7 @@ import {
   Input,
   Textarea,
   Skeleton,
+  Badge,
 } from '@repo/ui'
 import { toast } from 'sonner'
 import { useUsers } from '@/features/users/queries'

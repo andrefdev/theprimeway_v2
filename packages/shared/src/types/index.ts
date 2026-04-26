@@ -27,7 +27,7 @@ export type {
   DailyChallenge,
 } from './gamification'
 export type { CalendarAccount, CalendarInfo, CalendarEvent } from './calendar'
-export type { ChatThread, ChatMessage, Briefing } from './chat'
+export type { ChatThread, ChatMessage } from './chat'
 export type { NotificationPreferences, PushSubscription, AppNotification, SmartReminder, BatchedNotification, BatchedNotificationsResponse } from './notifications'
 export type { SubscriptionPlan, SubscriptionStatus } from './subscriptions'
 export type { FeatureValue, ResolvedFeatureSet, FeaturesResponse } from './features'

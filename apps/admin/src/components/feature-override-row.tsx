@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { FeatureKey, FeatureOverride } from '@/features/users/api'
 import { useSetFeatureOverride, useDeleteFeatureOverride } from '@/features/users/queries'
-import { Badge, Checkbox, Button, Input } from '@repo/ui'
+import { Badge, Checkbox, Button, Input, Card, CardContent } from '@repo/ui'
 import { Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -77,7 +77,8 @@ export function FeatureOverrideRow({
   const isLoading = setOverride.isPending || deleteOverride.isPending
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border p-4">
+    <Card>
+      <CardContent className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-4">
         <div className="flex-1">
           <p className="font-medium">{FEATURE_NAMES[featureKey]}</p>
@@ -135,6 +136,7 @@ export function FeatureOverrideRow({
           )}
         </div>
       )}
-    </div>
+      </CardContent>
+    </Card>
   )
 }

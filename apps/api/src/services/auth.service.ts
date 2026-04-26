@@ -87,11 +87,30 @@ async function getGoogleUserInfo(token: string): Promise<OAuthUserInfo | null> {
   return { email: data.email, name: data.name, image: data.picture, providerAccountId: data.id }
 }
 
+// Cache Apple's JWKS in-process; jose handles its own caching/refresh.
+const appleJwks = jose.createRemoteJWKSet(
+  new URL('https://appleid.apple.com/auth/keys'),
+)
+
 async function getAppleUserInfo(idToken: string): Promise<OAuthUserInfo | null> {
-  const parts = idToken.split('.')
-  if (parts.length !== 3) return null
-  const payload = JSON.parse(Buffer.from(parts[1]!, 'base64url').toString())
-  return { email: payload.email, name: undefined, image: undefined, providerAccountId: payload.sub }
+  const expectedAudience = process.env.AUTH_APPLE_ID
+  if (!expectedAudience) {
+    console.error('[apple-oauth] AUTH_APPLE_ID env var missing — cannot verify id_token')
+    return null
+  }
+  try {
+    const { payload } = await jose.jwtVerify(idToken, appleJwks, {
+      issuer: 'https://appleid.apple.com',
+      audience: expectedAudience,
+    })
+    const email = typeof payload.email === 'string' ? payload.email : null
+    const sub = typeof payload.sub === 'string' ? payload.sub : null
+    if (!email || !sub) return null
+    return { email, name: undefined, image: undefined, providerAccountId: sub }
+  } catch (err) {
+    console.error('[apple-oauth] id_token verification failed', err)
+    return null
+  }
 }
 
 // ---------------------------------------------------------------------------

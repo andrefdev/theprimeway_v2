@@ -1,5 +1,6 @@
 import { TaskItem } from '@/shared/components/TaskItem'
 import { Button } from '@/shared/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/shared/components/ui/card'
 import { ScrollArea } from '@/shared/components/ui/scroll-area'
 import { EmptyState } from '@/shared/components/ui/empty-state'
 import type { Task } from '@repo/shared/types'
@@ -16,20 +17,22 @@ export function ArchivePanel({ tasks, onReschedule, onDelete }: ArchivePanelProp
 
   if (tasks.length === 0) {
     return (
-      <div className="rounded-lg border border-border p-4">
-        <EmptyState title={t('noArchived')} description={t('noArchivedDescription')} />
-      </div>
+      <Card>
+        <CardContent className="p-4">
+          <EmptyState title={t('noArchived')} description={t('noArchivedDescription')} />
+        </CardContent>
+      </Card>
     )
   }
 
   return (
-    <div className="rounded-lg border border-border">
-      <div className="border-b border-border px-4 py-3">
-        <h3 className="text-sm font-medium text-foreground">{t('archived')}</h3>
-        <p className="text-xs text-muted-foreground">
+    <Card className="py-0 gap-0">
+      <CardHeader className="border-b py-3">
+        <CardTitle className="text-sm">{t('archived')}</CardTitle>
+        <CardDescription className="text-xs">
           {tasks.length} {t('archivedTasks')}
-        </p>
-      </div>
+        </CardDescription>
+      </CardHeader>
       <ScrollArea className="max-h-[400px]">
         <div className="p-2 space-y-1">
           {tasks.map((task) => (
@@ -66,6 +69,6 @@ export function ArchivePanel({ tasks, onReschedule, onDelete }: ArchivePanelProp
           ))}
         </div>
       </ScrollArea>
-    </div>
+    </Card>
   )
 }

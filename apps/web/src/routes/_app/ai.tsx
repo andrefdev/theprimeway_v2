@@ -6,7 +6,6 @@ import { DefaultChatTransport } from 'ai'
 import { Button } from '@/shared/components/ui/button'
 import { toast } from 'sonner'
 import { ChatInput } from '@/features/ai/components/ChatInput'
-import { BriefingCard } from '@/features/ai/components/BriefingCard'
 import { ToolCallCard } from '@/features/ai/components/ToolCallCard'
 import { Markdown } from '@/features/ai/components/Markdown'
 import { FeatureGate } from '@/features/feature-flags/FeatureGate'
@@ -236,7 +235,6 @@ function AiPage() {
           <div className="mx-auto max-w-2xl space-y-4 py-6">
             {messages.length === 0 && (
               <div className="space-y-4">
-                <BriefingCard />
                 <div className="py-8 text-center">
                   <div className="mb-3 text-4xl">&#x1F916;</div>
                   <p className="text-sm text-muted-foreground">{t('emptyState')}</p>

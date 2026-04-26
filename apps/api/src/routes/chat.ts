@@ -18,8 +18,7 @@ import { FEATURES } from '@repo/shared/constants'
 export const chatRoutes = new OpenAPIHono<AppEnv>()
 
 chatRoutes.use('*', authMiddleware)
-// Feature gate disabled for development — remove this line in production
-// chatRoutes.use('*', requireFeature(FEATURES.AI_ASSISTANT))
+chatRoutes.use('*', requireFeature(FEATURES.AI_ASSISTANT))
 
 const errorResponse = z.object({ error: z.string() })
 
@@ -82,26 +81,6 @@ chatRoutes.post('/stream', async (c) => {
   })
 
   return result.toUIMessageStreamResponse()
-})
-
-// ---------------------------------------------------------------------------
-// GET /briefing
-// ---------------------------------------------------------------------------
-const briefingRoute = createRoute({
-  method: 'get',
-  path: '/briefing',
-  tags: ['Chat'],
-  summary: 'Get daily briefing',
-  security: [{ Bearer: [] }],
-  responses: {
-    200: { content: { 'application/json': { schema: z.object({ data: z.any() }) } }, description: 'Briefing' },
-  },
-})
-
-chatRoutes.openapi(briefingRoute, async (c) => {
-  const userId = c.get('user').userId
-  const data = await chatService.getBriefing(userId)
-  return c.json({ data }, 200)
 })
 
 // ---------------------------------------------------------------------------
