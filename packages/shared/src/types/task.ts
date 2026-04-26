@@ -24,6 +24,8 @@ export interface Task {
   scheduledBucket: TaskBucket | null
   channelId: string | null
   estimatedDuration: number | null
+  plannedTimeMinutes?: number | null
+  acceptanceCriteria?: string | null
   completedAt: string | null
   isArchived: boolean
   tags: string[]

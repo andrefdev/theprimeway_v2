@@ -9,6 +9,7 @@ import type { InboxNotification } from '../api'
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover'
 import { ScrollArea } from '@/shared/components/ui/scroll-area'
 import { Button } from '@/shared/components/ui/button'
+import { Badge } from '@/shared/components/ui/badge'
 import {
   Bell,
   Clock,
@@ -68,17 +69,22 @@ export function NotificationBell() {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button
-          className="relative inline-flex items-center justify-center p-2 rounded-lg hover:bg-muted transition-colors"
+        <Button
+          variant="ghost"
+          size="icon"
+          className="relative"
           aria-label={t('notifications', { defaultValue: 'Notifications' })}
         >
           <Bell className="h-5 w-5" />
           {showBadge && (
-            <span className="absolute top-1 right-1 flex h-5 min-w-5 px-1 items-center justify-center rounded-full bg-red-500 text-[10px] font-semibold text-white">
+            <Badge
+              variant="destructive"
+              className="absolute top-0.5 right-0.5 h-5 min-w-5 px-1 rounded-full text-[10px] font-semibold"
+            >
               {badgeText}
-            </span>
+            </Badge>
           )}
-        </button>
+        </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[min(96vw,380px)] p-0" align="end">
         <div className="flex items-center justify-between px-3 py-2 border-b">
@@ -87,9 +93,9 @@ export function NotificationBell() {
               {t('notifications', { defaultValue: 'Notifications' })}
             </h3>
             {unread > 0 && (
-              <span className="text-[10px] font-semibold bg-red-500 text-white rounded-full px-1.5 py-0.5">
+              <Badge variant="destructive" className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full">
                 {unread}
-              </span>
+              </Badge>
             )}
           </div>
           <div className="flex items-center gap-1">
@@ -128,9 +134,10 @@ export function NotificationBell() {
                     className={`group relative before:absolute before:left-0 before:top-0 before:h-full before:w-0.5 ${urgencyBar[urgency] ?? ''} ${unreadRow ? 'bg-primary/5' : ''}`}
                   >
                     <div className="flex items-start gap-2 px-3 py-2.5">
-                      <button
+                      <Button
+                        variant="ghost"
                         onClick={() => handleOpen(n)}
-                        className="flex-1 flex items-start gap-2 text-left min-w-0"
+                        className="flex-1 h-auto py-0 px-0 flex items-start gap-2 text-left min-w-0 justify-start whitespace-normal hover:bg-transparent"
                       >
                         <span className="mt-0.5 flex-shrink-0">{typeIcon[n.type] ?? typeIcon.system}</span>
                         <span className="flex-1 min-w-0">
@@ -147,26 +154,30 @@ export function NotificationBell() {
                             {relativeTime(n.createdAt, i18n.language)}
                           </span>
                         </span>
-                      </button>
+                      </Button>
                       <div className="flex flex-col gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
                         {unreadRow && (
-                          <button
+                          <Button
                             type="button"
-                            className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
+                            variant="ghost"
+                            size="icon-xs"
+                            className="text-muted-foreground hover:text-foreground"
                             onClick={() => markRead.mutate(n.id)}
                             title={t('markRead', { defaultValue: 'Mark read' })}
                           >
                             <Check className="h-3.5 w-3.5" />
-                          </button>
+                          </Button>
                         )}
-                        <button
+                        <Button
                           type="button"
-                          className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
+                          variant="ghost"
+                          size="icon-xs"
+                          className="text-muted-foreground hover:text-foreground"
                           onClick={() => dismiss.mutate(n.id)}
                           title={t('dismiss', { defaultValue: 'Dismiss' })}
                         >
                           <X className="h-3.5 w-3.5" />
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   </li>

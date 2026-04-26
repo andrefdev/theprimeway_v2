@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { tasksQueries, useUpdateTask, useDeleteTask } from '@/features/tasks/queries'
 import { WeekPlanner } from '@/features/tasks/components/WeekPlanner'
 import { TaskDialog } from '@/features/tasks/components/TaskDialog'
+import { QuickTaskDialog } from '@/features/tasks/components/QuickTaskDialog'
 import { QueryError } from '@/shared/components/QueryError'
 import { Button } from '@/shared/components/ui/button'
 import { SectionHeader } from '@/shared/components/SectionHeader'
@@ -38,15 +39,15 @@ function TasksWeeklyPage() {
   const showImpact = useCompletionImpact()
 
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [quickOpen, setQuickOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [defaultDate, setDefaultDate] = useState<string | undefined>()
 
   const tasks = tasksQuery.data?.data ?? []
 
   function openCreate(date?: string) {
-    setEditingTask(null)
     setDefaultDate(date)
-    setDialogOpen(true)
+    setQuickOpen(true)
   }
 
   function openEdit(task: Task) {
@@ -149,6 +150,11 @@ function TasksWeeklyPage() {
         open={dialogOpen}
         onClose={() => { setDialogOpen(false); setEditingTask(null); setDefaultDate(undefined) }}
         task={editingTask}
+        defaultDate={defaultDate}
+      />
+      <QuickTaskDialog
+        open={quickOpen}
+        onClose={() => { setQuickOpen(false); setDefaultDate(undefined) }}
         defaultDate={defaultDate}
       />
     </div>

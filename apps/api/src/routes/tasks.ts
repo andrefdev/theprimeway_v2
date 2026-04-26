@@ -41,6 +41,7 @@ const createTaskSchema = z.object({
   scheduledEnd: z.string().optional(),
   isAllDay: z.boolean().optional(),
   estimatedDuration: z.number().optional(),
+  acceptanceCriteria: z.string().nullish(),
   backlogState: z.string().optional(),
   source: z.string().optional(),
   tags: z.array(z.string()).optional(),

@@ -183,6 +183,7 @@ class TasksRepository {
         scheduledEnd: data.scheduledEnd ? new Date(data.scheduledEnd) : undefined,
         isAllDay: data.isAllDay,
         estimatedDurationMinutes: data.estimatedDurationMinutes,
+        acceptanceCriteria: data.acceptanceCriteria,
         backlogState: data.backlogState,
         source: data.source,
         tags: data.tags || [],
@@ -214,6 +215,7 @@ class TasksRepository {
     if (data.scheduledEnd !== undefined) updateData.scheduledEnd = data.scheduledEnd ? new Date(data.scheduledEnd) : null
     if (data.isAllDay !== undefined) updateData.isAllDay = data.isAllDay
     if (data.estimatedDurationMinutes !== undefined) updateData.estimatedDurationMinutes = data.estimatedDurationMinutes
+    if (data.acceptanceCriteria !== undefined) updateData.acceptanceCriteria = data.acceptanceCriteria
     if (data.backlogState !== undefined) updateData.backlogState = data.backlogState
     if (data.tags !== undefined) updateData.tags = data.tags
     if (data.archivedAt !== undefined) updateData.archivedAt = data.archivedAt ? new Date(data.archivedAt) : null

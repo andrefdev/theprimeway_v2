@@ -4,6 +4,8 @@ import { toast } from 'sonner'
 import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
 import { Badge } from '@/shared/components/ui/badge'
+import { Card } from '@/shared/components/ui/card'
+import { Checkbox } from '@/shared/components/ui/checkbox'
 import { EmptyState } from '@/shared/components/ui/empty-state'
 import { SkeletonList } from '@/shared/components/ui/skeleton-list'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/shared/components/ui/select'
@@ -113,14 +115,14 @@ function ContextCard({ context, channels }: { context: Context; channels: Channe
   }
 
   return (
-    <div className="rounded-lg border border-border/60 bg-card/40 overflow-hidden">
+    <Card className="bg-card/40 py-0 gap-0">
       <div className="flex items-center justify-between gap-3 border-b border-border/40 bg-muted/20 px-4 py-3">
         {editing ? (
           <div className="flex items-center gap-2 flex-1">
             <span className="h-3 w-3 rounded-full" style={{ backgroundColor: context.color }} />
             <Input value={name} onChange={(e) => setName(e.target.value)} className="h-8 max-w-xs" />
             <label className="flex items-center gap-1 text-xs text-muted-foreground">
-              <input type="checkbox" checked={isPersonal} onChange={(e) => setIsPersonal(e.target.checked)} />
+              <Checkbox checked={isPersonal} onCheckedChange={(c) => setIsPersonal(c === true)} />
               Personal
             </label>
             <Button size="sm" onClick={save} disabled={updateContext.isPending}>Save</Button>
@@ -147,7 +149,7 @@ function ContextCard({ context, channels }: { context: Context; channels: Channe
         {channels.map((ch) => <ChannelRow key={ch.id} channel={ch} />)}
         <CreateChannelForm contextId={context.id} />
       </div>
-    </div>
+    </Card>
   )
 }
 
@@ -267,7 +269,7 @@ function CreateContextForm() {
   }
 
   return (
-    <div className="flex items-center gap-2 rounded-lg border border-dashed border-border/60 bg-card/20 p-3">
+    <Card className="flex flex-row items-center gap-2 border-dashed bg-card/20 p-3 py-3">
       <Input
         value={name}
         onChange={(e) => setName(e.target.value)}
@@ -275,13 +277,13 @@ function CreateContextForm() {
         className="h-9"
       />
       <label className="flex items-center gap-1 text-xs text-muted-foreground whitespace-nowrap">
-        <input type="checkbox" checked={isPersonal} onChange={(e) => setIsPersonal(e.target.checked)} />
+        <Checkbox checked={isPersonal} onCheckedChange={(c) => setIsPersonal(c === true)} />
         Personal
       </label>
       <Button size="sm" onClick={submit} disabled={!name.trim() || create.isPending}>
         {create.isPending ? 'Adding…' : 'Add context'}
       </Button>
-    </div>
+    </Card>
   )
 }
 

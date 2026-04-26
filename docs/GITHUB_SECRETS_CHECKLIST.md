@@ -76,13 +76,13 @@ Repeat for all 35 secrets.
 
 ### Authentication - Google OAuth (2 secrets)
 
-- [ ] **AUTH_GOOGLE_ID**
+- [x] **AUTH_GOOGLE_ID**
   - Description: Google Client ID from Google Cloud Console
   - Example: `123456789-abc123def456.apps.googleusercontent.com`
   - Type: Secret
   - **Source**: [Google Cloud Console](https://console.cloud.google.com/) → OAuth 2.0 Client IDs
 
-- [ ] **AUTH_GOOGLE_SECRET**
+- [x] **AUTH_GOOGLE_SECRET**
   - Description: Google Client Secret
   - Example: `GOCSPX-xxxxxxxxxxxxxxxxxxxxxxxx`
   - Type: Secret

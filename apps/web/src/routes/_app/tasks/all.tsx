@@ -4,6 +4,7 @@ import { tasksQueries, useUpdateTask, useDeleteTask } from '@/features/tasks/que
 import { TaskGroup } from '@/features/tasks/components/TaskGroup'
 import { ArchivePanel } from '@/features/tasks/components/ArchivePanel'
 import { TaskDialog } from '@/features/tasks/components/TaskDialog'
+import { QuickTaskDialog } from '@/features/tasks/components/QuickTaskDialog'
 import { QueryError } from '@/shared/components/QueryError'
 import { FilterBar } from '@/shared/components/FilterBar'
 import { PlusIcon } from '@/shared/components/Icons'
@@ -38,6 +39,7 @@ function TasksAllPage() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [search, setSearch] = useState('')
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [quickOpen, setQuickOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [showArchive, setShowArchive] = useState(false)
 
@@ -67,8 +69,7 @@ function TasksAllPage() {
   const totalCount = filteredGroups.reduce((sum, g) => sum + g.tasks.length, 0)
 
   function openCreate() {
-    setEditingTask(null)
-    setDialogOpen(true)
+    setQuickOpen(true)
   }
 
   function openEdit(task: Task) {
@@ -210,6 +211,10 @@ function TasksAllPage() {
         open={dialogOpen}
         onClose={() => { setDialogOpen(false); setEditingTask(null) }}
         task={editingTask}
+      />
+      <QuickTaskDialog
+        open={quickOpen}
+        onClose={() => setQuickOpen(false)}
       />
     </div>
   )

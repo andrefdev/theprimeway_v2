@@ -32,6 +32,7 @@ import { DurationCombobox } from './DurationCombobox'
 import { DatePicker } from '@/shared/components/ui/date-picker'
 import { DateTimePicker } from '@/shared/components/ui/date-time-picker'
 import { Switch } from '@/shared/components/ui/switch'
+import { Checkbox } from '@/shared/components/ui/checkbox'
 import { toast } from 'sonner'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -354,8 +355,10 @@ export function TaskDialog({ open, onClose, task, defaultDate, defaultStart, def
               <div className="flex items-center justify-between">
                 <Label>{t('scheduledDate')}</Label>
                 <div className="flex items-center gap-3">
-                  <button
+                  <Button
                     type="button"
+                    variant="link"
+                    size="xs"
                     onClick={() => {
                       const next = !showExactTimes
                       setShowExactTimes(next)
@@ -367,12 +370,12 @@ export function TaskDialog({ open, onClose, task, defaultDate, defaultStart, def
                         form.setValue('isAllDay', false)
                       }
                     }}
-                    className="text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+                    className="text-muted-foreground hover:text-foreground"
                   >
                     {showExactTimes
                       ? t('hideExactTimes', { defaultValue: 'Use timebox only' })
                       : t('showExactTimes', { defaultValue: 'Pick exact time' })}
-                  </button>
+                  </Button>
                   {isEdit && task && (
                     <Button
                       type="button"
@@ -522,13 +525,15 @@ export function TaskDialog({ open, onClose, task, defaultDate, defaultStart, def
                 {tags.map((tag) => (
                   <Badge key={tag} variant="secondary" className="gap-1">
                     {tag}
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="icon-xs"
                       onClick={() => removeTag(tag)}
-                      className="ml-0.5 text-muted-foreground hover:text-foreground"
+                      className="ml-0.5 h-4 w-4 text-muted-foreground hover:text-foreground"
                     >
                       &times;
-                    </button>
+                    </Button>
                   </Badge>
                 ))}
               </div>
@@ -592,22 +597,20 @@ export function TaskDialog({ open, onClose, task, defaultDate, defaultStart, def
                           ].map((d) => {
                             const active = repeatDays.includes(d.v)
                             return (
-                              <button
+                              <Button
                                 key={d.v}
                                 type="button"
+                                variant={active ? 'default' : 'outline'}
+                                size="icon"
                                 onClick={() =>
                                   setRepeatDays(
                                     active ? repeatDays.filter((x) => x !== d.v) : [...repeatDays, d.v],
                                   )
                                 }
-                                className={`h-8 w-8 rounded-md border text-xs font-medium transition-colors ${
-                                  active
-                                    ? 'border-primary bg-primary text-primary-foreground'
-                                    : 'border-border/60 hover:border-primary/50'
-                                }`}
+                                className="text-xs font-medium"
                               >
                                 {d.l}
-                              </button>
+                              </Button>
                             )
                           })}
                         </div>
@@ -664,17 +667,19 @@ export function TaskDialog({ open, onClose, task, defaultDate, defaultStart, def
             {/* AI Insights (for edit only) */}
             {isEdit && (
               <div className="space-y-1.5 border-t pt-4">
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="sm"
                   onClick={() => setShowInsights(!showInsights)}
-                  className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary w-full"
+                  className="w-full justify-start gap-2 text-sm font-medium text-foreground hover:text-primary"
                 >
                   <ChevronRightIcon
                     size={16}
                     className={`transition-transform ${showInsights ? 'rotate-90' : ''}`}
                   />
                   {t('aiInsights')}
-                </button>
+                </Button>
                 {showInsights && (
                   <div className="space-y-2 p-3 rounded-lg bg-secondary/50 border border-border/30 text-sm">
                     {isInsightLoading ? (
@@ -704,11 +709,10 @@ export function TaskDialog({ open, onClose, task, defaultDate, defaultStart, def
                             <ul className="space-y-1">
                               {insight.suggestedSubtasks.map((subtask, i) => (
                                 <li key={i} className="text-xs flex items-start gap-2">
-                                  <input
-                                    type="checkbox"
+                                  <Checkbox
                                     className="mt-0.5"
-                                    onChange={(e) => {
-                                      if (e.target.checked) {
+                                    onCheckedChange={(checked) => {
+                                      if (checked) {
                                         addTag(subtask)
                                       }
                                     }}

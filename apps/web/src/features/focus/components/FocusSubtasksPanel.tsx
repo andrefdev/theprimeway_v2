@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Check, Plus, Trash2 } from 'lucide-react'
 import { useSubtasks, useCreateSubtask, useUpdateSubtask, useDeleteSubtask } from '@/features/subtasks/queries'
+import { Button } from '@/shared/components/ui/button'
+import { Input } from '@/shared/components/ui/input'
 
 interface Props {
   taskId: string
@@ -53,36 +55,36 @@ export function FocusSubtasksPanel({ taskId }: Props) {
         )}
         {subtasks.map((s) => (
           <li key={s.id} className="group flex items-center gap-2">
-            <button
+            <Button
               type="button"
+              variant={s.isCompleted ? 'default' : 'outline'}
+              size="icon-xs"
               onClick={() => toggle(s.id, !s.isCompleted)}
-              className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors ${
-                s.isCompleted
-                  ? 'border-primary bg-primary text-primary-foreground'
-                  : 'border-border hover:border-primary'
-              }`}
+              className="h-4 w-4 shrink-0"
               aria-label={s.isCompleted ? 'Mark incomplete' : 'Mark complete'}
             >
               {s.isCompleted && <Check className="h-3 w-3" />}
-            </button>
+            </Button>
             <span className={`flex-1 text-sm ${s.isCompleted ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
               {s.title}
             </span>
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="icon-xs"
               onClick={() => deleteMut.mutate(s.id)}
-              className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+              className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive"
               aria-label="Delete subtask"
             >
               <Trash2 className="h-3.5 w-3.5" />
-            </button>
+            </Button>
           </li>
         ))}
       </ul>
 
       <div className="flex items-center gap-1 pt-1">
         <Plus className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-        <input
+        <Input
           type="text"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
@@ -93,7 +95,7 @@ export function FocusSubtasksPanel({ taskId }: Props) {
             }
           }}
           placeholder="Add subtask…"
-          className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+          className="flex-1 border-0 bg-transparent shadow-none focus-visible:ring-0 px-0"
         />
       </div>
     </aside>

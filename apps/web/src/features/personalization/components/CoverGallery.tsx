@@ -65,29 +65,31 @@ export function CoverGallery({ selectedUrl, onSelect, onRemove, children }: Cove
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 pr-3">
             {/* Remove option */}
             {onRemove && (
-              <button
+              <Button
                 type="button"
+                variant="outline"
                 onClick={() => {
                   onRemove()
                   setOpen(false)
                 }}
-                className="flex aspect-[4/1] items-center justify-center rounded-lg border border-dashed border-border text-sm text-muted-foreground hover:bg-muted transition-colors"
+                className="aspect-[4/1] h-auto border-dashed text-sm text-muted-foreground"
               >
                 <XIcon className="mr-1.5 h-4 w-4" />
                 {t('noImage')}
-              </button>
+              </Button>
             )}
 
             {filtered.map((img) => (
-              <button
+              <Button
                 key={img.id}
                 type="button"
+                variant="ghost"
                 onClick={() => {
                   onSelect(img.url)
                   setOpen(false)
                 }}
                 className={cn(
-                  'group relative aspect-[4/1] overflow-hidden rounded-lg transition-all',
+                  'group relative aspect-[4/1] h-auto p-0 overflow-hidden rounded-lg hover:bg-transparent',
                   selectedUrl === img.url
                     ? 'ring-2 ring-primary ring-offset-2'
                     : 'hover:ring-1 hover:ring-border',
@@ -102,7 +104,7 @@ export function CoverGallery({ selectedUrl, onSelect, onRemove, children }: Cove
                 <div className="absolute inset-0 flex items-end bg-gradient-to-t from-black/50 to-transparent opacity-0 transition-opacity group-hover:opacity-100">
                   <span className="px-2 pb-1 text-[10px] text-white">{img.credit}</span>
                 </div>
-              </button>
+              </Button>
             ))}
           </div>
         </ScrollArea>

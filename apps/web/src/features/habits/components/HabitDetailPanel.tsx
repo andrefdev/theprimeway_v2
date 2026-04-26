@@ -197,17 +197,18 @@ export function HabitDetailPanel({ habit }: HabitDetailPanelProps) {
                   <div className="space-y-1.5">
                     <p className="text-xs text-muted-foreground">Weekly</p>
                     {goalSuggestionsQuery.data.suggestions.weeklyGoals.map((goal) => (
-                      <button
+                      <Button
                         key={goal.id}
                         type="button"
+                        variant="ghost"
                         onClick={() => handleLinkGoal(goal.id)}
-                        className="w-full text-left p-2 rounded-lg hover:bg-muted/50 transition-colors text-sm text-foreground"
+                        className="w-full h-auto justify-start text-left p-2 text-sm text-foreground whitespace-normal"
                       >
                         <div className="flex items-start gap-2">
                           <CheckCircle className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />
                           <span>{goal.title}</span>
                         </div>
-                      </button>
+                      </Button>
                     ))}
                   </div>
                 )}
@@ -217,17 +218,18 @@ export function HabitDetailPanel({ habit }: HabitDetailPanelProps) {
                   <div className="space-y-1.5">
                     <p className="text-xs text-muted-foreground">Quarterly</p>
                     {goalSuggestionsQuery.data.suggestions.quarterlyGoals.map((goal) => (
-                      <button
+                      <Button
                         key={goal.id}
                         type="button"
+                        variant="ghost"
                         onClick={() => handleLinkGoal(goal.id)}
-                        className="w-full text-left p-2 rounded-lg hover:bg-muted/50 transition-colors text-sm text-foreground"
+                        className="w-full h-auto justify-start text-left p-2 text-sm text-foreground whitespace-normal"
                       >
                         <div className="flex items-start gap-2">
                           <CheckCircle className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />
                           <span>{goal.title}</span>
                         </div>
-                      </button>
+                      </Button>
                     ))}
                   </div>
                 )}
@@ -237,17 +239,18 @@ export function HabitDetailPanel({ habit }: HabitDetailPanelProps) {
                   <div className="space-y-1.5">
                     <p className="text-xs text-muted-foreground">Annual</p>
                     {goalSuggestionsQuery.data.suggestions.annualGoals.map((goal) => (
-                      <button
+                      <Button
                         key={goal.id}
                         type="button"
+                        variant="ghost"
                         onClick={() => handleLinkGoal(goal.id)}
-                        className="w-full text-left p-2 rounded-lg hover:bg-muted/50 transition-colors text-sm text-foreground"
+                        className="w-full h-auto justify-start text-left p-2 text-sm text-foreground whitespace-normal"
                       >
                         <div className="flex items-start gap-2">
                           <CheckCircle className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />
                           <span>{goal.title}</span>
                         </div>
-                      </button>
+                      </Button>
                     ))}
                   </div>
                 )}

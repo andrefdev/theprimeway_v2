@@ -5,6 +5,7 @@ import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
 import { Label } from '@/shared/components/ui/label'
 import { Badge } from '@/shared/components/ui/badge'
+import { Alert, AlertDescription, AlertTitle } from '@/shared/components/ui/alert'
 import { Copy, Trash2 } from 'lucide-react'
 import { useApiKeys, useCreateApiKey, useRevokeApiKey } from '../queries'
 
@@ -57,22 +58,24 @@ export function ApiKeysCard() {
         </div>
 
         {justCreated && (
-          <div className="rounded-md border border-amber-400/40 bg-amber-500/5 p-3 space-y-2">
-            <div className="text-xs font-medium text-amber-600 dark:text-amber-400">
+          <Alert className="border-amber-400/40 bg-amber-500/5">
+            <AlertTitle className="text-amber-600 dark:text-amber-400">
               New key — copy now, it will not be shown again.
-            </div>
-            <div className="flex items-center gap-2">
-              <code className="flex-1 truncate rounded bg-muted px-2 py-1.5 font-mono text-xs">
-                {justCreated.plaintext}
-              </code>
-              <Button size="sm" variant="outline" onClick={() => copy(justCreated.plaintext)}>
-                <Copy className="h-3.5 w-3.5" />
+            </AlertTitle>
+            <AlertDescription className="space-y-2">
+              <div className="flex w-full items-center gap-2">
+                <code className="flex-1 truncate rounded bg-muted px-2 py-1.5 font-mono text-xs">
+                  {justCreated.plaintext}
+                </code>
+                <Button size="sm" variant="outline" onClick={() => copy(justCreated.plaintext)}>
+                  <Copy className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+              <Button size="sm" variant="ghost" onClick={() => setJustCreated(null)}>
+                I saved it
               </Button>
-            </div>
-            <Button size="sm" variant="ghost" onClick={() => setJustCreated(null)}>
-              I saved it
-            </Button>
-          </div>
+            </AlertDescription>
+          </Alert>
         )}
 
         <div className="flex items-end gap-2">
