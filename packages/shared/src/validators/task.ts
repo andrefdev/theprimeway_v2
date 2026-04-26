@@ -24,6 +24,7 @@ export const createTaskSchema = z.object({
   scheduledBucket: taskBucketSchema.nullish(),
   isAllDay: z.boolean().optional(),
   estimatedDuration: z.number().optional(),
+  acceptanceCriteria: z.string().nullish(),
   tags: z.array(z.string()).optional().default([]),
   weeklyGoalId: z.string().optional(),
   channelId: z.string().nullish(),

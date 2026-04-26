@@ -1,6 +1,7 @@
 import { toast } from 'sonner'
 import { Badge } from '@/shared/components/ui/badge'
 import { Button } from '@/shared/components/ui/button'
+import { Alert, AlertTitle, AlertDescription } from '@/shared/components/ui/alert'
 import { Loader2, AlertCircle, Plus, Trash2, RefreshCw, Pin, PinOff } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import {
@@ -113,15 +114,14 @@ export function BrainEntryDetail({ entryId, onDeleted }: Props) {
       </div>
 
       {failed && (
-        <div className="rounded-md border border-rose-500/40 bg-rose-500/5 p-3 text-rose-600 dark:text-rose-400">
-          <div className="flex items-center gap-2 text-xs font-medium">
-            <AlertCircle className="h-3.5 w-3.5" /> Processing failed
-          </div>
-          {entry.errorMessage && <p className="text-xs mt-1">{entry.errorMessage}</p>}
+        <Alert variant="destructive">
+          <AlertCircle className="h-3.5 w-3.5" />
+          <AlertTitle>Processing failed</AlertTitle>
+          {entry.errorMessage && <AlertDescription>{entry.errorMessage}</AlertDescription>}
           <Button size="sm" variant="outline" className="mt-2" onClick={onReprocess}>
             <RefreshCw className="h-3.5 w-3.5 mr-1" /> Retry
           </Button>
-        </div>
+        </Alert>
       )}
 
       {/* Raw transcript always visible */}

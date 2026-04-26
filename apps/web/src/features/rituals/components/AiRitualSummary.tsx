@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import { Sparkles } from 'lucide-react'
 import { ritualsApi } from '../api'
+import { Button } from '@/shared/components/ui/button'
+import { Card, CardContent } from '@/shared/components/ui/card'
 
 type Insight = Awaited<ReturnType<typeof ritualsApi.aiSummary>>
 
@@ -37,15 +39,16 @@ export function AiRitualSummary({ instanceId, label = 'Generate AI summary', cac
 
   if (!insight) {
     return (
-      <button
+      <Button
         type="button"
+        variant="outline"
+        size="xs"
         onClick={run}
         disabled={loading}
-        className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1 text-xs hover:bg-accent/40 disabled:opacity-60"
       >
         <Sparkles className="h-3 w-3" />
         {loading ? 'Analyzing…' : label}
-      </button>
+      </Button>
     )
   }
 
@@ -55,32 +58,36 @@ export function AiRitualSummary({ instanceId, label = 'Generate AI summary', cac
       : ''
 
   return (
-    <div className="rounded-md border border-border bg-card/60 p-3 text-xs space-y-2">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5 font-medium">
-          <Sparkles className="h-3 w-3 text-primary" /> AI summary<span className="text-muted-foreground font-normal">{staleHint}</span>
+    <Card className="bg-card/60">
+      <CardContent className="p-3 text-xs space-y-2">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 font-medium">
+            <Sparkles className="h-3 w-3 text-primary" /> AI summary<span className="text-muted-foreground font-normal">{staleHint}</span>
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="xs"
+            onClick={run}
+            disabled={loading}
+            className="text-[10px] uppercase tracking-wide text-muted-foreground hover:text-foreground"
+          >
+            {loading ? 'Refreshing…' : 'Re-run'}
+          </Button>
         </div>
-        <button
-          type="button"
-          onClick={run}
-          disabled={loading}
-          className="text-[10px] uppercase tracking-wide text-muted-foreground hover:text-foreground disabled:opacity-60"
-        >
-          {loading ? 'Refreshing…' : 'Re-run'}
-        </button>
-      </div>
-      <p className="text-sm text-foreground">{insight.summary}</p>
-      {insight.highlights.length > 0 && (
-        <Section label="Highlights" items={insight.highlights} />
-      )}
-      {insight.blockers.length > 0 && (
-        <Section label="Blockers" items={insight.blockers} />
-      )}
-      <div className="border-t border-border/40 pt-2">
-        <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Next focus</div>
-        <p className="text-sm font-medium">{insight.suggestedNextFocus}</p>
-      </div>
-    </div>
+        <p className="text-sm text-foreground">{insight.summary}</p>
+        {insight.highlights.length > 0 && (
+          <Section label="Highlights" items={insight.highlights} />
+        )}
+        {insight.blockers.length > 0 && (
+          <Section label="Blockers" items={insight.blockers} />
+        )}
+        <div className="border-t border-border/40 pt-2">
+          <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Next focus</div>
+          <p className="text-sm font-medium">{insight.suggestedNextFocus}</p>
+        </div>
+      </CardContent>
+    </Card>
   )
 }
 

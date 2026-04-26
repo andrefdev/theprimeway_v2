@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { tasksQueries, useUpdateTask, useDeleteTask } from '@/features/tasks/queries'
 import { DayPlanner } from '@/features/tasks/components/DayPlanner'
 import { TaskDialog } from '@/features/tasks/components/TaskDialog'
+import { QuickTaskDialog } from '@/features/tasks/components/QuickTaskDialog'
 import { QueryError } from '@/shared/components/QueryError'
 import { PlusIcon } from '@/shared/components/Icons'
 import { Button } from '@/shared/components/ui/button'
@@ -36,6 +37,7 @@ export function TasksToday() {
   const autoSchedule = useAutoSchedule()
 
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [quickOpen, setQuickOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [planDismissed, setPlanDismissed] = useState(false)
   const [planOpen, setPlanOpen] = useState(false)
@@ -80,8 +82,7 @@ export function TasksToday() {
   }
 
   function openCreate() {
-    setEditingTask(null)
-    setDialogOpen(true)
+    setQuickOpen(true)
   }
 
   function openEdit(task: Task) {
@@ -182,6 +183,12 @@ export function TasksToday() {
         onClose={() => { setDialogOpen(false); setEditingTask(null) }}
         task={editingTask}
         defaultDate={today}
+      />
+      <QuickTaskDialog
+        open={quickOpen}
+        onClose={() => setQuickOpen(false)}
+        defaultDate={today}
+        defaultBucket="TODAY"
       />
 
       {pendingDailyPlan && (

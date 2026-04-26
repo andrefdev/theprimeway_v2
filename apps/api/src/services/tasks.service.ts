@@ -37,6 +37,7 @@ export interface CreateTaskInput {
   scheduledEnd?: string
   isAllDay?: boolean
   estimatedDuration?: number
+  acceptanceCriteria?: string | null
   backlogState?: string
   source?: string
   tags?: string[]
@@ -59,6 +60,7 @@ export interface UpdateTaskInput {
   scheduledEnd?: string
   isAllDay?: boolean
   estimatedDuration?: number
+  acceptanceCriteria?: string | null
   backlogState?: string
   tags?: string[]
   weeklyGoalId?: string
@@ -202,6 +204,7 @@ class TasksService {
       scheduledBucket: input.scheduledBucket,
       isAllDay: input.isAllDay,
       estimatedDurationMinutes: input.estimatedDuration,
+      acceptanceCriteria: input.acceptanceCriteria,
       backlogState: input.backlogState,
       source: input.source,
       isRecurring: input.isRecurring,
@@ -259,6 +262,7 @@ class TasksService {
     if (input.scheduledEnd !== undefined) data.scheduledEnd = input.scheduledEnd
     if (input.isAllDay !== undefined) data.isAllDay = input.isAllDay
     if (input.estimatedDuration !== undefined) data.estimatedDurationMinutes = input.estimatedDuration
+    if (input.acceptanceCriteria !== undefined) data.acceptanceCriteria = input.acceptanceCriteria
     if (input.backlogState !== undefined) data.backlogState = input.backlogState
     if (input.tags !== undefined) data.tags = input.tags
     if (input.weeklyGoalId !== undefined) data.weeklyGoalId = input.weeklyGoalId

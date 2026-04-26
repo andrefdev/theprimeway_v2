@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/shared/components/ui/button'
+import { Alert, AlertDescription } from '@/shared/components/ui/alert'
 import { Loader2Icon } from 'lucide-react'
 import { useOAuth } from '../hooks/use-oauth'
 
@@ -10,9 +11,9 @@ export function OAuthButtons() {
   return (
     <>
       {error && (
-        <div className="rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          {error}
-        </div>
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       )}
       <div className="grid grid-cols-2 gap-3">
         <Button
