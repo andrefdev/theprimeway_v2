@@ -55,7 +55,7 @@ class AdminRepository {
   }
 
   // ── Analytics aggregations ───────────────────────────────
-  countAdmins() { return prisma.user.count({ where: { role: 'admin' } }) }
+  countAdmins() { return prisma.user.count({ where: { role: 'ADMIN' } }) }
 
   subscriptionsByStatus() {
     return prisma.userSubscription.groupBy({ by: ['status'], _count: { _all: true } })

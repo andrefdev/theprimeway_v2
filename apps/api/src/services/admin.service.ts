@@ -10,7 +10,7 @@ interface SetSubscriptionInput {
 
 class AdminService {
   isAdmin(userId: string) {
-    return adminRepo.findUserRole(userId).then((u: { role: string } | null) => u?.role === 'admin')
+    return adminRepo.findUserRole(userId).then((u: { role: string } | null) => u?.role === 'ADMIN')
   }
 
   listUsers(params: { page: number; limit: number; search?: string }) {

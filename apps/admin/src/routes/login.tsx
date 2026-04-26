@@ -50,7 +50,7 @@ function LoginPage() {
         password: values.password,
       })
 
-      if (data.user.role !== 'admin') {
+      if (data.user.role !== 'ADMIN') {
         toast.error('This account is not an admin')
         setIsLoading(false)
         return
