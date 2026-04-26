@@ -1,7 +1,38 @@
 import { notificationsRepo } from '../repositories/notifications.repo'
 import { gamificationService } from './gamification.service'
 import { calendarService } from './calendar.service'
-import { sendExpoPush, isPushEnabled } from '../lib/expo-push'
+import { sendExpoPush, isPushEnabled as isExpoEnabled, isValidExpoPushToken } from '../lib/expo-push'
+import { sendFcm, isFcmEnabled } from '../lib/firebase'
+
+function isPushEnabled() {
+  return isExpoEnabled() || isFcmEnabled()
+}
+
+function partitionTokens(tokens: string[]): { expo: string[]; fcm: string[] } {
+  const expo: string[] = []
+  const fcm: string[] = []
+  for (const t of tokens) {
+    if (isValidExpoPushToken(t)) expo.push(t)
+    else fcm.push(t)
+  }
+  return { expo, fcm }
+}
+
+async function sendToTokens(
+  tokens: string[],
+  payload: { title: string; body: string; url?: string; tag?: string; image?: string; data?: unknown },
+): Promise<{ successCount: number; failureCount: number; invalidTokens: string[] }> {
+  const { expo, fcm } = partitionTokens(tokens)
+  const [expoRes, fcmRes] = await Promise.all([
+    expo.length > 0 ? sendExpoPush(expo, payload) : Promise.resolve({ successCount: 0, failureCount: 0, invalidTokens: [] as string[] }),
+    fcm.length > 0 ? sendFcm(fcm, payload) : Promise.resolve({ successCount: 0, failureCount: 0, invalidTokens: [] as string[] }),
+  ])
+  return {
+    successCount: expoRes.successCount + fcmRes.successCount,
+    failureCount: expoRes.failureCount + fcmRes.failureCount,
+    invalidTokens: [...expoRes.invalidTokens, ...fcmRes.invalidTokens],
+  }
+}
 import * as Sentry from '@sentry/node'
 
 interface AppNotification {
@@ -312,7 +343,7 @@ class NotificationsService {
     const tokens = devices.map((d: { fcmToken: string }) => d.fcmToken).filter(Boolean)
     if (tokens.length === 0) return { success_count: 0, failure_count: 0 }
 
-    const res = await sendExpoPush(tokens, payload)
+    const res = await sendToTokens(tokens, payload)
 
     await Promise.all(
       res.invalidTokens.map((token) => notificationsRepo.markDeviceInactive(token)),
@@ -475,7 +506,7 @@ class NotificationsService {
 
     if (!isPushEnabled()) {
       return {
-        message: 'Push disabled (expo-server-sdk init failed)',
+        message: 'Push disabled (no expo or firebase credentials configured)',
         total_devices: devices.length,
         success_count: 0,
         failure_count: 0,
@@ -484,7 +515,7 @@ class NotificationsService {
 
     const tokens = devices.map((d: { fcmToken: string }) => d.fcmToken).filter(Boolean)
 
-    const res = await sendExpoPush(tokens, {
+    const res = await sendToTokens(tokens, {
       title: body.title,
       body: body.body,
       url: body.url,

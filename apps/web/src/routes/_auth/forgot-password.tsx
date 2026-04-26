@@ -72,15 +72,6 @@ function ForgotPasswordPage() {
 
   return (
     <div>
-      <div className="mb-8 text-center">
-        <div className="flex items-center justify-center pt-8 pb-4">
-          <div className="flex h-[100px] w-[100px] items-center justify-center rounded-xl bg-primary text-4xl font-bold text-primary-foreground">
-            P
-          </div>
-        </div>
-        <h1 className="mb-2 text-4xl font-bold text-foreground">The Prime Way</h1>
-      </div>
-
       <div className="rounded-2xl border border-border/50 bg-card/50 p-6 shadow-sm backdrop-blur-xs">
         {step === 'email' && (
           <div className="space-y-6">

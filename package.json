@@ -19,6 +19,7 @@
     "db:studio": "turbo run db:studio --filter=@repo/api"
   },
   "devDependencies": {
+    "jsonwebtoken": "^9.0.3",
     "turbo": "^2.9.5"
   }
 }

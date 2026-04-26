@@ -3,6 +3,7 @@ import { Badge } from '@/shared/components/ui/badge'
 import { Button } from '@/shared/components/ui/button'
 import { Alert, AlertTitle, AlertDescription } from '@/shared/components/ui/alert'
 import { Loader2, AlertCircle, Plus, Trash2, RefreshCw, Pin, PinOff } from 'lucide-react'
+import { Skeleton } from '@/shared/components/ui/skeleton'
 import { formatDistanceToNow } from 'date-fns'
 import {
   useApplyActionItem,
@@ -33,7 +34,34 @@ export function BrainEntryDetail({ entryId, onDeleted }: Props) {
   const updateMut = useUpdateBrainEntry(entryId)
 
   if (isLoading || !entry) {
-    return <div className="text-xs text-muted-foreground p-4">Loading…</div>
+    return (
+      <div className="space-y-4 text-sm">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-3 w-24" />
+            <Skeleton className="h-6 w-3/4" />
+          </div>
+          <div className="flex gap-1">
+            <Skeleton className="h-8 w-8 rounded-md" />
+            <Skeleton className="h-8 w-8 rounded-md" />
+          </div>
+        </div>
+        <Skeleton className="h-20 w-full rounded-md" />
+        <div className="space-y-2">
+          <Skeleton className="h-3 w-16" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-5/6" />
+        </div>
+        <div className="space-y-2">
+          <Skeleton className="h-3 w-20" />
+          <div className="flex gap-1">
+            <Skeleton className="h-5 w-14 rounded-full" />
+            <Skeleton className="h-5 w-16 rounded-full" />
+            <Skeleton className="h-5 w-12 rounded-full" />
+          </div>
+        </div>
+      </div>
+    )
   }
 
   const processing = ['pending', 'transcribing', 'analyzing'].includes(entry.status)
