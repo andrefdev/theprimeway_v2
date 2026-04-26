@@ -166,7 +166,7 @@ export function TaskComposer({ defaultBucket, onCreated, placeholder }: TaskComp
                 <CommandEmpty>{t('common:noResults', { defaultValue: 'No results' })}</CommandEmpty>
                 <CommandGroup>
                   {BUCKETS.map((b) => {
-                    const isActive = bucket === b.key && bucket !== 'EXACT_DATE'
+                    const isActive = bucket === b.key
                     return (
                       <CommandItem
                         key={b.key}

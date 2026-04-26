@@ -1,6 +1,6 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { createTaskSchema, type CreateTaskInput, TASK_BUCKETS } from '@repo/shared/validators'
+import { createTaskSchema, type CreateTaskInput } from '@repo/shared/validators'
 import type { Task, TaskBucket } from '@repo/shared/types'
 import { channelsApi } from '@/features/capture/channels-api'
 import { useCreateTask, useUpdateTask } from '../queries'
@@ -68,7 +68,7 @@ export function TaskDialog({ open, onClose, task, defaultDate, defaultStart, def
   const createRecurring = useCreateRecurring()
   const estimateTimebox = useEstimateTimebox()
   const [showInsights, setShowInsights] = useState(false)
-  const [showScheduleResult, setShowScheduleResult] = useState<{ start: string; end: string } | null>(null)
+  const [showScheduleResult] = useState<{ start: string; end: string } | null>(null)
   const [repeatEnabled, setRepeatEnabled] = useState(false)
   const [repeatPattern, setRepeatPattern] = useState<RecurrencePattern>('DAILY')
   const [repeatDays, setRepeatDays] = useState<number[]>([1, 2, 3, 4, 5])
@@ -684,24 +684,3 @@ export function TaskDialog({ open, onClose, task, defaultDate, defaultStart, def
   )
 }
 
-function bucketLabel(b: string): string {
-  switch (b) {
-    case 'TODAY': return 'Today'
-    case 'TOMORROW': return 'Tomorrow'
-    case 'NEXT_WEEK': return 'Next week'
-    case 'NEXT_MONTH': return 'Next month'
-    case 'NEXT_QUARTER': return 'Next quarter'
-    case 'NEXT_YEAR': return 'Next year'
-    case 'SOMEDAY': return 'Someday'
-    case 'NEVER': return 'Never'
-    default: return b
-  }
-}
-
-function parseLocalDate(dateString?: string): Date | undefined {
-  if (!dateString) return undefined
-  // Handle both "YYYY-MM-DD" and "YYYY-MM-DDTHH:MM:SSZ" formats
-  const datePart = dateString.includes('T') ? dateString.split('T')[0]! : dateString
-  const [year, month, day] = datePart.split('-').map(Number) as [number, number, number]
-  return new Date(year, month - 1, day)
-}
