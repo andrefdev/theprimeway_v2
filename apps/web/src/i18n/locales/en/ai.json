@@ -9,10 +9,5 @@
   "noResponse": "No response received",
   "aiDisabled": "AI is disabled. Enable AI Data Sharing in Settings.",
   "rateLimited": "Too many requests. Please wait a moment.",
-  "failedToSend": "Failed to send message",
-  "dailyBriefing": "Daily Briefing",
-  "tasksStatus": "{{done}}/{{total}} tasks",
-  "habitsStatus": "{{done}}/{{total}} habits",
-  "eventsCount": "{{count}} events",
-  "streakBadge": "{{count}} day streak"
+  "failedToSend": "Failed to send message"
 }

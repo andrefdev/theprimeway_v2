@@ -11,6 +11,7 @@ import {
   Input,
   Textarea,
   Skeleton,
+  Badge,
 } from '@repo/ui'
 import { toast } from 'sonner'
 import { useUsers } from '@/features/users/queries'
@@ -220,11 +221,7 @@ function NotificationsPage() {
                             </p>
                             <p className="truncate text-xs text-muted-foreground">{u.email}</p>
                           </div>
-                          {u.role === 'admin' && (
-                            <span className="rounded-full bg-secondary px-2 py-1 text-xs font-medium">
-                              admin
-                            </span>
-                          )}
+                          {u.role === 'admin' && <Badge>admin</Badge>}
                         </label>
                       </li>
                     )

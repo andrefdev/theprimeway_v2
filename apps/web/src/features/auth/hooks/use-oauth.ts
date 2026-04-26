@@ -10,7 +10,16 @@ declare global {
       accounts: {
         id: {
           initialize: (config: Record<string, unknown>) => void
-          prompt: (cb?: (notification: { isNotDisplayed: () => boolean }) => void) => void
+          prompt: (
+            cb?: (notification: {
+              isNotDisplayed: () => boolean
+              isSkippedMoment: () => boolean
+              isDismissedMoment: () => boolean
+              getNotDisplayedReason?: () => string
+              getSkippedReason?: () => string
+              getDismissedReason?: () => string
+            }) => void,
+          ) => void
         }
       }
     }
@@ -64,19 +73,38 @@ export function useOAuth() {
       await loadScript('https://accounts.google.com/gsi/client')
 
       const credential = await new Promise<string>((resolve, reject) => {
+        let settled = false
+        const settle = (fn: () => void) => {
+          if (settled) return
+          settled = true
+          fn()
+        }
+        // Hard timeout: release the button even if Google never reports back
+        const timeout = setTimeout(() => {
+          settle(() => reject(new Error('Google login timed out')))
+        }, 60_000)
+
         window.google!.accounts.id.initialize({
           client_id: GOOGLE_CLIENT_ID,
           callback: (response: { credential?: string }) => {
+            clearTimeout(timeout)
             if (response.credential) {
-              resolve(response.credential)
+              settle(() => resolve(response.credential!))
             } else {
-              reject(new Error('No credential returned'))
+              settle(() => reject(new Error('No credential returned')))
             }
           },
         })
         window.google!.accounts.id.prompt((notification) => {
-          if (notification.isNotDisplayed()) {
-            reject(new Error('Google prompt not displayed'))
+          // Reject on any terminal moment that is NOT a successful credential —
+          // otherwise the loading state hangs forever when the user dismisses.
+          if (
+            notification.isNotDisplayed() ||
+            notification.isSkippedMoment() ||
+            notification.isDismissedMoment()
+          ) {
+            clearTimeout(timeout)
+            settle(() => reject(new Error('Google login cancelled')))
           }
         })
       })

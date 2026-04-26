@@ -1,4 +1,5 @@
 import { Button } from '@/shared/components/ui/button'
+import { Card, CardContent } from '@/shared/components/ui/card'
 import { toast } from 'sonner'
 import { useWorkingSessionsForDay, useDeleteWorkingSession } from '../queries'
 import type { WorkingSession } from '../working-sessions-api'
@@ -56,7 +57,7 @@ export function WorkingSessionsPanel({ day }: Props) {
   const totalLabel = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`
 
   return (
-    <div className="rounded-lg border border-border/60 bg-card/40 p-4 space-y-2">
+    <Card className="bg-card/40"><CardContent className="p-4 space-y-2">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium">Scheduled blocks</h3>
         <span className="text-xs text-muted-foreground">
@@ -90,6 +91,6 @@ export function WorkingSessionsPanel({ day }: Props) {
           </li>
         ))}
       </ul>
-    </div>
+    </CardContent></Card>
   )
 }

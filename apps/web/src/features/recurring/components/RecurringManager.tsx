@@ -50,11 +50,11 @@ export function RecurringManager({ bare = false }: Props = {}) {
       )}
 
       {!list.isLoading && (list.data ?? []).length > 0 && (
-        <div className="rounded-lg border border-border/60 bg-card/30 divide-y divide-border/40">
+        <Card className="bg-card/30 py-0 gap-0 divide-y divide-border/40">
           {(list.data ?? []).map((s) => (
             <RecurringRow key={s.id} series={s} onDelete={handleDelete} />
           ))}
-        </div>
+        </Card>
       )}
     </div>
   )

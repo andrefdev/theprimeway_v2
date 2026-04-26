@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import type { TaskBucket } from '@repo/shared/types'
 import { Button } from '@/shared/components/ui/button'
+import { Card } from '@/shared/components/ui/card'
 import { Textarea } from '@/shared/components/ui/textarea'
 import {
   Popover,
@@ -139,7 +140,7 @@ export function TaskComposer({ defaultBucket, onCreated, placeholder }: TaskComp
   }
 
   return (
-    <div className="rounded-xl border border-border/40 bg-card/60 p-3 shadow-sm">
+    <Card className="rounded-xl bg-card/60 p-3 py-3 gap-3">
       <Textarea
         ref={textareaRef}
         value={title}
@@ -329,7 +330,7 @@ export function TaskComposer({ defaultBucket, onCreated, placeholder }: TaskComp
           </Button>
         </div>
       </div>
-    </div>
+    </Card>
   )
 }
 
