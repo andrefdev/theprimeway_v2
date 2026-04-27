@@ -255,13 +255,19 @@ export function DataTable<TData, TValue>({
 
       {!hidePagination && (
         <div className="flex flex-wrap items-center justify-between gap-3 px-1 text-sm">
-          <p className="text-muted-foreground">
-            {enableRowSelection && Object.keys(rowSelection).length > 0
-              ? `${Object.keys(rowSelection).length} selected · `
-              : ''}
-            {table.getFilteredRowModel().rows.length} row
-            {table.getFilteredRowModel().rows.length === 1 ? '' : 's'}
-          </p>
+          {(() => {
+            const filtered = table.getFilteredRowModel().rows.length
+            const { pageIndex, pageSize: ps } = table.getState().pagination
+            const start = filtered === 0 ? 0 : pageIndex * ps + 1
+            const end = Math.min(filtered, (pageIndex + 1) * ps)
+            const selectedCount = Object.keys(rowSelection).length
+            return (
+              <p className="text-muted-foreground">
+                {enableRowSelection && selectedCount > 0 ? `${selectedCount} selected · ` : ''}
+                Showing {start}–{end} of {filtered} row{filtered === 1 ? '' : 's'}
+              </p>
+            )
+          })()}
           <div className="flex items-center gap-2">
             <span className="text-muted-foreground">
               Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount() || 1}

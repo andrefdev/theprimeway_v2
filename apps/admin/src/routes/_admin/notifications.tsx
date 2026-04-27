@@ -15,7 +15,7 @@ import {
 import { toast } from 'sonner'
 import type { ColumnDef } from '@tanstack/react-table'
 import type { RowSelectionState } from '@tanstack/react-table'
-import { useUsers } from '@/features/users/queries'
+import { useAllUsers } from '@/features/users/queries'
 import { useSendPush } from '@/features/notifications/queries'
 import { DataTable } from '@/components/data-table'
 
@@ -36,7 +36,7 @@ function NotificationsPage() {
   const [target, setTarget] = useState<Target>('all')
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
 
-  const usersQuery = useUsers(1, 100)
+  const usersQuery = useAllUsers()
   const sendPush = useSendPush()
 
   const users: AdminUserRow[] = usersQuery.data?.data ?? []

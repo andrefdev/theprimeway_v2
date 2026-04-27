@@ -1,6 +1,7 @@
 import { queryOptions, useMutation, useQuery } from '@tanstack/react-query'
 import {
   getUsers,
+  getAllUsers,
   getUser,
   getUserSubscription,
   getUserFeatureOverrides,
@@ -15,6 +16,7 @@ import type { FeatureKey } from '@repo/shared/constants'
 export const usersQueryKeys = {
   all: ['users'] as const,
   list: (page: number, limit: number) => [...usersQueryKeys.all, 'list', page, limit] as const,
+  listAll: () => [...usersQueryKeys.all, 'list', 'all'] as const,
   detail: (userId: string) => [...usersQueryKeys.all, 'detail', userId] as const,
   subscription: (userId: string) => [...usersQueryKeys.all, 'subscription', userId] as const,
   features: (userId: string) => [...usersQueryKeys.all, 'features', userId] as const,
@@ -47,10 +49,23 @@ export const usersQueries = {
 }
 
 /**
- * Hook to get list of users
+ * Hook to get a single page of users (server-paginated).
  */
 export function useUsers(page = 1, limit = 20) {
   return useQuery(usersQueries.list(page, limit))
+}
+
+/**
+ * Hook to get ALL users (auto-paginates). Use when client-side
+ * search / sort / filter must cover the full set.
+ */
+export function useAllUsers() {
+  return useQuery(
+    queryOptions({
+      queryKey: usersQueryKeys.listAll(),
+      queryFn: getAllUsers,
+    }),
+  )
 }
 
 /**

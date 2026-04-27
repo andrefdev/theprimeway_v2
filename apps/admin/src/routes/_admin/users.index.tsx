@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useMemo } from 'react'
-import { useUsers } from '@/features/users/queries'
+import { useAllUsers } from '@/features/users/queries'
 import {
   Card,
   CardContent,
@@ -23,7 +23,7 @@ interface UserRow {
 }
 
 function UsersPage() {
-  const { data, isLoading } = useUsers(1, 100)
+  const { data, isLoading } = useAllUsers()
   const navigate = useNavigate()
 
   const users: UserRow[] = data?.data || []

@@ -42,13 +42,34 @@ export interface FeatureOverride {
 }
 
 /**
- * Get list of users (with pagination)
+ * Get a single page of users (server cap: 100/page).
  */
 export async function getUsers(page = 1, limit = 20) {
   const { data } = await api.get('/admin/users', {
     params: { page, limit },
   })
-  return data
+  return data as { data: User[]; total: number; page: number; limit: number }
+}
+
+/**
+ * Fetch every user across all pages. First page reveals total; remaining
+ * pages are fetched in parallel. Server caps `limit` at 100.
+ */
+export async function getAllUsers() {
+  const PAGE_SIZE = 100
+  const first = await getUsers(1, PAGE_SIZE)
+  const total: number = first.total ?? first.data?.length ?? 0
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
+  if (totalPages <= 1) return { data: first.data ?? [], total }
+
+  const rest = await Promise.all(
+    Array.from({ length: totalPages - 1 }, (_, i) => getUsers(i + 2, PAGE_SIZE)),
+  )
+  const merged = [
+    ...(first.data ?? []),
+    ...rest.flatMap((r) => r.data ?? []),
+  ]
+  return { data: merged, total }
 }
 
 /**
