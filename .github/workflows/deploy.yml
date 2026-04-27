@@ -314,10 +314,28 @@ jobs:
             docker compose -f docker-compose.prod.yml exec -T nginx nginx -s reload || true
 
       - name: Health check - API
+        id: health_api
         run: |
           sleep 10
           curl --fail --retry 10 --retry-delay 3 --retry-max-time 60 \
             https://api.theprimeway.app/api/health
+
+      - name: Dump API container state on failure
+        if: failure() && steps.health_api.conclusion == 'failure'
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            cd /var/www/theprimeway
+            echo "=== docker compose ps ==="
+            docker compose -f docker-compose.prod.yml ps
+            echo "=== api logs (last 200) ==="
+            docker compose -f docker-compose.prod.yml logs --tail=200 api || true
+            echo "=== nginx logs (last 80) ==="
+            docker compose -f docker-compose.prod.yml logs --tail=80 nginx || true
 
       - name: Health check - Web
         run: |
