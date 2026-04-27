@@ -11,7 +11,7 @@ import { habitsRepository } from '../repositories/habits.repo'
 import { gamificationService } from './gamification.service'
 import { gamificationEvents } from './gamification/events'
 import { prisma } from '../lib/prisma'
-import { validateLimit } from '../lib/limits'
+import { enforceLimit } from '../lib/limits'
 import { FEATURES, CATEGORY_TO_PILLAR } from '@repo/shared/constants'
 import { generateObject } from 'ai'
 import { taskModel } from '../lib/ai-models'
@@ -238,22 +238,7 @@ class HabitsService {
       }
     }
 
-    // Check habit limit
-    const [subscription, usage] = await Promise.all([
-      prisma.userSubscription.findFirst({
-        where: { userId },
-        orderBy: { createdAt: 'desc' },
-        include: { plan: true },
-      }),
-      prisma.userUsageStat.findFirst({
-        where: { userId },
-      }),
-    ])
-
-    const plan = subscription?.plan
-    if (plan) {
-      validateLimit(FEATURES.HABITS_LIMIT, plan, usage?.currentHabits ?? 0)
-    }
+    await enforceLimit(userId, FEATURES.HABITS_LIMIT)
 
     return habitsRepository.create(userId, {
       name: input.name,

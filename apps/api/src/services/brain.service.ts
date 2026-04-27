@@ -16,6 +16,8 @@ import { tasksService } from './tasks.service'
 import { gamificationEvents } from './gamification/events'
 import { gamificationService } from './gamification.service'
 import { bestMatch } from '../lib/fuzzy-match'
+import { enforceLimit } from '../lib/limits'
+import { FEATURES } from '@repo/shared/constants'
 
 type TargetType = 'task' | 'goal' | 'habit'
 type LinkType = 'related' | 'spawned_from' | 'action_for' | 'evidence_for'
@@ -48,6 +50,7 @@ class BrainService {
   }
 
   async create(userId: string, content: string) {
+    await enforceLimit(userId, FEATURES.BRAIN_ENTRIES_LIMIT)
     const entry = await brainRepo.create(userId, { rawTranscript: content })
     // Fire-and-forget. Failures mark entry as 'failed' inside processEntry.
     this.processEntry(userId, entry.id).catch((err) =>

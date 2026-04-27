@@ -83,7 +83,7 @@ pomodoroRoutes.openapi(createSessionRoute, (async (c: any) => {
     return c.json({ data: session }, 201)
   } catch (error) {
     if (error instanceof LimitExceededError) {
-      return c.json({ error: error.message, limitType: error.limitType }, 409)
+      return c.json({ error: error.message, code: 'limit_exceeded', limitType: error.limitType }, 409)
     }
     throw error
   }

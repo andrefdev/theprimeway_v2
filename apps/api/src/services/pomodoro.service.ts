@@ -1,6 +1,5 @@
 import { pomodoroRepo } from '../repositories/pomodoro.repo'
-import { prisma } from '../lib/prisma'
-import { validateLimit } from '../lib/limits'
+import { enforceLimit } from '../lib/limits'
 import { FEATURES } from '@repo/shared/constants'
 import { gamificationEvents } from './gamification/events'
 
@@ -46,26 +45,7 @@ class PomodoroService {
       startedAt?: string
     },
   ) {
-    // Check daily pomodoro limit
-    const [subscription, usage] = await Promise.all([
-      prisma.userSubscription.findFirst({
-        where: { userId },
-        orderBy: { createdAt: 'desc' },
-        include: { plan: true },
-      }),
-      prisma.userUsageStat.findFirst({
-        where: { userId },
-      }),
-    ])
-
-    const plan = subscription?.plan
-    if (plan) {
-      validateLimit(
-        FEATURES.POMODORO_DAILY_LIMIT,
-        plan,
-        usage?.dailyPomodoroSessions ?? 0,
-      )
-    }
+    await enforceLimit(userId, FEATURES.POMODORO_DAILY_LIMIT)
 
     return pomodoroRepo.createSession({
       userId,

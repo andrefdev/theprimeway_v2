@@ -10,6 +10,7 @@ import { GoogleCalendarSettings } from '@/features/calendar/components/GoogleCal
 import { ApiKeysCard } from '@/features/integrations/components/ApiKeysCard'
 import { WebhooksCard } from '@/features/integrations/components/WebhooksCard'
 import { ChannelsManager } from '@/features/channels/components/ChannelsManager'
+import { UsageLimits } from '@/features/subscriptions/components/UsageLimits'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/components/ui/tabs'
 import { useFeature } from '@/features/feature-flags/hooks'
 import { FEATURES } from '@repo/shared/constants'
@@ -47,6 +48,7 @@ function SettingsPage() {
           <TabsTrigger value="notifications">{t('tabNotifications')}</TabsTrigger>
           <TabsTrigger value="channels">{t('tabChannels')}</TabsTrigger>
           <TabsTrigger value="integrations">{t('tabIntegrations')}</TabsTrigger>
+          <TabsTrigger value="plan">{t('tabPlan', { defaultValue: 'Plan' })}</TabsTrigger>
           <TabsTrigger value="account">{t('tabAccount')}</TabsTrigger>
         </TabsList>
 
@@ -71,6 +73,10 @@ function SettingsPage() {
           <GoogleCalendarSettings />
           <ApiKeysCard />
           <WebhooksCard />
+        </TabsContent>
+
+        <TabsContent value="plan" className="space-y-6 pt-4">
+          <UsageLimits />
         </TabsContent>
 
         <TabsContent value="account" className="space-y-6 pt-4">

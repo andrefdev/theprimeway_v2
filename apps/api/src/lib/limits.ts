@@ -1,5 +1,7 @@
 import { FEATURES, type FeatureKey } from '@repo/shared/constants';
 import type { SubscriptionPlan } from '@prisma/client';
+import { prisma } from './prisma';
+import { getCurrentUsage } from './usage';
 
 export interface LimitConfig {
   featureKey: FeatureKey;
@@ -27,6 +29,11 @@ const LIMIT_MAPPING = {
     planField: 'maxPomodoroSessionsDaily',
     usageField: 'dailyPomodoroSessions',
     errorMessage: 'You have reached your daily pomodoro limit for this plan.',
+  },
+  [FEATURES.BRAIN_ENTRIES_LIMIT]: {
+    planField: 'maxBrainEntries',
+    usageField: 'currentBrainEntries',
+    errorMessage: 'You have reached your brain entries limit for this plan.',
   },
 };
 
@@ -75,4 +82,20 @@ export function validateLimit(
 
 export function getLimitInfo(featureKey: FeatureKey) {
   return LIMIT_MAPPING[featureKey as keyof typeof LIMIT_MAPPING];
+}
+
+/**
+ * Resolve user's plan, count current usage from real data, and throw
+ * LimitExceededError if at/over the cap. Use before any "create" path.
+ */
+export async function enforceLimit(userId: string, featureKey: FeatureKey): Promise<void> {
+  const subscription = await prisma.userSubscription.findFirst({
+    where: { userId },
+    orderBy: { createdAt: 'desc' },
+    include: { plan: true },
+  });
+  const plan = subscription?.plan;
+  if (!plan) return;
+  const currentUsage = await getCurrentUsage(userId, featureKey);
+  validateLimit(featureKey, plan, currentUsage);
 }

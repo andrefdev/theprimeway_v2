@@ -121,7 +121,7 @@ taskRoutes.openapi(createRoute_, (async (c: any) => {
     return c.json({ data: task }, 201)
   } catch (err: any) {
     if (err instanceof LimitExceededError) {
-      return c.json({ error: err.message, limitType: err.limitType }, 409)
+      return c.json({ error: err.message, code: 'limit_exceeded', limitType: err.limitType }, 409)
     }
     throw err
   }

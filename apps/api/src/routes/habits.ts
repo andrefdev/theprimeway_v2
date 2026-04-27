@@ -151,7 +151,7 @@ habitRoutes.openapi(postHabitRoute, (async (c: any) => {
     return c.json(habit as any, 200)
   } catch (error) {
     if (error instanceof LimitExceededError) {
-      return c.json({ error: error.message, limitType: error.limitType }, 409)
+      return c.json({ error: error.message, code: 'limit_exceeded', limitType: error.limitType }, 409)
     }
     if (error instanceof Error && error.message.includes('Goal not found')) {
       return c.json({ error: error.message }, 400)

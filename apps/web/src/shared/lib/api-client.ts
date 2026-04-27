@@ -1,5 +1,6 @@
 import axios from 'axios'
 import type { AxiosError, InternalAxiosRequestConfig } from 'axios'
+import { toast } from 'sonner'
 import { useAuthStore } from '../stores/auth.store'
 
 export const api = axios.create({
@@ -39,6 +40,14 @@ api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean }
+
+    // Surface plan-limit errors uniformly so any mutation triggers a toast.
+    if (error.response?.status === 409) {
+      const data = error.response.data as { code?: string; error?: string } | undefined
+      if (data?.code === 'limit_exceeded' && data.error) {
+        toast.error(data.error)
+      }
+    }
 
     // Skip refresh for auth endpoints themselves
     if (

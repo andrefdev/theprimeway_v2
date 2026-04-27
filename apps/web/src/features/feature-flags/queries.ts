@@ -18,4 +18,11 @@ export const featureQueries = {
       staleTime: CACHE_TIMES.long, // 30 min — features don't change often
       gcTime: CACHE_TIMES.day, // 24h — survive page reloads offline
     }),
+
+  usage: () =>
+    queryOptions({
+      queryKey: [...featureQueries.all(), 'usage'],
+      queryFn: () => featuresApi.getUsage(),
+      staleTime: CACHE_TIMES.short,
+    }),
 }

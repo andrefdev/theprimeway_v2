@@ -9,6 +9,8 @@
 import { goalsRepository } from '../repositories/goals.repo'
 import { gamificationEvents } from './gamification/events'
 import { prisma } from '../lib/prisma'
+import { enforceLimit } from '../lib/limits'
+import { FEATURES } from '@repo/shared/constants'
 import { generateObject } from 'ai'
 import { taskModel } from '../lib/ai-models'
 import { z } from 'zod'
@@ -49,6 +51,7 @@ class GoalsService {
   async createThreeYearGoal(userId: string, input: {
     visionId: string; area: string; title: string; description?: string
   }) {
+    await enforceLimit(userId, FEATURES.GOALS_LIMIT)
     return goalsRepository.createThreeYearGoal(userId, input)
   }
 
@@ -72,6 +75,7 @@ class GoalsService {
     threeYearGoalId: string; title: string; description?: string;
     targetMetrics?: unknown; targetDate?: string
   }) {
+    await enforceLimit(userId, FEATURES.GOALS_LIMIT)
     return goalsRepository.createAnnualGoal(userId, input)
   }
 
@@ -95,6 +99,7 @@ class GoalsService {
     annualGoalId?: string; year: number; quarter: number; title: string;
     objectives?: unknown[]; startDate?: string; endDate?: string
   }) {
+    await enforceLimit(userId, FEATURES.GOALS_LIMIT)
     return goalsRepository.createQuarterlyGoal(userId, input)
   }
 
@@ -123,6 +128,7 @@ class GoalsService {
   async createWeeklyGoal(userId: string, input: {
     quarterlyGoalId?: string; weekStartDate: string; title: string; status?: string
   }) {
+    await enforceLimit(userId, FEATURES.GOALS_LIMIT)
     const result = await goalsRepository.createWeeklyGoal(userId, {
       ...input,
       status: input.status ?? 'not-started',

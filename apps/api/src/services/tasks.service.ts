@@ -14,7 +14,7 @@ import { gamificationEvents } from './gamification/events'
 import { syncService } from './sync.service'
 import { webhooksService } from './webhooks.service'
 import { scheduleOptimizer } from './schedule-optimizer'
-import { validateLimit } from '../lib/limits'
+import { enforceLimit } from '../lib/limits'
 import { FEATURES } from '@repo/shared/constants'
 import { prisma } from '../lib/prisma'
 import type { Task } from '@prisma/client'
@@ -177,22 +177,7 @@ class TasksService {
   /** Create a new task with optional auto-scheduling */
   async createTask(userId: string, input: CreateTaskInput): Promise<TaskModel> {
     console.log('📥 TasksService.createTask - input:', input)
-    // Check task limit
-    const [subscription, usage] = await Promise.all([
-      prisma.userSubscription.findFirst({
-        where: { userId },
-        orderBy: { createdAt: 'desc' },
-        include: { plan: true },
-      }),
-      prisma.userUsageStat.findFirst({
-        where: { userId },
-      }),
-    ])
-
-    const plan = subscription?.plan
-    if (plan) {
-      validateLimit(FEATURES.TASKS_LIMIT, plan, usage?.currentTasks ?? 0)
-    }
+    await enforceLimit(userId, FEATURES.TASKS_LIMIT)
 
     const data: Record<string, any> = {
       title: input.title,
