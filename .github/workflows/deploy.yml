@@ -193,6 +193,7 @@ jobs:
           JWT_REFRESH_EXPIRY: ${{ secrets.JWT_REFRESH_EXPIRY }}
           AUTH_GOOGLE_ID: ${{ secrets.AUTH_GOOGLE_ID }}
           AUTH_GOOGLE_SECRET: ${{ secrets.AUTH_GOOGLE_SECRET }}
+          GOOGLE_CALENDAR_REDIRECT_URI: ${{ secrets.GOOGLE_CALENDAR_REDIRECT_URI }}
           AUTH_APPLE_ID: ${{ secrets.AUTH_APPLE_ID }}
           AUTH_APPLE_SECRET: ${{ secrets.AUTH_APPLE_SECRET }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -227,6 +228,7 @@ jobs:
           printf "JWT_REFRESH_EXPIRY='%s'\n" "$JWT_REFRESH_EXPIRY" >> .env
           printf "AUTH_GOOGLE_ID='%s'\n" "$AUTH_GOOGLE_ID" >> .env
           printf "AUTH_GOOGLE_SECRET='%s'\n" "$AUTH_GOOGLE_SECRET" >> .env
+          printf "GOOGLE_CALENDAR_REDIRECT_URI='%s'\n" "$GOOGLE_CALENDAR_REDIRECT_URI" >> .env
           printf "AUTH_APPLE_ID='%s'\n" "$AUTH_APPLE_ID" >> .env
           printf "AUTH_APPLE_SECRET='%s'\n" "$AUTH_APPLE_SECRET" >> .env
           printf "ANTHROPIC_API_KEY='%s'\n" "$ANTHROPIC_API_KEY" >> .env

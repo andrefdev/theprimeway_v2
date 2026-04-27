@@ -34,3 +34,4 @@ apps/web/.tanstack/
 
 # tauri generated schemas
 apps/desktop/src-tauri/gen/
+/archive/
