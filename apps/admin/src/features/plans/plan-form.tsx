@@ -72,6 +72,7 @@ interface PlanFormProps {
 
 export function PlanForm({ plan, submitLabel, submitting, onSubmit, error }: PlanFormProps) {
   const [state, setState] = useState<FormState>(() => initialState(plan))
+  const isFree = plan?.name === 'free'
 
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {
     setState((s) => ({ ...s, [key]: value }))
@@ -84,92 +85,123 @@ export function PlanForm({ plan, submitLabel, submitting, onSubmit, error }: Pla
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Details</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-2">
-          <Input
-            label="Name (internal)"
-            value={state.name ?? ''}
-            onChange={(e) => set('name', e.target.value)}
-            placeholder="premium"
-            required
-          />
-          <Input
-            label="Display name"
-            value={state.displayName ?? ''}
-            onChange={(e) => set('displayName', e.target.value)}
-            placeholder="Premium"
-            required
-          />
-          <Input
-            label="Description"
-            value={state.description ?? ''}
-            onChange={(e) => set('description', e.target.value)}
-            className="md:col-span-2"
-          />
-          <Input
-            label="Price"
-            type="number"
-            step="0.01"
-            value={state.price ?? 0}
-            onChange={(e) => set('price', toNumber(e.target.value) ?? 0)}
-            required
-          />
-          <Input
-            label="Currency"
-            value={state.currency ?? 'USD'}
-            onChange={(e) => set('currency', e.target.value.toUpperCase().slice(0, 3))}
-            required
-          />
-          <Select
-            label="Billing interval"
-            value={state.billingInterval ?? 'monthly'}
-            onChange={(e) => set('billingInterval', e.target.value as PlanInput['billingInterval'])}
-            options={BILLING_OPTIONS}
-          />
-          <Input
-            label="Sort order"
-            type="number"
-            value={state.sortOrder ?? 0}
-            onChange={(e) => set('sortOrder', toNumber(e.target.value) ?? 0)}
-          />
-          <Input
-            label="Trial period (days)"
-            type="number"
-            value={state.trialPeriodDays ?? 0}
-            onChange={(e) => set('trialPeriodDays', toNumber(e.target.value))}
-            description="0 = no trial"
-          />
-          <div className="md:col-span-2">
-            <Checkbox
-              label="Active"
-              description="Inactive plans are hidden from checkout but preserved for history."
-              checked={!!state.isActive}
-              onChange={(e) => set('isActive', e.target.checked)}
+      {!isFree && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Details</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4 md:grid-cols-2">
+            <Input
+              label="Name (internal)"
+              value={state.name ?? ''}
+              onChange={(e) => set('name', e.target.value)}
+              placeholder="premium"
+              required
             />
-          </div>
-        </CardContent>
-      </Card>
+            <Input
+              label="Display name"
+              value={state.displayName ?? ''}
+              onChange={(e) => set('displayName', e.target.value)}
+              placeholder="Premium"
+              required
+            />
+            <Input
+              label="Description"
+              value={state.description ?? ''}
+              onChange={(e) => set('description', e.target.value)}
+              className="md:col-span-2"
+            />
+            <Input
+              label="Price"
+              type="number"
+              step="0.01"
+              value={state.price ?? 0}
+              onChange={(e) => set('price', toNumber(e.target.value) ?? 0)}
+              required
+            />
+            <Input
+              label="Currency"
+              value={state.currency ?? 'USD'}
+              onChange={(e) => set('currency', e.target.value.toUpperCase().slice(0, 3))}
+              required
+            />
+            <Select
+              label="Billing interval"
+              value={state.billingInterval ?? 'monthly'}
+              onChange={(e) =>
+                set('billingInterval', e.target.value as PlanInput['billingInterval'])
+              }
+              options={BILLING_OPTIONS}
+            />
+            <Input
+              label="Sort order"
+              type="number"
+              value={state.sortOrder ?? 0}
+              onChange={(e) => set('sortOrder', toNumber(e.target.value) ?? 0)}
+            />
+            <Input
+              label="Trial period (days)"
+              type="number"
+              value={state.trialPeriodDays ?? 0}
+              onChange={(e) => set('trialPeriodDays', toNumber(e.target.value))}
+              description="0 = no trial"
+            />
+            <div className="md:col-span-2">
+              <Checkbox
+                label="Active"
+                description="Inactive plans are hidden from checkout but preserved for history."
+                checked={!!state.isActive}
+                onChange={(e) => set('isActive', e.target.checked)}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Lemon Squeezy</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-2">
-          <Input
-            label="Product ID"
-            value={state.lemonSqueezyProductId ?? ''}
-            onChange={(e) => set('lemonSqueezyProductId', e.target.value || null)}
-          />
-          <Input
-            label="Variant ID (unique)"
-            value={state.lemonSqueezyVariantId ?? ''}
-            onChange={(e) => set('lemonSqueezyVariantId', e.target.value || null)}
-          />
-        </CardContent>
-      </Card>
+      {isFree && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Free Plan Defaults</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4 md:grid-cols-2">
+            <Input
+              label="Display name"
+              value={state.displayName ?? ''}
+              onChange={(e) => set('displayName', e.target.value)}
+              required
+            />
+            <Input
+              label="Description"
+              value={state.description ?? ''}
+              onChange={(e) => set('description', e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground md:col-span-2">
+              These limits and feature flags apply to every user without an active paid
+              subscription. Updates take effect within ~60 seconds.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {!isFree && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Lemon Squeezy</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4 md:grid-cols-2">
+            <Input
+              label="Product ID"
+              value={state.lemonSqueezyProductId ?? ''}
+              onChange={(e) => set('lemonSqueezyProductId', e.target.value || null)}
+            />
+            <Input
+              label="Variant ID (unique)"
+              value={state.lemonSqueezyVariantId ?? ''}
+              onChange={(e) => set('lemonSqueezyVariantId', e.target.value || null)}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>

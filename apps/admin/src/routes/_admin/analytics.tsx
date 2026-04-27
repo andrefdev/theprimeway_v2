@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { useMemo } from 'react'
 import {
   Card,
   CardContent,
@@ -6,15 +7,11 @@ import {
   CardHeader,
   CardTitle,
   Skeleton,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
 } from '@repo/ui'
 import { Users, Activity, CreditCard, TrendingUp } from 'lucide-react'
+import type { ColumnDef } from '@tanstack/react-table'
 import { useAnalyticsSummary } from '@/features/analytics/queries'
+import { DataTable } from '@/components/data-table'
 
 function Kpi({
   label,
@@ -41,8 +38,65 @@ function Kpi({
   )
 }
 
+type ByPlanRow = { planId: string | null; planName: string; displayName: string; count: number }
+type ByStatusRow = { status: string; count: number }
+type OverrideRow = { featureKey: string; enabled: number; disabled: number }
+
 function AnalyticsPage() {
   const { data, isLoading } = useAnalyticsSummary()
+
+  const planCols = useMemo<ColumnDef<ByPlanRow>[]>(
+    () => [
+      {
+        accessorKey: 'displayName',
+        header: 'Plan',
+        cell: ({ row }) => <span className="font-medium">{row.original.displayName}</span>,
+      },
+      {
+        accessorKey: 'count',
+        header: () => <span className="block text-right">Count</span>,
+        cell: ({ row }) => <span className="block text-right">{row.original.count}</span>,
+      },
+    ],
+    [],
+  )
+
+  const statusCols = useMemo<ColumnDef<ByStatusRow>[]>(
+    () => [
+      {
+        accessorKey: 'status',
+        header: 'Status',
+        cell: ({ row }) => <span className="font-medium capitalize">{row.original.status}</span>,
+      },
+      {
+        accessorKey: 'count',
+        header: () => <span className="block text-right">Count</span>,
+        cell: ({ row }) => <span className="block text-right">{row.original.count}</span>,
+      },
+    ],
+    [],
+  )
+
+  const overrideCols = useMemo<ColumnDef<OverrideRow>[]>(
+    () => [
+      {
+        accessorKey: 'featureKey',
+        header: 'Feature',
+        cell: ({ row }) => <span className="font-mono text-sm">{row.original.featureKey}</span>,
+      },
+      {
+        accessorKey: 'enabled',
+        header: () => <span className="block text-right">Enabled</span>,
+        cell: ({ row }) => <span className="block text-right">{row.original.enabled}</span>,
+      },
+      {
+        accessorKey: 'disabled',
+        header: () => <span className="block text-right">Disabled</span>,
+        cell: ({ row }) => <span className="block text-right">{row.original.disabled}</span>,
+      },
+    ],
+    [],
+  )
 
   if (isLoading || !data) {
     return (
@@ -89,30 +143,13 @@ function AnalyticsPage() {
             <CardDescription>Distribution across plans</CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Plan</TableHead>
-                  <TableHead className="text-right">Count</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {subscriptions.byPlan.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={2} className="text-center text-muted-foreground">
-                      No subscriptions
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  subscriptions.byPlan.map((p) => (
-                    <TableRow key={p.planId ?? 'none'}>
-                      <TableCell className="font-medium">{p.displayName}</TableCell>
-                      <TableCell className="text-right">{p.count}</TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+            <DataTable
+              columns={planCols}
+              data={subscriptions.byPlan}
+              hideSearch
+              hidePagination
+              empty="No subscriptions"
+            />
           </CardContent>
         </Card>
 
@@ -122,30 +159,13 @@ function AnalyticsPage() {
             <CardDescription>Active / trialing / canceled</CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Count</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {subscriptions.byStatus.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={2} className="text-center text-muted-foreground">
-                      No data
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  subscriptions.byStatus.map((s) => (
-                    <TableRow key={s.status}>
-                      <TableCell className="font-medium capitalize">{s.status}</TableCell>
-                      <TableCell className="text-right">{s.count}</TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+            <DataTable
+              columns={statusCols}
+              data={subscriptions.byStatus}
+              hideSearch
+              hidePagination
+              empty="No data"
+            />
           </CardContent>
         </Card>
       </div>
@@ -186,32 +206,13 @@ function AnalyticsPage() {
           <CardDescription>Manual toggles per feature</CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Feature</TableHead>
-                <TableHead className="text-right">Enabled</TableHead>
-                <TableHead className="text-right">Disabled</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {featureOverrides.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={3} className="text-center text-muted-foreground">
-                    No overrides
-                  </TableCell>
-                </TableRow>
-              ) : (
-                featureOverrides.map((f) => (
-                  <TableRow key={f.featureKey}>
-                    <TableCell className="font-mono text-sm">{f.featureKey}</TableCell>
-                    <TableCell className="text-right">{f.enabled}</TableCell>
-                    <TableCell className="text-right">{f.disabled}</TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+          <DataTable
+            columns={overrideCols}
+            data={featureOverrides}
+            searchPlaceholder="Filter features..."
+            pageSize={10}
+            empty="No overrides"
+          />
         </CardContent>
       </Card>
     </div>

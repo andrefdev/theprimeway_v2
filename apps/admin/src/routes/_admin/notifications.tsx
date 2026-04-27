@@ -7,14 +7,17 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  Checkbox,
   Input,
   Textarea,
   Skeleton,
+  Badge,
 } from '@repo/ui'
 import { toast } from 'sonner'
+import type { ColumnDef } from '@tanstack/react-table'
+import type { RowSelectionState } from '@tanstack/react-table'
 import { useUsers } from '@/features/users/queries'
 import { useSendPush } from '@/features/notifications/queries'
+import { DataTable } from '@/components/data-table'
 
 type Target = 'all' | 'selected'
 
@@ -31,17 +34,18 @@ function NotificationsPage() {
   const [url, setUrl] = useState('')
   const [image, setImage] = useState('')
   const [target, setTarget] = useState<Target>('all')
-  const [page, setPage] = useState(1)
-  const [selected, setSelected] = useState<Record<string, AdminUserRow>>({})
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
 
-  const usersQuery = useUsers(page, 20)
+  const usersQuery = useUsers(1, 100)
   const sendPush = useSendPush()
 
   const users: AdminUserRow[] = usersQuery.data?.data ?? []
-  const total: number = usersQuery.data?.total ?? 0
-  const pageCount = Math.max(1, Math.ceil(total / 20))
+  const total: number = usersQuery.data?.total ?? users.length
 
-  const selectedIds = useMemo(() => Object.keys(selected), [selected])
+  const selectedIds = useMemo(
+    () => Object.keys(rowSelection).filter((id) => rowSelection[id]),
+    [rowSelection],
+  )
 
   const canSubmit =
     title.trim().length > 0 &&
@@ -49,14 +53,34 @@ function NotificationsPage() {
     (target === 'all' || selectedIds.length > 0) &&
     !sendPush.isPending
 
-  function toggleUser(user: AdminUserRow) {
-    setSelected((prev) => {
-      const next = { ...prev }
-      if (next[user.id]) delete next[user.id]
-      else next[user.id] = user
-      return next
-    })
-  }
+  const columns = useMemo<ColumnDef<AdminUserRow>[]>(
+    () => [
+      {
+        accessorFn: (u) => u.name ?? u.email ?? u.id,
+        id: 'name',
+        header: 'Name',
+        cell: ({ row }) => {
+          const u = row.original
+          return (
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium">{u.name ?? u.email ?? u.id}</p>
+              <p className="truncate text-xs text-muted-foreground">{u.email}</p>
+            </div>
+          )
+        },
+      },
+      {
+        accessorKey: 'role',
+        header: 'Role',
+        cell: ({ row }) => (
+          <Badge variant={row.original.role === 'ADMIN' ? 'primary' : 'outline'}>
+            {row.original.role.toLowerCase()}
+          </Badge>
+        ),
+      },
+    ],
+    [],
+  )
 
   async function handleSend() {
     if (!canSubmit) return
@@ -81,7 +105,7 @@ function NotificationsPage() {
       setBody('')
       setUrl('')
       setImage('')
-      setSelected({})
+      setRowSelection({})
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err)
       toast.error(`Failed to send: ${message}`)
@@ -185,78 +209,33 @@ function NotificationsPage() {
 
       {target === 'selected' && (
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0">
-            <div>
-              <CardTitle>Select recipients</CardTitle>
-              <CardDescription>
-                {selectedIds.length} selected · {total} total users
-              </CardDescription>
-            </div>
+          <CardHeader>
+            <CardTitle>Select recipients</CardTitle>
+            <CardDescription>
+              {selectedIds.length} selected · {total} total users
+            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="max-h-96 overflow-y-auto rounded-md border">
-              {usersQuery.isLoading ? (
-                <div className="space-y-2 p-3">
-                  {[...Array(5)].map((_, i) => (
-                    <Skeleton key={i} className="h-10 w-full" />
-                  ))}
-                </div>
-              ) : users.length === 0 ? (
-                <p className="p-4 text-sm text-muted-foreground">No users found.</p>
-              ) : (
-                <ul className="divide-y">
-                  {users.map((u) => {
-                    const checked = !!selected[u.id]
-                    return (
-                      <li key={u.id}>
-                        <label className="flex cursor-pointer items-center gap-3 p-3 hover:bg-muted/40">
-                          <Checkbox
-                            checked={checked}
-                            onChange={() => toggleUser(u)}
-                          />
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-medium">
-                              {u.name ?? u.email ?? u.id}
-                            </p>
-                            <p className="truncate text-xs text-muted-foreground">{u.email}</p>
-                          </div>
-                          {u.role === 'ADMIN' && (
-                            <span className="rounded-full bg-secondary px-2 py-1 text-xs font-medium">
-                              admin
-                            </span>
-                          )}
-                        </label>
-                      </li>
-                    )
-                  })}
-                </ul>
-              )}
-            </div>
-
-            {pageCount > 1 && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">
-                  Page {page} of {pageCount}
-                </span>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={page === 1}
-                    onClick={() => setPage(Math.max(1, page - 1))}
-                  >
-                    Previous
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={page === pageCount}
-                    onClick={() => setPage(Math.min(pageCount, page + 1))}
-                  >
-                    Next
-                  </Button>
-                </div>
+          <CardContent>
+            {usersQuery.isLoading ? (
+              <div className="space-y-2">
+                {[...Array(5)].map((_, i) => (
+                  <Skeleton key={i} className="h-10 w-full" />
+                ))}
               </div>
+            ) : (
+              <DataTable
+                columns={columns}
+                data={users}
+                searchPlaceholder="Search by name or email..."
+                pageSize={10}
+                empty="No users found"
+                enableRowSelection
+                rowSelection={rowSelection}
+                onRowSelectionChange={setRowSelection}
+                getRowId={(u) => u.id}
+                stickyHeader
+                maxHeight="28rem"
+              />
             )}
           </CardContent>
         </Card>

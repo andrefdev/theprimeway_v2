@@ -4,7 +4,7 @@ import type { AppEnv } from '../types/env'
 import { authMiddleware } from '../middleware/auth'
 import { featuresRepo } from '../repositories/features.repo'
 import { plansRepo, type PlanRow } from '../repositories/plans.repo'
-import { bustFeatureCache } from '../services/features.service'
+import { bustAllFeatureCaches, bustFeatureCache } from '../services/features.service'
 import { FEATURES } from '@repo/shared/constants'
 import { sendPushSchema } from '@repo/shared/validators'
 import { notificationsService } from '../services/notifications.service'
@@ -299,6 +299,23 @@ adminRoutes.openapi(listPlansRoute, async (c) => {
   return c.json({ data: plans.map(serializePlan) }, 200)
 })
 
+// GET /plans/free — get (or auto-create) the global free plan defaults
+const getFreePlanRoute = createRoute({
+  method: 'get',
+  path: '/plans/free',
+  tags: ['Admin'],
+  summary: 'Get or initialize the global free plan defaults',
+  security: [{ Bearer: [] }],
+  responses: {
+    200: { content: { 'application/json': { schema: z.object({ data: z.any() }) } }, description: 'Free plan' },
+  },
+})
+
+adminRoutes.openapi(getFreePlanRoute, async (c) => {
+  const free = await plansRepo.ensureFreePlan()
+  return c.json({ data: serializePlan(free) }, 200)
+})
+
 // GET /plans/:id
 const getPlanRoute = createRoute({
   method: 'get',
@@ -371,8 +388,18 @@ adminRoutes.openapi(updatePlanRoute, async (c) => {
   const body = c.req.valid('json')
   const existing = await plansRepo.findById(id)
   if (!existing) return c.json({ error: 'Plan not found' }, 404)
+
+  const isFree = existing.name === 'free'
+  if (isFree && body.name && body.name !== 'free') {
+    return c.json({ error: 'Cannot rename the global free plan.' }, 409)
+  }
+  if (isFree && body.isActive === false) {
+    return c.json({ error: 'Free plan cannot be deactivated.' }, 409)
+  }
+
   try {
     const updated = await plansRepo.update(id, body as any)
+    if (isFree) bustAllFeatureCaches()
     return c.json({ data: serializePlan(updated) }, 200)
   } catch (e: any) {
     if (e?.code === 'P2002') return c.json({ error: 'Duplicate lemonSqueezyVariantId' }, 409)
@@ -402,6 +429,9 @@ adminRoutes.openapi(deletePlanRoute, async (c) => {
   const { hard } = c.req.valid('query')
   const existing = await plansRepo.findById(id)
   if (!existing) return c.json({ error: 'Plan not found' }, 404)
+  if (existing.name === 'free') {
+    return c.json({ error: 'Free plan cannot be deleted; edit it to change defaults.' }, 409)
+  }
 
   if (hard) {
     const inUse = await plansRepo.countActiveSubscriptions(id)

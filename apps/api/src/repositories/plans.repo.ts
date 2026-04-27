@@ -44,6 +44,44 @@ class PlansRepository {
     return prisma.subscriptionPlan.findUnique({ where: { id }, select: adminSelect })
   }
 
+  async findByName(name: string) {
+    return prisma.subscriptionPlan.findFirst({ where: { name }, select: adminSelect })
+  }
+
+  /**
+   * Ensure a global "free" plan exists. Used as the global defaults for users
+   * without an active subscription. Idempotent.
+   */
+  async ensureFreePlan() {
+    const existing = await this.findByName('free')
+    if (existing) return existing
+    return prisma.subscriptionPlan.create({
+      data: {
+        name: 'free',
+        displayName: 'Free',
+        description: 'Default plan for users without a paid subscription.',
+        price: 0,
+        currency: 'USD',
+        billingInterval: 'lifetime',
+        trialPeriodDays: 0,
+        maxHabits: 5,
+        maxGoals: 3,
+        maxTasks: 20,
+        maxPomodoroSessionsDaily: 10,
+        maxBrainEntries: 20,
+        hasAiAssistant: false,
+        hasBrainModule: false,
+        hasAdvancedAnalytics: false,
+        hasCustomThemeCreation: false,
+        hasExportData: false,
+        hasPrioritySupport: false,
+        isActive: true,
+        sortOrder: -1,
+      },
+      select: adminSelect,
+    })
+  }
+
   async create(data: Prisma.SubscriptionPlanCreateInput) {
     return prisma.subscriptionPlan.create({ data, select: adminSelect })
   }

@@ -70,7 +70,7 @@ class CalendarService {
     if (!clientId || !redirectUri) return null
 
     const scopes = [
-      'https://www.googleapis.com/auth/calendar.readonly',
+      'https://www.googleapis.com/auth/calendar',
       'https://www.googleapis.com/auth/calendar.events',
     ].join(' ')
 

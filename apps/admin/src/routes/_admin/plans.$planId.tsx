@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, Link } from '@tanstack/react-router'
 import { PlanForm } from '@/features/plans/plan-form'
 import { usePlan, useUpdatePlan, useDeletePlan } from '@/features/plans/queries'
-import { Button, Skeleton } from '@repo/ui'
+import { Badge, Button, Skeleton } from '@repo/ui'
 import { ArrowLeft } from 'lucide-react'
 
 function EditPlanPage() {
@@ -42,28 +42,33 @@ function EditPlanPage() {
             </Button>
           </Link>
           <div>
-            <h1 className="text-3xl font-bold">{plan.displayName}</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-3xl font-bold">{plan.displayName}</h1>
+              {plan.name === 'free' && <Badge variant="primary">System</Badge>}
+            </div>
             <p className="font-mono text-sm text-muted-foreground">{plan.id}</p>
           </div>
         </div>
-        <Button
-          variant="outline"
-          onClick={() => {
-            const hard = !plan.isActive
-            const msg = hard
-              ? `Permanently delete "${plan.displayName}"? Cannot be undone.`
-              : `Deactivate "${plan.displayName}"? Hidden from checkout; existing subscribers unaffected.`
-            if (confirm(msg)) {
-              del.mutate(
-                { id: plan.id, hard },
-                { onSuccess: () => navigate({ to: '/plans' }) },
-              )
-            }
-          }}
-          disabled={del.isPending}
-        >
-          {plan.isActive ? 'Deactivate' : 'Delete'}
-        </Button>
+        {plan.name !== 'free' && (
+          <Button
+            variant="outline"
+            onClick={() => {
+              const hard = !plan.isActive
+              const msg = hard
+                ? `Permanently delete "${plan.displayName}"? Cannot be undone.`
+                : `Deactivate "${plan.displayName}"? Hidden from checkout; existing subscribers unaffected.`
+              if (confirm(msg)) {
+                del.mutate(
+                  { id: plan.id, hard },
+                  { onSuccess: () => navigate({ to: '/plans' }) },
+                )
+              }
+            }}
+            disabled={del.isPending}
+          >
+            {plan.isActive ? 'Deactivate' : 'Delete'}
+          </Button>
+        )}
       </div>
 
       <PlanForm

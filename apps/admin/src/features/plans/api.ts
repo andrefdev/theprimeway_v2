@@ -65,3 +65,9 @@ export async function updatePlan(id: string, input: Partial<PlanInput>): Promise
 export async function deletePlan(id: string, hard = false): Promise<void> {
   await api.delete(`/admin/plans/${id}`, { params: { hard: hard ? 'true' : undefined } })
 }
+
+/** Get (or auto-create) the global free plan defaults. */
+export async function getFreePlan(): Promise<Plan> {
+  const { data } = await api.get<{ data: Plan }>('/admin/plans/free')
+  return data.data
+}

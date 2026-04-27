@@ -5,6 +5,7 @@ import {
   createPlan,
   updatePlan,
   deletePlan,
+  getFreePlan,
   type PlanInput,
 } from './api'
 import { queryClient } from '@/lib/query-client'
@@ -54,6 +55,15 @@ export function useUpdatePlan(id: string) {
       queryClient.invalidateQueries({ queryKey: plansQueryKeys.all })
     },
   })
+}
+
+export function useFreePlan() {
+  return useQuery(
+    queryOptions({
+      queryKey: [...plansQueryKeys.all, 'free'] as const,
+      queryFn: getFreePlan,
+    }),
+  )
 }
 
 export function useDeletePlan() {
