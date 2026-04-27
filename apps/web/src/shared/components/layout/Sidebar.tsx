@@ -16,8 +16,6 @@ import {
   useSidebar,
 } from '@/shared/components/ui/sidebar'
 import { PanelLeftClose, HelpCircle } from 'lucide-react'
-import { useFeatures } from '@/features/feature-flags/hooks'
-import { FEATURES } from '@repo/shared/constants'
 import type { FeatureKey } from '@repo/shared/constants'
 
 interface NavItem {
@@ -76,21 +74,13 @@ function useDirectionItems() {
 
 function useKnowledgeItems() {
   const { t } = useTranslation('common')
-  const { features } = useFeatures()
-
-  const items: NavItem[] = [
+  return [
     {
       title: t('navBrain', { defaultValue: 'Brain' }),
       to: '/brain',
       icon: sidebarIcons.brain(undefined, { size: 20 }),
-      requiredFeature: FEATURES.BRAIN_MODULE,
     },
-  ]
-
-  return items.filter((item) => {
-    if (!item.requiredFeature) return true
-    return features?.[item.requiredFeature]?.enabled ?? false
-  })
+  ] satisfies NavItem[]
 }
 
 function useAssistItems() {
