@@ -4,11 +4,12 @@
 
 services:
   # Database migration service (runs once and exits)
-  # Depends on environment: DATABASE_URL must be set in .env
+  # Uses DIRECT_DATABASE_URL (non-pooled) so prisma can hold the advisory
+  # lock during `migrate deploy`. Falls back to DATABASE_URL if unset.
   migrate:
     image: ghcr.io/${DOCKER_REGISTRY}/theprimeway-api:latest
     command: >-
-      sh -c "npx prisma migrate deploy"
+      sh -c 'DATABASE_URL="$${DIRECT_DATABASE_URL:-$$DATABASE_URL}" npx prisma migrate deploy'
     env_file: .env
     environment:
       NODE_ENV: production
