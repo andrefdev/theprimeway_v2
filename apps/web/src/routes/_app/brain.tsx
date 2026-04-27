@@ -8,12 +8,26 @@ import { useBrainFeed } from '@/features/brain/queries'
 import { BrainCaptureCard } from '@/features/brain/components/BrainCaptureCard'
 import { BrainEntryCard } from '@/features/brain/components/BrainEntryCard'
 import { BrainEntryDetail } from '@/features/brain/components/BrainEntryDetail'
+import { FeatureGate } from '@/features/feature-flags/FeatureGate'
+import { UpgradePrompt } from '@/features/subscriptions/components/UpgradePrompt'
+import { FEATURES } from '@repo/shared/constants'
 
 export const Route = createFileRoute('/_app/brain')({
   component: BrainPage,
 })
 
 function BrainPage() {
+  return (
+    <FeatureGate
+      feature={FEATURES.BRAIN_MODULE}
+      fallback={<UpgradePrompt featureKey={FEATURES.BRAIN_MODULE} />}
+    >
+      <BrainPageContent />
+    </FeatureGate>
+  )
+}
+
+function BrainPageContent() {
   const [search, setSearch] = useState('')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const { data: entries = [], isLoading } = useBrainFeed({ search: search.trim() || undefined })
