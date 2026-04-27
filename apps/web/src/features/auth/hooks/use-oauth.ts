@@ -8,18 +8,18 @@ declare global {
   interface Window {
     google?: {
       accounts: {
-        id: {
-          initialize: (config: Record<string, unknown>) => void
-          prompt: (
-            cb?: (notification: {
-              isNotDisplayed: () => boolean
-              isSkippedMoment: () => boolean
-              isDismissedMoment: () => boolean
-              getNotDisplayedReason?: () => string
-              getSkippedReason?: () => string
-              getDismissedReason?: () => string
-            }) => void,
-          ) => void
+        oauth2: {
+          initTokenClient: (config: {
+            client_id: string
+            scope: string
+            prompt?: string
+            callback: (response: {
+              access_token?: string
+              error?: string
+              error_description?: string
+            }) => void
+            error_callback?: (err: { type?: string; message?: string }) => void
+          }) => { requestAccessToken: (overrides?: { prompt?: string }) => void }
         }
       }
     }
@@ -72,47 +72,40 @@ export function useOAuth() {
     try {
       await loadScript('https://accounts.google.com/gsi/client')
 
-      const credential = await new Promise<string>((resolve, reject) => {
+      const accessToken = await new Promise<string>((resolve, reject) => {
         let settled = false
         const settle = (fn: () => void) => {
           if (settled) return
           settled = true
           fn()
         }
-        // Hard timeout: release the button even if Google never reports back
         const timeout = setTimeout(() => {
           settle(() => reject(new Error('Google login timed out')))
-        }, 60_000)
+        }, 120_000)
 
-        window.google!.accounts.id.initialize({
+        const client = window.google!.accounts.oauth2.initTokenClient({
           client_id: GOOGLE_CLIENT_ID,
-          callback: (response: { credential?: string }) => {
+          scope: 'openid email profile',
+          prompt: 'select_account',
+          callback: (response) => {
             clearTimeout(timeout)
-            if (response.credential) {
-              settle(() => resolve(response.credential!))
+            if (response.access_token) {
+              settle(() => resolve(response.access_token!))
             } else {
-              settle(() => reject(new Error('No credential returned')))
+              settle(() => reject(new Error(response.error_description || response.error || 'No access token')))
             }
           },
-        })
-        window.google!.accounts.id.prompt((notification) => {
-          // Reject on any terminal moment that is NOT a successful credential —
-          // otherwise the loading state hangs forever when the user dismisses.
-          if (
-            notification.isNotDisplayed() ||
-            notification.isSkippedMoment() ||
-            notification.isDismissedMoment()
-          ) {
+          error_callback: (err) => {
             clearTimeout(timeout)
-            settle(() => reject(new Error('Google login cancelled')))
-          }
+            settle(() => reject(new Error(err.message || err.type || 'Google login cancelled')))
+          },
         })
+        client.requestAccessToken()
       })
 
       const result = await authApi.oauth({
         provider: 'google',
-        accessToken: credential,
-        idToken: credential,
+        accessToken,
       })
 
       loginSuccess(result.token, result.refreshToken, result.user)
