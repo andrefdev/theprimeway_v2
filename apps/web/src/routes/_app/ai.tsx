@@ -5,6 +5,7 @@ import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
 import { Button } from '@/shared/components/ui/button'
 import { toast } from 'sonner'
+import { SquareIcon } from 'lucide-react'
 import { ChatInput } from '@/features/ai/components/ChatInput'
 import { ToolCallCard } from '@/features/ai/components/ToolCallCard'
 import { Markdown } from '@/features/ai/components/Markdown'
@@ -372,8 +373,14 @@ function AiPage() {
               />
             </div>
             {isLoading && (
-              <Button variant="outline" size="sm" onClick={stop}>
-                {t('stop', { defaultValue: 'Stop' })}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={stop}
+                aria-label={t('stop', { defaultValue: 'Stop' })}
+                className="h-10 w-10 rounded-xl p-0"
+              >
+                <SquareIcon className="size-4 fill-current" />
               </Button>
             )}
           </div>

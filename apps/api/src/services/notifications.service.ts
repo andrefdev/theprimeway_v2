@@ -352,11 +352,25 @@ class NotificationsService {
     return { success_count: res.successCount, failure_count: res.failureCount }
   }
 
+  // Per-user TTL so /inbox doesn't trigger a full derived-notification sync
+  // on every poll. The sync is heavy (calendar API + many upserts).
+  private lastSyncAt = new Map<string, number>()
+  private readonly syncTtlMs = 60_000
+
   async listInbox(
     userId: string,
     opts: { includeRead?: boolean; includeDismissed?: boolean; limit?: number; offset?: number },
   ) {
-    await this.syncPersistedInbox(userId)
+    const last = this.lastSyncAt.get(userId) ?? 0
+    if (Date.now() - last > this.syncTtlMs) {
+      this.lastSyncAt.set(userId, Date.now())
+      // Fire-and-forget so the response isn't blocked on calendar/upserts.
+      void this.syncPersistedInbox(userId).catch((err) => {
+        console.error('[notifications] syncPersistedInbox failed', err)
+        Sentry.captureException(err, { tags: { area: 'notifications_sync' } })
+        this.lastSyncAt.delete(userId)
+      })
+    }
     return notificationsRepo.listNotifications(userId, {
       includeRead: opts.includeRead ?? true,
       includeDismissed: opts.includeDismissed ?? false,
@@ -476,6 +490,11 @@ class NotificationsService {
     }
   }
 
+  private async resolveAdminTargetUserIds(userIds?: string[]): Promise<string[]> {
+    if (userIds && userIds.length > 0) return userIds
+    return notificationsRepo.findAllUserIds()
+  }
+
   async sendPush(body: {
     userIds?: string[]
     title: string
@@ -496,11 +515,36 @@ class NotificationsService {
 
     const devices = await notificationsRepo.findActiveDevices(whereClause)
 
+    // Persist admin-sent message to each target user's inbox so it appears in
+    // the bell even if push is disabled or no device is registered.
+    const targetUserIds = await this.resolveAdminTargetUserIds(body.userIds)
+    const inboxEntityId = `admin_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+    await Promise.all(
+      targetUserIds.map((userId) =>
+        notificationsRepo
+          .upsertNotification({
+            userId,
+            type: 'admin_message',
+            entityId: inboxEntityId,
+            title: body.title,
+            message: body.body,
+            href: body.url ?? null,
+            urgency: null,
+            data: body.data,
+          })
+          .catch((err) => {
+            console.error('[notifications] admin inbox persist failed', err)
+            Sentry.captureException(err, { tags: { area: 'admin_inbox_persist' } })
+          }),
+      ),
+    )
+
     if (devices.length === 0) {
       return {
         message: 'No devices found',
         success_count: 0,
         failure_count: 0,
+        inbox_persisted: targetUserIds.length,
       }
     }
 

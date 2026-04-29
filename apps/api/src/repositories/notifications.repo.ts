@@ -206,6 +206,11 @@ class NotificationsRepository {
     return true
   }
 
+  async findAllUserIds(): Promise<string[]> {
+    const rows = await prisma.user.findMany({ select: { id: true } })
+    return rows.map((r) => r.id)
+  }
+
   async pruneStale(
     userId: string,
     opts: { keepTypes: string[]; keepEntityIds: string[] },
