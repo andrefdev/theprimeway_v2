@@ -77,7 +77,6 @@ chatRoutes.post('/stream', async (c) => {
   const body = await c.req.json()
   const result = await chatService.chatStream(userId, {
     messages: body.messages,
-    locale: body.locale,
   })
 
   return result.toUIMessageStreamResponse()

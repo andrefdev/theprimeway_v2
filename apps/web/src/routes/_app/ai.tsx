@@ -31,7 +31,7 @@ export const Route = createFileRoute('/_app/ai')({
 })
 
 function AiPage() {
-  const { t, i18n } = useTranslation('ai')
+  const { t } = useTranslation('ai')
   const token = useAuthStore((s) => s.token)
   const qc = useQueryClient()
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -41,7 +41,6 @@ function AiPage() {
     transport: new DefaultChatTransport({
       api: '/api/chat/stream',
       headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-      body: { locale: i18n.language },
     }),
     onError: (err) => {
       const status = (err as any)?.status

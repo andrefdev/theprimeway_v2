@@ -13,6 +13,8 @@ import { enforceLimit } from '../lib/limits'
 import { FEATURES } from '@repo/shared/constants'
 import { generateObject } from 'ai'
 import { taskModel } from '../lib/ai-models'
+import { getAIContext } from '../lib/ai-context'
+import { buildBasePreamble } from '../lib/ai-prompts'
 import { z } from 'zod'
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -426,9 +428,12 @@ class GoalsService {
       ),
     })
 
+    const ctx = await getAIContext(userId)
+
     const result = await generateObject({
       model: taskModel,
       schema: suggestionSchema,
+      system: buildBasePreamble(ctx),
       prompt: `You are a personal productivity coach. A user has the following ${goalLevel}:
 
 Title: "${parentGoal.title}"

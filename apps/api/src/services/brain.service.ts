@@ -145,6 +145,9 @@ class BrainService {
       const { generateObject } = await import('ai')
       const { z: zod } = await import('zod')
       const { taskModel } = await import('../lib/ai-models')
+      const { getAIContext } = await import('../lib/ai-context')
+      const { buildBasePreamble } = await import('../lib/ai-prompts')
+      const ctx = await getAIContext(userId)
 
       const prompt = `You are an intelligent knowledge companion organizing a user's thought.
 
@@ -196,7 +199,7 @@ Produce structured output:
         sentiment: zod.enum(['positive', 'neutral', 'negative']).optional(),
       })
 
-      const result = await generateObject({ model: taskModel, schema, prompt })
+      const result = await generateObject({ model: taskModel, schema, prompt, system: buildBasePreamble(ctx) })
       const out = result.object
 
       // Resolve cross-links against real user data — drop anything we can't match.

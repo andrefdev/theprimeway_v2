@@ -3,6 +3,8 @@ import { prisma } from '../lib/prisma'
 import { generateObject, generateText, streamText, tool, stepCountIs, convertToModelMessages } from 'ai'
 import type { UIMessage } from 'ai'
 import { chatModel, taskModel } from '../lib/ai-models'
+import { getAIContext } from '../lib/ai-context'
+import { buildBasePreamble } from '../lib/ai-prompts'
 import { z } from 'zod'
 import { calendarService } from './calendar.service'
 import { habitsService } from './habits.service'
@@ -54,8 +56,9 @@ class ChatService {
     return userSettings?.aiDataSharing ?? true
   }
 
-  async buildSystemPrompt(userId: string, locale: string) {
-    const [openTasks, activeHabits] = await Promise.all([
+  async buildSystemPrompt(userId: string) {
+    const [ctx, openTasks, activeHabits] = await Promise.all([
+      getAIContext(userId),
       chatRepo.findOpenTasks(userId, 20),
       chatRepo.findActiveHabits(userId),
     ])
@@ -68,11 +71,10 @@ class ChatService {
       .map((h: any) => `- [${h.id}] "${h.name}" (frequency: ${h.frequencyType || 'daily'}, target: ${h.targetFrequency || 1})`)
       .join('\n')
 
-    return `You are a productivity assistant for ThePrimeWay, a personal productivity app.
-You help the user manage their tasks and habits. Be concise, actionable, and encouraging.
-Respond in ${locale === 'es' ? 'Spanish' : 'English'}.
+    return `${buildBasePreamble(ctx)}
 
-Current date: ${new Date().toISOString().split('T')[0]}
+ROLE
+You are a productivity assistant for ThePrimeWay. You help the user manage their tasks and habits. Be concise, actionable, and encouraging.
 
 User's open tasks:
 ${taskContext || '(no open tasks)'}
@@ -99,10 +101,9 @@ Workflow:
    */
   async chatStream(
     userId: string,
-    body: { messages: UIMessage[]; locale?: string },
+    body: { messages: UIMessage[] },
   ) {
-    const locale = body.locale || 'en'
-    const system = await this.buildSystemPrompt(userId, locale)
+    const system = await this.buildSystemPrompt(userId)
 
     return streamText({
       model: chatModel,
@@ -389,12 +390,10 @@ Workflow:
 
   async chat(
     userId: string,
-    body: { messages: { role: 'user' | 'assistant'; content: string }[]; locale?: string },
+    body: { messages: { role: 'user' | 'assistant'; content: string }[] },
   ) {
-    const locale = body.locale || 'en'
-
-    // Fetch user context for the system prompt
-    const [openTasks, activeHabits] = await Promise.all([
+    const [ctx, openTasks, activeHabits] = await Promise.all([
+      getAIContext(userId),
       chatRepo.findOpenTasks(userId, 20),
       chatRepo.findActiveHabits(userId),
     ])
@@ -407,11 +406,10 @@ Workflow:
       .map((h: any) => `- [${h.id}] "${h.name}" (frequency: ${h.frequencyType || 'daily'}, target: ${h.targetFrequency || 1})`)
       .join('\n')
 
-    const systemPrompt = `You are a productivity assistant for ThePrimeWay, a personal productivity app.
-You help the user manage their tasks and habits. Be concise, actionable, and encouraging.
-Respond in ${locale === 'es' ? 'Spanish' : 'English'}.
+    const systemPrompt = `${buildBasePreamble(ctx)}
 
-Current date: ${new Date().toISOString().split('T')[0]}
+ROLE
+You are a productivity assistant for ThePrimeWay. You help the user manage their tasks and habits. Be concise, actionable, and encouraging.
 
 User's open tasks:
 ${taskContext || '(no open tasks)'}
@@ -566,7 +564,8 @@ Do NOT invent task or habit IDs — only reference IDs from the context above or
     weekEnd.setDate(weekEnd.getDate() + 6)
     weekEnd.setHours(23, 59, 59, 999)
 
-    const [quarterlyGoals, habits, openTasks, workingHours] = await Promise.all([
+    const [ctx, quarterlyGoals, habits, openTasks, workingHours] = await Promise.all([
+      getAIContext(userId),
       chatRepo.findActiveGoalsByUser(userId),
       chatRepo.findActiveHabits(userId),
       chatRepo.findOpenTasks(userId, 100),
@@ -617,6 +616,7 @@ Do NOT invent task or habit IDs — only reference IDs from the context above or
         }),
         rationale: z.string(),
       }),
+      system: buildBasePreamble(ctx),
       prompt: `
 Create a weekly plan for ${weekStartDate} to ${weekEnd.toISOString().split('T')[0]}.
 
