@@ -1,10 +1,12 @@
-import { useQuery } from '@tanstack/react-query'
+import { useEffect } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   notificationQueries,
   useDismissNotification,
   useMarkAllNotificationsRead,
   useMarkNotificationRead,
 } from '../queries'
+import { subscribeForegroundMessages } from '../push'
 import type { InboxNotification } from '../api'
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover'
 import { Button } from '@/shared/components/ui/button'
@@ -43,7 +45,28 @@ function relativeTime(iso: string, locale: string): string {
 export function NotificationBell() {
   const { t, i18n } = useTranslation('common')
   const navigate = useNavigate()
+  const qc = useQueryClient()
   const { data, isLoading } = useQuery(notificationQueries.inbox({ includeRead: true }))
+
+  // Real-time: when FCM delivers a foreground message (admin push, etc.)
+  // refetch the inbox so the new notification appears without a reload.
+  useEffect(() => {
+    const unsubscribe = subscribeForegroundMessages(() => {
+      qc.invalidateQueries({ queryKey: notificationQueries.all() })
+    })
+    return () => unsubscribe()
+  }, [qc])
+
+  // Also refetch when tab regains focus (e.g. after FCM background notification)
+  useEffect(() => {
+    function onVisible() {
+      if (document.visibilityState === 'visible') {
+        qc.invalidateQueries({ queryKey: notificationQueries.all() })
+      }
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
+  }, [qc])
   const markRead = useMarkNotificationRead()
   const dismiss = useDismissNotification()
   const markAllRead = useMarkAllNotificationsRead()

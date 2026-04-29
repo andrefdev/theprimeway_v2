@@ -78,20 +78,38 @@ export function useCalendarItems(dateRange: { from: string; to: string }) {
       })
     }
 
-    // Google Calendar events
-    const events = (eventsQuery.data?.data ?? []) as CalendarEvent[]
+    // Google Calendar events. Backend currently returns Google's raw shape
+    // (start.dateTime / end.dateTime / summary / id), not the typed CalendarEvent
+    // shape — normalize defensively to handle both.
+    const events = (eventsQuery.data?.data ?? []) as Array<CalendarEvent | Record<string, any>>
     for (const event of events) {
-      const start = parseISO(event.startTime)
-      const end = parseISO(event.endTime)
+      const ev = event as any
+      const startStr: string | undefined =
+        ev.startTime ??
+        ev.start?.dateTime ??
+        (ev.start?.date ? `${ev.start.date}T00:00:00` : undefined)
+      const endStr: string | undefined =
+        ev.endTime ??
+        ev.end?.dateTime ??
+        (ev.end?.date ? `${ev.end.date}T23:59:59` : undefined)
+      if (!startStr || !endStr) continue
+
+      const start = parseISO(startStr)
+      const end = parseISO(endStr)
       if (isNaN(start.getTime())) continue
 
+      const id: string = ev.id ?? `${startStr}-${ev.summary ?? ev.title ?? 'event'}`
+      const title: string = ev.title ?? ev.summary ?? '(untitled)'
+      const isAllDay: boolean = ev.isAllDay ?? Boolean(ev.start?.date && !ev.start?.dateTime)
+      const color: string = ev.color ?? ev.calendarColor ?? 'purple'
+
       result.push({
-        id: `event-${event.id}`,
-        title: event.title,
+        id: `event-${id}`,
+        title,
         start,
         end,
-        isAllDay: event.isAllDay,
-        color: event.color ?? 'purple',
+        isAllDay,
+        color,
         type: 'event',
       })
     }
