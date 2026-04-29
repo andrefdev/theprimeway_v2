@@ -28,14 +28,25 @@ class CalendarRepository {
     return prisma.calendar.update({ where: { id }, data })
   }
 
-  async findAccountByProviderEmail(userId: string, provider: string, providerEmail: string) {
+  async findAccountByProviderEmail(userId: string, provider: string, email: string) {
     return prisma.calendarAccount.findFirst({
-      where: { userId, provider, providerEmail } as any,
+      where: { userId, provider, email },
     })
   }
 
   async updateAccount(id: string, data: Record<string, unknown>) {
-    return prisma.calendarAccount.update({ where: { id }, data })
+    const mapped: Record<string, unknown> = { ...data }
+    if ('tokenExpiresAt' in mapped) {
+      mapped.expiresAt = mapped.tokenExpiresAt
+      delete mapped.tokenExpiresAt
+    }
+    if ('providerEmail' in mapped) {
+      mapped.email = mapped.providerEmail
+      delete mapped.providerEmail
+    }
+    delete mapped.providerAccountId
+    delete mapped.displayName
+    return prisma.calendarAccount.update({ where: { id }, data: mapped })
   }
 
   async createAccount(data: {
@@ -48,7 +59,16 @@ class CalendarRepository {
     refreshToken: string | null
     tokenExpiresAt: Date
   }) {
-    return prisma.calendarAccount.create({ data: data as any })
+    return prisma.calendarAccount.create({
+      data: {
+        userId: data.userId,
+        provider: data.provider,
+        email: data.providerEmail,
+        accessToken: data.accessToken,
+        refreshToken: data.refreshToken,
+        expiresAt: data.tokenExpiresAt,
+      },
+    })
   }
 
   async upsertCalendar(
@@ -64,12 +84,24 @@ class CalendarRepository {
       isSelectedForSync: boolean
     },
   ) {
-    return prisma.calendar.upsert({
-      where: {
-        calendarAccountId_externalId: { calendarAccountId, externalId },
-      } as any,
-      update: updateData,
-      create: createData as any,
+    const existing = await prisma.calendar.findFirst({
+      where: { calendarAccountId, providerCalendarId: externalId },
+    })
+    if (existing) {
+      return prisma.calendar.update({
+        where: { id: existing.id },
+        data: { name: updateData.name, color: updateData.color ?? null },
+      })
+    }
+    return prisma.calendar.create({
+      data: {
+        calendarAccountId: createData.calendarAccountId,
+        providerCalendarId: createData.externalId,
+        name: createData.name,
+        color: createData.color,
+        isPrimary: createData.isPrimary,
+        isSelectedForSync: createData.isSelectedForSync,
+      },
     })
   }
 
