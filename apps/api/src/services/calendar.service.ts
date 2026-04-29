@@ -70,6 +70,9 @@ class CalendarService {
     if (!clientId || !redirectUri) return null
 
     const scopes = [
+      'openid',
+      'email',
+      'profile',
       'https://www.googleapis.com/auth/calendar',
       'https://www.googleapis.com/auth/calendar.events',
     ].join(' ')
@@ -113,20 +116,43 @@ class CalendarService {
       }
       console.log('[GOOGLE_CALLBACK] token exchange OK')
 
-      // Get user info from Google
+      // Get user info from Google. If userinfo scope wasn't granted, fall back
+      // to the calendar primary id (which is the user's email for Google).
+      let userInfo: { email?: string; name?: string } = {}
       const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
         headers: { Authorization: `Bearer ${tokens.access_token}` },
       })
-      if (!userInfoRes.ok) {
+      if (userInfoRes.ok) {
+        userInfo = (await userInfoRes.json()) as { email?: string; name?: string }
+        console.log('[GOOGLE_CALLBACK] userinfo OK', userInfo.email)
+      } else {
         const errText = await userInfoRes.text()
-        console.error('[GOOGLE_CALLBACK] userinfo failed:', errText)
-        return { error: 'userinfo_failed' as const, detail: errText }
+        console.warn('[GOOGLE_CALLBACK] userinfo failed, will fall back to primary calendar id:', errText)
       }
-      const userInfo = (await userInfoRes.json()) as { email?: string; name?: string }
+
       if (!userInfo.email) {
-        return { error: 'userinfo_no_email' as const, detail: 'Google userinfo response missing email' }
+        const primaryRes = await fetch(
+          'https://www.googleapis.com/calendar/v3/calendars/primary',
+          { headers: { Authorization: `Bearer ${tokens.access_token}` } },
+        )
+        if (primaryRes.ok) {
+          const primary = (await primaryRes.json()) as { id?: string; summary?: string }
+          if (primary.id) {
+            userInfo = { email: primary.id, name: primary.summary }
+            console.log('[GOOGLE_CALLBACK] derived email from primary calendar', primary.id)
+          }
+        } else {
+          const errText = await primaryRes.text()
+          console.error('[GOOGLE_CALLBACK] primary calendar fallback failed:', errText)
+        }
       }
-      console.log('[GOOGLE_CALLBACK] userinfo OK', userInfo.email)
+
+      if (!userInfo.email) {
+        return {
+          error: 'userinfo_no_email' as const,
+          detail: 'Could not determine Google account email from userinfo or primary calendar',
+        }
+      }
 
       // Upsert CalendarAccount
       const existingAccount = await calendarRepo.findAccountByProviderEmail(userId, 'google', userInfo.email)
