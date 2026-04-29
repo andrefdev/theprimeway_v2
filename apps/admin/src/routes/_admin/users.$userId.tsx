@@ -91,7 +91,9 @@ function UserDetailPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-muted-foreground">Current Plan</p>
-              <p className="text-lg font-semibold capitalize">{subscription?.planTier || 'free'}</p>
+              <p className="text-lg font-semibold capitalize">
+                {subscription?.planDisplayName || subscription?.planName || 'Free'}
+              </p>
             </div>
             <Badge variant="outline" className="capitalize">
               {subscription?.status || 'inactive'}

@@ -319,13 +319,15 @@ Workflow:
         }),
 
         createTimeBlock: tool({
-          description: 'Propose creating a calendar time block. Requires user approval.',
+          description:
+            'Propose creating a calendar time block in the user\'s connected Google Calendar. Requires user approval AND requires the user to have a Google Calendar connected (Settings → Integrations). If the user has not connected Google yet, ask them to connect before proposing this.',
           inputSchema: z.object({
             title: z.string(),
             date: z.string().describe('YYYY-MM-DD'),
             startTime: z.string().describe('HH:MM (24h)'),
             endTime: z.string().describe('HH:MM (24h)'),
             description: z.string().optional(),
+            timeZone: z.string().optional().describe('IANA timezone, e.g. America/Bogota. Defaults to user browser TZ.'),
           }),
         }),
 
@@ -335,6 +337,49 @@ Workflow:
             durationMinutes: z.number().describe('Session length in minutes'),
             taskId: z.string().optional().describe('Optional linked task'),
             taskTitle: z.string().optional().describe('For display'),
+          }),
+        }),
+
+        createHabitBlock: tool({
+          description:
+            'Propose creating a recurring calendar block for an existing habit (puts the habit on the calendar at a fixed time). Requires Google Calendar connected. Requires user approval.',
+          inputSchema: z.object({
+            habitId: z.string(),
+            habitName: z.string().describe('For display'),
+            startTime: z.string().describe('HH:MM (24h)'),
+            endTime: z.string().describe('HH:MM (24h)'),
+            frequencyType: z.string().describe('daily | weekly | etc.'),
+            weekDays: z.array(z.string()).optional().describe('For weekly: MO, TU, WE, TH, FR, SA, SU'),
+            description: z.string().optional(),
+          }),
+        }),
+
+        autoScheduleTask: tool({
+          description:
+            'Propose auto-scheduling a single task into the next available free slot on a given day. Requires user approval.',
+          inputSchema: z.object({
+            taskId: z.string(),
+            taskTitle: z.string().describe('For display'),
+            day: z.string().describe('YYYY-MM-DD'),
+            preventSplit: z.boolean().optional(),
+          }),
+        }),
+
+        deleteHabit: tool({
+          description: 'Propose deleting a habit. Requires user approval.',
+          inputSchema: z.object({
+            habitId: z.string(),
+            habitName: z.string().describe('For display'),
+          }),
+        }),
+
+        deleteGoal: tool({
+          description:
+            'Propose deleting a goal. Requires user approval. Specify level: three_year, annual, quarterly, or weekly.',
+          inputSchema: z.object({
+            goalId: z.string(),
+            goalTitle: z.string().describe('For display'),
+            level: z.enum(['three_year', 'annual', 'quarterly', 'weekly']),
           }),
         }),
       },

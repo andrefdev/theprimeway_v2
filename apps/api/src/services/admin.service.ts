@@ -29,21 +29,27 @@ class AdminService {
     const user = await adminRepo.userExists(userId)
     if (!user) return { ok: false as const, reason: 'user_not_found' as const }
     const subscription = await adminRepo.findUserSubscription(userId)
-    let planTier = 'free'
-    let status = 'inactive'
-    if (subscription) {
-      status = subscription.status ?? 'pending'
-      if (subscription.status === 'active') planTier = 'premium'
-      else if (subscription.status === 'trialing') planTier = 'trial'
-    }
+    const sub = subscription as
+      | (typeof subscription & { plan?: { id: string; name: string; displayName: string } | null })
+      | null
+    const status = sub?.status ?? 'inactive'
+    const planName = sub?.plan?.name ?? 'free'
+    const planDisplayName = sub?.plan?.displayName ?? 'Free'
+    const planId = sub?.plan?.id ?? null
+    let planTier: 'free' | 'trial' | 'premium' = 'free'
+    if (sub?.status === 'trialing') planTier = 'trial'
+    else if (sub?.status === 'active' && sub.planId && planName !== 'free') planTier = 'premium'
     return {
       ok: true as const,
       data: {
         userId,
         planTier,
+        planId,
+        planName,
+        planDisplayName,
         status,
-        currentPeriodStart: subscription?.startsAt ? subscription.startsAt.toISOString() : null,
-        currentPeriodEnd: subscription?.endsAt ? subscription.endsAt.toISOString() : null,
+        currentPeriodStart: sub?.startsAt ? sub.startsAt.toISOString() : null,
+        currentPeriodEnd: sub?.endsAt ? sub.endsAt.toISOString() : null,
       },
     }
   }

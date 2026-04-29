@@ -33,7 +33,7 @@ class AdminRepository {
   findUserSubscription(userId: string) {
     return prisma.userSubscription.findFirst({
       where: { userId },
-      include: { plan: { select: { name: true } } },
+      include: { plan: { select: { id: true, name: true, displayName: true } } },
       orderBy: { id: 'desc' },
     })
   }

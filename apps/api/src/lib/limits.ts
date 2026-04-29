@@ -1,6 +1,7 @@
 import { FEATURES, type FeatureKey } from '@repo/shared/constants';
 import type { SubscriptionPlan } from '@prisma/client';
 import { prisma } from './prisma';
+import { plansRepo } from '../repositories/plans.repo';
 import { getCurrentUsage } from './usage';
 
 export interface LimitConfig {
@@ -94,7 +95,10 @@ export async function enforceLimit(userId: string, featureKey: FeatureKey): Prom
     orderBy: { createdAt: 'desc' },
     include: { plan: true },
   });
-  const plan = subscription?.plan;
+  let plan: SubscriptionPlan | null = subscription?.plan ?? null;
+  if (!plan) {
+    plan = (await plansRepo.findByName('free')) as SubscriptionPlan | null;
+  }
   if (!plan) return;
   const currentUsage = await getCurrentUsage(userId, featureKey);
   validateLimit(featureKey, plan, currentUsage);

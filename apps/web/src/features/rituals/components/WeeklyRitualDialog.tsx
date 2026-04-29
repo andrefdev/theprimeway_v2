@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog'
@@ -38,6 +38,32 @@ export function WeeklyPlanDialog({ instance, open, onClose }: Props) {
   const [suggesting, setSuggesting] = useState(false)
   const [rationale, setRationale] = useState<string | null>(null)
   const qc = useQueryClient()
+  const inputsRef = useRef<Array<HTMLInputElement | null>>([])
+  const [pendingFocus, setPendingFocus] = useState<number | null>(null)
+
+  useEffect(() => {
+    if (pendingFocus != null) {
+      inputsRef.current[pendingFocus]?.focus()
+      setPendingFocus(null)
+    }
+  }, [pendingFocus, objectives.length])
+
+  function handleObjectiveKeyDown(e: React.KeyboardEvent<HTMLInputElement>, i: number) {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      if (i + 1 < objectives.length) {
+        inputsRef.current[i + 1]?.focus()
+      } else if (objectives.length < 5) {
+        setObjectives((prev) => [...prev, ''])
+        setPendingFocus(i + 1)
+      }
+    } else if (e.key === 'Backspace' && objectives[i] === '' && objectives.length > 1) {
+      e.preventDefault()
+      const target = Math.max(0, i - 1)
+      setObjectives((prev) => prev.filter((_, idx) => idx !== i))
+      setPendingFocus(target)
+    }
+  }
 
   async function suggestObjectives() {
     setSuggesting(true)
@@ -209,8 +235,10 @@ export function WeeklyPlanDialog({ instance, open, onClose }: Props) {
                 <div key={i} className="flex items-center gap-2">
                   <span className="w-5 text-xs text-muted-foreground text-right tabular-nums">{i + 1}.</span>
                   <Input
+                    ref={(el) => { inputsRef.current[i] = el }}
                     value={val}
                     onChange={(e) => updateObjective(i, e.target.value)}
+                    onKeyDown={(e) => handleObjectiveKeyDown(e, i)}
                     placeholder="e.g. Ship v2 auth flow"
                     className="h-9"
                   />

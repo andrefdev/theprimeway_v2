@@ -20,7 +20,7 @@ class WidgetBridgeModule : Module() {
     Name("WidgetBridgeModule")
 
     Function("writeSnapshot") { json: String ->
-      val ctx = appContext.reactContext ?: return@Function
+      val ctx = appContext.reactContext ?: return@Function Unit
       ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         .edit()
         .putString(KEY_SNAPSHOT, json)
@@ -35,7 +35,7 @@ class WidgetBridgeModule : Module() {
     }
 
     Function("clearPendingActions") {
-      val ctx = appContext.reactContext ?: return@Function
+      val ctx = appContext.reactContext ?: return@Function Unit
       ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         .edit()
         .remove(KEY_PENDING_ACTIONS)
@@ -43,7 +43,7 @@ class WidgetBridgeModule : Module() {
     }
 
     Function("reloadWidgets") {
-      val ctx = appContext.reactContext ?: return@Function
+      val ctx = appContext.reactContext ?: return@Function Unit
       reloadAllWidgets(ctx)
     }
   }

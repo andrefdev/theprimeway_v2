@@ -1,12 +1,13 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { settingsApi, type UserSettings } from '@/features/settings/api'
 import { PreferencesForm } from '@/features/settings/components/PreferencesForm'
 import { ChangePasswordForm } from '@/features/settings/components/ChangePasswordForm'
 import { DangerZone } from '@/features/settings/components/DangerZone'
 import { NotificationsPreferences } from '@/features/notifications/components/NotificationsPreferences'
 import { GoogleCalendarSettings } from '@/features/calendar/components/GoogleCalendarSettings'
+import { useConnectGoogleCalendar } from '@/features/calendar/queries'
 import { ApiKeysCard } from '@/features/integrations/components/ApiKeysCard'
 import { WebhooksCard } from '@/features/integrations/components/WebhooksCard'
 import { ChannelsManager } from '@/features/channels/components/ChannelsManager'
@@ -24,8 +25,11 @@ function SettingsPage() {
   const { t } = useTranslation('settings')
   const [settings, setSettings] = useState<UserSettings | null>(null)
   const [saving] = useState(false)
+  const [activeTab, setActiveTab] = useState('general')
   const customThemeCreationFeature = useFeature(FEATURES.CUSTOM_THEME_CREATION)
   const exportDataFeature = useFeature(FEATURES.EXPORT_DATA)
+  const connectGoogle = useConnectGoogleCalendar()
+  const handledOAuthRef = useRef(false)
 
   useEffect(() => {
     settingsApi
@@ -33,6 +37,45 @@ function SettingsPage() {
       .then((r) => setSettings(r.data.data))
       .catch(() => toast.error(t('loadSettingsFailed', { defaultValue: 'Failed to load settings' })))
   }, [])
+
+  // Handle Google Calendar OAuth callback at the parent level so it processes
+  // immediately regardless of which tab the user lands on.
+  useEffect(() => {
+    if (handledOAuthRef.current) return
+    const params = new URLSearchParams(window.location.search)
+    const state = params.get('state')
+    if (state !== 'calendar_oauth') return
+    const code = params.get('code')
+    const err = params.get('error')
+    if (!code && !err) return
+    handledOAuthRef.current = true
+
+    setActiveTab('integrations')
+
+    const url = new URL(window.location.href)
+    url.searchParams.delete('code')
+    url.searchParams.delete('error')
+    url.searchParams.delete('scope')
+    url.searchParams.delete('state')
+    url.searchParams.delete('authuser')
+    url.searchParams.delete('prompt')
+    window.history.replaceState({}, '', url.toString())
+
+    if (err) {
+      toast.error(`Google Calendar: ${err}`)
+      return
+    }
+    if (code) {
+      connectGoogle
+        .mutateAsync(code)
+        .then(() => toast.success(t('googleCal.connected', { defaultValue: 'Google Calendar connected' })))
+        .catch((e: any) => {
+          const detail =
+            e?.response?.data?.error ?? e?.data?.error ?? e?.message ?? 'connection failed'
+          toast.error(`Google Calendar: ${detail}`)
+        })
+    }
+  }, [connectGoogle, t])
 
   function update(key: keyof UserSettings, value: string) {
     setSettings((prev) => (prev ? { ...prev, [key]: value } : null))
@@ -42,7 +85,7 @@ function SettingsPage() {
     <div className="mx-auto max-w-4xl px-4 py-6 space-y-6">
       <h1 className="text-2xl font-semibold">{t('title')}</h1>
 
-      <Tabs defaultValue="general" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="flex flex-wrap h-auto justify-start gap-1">
           <TabsTrigger value="general">{t('tabGeneral')}</TabsTrigger>
           <TabsTrigger value="notifications">{t('tabNotifications')}</TabsTrigger>

@@ -74,7 +74,7 @@ class CalendarService {
       'https://www.googleapis.com/auth/calendar.events',
     ].join(' ')
 
-    return `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scopes)}&access_type=offline&prompt=consent`
+    return `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scopes)}&access_type=offline&prompt=consent&state=calendar_oauth`
   }
 
   async handleGoogleCallback(userId: string, code: string) {
@@ -83,102 +83,124 @@ class CalendarService {
     const redirectUri = process.env.GOOGLE_CALENDAR_REDIRECT_URI
 
     if (!clientId || !clientSecret || !redirectUri) {
-      return { error: 'not_configured' as const }
+      return { error: 'not_configured' as const, detail: 'AUTH_GOOGLE_ID, AUTH_GOOGLE_SECRET or GOOGLE_CALENDAR_REDIRECT_URI missing' }
     }
 
-    // Exchange code for tokens
-    const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        code,
-        client_id: clientId,
-        client_secret: clientSecret,
-        redirect_uri: redirectUri,
-        grant_type: 'authorization_code',
-      }),
-    })
-
-    if (!tokenResponse.ok) {
-      const errText = await tokenResponse.text()
-      console.error('[GOOGLE_CALLBACK] Token exchange failed:', errText)
-      return { error: 'token_exchange_failed' as const }
-    }
-
-    const tokens = (await tokenResponse.json()) as {
-      access_token: string
-      refresh_token?: string
-      expires_in: number
-    }
-
-    // Get user info from Google
-    const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-      headers: { Authorization: `Bearer ${tokens.access_token}` },
-    })
-    const userInfo = (await userInfoRes.json()) as { email: string; name?: string }
-
-    // Upsert CalendarAccount
-    const existingAccount = await calendarRepo.findAccountByProviderEmail(userId, 'google', userInfo.email)
-
-    let account
-    if (existingAccount) {
-      account = await calendarRepo.updateAccount(existingAccount.id, {
-        accessToken: tokens.access_token,
-        refreshToken: tokens.refresh_token || existingAccount.refreshToken,
-        tokenExpiresAt: new Date(Date.now() + tokens.expires_in * 1000),
+    try {
+      // Exchange code for tokens
+      const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          code,
+          client_id: clientId,
+          client_secret: clientSecret,
+          redirect_uri: redirectUri,
+          grant_type: 'authorization_code',
+        }),
       })
-    } else {
-      account = await calendarRepo.createAccount({
-        userId,
-        provider: 'google',
-        providerAccountId: userInfo.email,
-        providerEmail: userInfo.email,
-        displayName: userInfo.name || userInfo.email,
-        accessToken: tokens.access_token,
-        refreshToken: tokens.refresh_token || null,
-        tokenExpiresAt: new Date(Date.now() + tokens.expires_in * 1000),
+
+      if (!tokenResponse.ok) {
+        const errText = await tokenResponse.text()
+        console.error('[GOOGLE_CALLBACK] Token exchange failed:', errText)
+        return { error: 'token_exchange_failed' as const, detail: errText }
+      }
+
+      const tokens = (await tokenResponse.json()) as {
+        access_token: string
+        refresh_token?: string
+        expires_in: number
+      }
+      console.log('[GOOGLE_CALLBACK] token exchange OK')
+
+      // Get user info from Google
+      const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+        headers: { Authorization: `Bearer ${tokens.access_token}` },
       })
-    }
-
-    // Fetch and store calendars from Google
-    const calendarListRes = await fetch(
-      'https://www.googleapis.com/calendar/v3/users/me/calendarList',
-      { headers: { Authorization: `Bearer ${tokens.access_token}` } },
-    )
-    const calendarList = (await calendarListRes.json()) as {
-      items?: Array<{ id: string; summary: string; primary?: boolean; backgroundColor?: string }>
-    }
-
-    const upsertedCalendars: Array<{ id: string; isSelectedForSync: boolean | null | undefined }> = []
-    if (calendarList.items) {
-      for (const cal of calendarList.items) {
-        const upserted = await calendarRepo.upsertCalendar(
-          account.id,
-          cal.id,
-          { name: cal.summary, color: cal.backgroundColor },
-          {
-            calendarAccountId: account.id,
-            externalId: cal.id,
-            name: cal.summary,
-            color: cal.backgroundColor || null,
-            isPrimary: cal.primary || false,
-            isSelectedForSync: cal.primary || false,
-          },
-        )
-        upsertedCalendars.push({ id: upserted.id, isSelectedForSync: upserted.isSelectedForSync })
+      if (!userInfoRes.ok) {
+        const errText = await userInfoRes.text()
+        console.error('[GOOGLE_CALLBACK] userinfo failed:', errText)
+        return { error: 'userinfo_failed' as const, detail: errText }
       }
-    }
-
-    // Subscribe push-notification watch channels for synced calendars (fire-and-forget)
-    for (const cal of upsertedCalendars) {
-      if (cal.isSelectedForSync) {
-        this.subscribeWatchChannel(cal.id).catch((err) =>
-          console.error('[CAL_WATCH] subscribe on connect failed', err),
-        )
+      const userInfo = (await userInfoRes.json()) as { email?: string; name?: string }
+      if (!userInfo.email) {
+        return { error: 'userinfo_no_email' as const, detail: 'Google userinfo response missing email' }
       }
-    }
+      console.log('[GOOGLE_CALLBACK] userinfo OK', userInfo.email)
 
-    return { data: account }
+      // Upsert CalendarAccount
+      const existingAccount = await calendarRepo.findAccountByProviderEmail(userId, 'google', userInfo.email)
+
+      let account
+      if (existingAccount) {
+        account = await calendarRepo.updateAccount(existingAccount.id, {
+          accessToken: tokens.access_token,
+          refreshToken: tokens.refresh_token || existingAccount.refreshToken,
+          tokenExpiresAt: new Date(Date.now() + tokens.expires_in * 1000),
+        })
+      } else {
+        account = await calendarRepo.createAccount({
+          userId,
+          provider: 'google',
+          providerAccountId: userInfo.email,
+          providerEmail: userInfo.email,
+          displayName: userInfo.name || userInfo.email,
+          accessToken: tokens.access_token,
+          refreshToken: tokens.refresh_token || null,
+          tokenExpiresAt: new Date(Date.now() + tokens.expires_in * 1000),
+        })
+      }
+      console.log('[GOOGLE_CALLBACK] account upsert OK', account.id)
+
+      // Fetch and store calendars from Google
+      const calendarListRes = await fetch(
+        'https://www.googleapis.com/calendar/v3/users/me/calendarList',
+        { headers: { Authorization: `Bearer ${tokens.access_token}` } },
+      )
+      if (!calendarListRes.ok) {
+        const errText = await calendarListRes.text()
+        console.error('[GOOGLE_CALLBACK] calendarList failed:', errText)
+        return { error: 'calendar_list_failed' as const, detail: errText }
+      }
+      const calendarList = (await calendarListRes.json()) as {
+        items?: Array<{ id: string; summary: string; primary?: boolean; backgroundColor?: string }>
+      }
+
+      const upsertedCalendars: Array<{ id: string; isSelectedForSync: boolean | null | undefined }> = []
+      if (calendarList.items) {
+        for (const cal of calendarList.items) {
+          const upserted = await calendarRepo.upsertCalendar(
+            account.id,
+            cal.id,
+            { name: cal.summary, color: cal.backgroundColor },
+            {
+              calendarAccountId: account.id,
+              externalId: cal.id,
+              name: cal.summary,
+              color: cal.backgroundColor || null,
+              isPrimary: cal.primary || false,
+              isSelectedForSync: cal.primary || false,
+            },
+          )
+          upsertedCalendars.push({ id: upserted.id, isSelectedForSync: upserted.isSelectedForSync })
+        }
+      }
+      console.log('[GOOGLE_CALLBACK] calendars upserted', upsertedCalendars.length)
+
+      // Subscribe push-notification watch channels for synced calendars (fire-and-forget)
+      for (const cal of upsertedCalendars) {
+        if (cal.isSelectedForSync) {
+          this.subscribeWatchChannel(cal.id).catch((err) =>
+            console.error('[CAL_WATCH] subscribe on connect failed', err),
+          )
+        }
+      }
+
+      return { data: account }
+    } catch (err) {
+      console.error('[GOOGLE_CALLBACK] unexpected error', err)
+      return { error: 'callback_failed' as const, detail: (err as Error)?.message ?? String(err) }
+    }
   }
 
   async getGoogleEvents(userId: string, timeMin: string, timeMax: string) {
@@ -462,7 +484,7 @@ class CalendarService {
 
   async createTimeBlock(
     userId: string,
-    input: { title: string; date: string; startTime: string; endTime: string; description?: string; color?: string },
+    input: { title: string; date: string; startTime: string; endTime: string; description?: string; color?: string; timeZone?: string },
   ): Promise<{ success: boolean; eventId?: string; error?: string }> {
     // Get the user's primary Google Calendar account
     const accounts = await calendarRepo.findGoogleAccountsWithSyncCalendars(userId)
@@ -495,11 +517,12 @@ class CalendarService {
     const startDateTime = `${input.date}T${input.startTime}:00`
     const endDateTime = `${input.date}T${input.endTime}:00`
 
+    const tz = input.timeZone || 'UTC'
     const eventBody = {
       summary: input.title,
       description: input.description || 'Time block created by ThePrimeWay',
-      start: { dateTime: startDateTime, timeZone: 'UTC' },
-      end: { dateTime: endDateTime, timeZone: 'UTC' },
+      start: { dateTime: startDateTime, timeZone: tz },
+      end: { dateTime: endDateTime, timeZone: tz },
       colorId: input.color || '9', // Blueberry
     }
 

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
-const { withAndroidManifest, withDangerousMod, AndroidConfig } = require('@expo/config-plugins');
+const { withAndroidManifest, withDangerousMod, AndroidConfig } = require('expo/config-plugins');
 const fs = require('fs');
 const path = require('path');
 

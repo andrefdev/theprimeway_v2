@@ -363,8 +363,11 @@ calendarRoutes.openapi(googleCallbackRoute, (async (c: any) => {
   const result = await calendarService.handleGoogleCallback(userId, code)
 
   if ('error' in result) {
-    if (result.error === 'not_configured') return c.json({ error: 'Google Calendar not configured' }, 500)
-    if (result.error === 'token_exchange_failed') return c.json({ error: 'Token exchange failed' }, 400)
+    const detail = (result as any).detail
+    const message = detail ? `${result.error}: ${detail}` : result.error
+    const status = result.error === 'not_configured' ? 500 : 400
+    console.error('[GOOGLE_CALLBACK_ROUTE]', message)
+    return c.json({ error: message, code: result.error }, status)
   }
 
   return c.json({ data: (result as any).data }, 200)
@@ -461,6 +464,7 @@ const timeBlockRoute = createRoute({
             endTime: z.string().regex(/^\d{2}:\d{2}$/, 'Time must be HH:MM'),
             description: z.string().optional(),
             color: z.string().optional(),
+            timeZone: z.string().optional(),
           }),
         },
       },

@@ -9,7 +9,6 @@ import type { InboxNotification } from '../api'
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover'
 import { ScrollArea } from '@/shared/components/ui/scroll-area'
 import { Button } from '@/shared/components/ui/button'
-import { Badge } from '@/shared/components/ui/badge'
 import {
   Bell,
   Clock,
@@ -18,9 +17,7 @@ import {
   Flame,
   Target,
   X,
-  Check,
   CheckCheck,
-  ExternalLink,
 } from 'lucide-react'
 import { useNavigate, Link } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
@@ -31,12 +28,6 @@ const typeIcon: Record<string, React.ReactNode> = {
   pending_transaction: <AlertCircle className="h-4 w-4 text-violet-500" />,
   smart_reminder: <Flame className="h-4 w-4 text-red-500" />,
   system: <Target className="h-4 w-4 text-muted-foreground" />,
-}
-
-const urgencyBar: Record<string, string> = {
-  high: 'before:bg-red-500',
-  medium: 'before:bg-amber-500',
-  low: 'before:bg-muted-foreground/30',
 }
 
 function relativeTime(iso: string, locale: string): string {
@@ -77,43 +68,35 @@ export function NotificationBell() {
         >
           <Bell className="h-5 w-5" />
           {showBadge && (
-            <Badge
-              variant="destructive"
-              className="absolute top-0.5 right-0.5 h-5 min-w-5 px-1 rounded-full text-[10px] font-semibold"
+            <span
+              aria-label={`${unread} unread`}
+              className="absolute -top-0.5 -right-0.5 z-10 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold leading-none text-white shadow-sm ring-2 ring-background"
             >
               {badgeText}
-            </Badge>
+            </span>
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[min(96vw,380px)] p-0" align="end">
-        <div className="flex items-center justify-between px-3 py-2 border-b">
-          <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold">
-              {t('notifications', { defaultValue: 'Notifications' })}
-            </h3>
-            {unread > 0 && (
-              <Badge variant="destructive" className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full">
-                {unread}
-              </Badge>
-            )}
-          </div>
-          <div className="flex items-center gap-1">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2 text-xs"
-              disabled={unread === 0 || markAllRead.isPending}
-              onClick={() => markAllRead.mutate()}
-              title={t('markAllRead', { defaultValue: 'Mark all read' })}
-            >
-              <CheckCheck className="h-3.5 w-3.5" />
-            </Button>
-          </div>
+      <PopoverContent
+        className="w-[min(96vw,380px)] p-0 overflow-hidden rounded-xl shadow-lg"
+        align="end"
+      >
+        <div className="flex items-center justify-between px-4 py-3 border-b">
+          <h3 className="text-sm font-semibold">
+            {t('notifications', { defaultValue: 'Notifications' })}
+          </h3>
+          <button
+            type="button"
+            onClick={() => markAllRead.mutate()}
+            disabled={unread === 0 || markAllRead.isPending}
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline disabled:opacity-40 disabled:no-underline disabled:cursor-not-allowed"
+          >
+            <CheckCheck className="h-3.5 w-3.5" />
+            {t('markAllRead', { defaultValue: 'Mark all as read' })}
+          </button>
         </div>
 
-        <ScrollArea className="max-h-[70vh]">
+        <ScrollArea className="max-h-[min(70vh,440px)]">
           {isLoading ? (
             <div className="p-6 text-center text-xs text-muted-foreground">
               {t('loading', { defaultValue: 'Loading...' })}
@@ -121,65 +104,56 @@ export function NotificationBell() {
           ) : items.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-2 p-8 text-center text-muted-foreground">
               <Bell className="h-8 w-8 opacity-40" />
-              <p className="text-sm">{t('no_notifications')}</p>
+              <p className="text-sm">{t('no_notifications', { defaultValue: 'No notifications' })}</p>
             </div>
           ) : (
             <ul className="divide-y">
-              {items.slice(0, 20).map((n) => {
-                const urgency = n.urgency ?? 'low'
+              {items.map((n) => {
                 const unreadRow = !n.readAt
                 return (
-                  <li
-                    key={n.id}
-                    className={`group relative before:absolute before:left-0 before:top-0 before:h-full before:w-0.5 ${urgencyBar[urgency] ?? ''} ${unreadRow ? 'bg-primary/5' : ''}`}
-                  >
-                    <div className="flex items-start gap-2 px-3 py-2.5">
-                      <Button
-                        variant="ghost"
-                        onClick={() => handleOpen(n)}
-                        className="flex-1 h-auto py-0 px-0 flex items-start gap-2 text-left min-w-0 justify-start whitespace-normal hover:bg-transparent"
-                      >
-                        <span className="mt-0.5 flex-shrink-0">{typeIcon[n.type] ?? typeIcon.system}</span>
-                        <span className="flex-1 min-w-0">
-                          <span className="flex items-center gap-1.5">
-                            <span className={`text-sm truncate ${unreadRow ? 'font-semibold' : 'font-medium'}`}>
-                              {n.title}
-                            </span>
-                            {n.href && <ExternalLink className="h-3 w-3 text-muted-foreground flex-shrink-0" />}
-                          </span>
+                  <li key={n.id} className="group relative">
+                    <button
+                      type="button"
+                      onClick={() => handleOpen(n)}
+                      className="flex w-full items-start gap-3 px-4 py-3 text-left hover:bg-muted/50"
+                    >
+                      {unreadRow && (
+                        <span
+                          aria-hidden
+                          className="absolute left-1.5 top-4 h-2 w-2 rounded-full bg-primary"
+                        />
+                      )}
+                      <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-muted">
+                        {typeIcon[n.type] ?? typeIcon.system}
+                      </span>
+                      <span className="flex-1 min-w-0 pr-6">
+                        <span
+                          className={`block text-sm truncate ${unreadRow ? 'font-semibold' : 'font-medium'}`}
+                        >
+                          {n.title}
+                        </span>
+                        {n.message && (
                           <span className="block text-xs text-muted-foreground line-clamp-2 mt-0.5">
                             {n.message}
                           </span>
-                          <span className="block text-[10px] text-muted-foreground/70 mt-1">
-                            {relativeTime(n.createdAt, i18n.language)}
-                          </span>
-                        </span>
-                      </Button>
-                      <div className="flex flex-col gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
-                        {unreadRow && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon-xs"
-                            className="text-muted-foreground hover:text-foreground"
-                            onClick={() => markRead.mutate(n.id)}
-                            title={t('markRead', { defaultValue: 'Mark read' })}
-                          >
-                            <Check className="h-3.5 w-3.5" />
-                          </Button>
                         )}
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon-xs"
-                          className="text-muted-foreground hover:text-foreground"
-                          onClick={() => dismiss.mutate(n.id)}
-                          title={t('dismiss', { defaultValue: 'Dismiss' })}
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    </div>
+                        <span className="block text-[11px] text-muted-foreground/80 mt-1">
+                          {relativeTime(n.createdAt, i18n.language)}
+                        </span>
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        dismiss.mutate(n.id)
+                      }}
+                      title={t('dismiss', { defaultValue: 'Dismiss' })}
+                      aria-label={t('dismiss', { defaultValue: 'Dismiss' })}
+                      className="absolute right-2 top-2 inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100 transition-opacity"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
                   </li>
                 )
               })}
@@ -187,12 +161,12 @@ export function NotificationBell() {
           )}
         </ScrollArea>
 
-        <div className="px-3 py-2 border-t bg-muted/30">
+        <div className="p-3 border-t">
           <Link
             to="/notifications"
-            className="block text-center text-xs font-medium text-primary hover:underline"
+            className="mx-auto block w-fit rounded-full border px-4 py-1.5 text-xs font-medium hover:bg-muted"
           >
-            {t('viewAllNotifications', { defaultValue: 'View all notifications' })}
+            {t('showAll', { defaultValue: 'Show all' })}
           </Link>
         </div>
       </PopoverContent>

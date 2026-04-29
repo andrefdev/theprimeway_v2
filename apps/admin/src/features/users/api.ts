@@ -28,6 +28,9 @@ export interface User {
 export interface UserSubscription {
   userId: string
   planTier: PlanTier
+  planId: string | null
+  planName: string
+  planDisplayName: string
   status: string
   currentPeriodStart: string | null
   currentPeriodEnd: string | null

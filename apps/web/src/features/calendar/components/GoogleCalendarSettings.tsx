@@ -1,4 +1,3 @@
-import { useEffect, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -9,7 +8,6 @@ import { Skeleton } from '@/shared/components/ui/skeleton'
 import { calendarApi, type Calendar } from '../api'
 import {
   calendarQueries,
-  useConnectGoogleCalendar,
   useUpdateCalendar,
   useDeleteCalendarAccount,
 } from '../queries'
@@ -17,41 +15,8 @@ import {
 export function GoogleCalendarSettings() {
   const { t } = useTranslation('settings')
   const { data: accounts, isLoading } = useQuery(calendarQueries.accounts())
-  const connect = useConnectGoogleCalendar()
   const updateCalendar = useUpdateCalendar()
   const deleteAccount = useDeleteCalendarAccount()
-  const handledCode = useRef(false)
-
-  useEffect(() => {
-    if (handledCode.current) return
-    const params = new URLSearchParams(window.location.search)
-    const code = params.get('code')
-    const err = params.get('error')
-    if (!code && !err) return
-    handledCode.current = true
-
-    const url = new URL(window.location.href)
-    url.searchParams.delete('code')
-    url.searchParams.delete('error')
-    url.searchParams.delete('scope')
-    url.searchParams.delete('state')
-    window.history.replaceState({}, '', url.toString())
-
-    if (err) {
-      toast.error(t('googleCal.connectFailed', { defaultValue: 'Google Calendar connection failed' }))
-      return
-    }
-    if (code) {
-      connect
-        .mutateAsync(code)
-        .then(() =>
-          toast.success(t('googleCal.connected', { defaultValue: 'Google Calendar connected' })),
-        )
-        .catch(() =>
-          toast.error(t('googleCal.connectFailed', { defaultValue: 'Google Calendar connection failed' })),
-        )
-    }
-  }, [connect, t])
 
   async function handleConnect() {
     try {
@@ -82,7 +47,7 @@ export function GoogleCalendarSettings() {
               })}
             </p>
           </div>
-          <Button onClick={handleConnect} size="sm" disabled={connect.isPending}>
+          <Button onClick={handleConnect} size="sm">
             {googleAccounts.length > 0
               ? t('googleCal.addAnother', { defaultValue: 'Add account' })
               : t('googleCal.connect', { defaultValue: 'Connect' })}

@@ -68,6 +68,7 @@ export const calendarApi = {
     endTime: string
     description?: string
     color?: string
+    timeZone?: string
   }) =>
     api
       .post<{ data: { success: boolean; eventId?: string } }>('/calendar/time-block', input)

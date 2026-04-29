@@ -17,6 +17,7 @@ import { habitsApi } from '@/features/habits/api'
 import { goalsApi } from '@/features/goals/api'
 import { calendarApi } from '@/features/calendar/api'
 import { pomodoroApi } from '@/features/pomodoro/api'
+import { schedulingApi } from '@/features/scheduling/api'
 import { useQueryClient } from '@tanstack/react-query'
 import { tasksQueries } from '@/features/tasks/queries'
 import { habitsQueries } from '@/features/habits/queries'
@@ -177,16 +178,38 @@ function AiPage() {
           break
         }
         case 'createTimeBlock': {
-          const res = await calendarApi.createTimeBlock({
-            title: args.title,
-            date: args.date,
-            startTime: args.startTime,
-            endTime: args.endTime,
-            description: args.description,
-          })
-          result = { success: true, eventId: (res as any)?.eventId }
-          qc.invalidateQueries({ queryKey: calendarQueries.all() })
-          toast.success(t('timeBlockCreated', { ns: 'calendar', defaultValue: 'Time block scheduled' }))
+          try {
+            const browserTz =
+              args.timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone
+            const res = await calendarApi.createTimeBlock({
+              title: args.title,
+              date: args.date,
+              startTime: args.startTime,
+              endTime: args.endTime,
+              description: args.description,
+              timeZone: browserTz,
+            })
+            result = {
+              success: true,
+              eventId:
+                (res as any)?.data?.eventId ?? (res as any)?.eventId,
+            }
+            qc.invalidateQueries({ queryKey: calendarQueries.all() })
+            toast.success(t('timeBlockCreated', { ns: 'calendar', defaultValue: 'Time block scheduled' }))
+          } catch (e: any) {
+            const errMsg: string = e?.response?.data?.error ?? e?.data?.error ?? e?.message ?? ''
+            if (/no_google_account|no_calendar|No Google Calendar/i.test(errMsg)) {
+              toast.error(
+                t('timeBlockNoGoogle', {
+                  ns: 'calendar',
+                  defaultValue: 'Connect Google Calendar in Settings → Integrations first',
+                }),
+              )
+              result = { error: 'no_google_account' }
+            } else {
+              throw e
+            }
+          }
           break
         }
         case 'startPomodoro': {
@@ -199,6 +222,77 @@ function AiPage() {
           result = { success: true, sessionId: (session as any).data?.id ?? (session as any).id }
           qc.invalidateQueries({ queryKey: pomodoroQueries.all() })
           toast.success(t('pomodoroStarted', { ns: 'pomodoro', defaultValue: 'Pomodoro started' }))
+          break
+        }
+        case 'createHabitBlock': {
+          try {
+            const res = await calendarApi.createHabitBlock({
+              habitId: args.habitId,
+              habitName: args.habitName,
+              startTime: args.startTime,
+              endTime: args.endTime,
+              frequencyType: args.frequencyType,
+              weekDays: args.weekDays,
+              description: args.description,
+            })
+            result = { success: true, eventId: (res as any)?.eventId }
+            qc.invalidateQueries({ queryKey: calendarQueries.all() })
+            qc.invalidateQueries({ queryKey: habitsQueries.all() })
+            toast.success(t('habitBlockCreated', { ns: 'calendar', defaultValue: 'Habit block scheduled' }))
+          } catch (e: any) {
+            const errMsg: string = e?.response?.data?.error ?? e?.data?.error ?? e?.message ?? ''
+            if (/no_google_account|no_calendar|No Google Calendar/i.test(errMsg)) {
+              toast.error(
+                t('timeBlockNoGoogle', {
+                  ns: 'calendar',
+                  defaultValue: 'Connect Google Calendar in Settings → Integrations first',
+                }),
+              )
+              result = { error: 'no_google_account' }
+            } else {
+              throw e
+            }
+          }
+          break
+        }
+        case 'autoScheduleTask': {
+          const r = await schedulingApi.autoSchedule({
+            taskId: args.taskId,
+            day: args.day,
+            preventSplit: args.preventSplit,
+          })
+          if ((r as any)?.type === 'Success') {
+            result = { success: true, sessions: (r as any).sessions }
+            qc.invalidateQueries({ queryKey: tasksQueries.all() })
+            qc.invalidateQueries({ queryKey: calendarQueries.all() })
+            toast.success(t('taskScheduled', { ns: 'tasks', defaultValue: 'Task scheduled' }))
+          } else {
+            result = { success: false, reason: (r as any)?.reason, options: (r as any)?.options }
+            toast.error(
+              t('taskScheduleFailed', {
+                ns: 'tasks',
+                defaultValue: 'Could not schedule task',
+              }),
+            )
+          }
+          break
+        }
+        case 'deleteHabit': {
+          await habitsApi.delete(args.habitId)
+          result = { success: true }
+          qc.invalidateQueries({ queryKey: habitsQueries.all() })
+          toast.success(t('habitDeleted', { ns: 'habits', defaultValue: 'Habit deleted' }))
+          break
+        }
+        case 'deleteGoal': {
+          if (args.level === 'three_year') await goalsApi.deleteThreeYearGoal(args.goalId)
+          else if (args.level === 'annual') await goalsApi.deleteAnnualGoal(args.goalId)
+          else if (args.level === 'quarterly') await goalsApi.deleteQuarterlyGoal(args.goalId)
+          else if (args.level === 'weekly') await goalsApi.deleteWeeklyGoal(args.goalId)
+          else throw new Error(`Unknown goal level: ${args.level}`)
+          result = { success: true, level: args.level }
+          qc.invalidateQueries({ queryKey: goalsQueries.all() })
+          toast.success(t('goalDeleted', { ns: 'goals', defaultValue: 'Goal deleted' }))
           break
         }
         default:
