@@ -14,6 +14,12 @@ import { Input } from '@/shared/components/ui/input'
 import { Textarea } from '@/shared/components/ui/textarea'
 import { Switch } from '@/shared/components/ui/switch'
 import { Label } from '@/shared/components/ui/label'
+import { Calendar } from '@/shared/components/ui/calendar'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/shared/components/ui/popover'
 import {
   Select,
   SelectContent,
@@ -21,7 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shared/components/ui/select'
-import { Trash2, X, Plus, Video } from 'lucide-react'
+import { Trash2, X, Plus, Video, ChevronDownIcon } from 'lucide-react'
 import {
   calendarQueries,
   useCreateTimeBlock,
@@ -95,9 +101,11 @@ export function EventEditDialog({ open, onClose, item, defaultStart, defaultEnd 
   const [title, setTitle] = useState(item?.title ?? '')
   const [description, setDescription] = useState(item?.description ?? '')
   const [location, setLocation] = useState(item?.location ?? '')
-  const [date, setDate] = useState(format(initialStart, 'yyyy-MM-dd'))
+  const [dateObj, setDateObj] = useState<Date>(initialStart)
+  const [datePopoverOpen, setDatePopoverOpen] = useState(false)
   const [startTime, setStartTime] = useState(format(initialStart, 'HH:mm'))
   const [endTime, setEndTime] = useState(format(initialEnd, 'HH:mm'))
+  const date = format(dateObj, 'yyyy-MM-dd')
   const [colorId, setColorId] = useState(item?.colorId ?? '9')
   const [calendarId, setCalendarId] = useState(item?.googleCalendarId ?? '')
   const [attendeesText, setAttendeesText] = useState(
@@ -228,32 +236,54 @@ export function EventEditDialog({ open, onClose, item, defaultStart, defaultEnd 
             />
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
-            <div className="space-y-1.5">
+          <div className="flex flex-wrap items-end gap-2">
+            <div className="space-y-1.5 flex-1 min-w-[160px]">
               <Label htmlFor="event-date">Date</Label>
-              <Input
-                id="event-date"
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-              />
+              <Popover open={datePopoverOpen} onOpenChange={setDatePopoverOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    id="event-date"
+                    variant="outline"
+                    className="w-full justify-between font-normal"
+                  >
+                    {format(dateObj, 'PPP')}
+                    <ChevronDownIcon size={16} />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={dateObj}
+                    captionLayout="dropdown"
+                    defaultMonth={dateObj}
+                    onSelect={(d) => {
+                      if (d) {
+                        setDateObj(d)
+                        setDatePopoverOpen(false)
+                      }
+                    }}
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 w-28">
               <Label htmlFor="event-start">Start</Label>
               <Input
                 id="event-start"
                 type="time"
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
+                className="appearance-none bg-background [&::-webkit-calendar-picker-indicator]:hidden"
               />
             </div>
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 w-28">
               <Label htmlFor="event-end">End</Label>
               <Input
                 id="event-end"
                 type="time"
                 value={endTime}
                 onChange={(e) => setEndTime(e.target.value)}
+                className="appearance-none bg-background [&::-webkit-calendar-picker-indicator]:hidden"
               />
             </div>
           </div>

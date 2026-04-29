@@ -238,7 +238,7 @@ class CalendarService {
       const acct = account as any
 
       // Refresh token if expired
-      if (acct.tokenExpiresAt && new Date() >= acct.tokenExpiresAt && account.refreshToken) {
+      if (acct.expiresAt && new Date() >= new Date(acct.expiresAt) && account.refreshToken) {
         const refreshed = await this.refreshGoogleToken(account.refreshToken)
         if (refreshed) {
           accessToken = refreshed.access_token
@@ -543,7 +543,7 @@ class CalendarService {
 
     // Refresh token if needed
     const acct = account as any
-    if (acct.tokenExpiresAt && new Date() >= acct.tokenExpiresAt && account.refreshToken) {
+    if (acct.expiresAt && new Date() >= new Date(acct.expiresAt) && account.refreshToken) {
       const refreshed = await this.refreshGoogleToken(account.refreshToken)
       if (refreshed) {
         accessToken = refreshed.access_token
@@ -645,7 +645,7 @@ class CalendarService {
       if (cal) {
         let accessToken = account.accessToken!
         const acct = account as any
-        if (acct.tokenExpiresAt && new Date() >= acct.tokenExpiresAt && account.refreshToken) {
+        if (acct.expiresAt && new Date() >= new Date(acct.expiresAt) && account.refreshToken) {
           const refreshed = await this.refreshGoogleToken(account.refreshToken)
           if (refreshed) {
             accessToken = refreshed.access_token
@@ -815,7 +815,7 @@ class CalendarService {
 
     // Refresh token if needed
     const acct = account as any
-    if (acct.tokenExpiresAt && new Date() >= acct.tokenExpiresAt && account.refreshToken) {
+    if (acct.expiresAt && new Date() >= new Date(acct.expiresAt) && account.refreshToken) {
       const refreshed = await this.refreshGoogleToken(account.refreshToken)
       if (refreshed) {
         accessToken = refreshed.access_token
