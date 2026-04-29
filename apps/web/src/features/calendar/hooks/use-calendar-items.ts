@@ -6,6 +6,12 @@ import { format, addMinutes, parseISO } from 'date-fns'
 import type { Task } from '@repo/shared/types'
 import type { CalendarEvent } from '@repo/shared/types'
 
+export interface EventAttendee {
+  email: string
+  displayName?: string
+  responseStatus?: string
+}
+
 export interface CalendarItem {
   id: string
   title: string
@@ -17,6 +23,18 @@ export interface CalendarItem {
   status?: string
   priority?: string
   task?: Task
+  // Google event details (populated when type === 'event')
+  googleEventId?: string
+  googleCalendarId?: string
+  calendarName?: string
+  description?: string
+  location?: string
+  attendees?: EventAttendee[]
+  hangoutLink?: string
+  htmlLink?: string
+  colorId?: string
+  organizer?: { email?: string; displayName?: string }
+  visibility?: string
 }
 
 /**
@@ -111,6 +129,23 @@ export function useCalendarItems(dateRange: { from: string; to: string }) {
         isAllDay,
         color,
         type: 'event',
+        googleEventId: ev.id,
+        googleCalendarId: ev.calendarId,
+        calendarName: ev.calendarName,
+        description: ev.description,
+        location: ev.location,
+        attendees: Array.isArray(ev.attendees)
+          ? (ev.attendees as any[]).map((a) => ({
+              email: a.email,
+              displayName: a.displayName,
+              responseStatus: a.responseStatus,
+            }))
+          : undefined,
+        hangoutLink: ev.hangoutLink,
+        htmlLink: ev.htmlLink,
+        colorId: ev.colorId,
+        organizer: ev.organizer,
+        visibility: ev.visibility,
       })
     }
 

@@ -4,7 +4,6 @@ import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import {
   notificationQueries,
-  useDeleteNotification,
   useDismissAllNotifications,
   useDismissNotification,
   useMarkAllNotificationsRead,
@@ -22,7 +21,6 @@ import {
   Target,
   Check,
   CheckCheck,
-  Trash2,
   X,
   Archive,
   ExternalLink,
@@ -59,7 +57,6 @@ function NotificationsPage() {
 
   const markRead = useMarkNotificationRead()
   const dismiss = useDismissNotification()
-  const remove = useDeleteNotification()
   const markAllRead = useMarkAllNotificationsRead()
   const dismissAll = useDismissAllNotifications()
 
@@ -195,14 +192,6 @@ function NotificationsPage() {
                           <X className="h-4 w-4" />
                         </button>
                       )}
-                      <button
-                        type="button"
-                        className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-destructive"
-                        onClick={() => remove.mutate(n.id)}
-                        title={t('delete', { defaultValue: 'Delete' })}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
                     </div>
                   </li>
                 )

@@ -510,8 +510,30 @@ class CalendarService {
 
   async createTimeBlock(
     userId: string,
-    input: { title: string; date: string; startTime: string; endTime: string; description?: string; color?: string; timeZone?: string },
-  ): Promise<{ success: boolean; eventId?: string; error?: string }> {
+    input: {
+      title: string
+      date: string
+      startTime: string
+      endTime: string
+      description?: string
+      color?: string
+      timeZone?: string
+      location?: string
+      attendees?: { email: string }[]
+      reminders?: {
+        useDefault: boolean
+        overrides?: { method: 'popup' | 'email'; minutes: number }[]
+      }
+      addGoogleMeet?: boolean
+      calendarId?: string
+    },
+  ): Promise<{
+    success: boolean
+    eventId?: string
+    hangoutLink?: string
+    htmlLink?: string
+    error?: string
+  }> {
     // Get the user's primary Google Calendar account
     const accounts = await calendarRepo.findGoogleAccountsWithSyncCalendars(userId)
     if (!accounts.length) return { success: false, error: 'no_google_account' }
@@ -532,38 +554,53 @@ class CalendarService {
       }
     }
 
-    // Find primary calendar
-    const primaryCal = account.calendars.find((c: any) => c.isPrimary) || account.calendars[0]
-    if (!primaryCal) return { success: false, error: 'no_calendar' }
-
-    const calAny = primaryCal as any
-    const calendarId = calAny.externalId || calAny.providerCalendarId
+    // Pick calendar — caller can specify, otherwise primary
+    let targetCalendarId = input.calendarId
+    if (!targetCalendarId) {
+      const primaryCal = account.calendars.find((c: any) => c.isPrimary) || account.calendars[0]
+      if (!primaryCal) return { success: false, error: 'no_calendar' }
+      const calAny = primaryCal as any
+      targetCalendarId = calAny.externalId || calAny.providerCalendarId
+    }
 
     // Create the event
     const startDateTime = `${input.date}T${input.startTime}:00`
     const endDateTime = `${input.date}T${input.endTime}:00`
 
     const tz = input.timeZone || 'UTC'
-    const eventBody = {
+    const eventBody: Record<string, unknown> = {
       summary: input.title,
       description: input.description || 'Time block created by ThePrimeWay',
       start: { dateTime: startDateTime, timeZone: tz },
       end: { dateTime: endDateTime, timeZone: tz },
       colorId: input.color || '9', // Blueberry
     }
+    if (input.location) eventBody.location = input.location
+    if (input.attendees?.length) eventBody.attendees = input.attendees
+    if (input.reminders) eventBody.reminders = input.reminders
+    if (input.addGoogleMeet) {
+      eventBody.conferenceData = {
+        createRequest: {
+          requestId: crypto.randomUUID(),
+          conferenceSolution: { key: { type: 'hangoutsMeet' } },
+        },
+      }
+    }
+
+    const url = new URL(
+      `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(targetCalendarId!)}/events`,
+    )
+    if (input.addGoogleMeet) url.searchParams.set('conferenceDataVersion', '1')
 
     try {
-      const res = await fetch(
-        `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(eventBody),
+      const res = await fetch(url.toString(), {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
         },
-      )
+        body: JSON.stringify(eventBody),
+      })
 
       if (!res.ok) {
         const error = await res.text()
@@ -571,11 +608,188 @@ class CalendarService {
         return { success: false, error: 'event_creation_failed' }
       }
 
-      const event = (await res.json()) as { id: string }
-      return { success: true, eventId: event.id }
+      const event = (await res.json()) as {
+        id: string
+        hangoutLink?: string
+        htmlLink?: string
+      }
+      return {
+        success: true,
+        eventId: event.id,
+        hangoutLink: event.hangoutLink,
+        htmlLink: event.htmlLink,
+      }
     } catch (err) {
       console.error('[TIME_BLOCK] Error:', err)
       return { success: false, error: 'event_creation_failed' }
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Generic Google Event mutations (for arbitrary events, not Task-bound)
+  // -------------------------------------------------------------------------
+
+  /**
+   * Verify the given calendarId belongs to the user and return an access token
+   * for the owning account. Returns null if calendar not found for user.
+   */
+  private async resolveCalendarForUser(
+    userId: string,
+    calendarId: string,
+  ): Promise<{ accessToken: string; calendar: any; account: any } | null> {
+    const accounts = await calendarRepo.findGoogleAccountsWithSyncCalendars(userId)
+    for (const account of accounts) {
+      const cal = (account.calendars as any[]).find(
+        (c) => (c.providerCalendarId || c.externalId) === calendarId,
+      )
+      if (cal) {
+        let accessToken = account.accessToken!
+        const acct = account as any
+        if (acct.tokenExpiresAt && new Date() >= acct.tokenExpiresAt && account.refreshToken) {
+          const refreshed = await this.refreshGoogleToken(account.refreshToken)
+          if (refreshed) {
+            accessToken = refreshed.access_token
+            await calendarRepo.updateAccount(account.id, {
+              accessToken: refreshed.access_token,
+              tokenExpiresAt: new Date(Date.now() + refreshed.expires_in * 1000),
+            })
+          }
+        }
+        return { accessToken, calendar: cal, account }
+      }
+    }
+    return null
+  }
+
+  async getGoogleEvent(
+    userId: string,
+    calendarId: string,
+    eventId: string,
+  ): Promise<{ success: boolean; event?: any; error?: string }> {
+    const ctx = await this.resolveCalendarForUser(userId, calendarId)
+    if (!ctx) return { success: false, error: 'not_found' }
+    try {
+      const res = await fetch(
+        `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(eventId)}`,
+        { headers: { Authorization: `Bearer ${ctx.accessToken}` } },
+      )
+      if (!res.ok) {
+        return { success: false, error: `google_${res.status}` }
+      }
+      const event = await res.json()
+      return { success: true, event }
+    } catch (err) {
+      console.error('[GET_EVENT] Error:', err)
+      return { success: false, error: 'network_error' }
+    }
+  }
+
+  async updateGoogleEvent(
+    userId: string,
+    calendarId: string,
+    eventId: string,
+    patch: {
+      title?: string
+      description?: string
+      location?: string
+      date?: string
+      startTime?: string
+      endTime?: string
+      timeZone?: string
+      colorId?: string
+      attendees?: { email: string }[]
+      addGoogleMeet?: boolean
+      removeGoogleMeet?: boolean
+      reminders?: {
+        useDefault: boolean
+        overrides?: { method: 'popup' | 'email'; minutes: number }[]
+      }
+      visibility?: 'default' | 'public' | 'private' | 'confidential'
+    },
+  ): Promise<{ success: boolean; event?: any; error?: string }> {
+    const ctx = await this.resolveCalendarForUser(userId, calendarId)
+    if (!ctx) return { success: false, error: 'not_found' }
+
+    const body: Record<string, unknown> = {}
+    if (patch.title !== undefined) body.summary = patch.title
+    if (patch.description !== undefined) body.description = patch.description
+    if (patch.location !== undefined) body.location = patch.location
+    if (patch.colorId !== undefined) body.colorId = patch.colorId
+    if (patch.attendees !== undefined) body.attendees = patch.attendees
+    if (patch.reminders !== undefined) body.reminders = patch.reminders
+    if (patch.visibility !== undefined) body.visibility = patch.visibility
+
+    if (patch.date && patch.startTime && patch.endTime) {
+      const tz = patch.timeZone || 'UTC'
+      body.start = { dateTime: `${patch.date}T${patch.startTime}:00`, timeZone: tz }
+      body.end = { dateTime: `${patch.date}T${patch.endTime}:00`, timeZone: tz }
+    }
+
+    let needsConferenceVersion = false
+    if (patch.addGoogleMeet) {
+      body.conferenceData = {
+        createRequest: {
+          requestId: crypto.randomUUID(),
+          conferenceSolution: { key: { type: 'hangoutsMeet' } },
+        },
+      }
+      needsConferenceVersion = true
+    } else if (patch.removeGoogleMeet) {
+      body.conferenceData = null
+      needsConferenceVersion = true
+    }
+
+    const url = new URL(
+      `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(eventId)}`,
+    )
+    if (needsConferenceVersion) url.searchParams.set('conferenceDataVersion', '1')
+
+    try {
+      const res = await fetch(url.toString(), {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${ctx.accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      })
+      if (!res.ok) {
+        const errText = await res.text()
+        console.error('[UPDATE_EVENT] Failed:', errText)
+        return { success: false, error: 'event_update_failed' }
+      }
+      const event = await res.json()
+      return { success: true, event }
+    } catch (err) {
+      console.error('[UPDATE_EVENT] Error:', err)
+      return { success: false, error: 'network_error' }
+    }
+  }
+
+  async deleteGoogleEvent(
+    userId: string,
+    calendarId: string,
+    eventId: string,
+  ): Promise<{ success: boolean; error?: string }> {
+    const ctx = await this.resolveCalendarForUser(userId, calendarId)
+    if (!ctx) return { success: false, error: 'not_found' }
+    try {
+      const res = await fetch(
+        `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(eventId)}`,
+        {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${ctx.accessToken}` },
+        },
+      )
+      if (!res.ok && res.status !== 404 && res.status !== 410) {
+        const errText = await res.text()
+        console.error('[DELETE_EVENT] Failed:', errText)
+        return { success: false, error: 'event_delete_failed' }
+      }
+      return { success: true }
+    } catch (err) {
+      console.error('[DELETE_EVENT] Error:', err)
+      return { success: false, error: 'network_error' }
     }
   }
 

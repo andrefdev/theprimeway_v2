@@ -69,9 +69,67 @@ export const calendarApi = {
     description?: string
     color?: string
     timeZone?: string
+    location?: string
+    attendees?: { email: string }[]
+    reminders?: {
+      useDefault: boolean
+      overrides?: { method: 'popup' | 'email'; minutes: number }[]
+    }
+    addGoogleMeet?: boolean
+    calendarId?: string
   }) =>
     api
-      .post<{ data: { success: boolean; eventId?: string } }>('/calendar/time-block', input)
+      .post<{
+        data: {
+          success: boolean
+          eventId?: string
+          hangoutLink?: string
+          htmlLink?: string
+        }
+      }>('/calendar/time-block', input)
+      .then((r) => r.data.data),
+
+  getGoogleEvent: (calendarId: string, eventId: string) =>
+    api
+      .get<{ data: any }>(
+        `/calendar/events/${encodeURIComponent(calendarId)}/${encodeURIComponent(eventId)}`,
+      )
+      .then((r) => r.data.data),
+
+  updateGoogleEvent: (
+    calendarId: string,
+    eventId: string,
+    body: {
+      title?: string
+      description?: string
+      location?: string
+      date?: string
+      startTime?: string
+      endTime?: string
+      timeZone?: string
+      colorId?: string
+      attendees?: { email: string }[]
+      addGoogleMeet?: boolean
+      removeGoogleMeet?: boolean
+      reminders?: {
+        useDefault: boolean
+        overrides?: { method: 'popup' | 'email'; minutes: number }[]
+      }
+      visibility?: 'default' | 'public' | 'private' | 'confidential'
+    },
+  ) =>
+    api
+      .patch<{ data: any }>(
+        `/calendar/events/${encodeURIComponent(calendarId)}/${encodeURIComponent(eventId)}`,
+        body,
+      )
+      .then((r) => r.data.data),
+
+  deleteGoogleEvent: (calendarId: string, eventId: string) =>
+    api
+      .delete<{ data: { success: boolean } }>(
+        `/calendar/events/${encodeURIComponent(calendarId)}/${encodeURIComponent(eventId)}`,
+      )
       .then((r) => r.data.data),
 
   createHabitBlock: (input: {

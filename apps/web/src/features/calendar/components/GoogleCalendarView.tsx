@@ -21,7 +21,11 @@ import { cn } from '@/shared/lib/utils'
 import { useCalendarItems, getItemsForDay, type CalendarItem } from '../hooks/use-calendar-items'
 import { TaskDialog } from '@/features/tasks/components/TaskDialog'
 import { QuickTaskDialog } from '@/features/tasks/components/QuickTaskDialog'
+import { EventQuickView } from './EventQuickView'
+import { EventEditDialog } from './EventEditDialog'
 import type { Task } from '@repo/shared/types'
+import { toast } from 'sonner'
+import { useDeleteGoogleEvent } from '../queries'
 
 const SLOT_MINUTES = 30
 
@@ -56,7 +60,11 @@ export function GoogleCalendarView() {
   const [currentDate, setCurrentDate] = useState(() => new Date())
   const [mode, setMode] = useState<ViewMode>('week')
   const [slotDialog, setSlotDialog] = useState<{ start: Date; end: Date } | null>(null)
+  const [eventCreateSlot, setEventCreateSlot] = useState<{ start: Date; end: Date } | null>(null)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
+  const [quickView, setQuickView] = useState<{ item: CalendarItem; anchor: HTMLElement } | null>(null)
+  const [editingEvent, setEditingEvent] = useState<CalendarItem | null>(null)
+  const deleteEvent = useDeleteGoogleEvent()
   const today = new Date()
 
   const range = useMemo(() => {
@@ -123,7 +131,20 @@ export function GoogleCalendarView() {
           <h2 className="text-lg font-semibold text-foreground ml-2">{title}</h2>
         </div>
 
-        <div className="flex rounded-md border border-border overflow-hidden">
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            className="h-8 text-xs gap-1"
+            onClick={() => {
+              const start = new Date()
+              start.setMinutes(Math.ceil(start.getMinutes() / 30) * 30, 0, 0)
+              const end = new Date(start.getTime() + 30 * 60_000)
+              setEventCreateSlot({ start, end })
+            }}
+          >
+            + Event
+          </Button>
+          <div className="flex rounded-md border border-border overflow-hidden">
           {(['day', 'week', 'month'] as const).map((m) => (
             <button
               key={m}
@@ -141,6 +162,7 @@ export function GoogleCalendarView() {
               })}
             </button>
           ))}
+          </div>
         </div>
       </div>
 
@@ -161,8 +183,12 @@ export function GoogleCalendarView() {
               const end = new Date(start.getTime() + 30 * 60_000)
               setSlotDialog({ start, end })
             }}
-            onItemClick={(item) => {
-              if (item.type === 'task' && item.task) setEditingTask(item.task)
+            onItemClick={(item, anchor) => {
+              if (item.type === 'task' && item.task) {
+                setEditingTask(item.task)
+              } else if (item.type === 'event') {
+                setQuickView({ item, anchor })
+              }
             }}
           />
         )}
@@ -183,6 +209,52 @@ export function GoogleCalendarView() {
           open
           onClose={() => setEditingTask(null)}
           task={editingTask}
+        />
+      )}
+
+      <EventQuickView
+        item={quickView?.item ?? null}
+        anchorEl={quickView?.anchor ?? null}
+        open={!!quickView}
+        onClose={() => setQuickView(null)}
+        onEdit={() => {
+          if (quickView) {
+            setEditingEvent(quickView.item)
+            setQuickView(null)
+          }
+        }}
+        onDelete={async () => {
+          if (!quickView) return
+          const it = quickView.item
+          if (!it.googleCalendarId || !it.googleEventId) return
+          if (!window.confirm('Delete this event from Google Calendar?')) return
+          try {
+            await deleteEvent.mutateAsync({
+              calendarId: it.googleCalendarId,
+              eventId: it.googleEventId,
+            })
+            toast.success('Event deleted')
+            setQuickView(null)
+          } catch (e: any) {
+            toast.error(e?.message ?? 'Failed to delete')
+          }
+        }}
+      />
+
+      {editingEvent && (
+        <EventEditDialog
+          open
+          onClose={() => setEditingEvent(null)}
+          item={editingEvent}
+        />
+      )}
+
+      {eventCreateSlot && (
+        <EventEditDialog
+          open
+          onClose={() => setEventCreateSlot(null)}
+          defaultStart={eventCreateSlot.start}
+          defaultEnd={eventCreateSlot.end}
         />
       )}
     </div>
@@ -208,7 +280,7 @@ function TimeGrid({
   items: CalendarItem[]
   today: Date
   onSlotClick: (start: Date) => void
-  onItemClick: (item: CalendarItem) => void
+  onItemClick: (item: CalendarItem, anchor: HTMLElement) => void
 }) {
   const { dateFnsLocale } = useLocale()
   const { t } = useTranslation('calendar')
@@ -349,7 +421,7 @@ function TimeGrid({
                   <div
                     key={item.id}
                     data-event
-                    onClick={(e) => { e.stopPropagation(); onItemClick(item) }}
+                    onClick={(e) => { e.stopPropagation(); onItemClick(item, e.currentTarget) }}
                     className={cn(
                       'absolute rounded-md border-l-[3px] px-1.5 py-0.5 overflow-hidden cursor-pointer hover:shadow-md transition-shadow',
                       colorClass,

@@ -465,6 +465,23 @@ const timeBlockRoute = createRoute({
             description: z.string().optional(),
             color: z.string().optional(),
             timeZone: z.string().optional(),
+            location: z.string().optional(),
+            attendees: z.array(z.object({ email: z.string().email() })).optional(),
+            reminders: z
+              .object({
+                useDefault: z.boolean(),
+                overrides: z
+                  .array(
+                    z.object({
+                      method: z.enum(['popup', 'email']),
+                      minutes: z.number().int().min(0),
+                    }),
+                  )
+                  .optional(),
+              })
+              .optional(),
+            addGoogleMeet: z.boolean().optional(),
+            calendarId: z.string().optional(),
           }),
         },
       },
@@ -502,8 +519,89 @@ calendarRoutes.openapi(timeBlockRoute, (async (c: any) => {
     return c.json({ error: result.error || 'Failed to create time block' }, 400)
   }
 
-  return c.json({ data: { success: true, eventId: result.eventId } }, 201)
+  return c.json(
+    {
+      data: {
+        success: true,
+        eventId: result.eventId,
+        hangoutLink: result.hangoutLink,
+        htmlLink: result.htmlLink,
+      },
+    },
+    201,
+  )
 }) as any)
+
+// ---------------------------------------------------------------------------
+// GET /events/:calendarId/:eventId — fetch a single Google Calendar event
+// PATCH /events/:calendarId/:eventId — update arbitrary Google Calendar event
+// DELETE /events/:calendarId/:eventId — delete arbitrary Google Calendar event
+// ---------------------------------------------------------------------------
+const eventPatchSchema = z.object({
+  title: z.string().min(1).optional(),
+  description: z.string().optional(),
+  location: z.string().optional(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  startTime: z.string().regex(/^\d{2}:\d{2}$/).optional(),
+  endTime: z.string().regex(/^\d{2}:\d{2}$/).optional(),
+  timeZone: z.string().optional(),
+  colorId: z.string().optional(),
+  attendees: z.array(z.object({ email: z.string().email() })).optional(),
+  addGoogleMeet: z.boolean().optional(),
+  removeGoogleMeet: z.boolean().optional(),
+  reminders: z
+    .object({
+      useDefault: z.boolean(),
+      overrides: z
+        .array(
+          z.object({
+            method: z.enum(['popup', 'email']),
+            minutes: z.number().int().min(0),
+          }),
+        )
+        .optional(),
+    })
+    .optional(),
+  visibility: z.enum(['default', 'public', 'private', 'confidential']).optional(),
+})
+
+calendarRoutes.get('/events/:calendarId/:eventId', async (c) => {
+  const userId = (c.get('user') as any).userId
+  const calendarId = decodeURIComponent(c.req.param('calendarId'))
+  const eventId = decodeURIComponent(c.req.param('eventId'))
+  const result = await calendarService.getGoogleEvent(userId, calendarId, eventId)
+  if (!result.success) {
+    return c.json({ error: result.error || 'failed' }, result.error === 'not_found' ? 404 : 400)
+  }
+  return c.json({ data: result.event }, 200)
+})
+
+calendarRoutes.patch('/events/:calendarId/:eventId', async (c) => {
+  const userId = (c.get('user') as any).userId
+  const calendarId = decodeURIComponent(c.req.param('calendarId'))
+  const eventId = decodeURIComponent(c.req.param('eventId'))
+  const raw = await c.req.json().catch(() => ({}))
+  const parsed = eventPatchSchema.safeParse(raw)
+  if (!parsed.success) {
+    return c.json({ error: 'Invalid input', issues: parsed.error.flatten() }, 400)
+  }
+  const result = await calendarService.updateGoogleEvent(userId, calendarId, eventId, parsed.data)
+  if (!result.success) {
+    return c.json({ error: result.error || 'failed' }, result.error === 'not_found' ? 404 : 400)
+  }
+  return c.json({ data: result.event }, 200)
+})
+
+calendarRoutes.delete('/events/:calendarId/:eventId', async (c) => {
+  const userId = (c.get('user') as any).userId
+  const calendarId = decodeURIComponent(c.req.param('calendarId'))
+  const eventId = decodeURIComponent(c.req.param('eventId'))
+  const result = await calendarService.deleteGoogleEvent(userId, calendarId, eventId)
+  if (!result.success) {
+    return c.json({ error: result.error || 'failed' }, result.error === 'not_found' ? 404 : 400)
+  }
+  return c.json({ data: { success: true } }, 200)
+})
 
 // ---------------------------------------------------------------------------
 // POST /habit-block — Create a recurring calendar block for a habit

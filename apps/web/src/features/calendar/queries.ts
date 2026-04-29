@@ -77,6 +77,42 @@ export function useUpdateCalendar() {
   })
 }
 
+export function useUpdateGoogleEvent() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (args: {
+      calendarId: string
+      eventId: string
+      body: Parameters<typeof calendarApi.updateGoogleEvent>[2]
+    }) => calendarApi.updateGoogleEvent(args.calendarId, args.eventId, args.body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: calendarQueries.all() })
+    },
+  })
+}
+
+export function useDeleteGoogleEvent() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (args: { calendarId: string; eventId: string }) =>
+      calendarApi.deleteGoogleEvent(args.calendarId, args.eventId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: calendarQueries.all() })
+    },
+  })
+}
+
+export function useCreateTimeBlock() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: Parameters<typeof calendarApi.createTimeBlock>[0]) =>
+      calendarApi.createTimeBlock(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: calendarQueries.all() })
+    },
+  })
+}
+
 export function useConnectGoogleCalendar() {
   const queryClient = useQueryClient()
   return useMutation({
