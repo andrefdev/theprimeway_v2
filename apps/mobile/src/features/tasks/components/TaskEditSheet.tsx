@@ -66,7 +66,7 @@ export function TaskEditSheet({ task, isOpen, onClose }: TaskEditSheetProps) {
           priority,
           scheduledDate,
           estimatedDurationMinutes: duration,
-          ...(linkedGoal ? { goal_id: linkedGoal.id } : {}),
+          ...(linkedGoal ? { goalId: linkedGoal.id } : {}),
         } as any,
       });
       onClose();

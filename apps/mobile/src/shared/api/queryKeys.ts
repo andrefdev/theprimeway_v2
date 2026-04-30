@@ -32,6 +32,12 @@ export const queryKeys = {
   ai: {
     threads: ['ai', 'threads'],
   },
+  brain: {
+    feeds: () => ['brain', 'feed'] as const,
+    feed: (params: { status?: string; search?: string } = {}) =>
+      ['brain', 'feed', params] as const,
+    entry: (id: string) => ['brain', 'entry', id] as const,
+  },
   profile: ['profile'],
   settings: ['settings'],
   subscription: {

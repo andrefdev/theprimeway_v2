@@ -1,0 +1,58 @@
+---
+title: "Instalar Desktop"
+description: "Pasos de instalación en Windows, macOS y Linux."
+---
+
+Descarga el instalador desde [theprimeway.com/download](https://theprimeway.com/download).
+
+<Tabs>
+  <Tab title="Windows">
+    1. Descarga `ThePrimeWay-Setup-x64.exe`.
+    2. Doble-click. Si Windows muestra SmartScreen, pulsa "Más información → Ejecutar de todas formas".
+    3. Sigue el asistente. Por defecto se instala en `%LOCALAPPDATA%\ThePrimeWay`.
+    4. Marca **Iniciar con Windows** si quieres que la app esté siempre disponible.
+    5. Inicia sesión con tu cuenta.
+  </Tab>
+  <Tab title="macOS">
+    1. Descarga `ThePrimeWay.dmg`.
+    2. Arrastra la app a `/Applications`.
+    3. Primer inicio: clic derecho → Abrir (Gatekeeper requiere autorización inicial).
+    4. Concede permisos: Notificaciones, Accesibilidad (para shortcuts globales), Automatización.
+    5. Inicia sesión.
+  </Tab>
+  <Tab title="Linux">
+    AppImage (recomendado, distribución agnóstica):
+    1. Descarga `ThePrimeWay.AppImage`.
+    2. `chmod +x ThePrimeWay.AppImage`.
+    3. Ejecuta: `./ThePrimeWay.AppImage`.
+
+    DEB (Debian / Ubuntu):
+    ```bash
+    sudo dpkg -i theprimeway_*_amd64.deb
+    ```
+
+    RPM (Fedora):
+    ```bash
+    sudo rpm -i theprimeway-*.x86_64.rpm
+    ```
+  </Tab>
+</Tabs>
+
+## Auto-updates
+
+La app comprueba actualizaciones al arrancar y cada 24h. Las instala silenciosamente; te pide reiniciar cuando esté lista. Configurable en `Ajustes → App → Auto-updates`.
+
+## Permisos requeridos
+
+| Permiso | Para qué |
+|--------|----------|
+| Notificaciones | Recordatorios, briefings, achievements |
+| Accesibilidad / Input monitoring | Shortcuts globales |
+| Always-on-top | Overlay |
+| Autostart | Iniciar con sistema (opcional) |
+
+## Desinstalar
+
+- Windows: Configuración → Apps → ThePrimeWay → Desinstalar.
+- macOS: arrastra `/Applications/ThePrimeWay.app` a la papelera.
+- Linux: `sudo apt remove theprimeway` o borra el AppImage.

@@ -1,0 +1,30 @@
+---
+title: "ThePrimeWay Mobile"
+description: "iOS y Android con widgets nativos y check-in rápido."
+---
+
+La app mobile está pensada para captura sobre la marcha, check-in rápido de hábitos y revisión ligera. El trabajo profundo vive en web/desktop.
+
+<CardGroup cols={2}>
+  <Card title="Instalación" icon="mobile" href="/mobile/instalacion">
+    iOS App Store y Google Play.
+  </Card>
+  <Card title="Widgets" icon="grip" href="/mobile/widgets">
+    Hábitos y tareas sin abrir la app.
+  </Card>
+</CardGroup>
+
+## Funciones clave
+
+- **Bottom tab nav**: Dashboard · Tareas · Hábitos · Objetivos · IA.
+- **Swipe-to-complete** tareas y hábitos.
+- **Widgets nativos** (iOS WidgetKit + Android Widgets).
+- **Push notifications** vía Firebase FCM.
+- **Push interactivo** para Morning Briefing y check-in de hábitos.
+- **Focus Timer** con integración Do Not Disturb.
+- **Offline-first**: SQLite local con sync al reconectar.
+- **Quick capture** desde botón flotante.
+
+## Sincronización
+
+Los cambios en mobile aparecen en web/desktop al instante (WebSocket cuando hay foreground; sync al reabrir cuando vuelves de background).

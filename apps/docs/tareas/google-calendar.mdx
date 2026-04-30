@@ -1,0 +1,41 @@
+---
+title: "Sincronización con Google Calendar"
+description: "Bidireccional y en tiempo real."
+---
+
+## Conectar tu cuenta Google
+
+1. `Ajustes → Integraciones → Google Calendar`.
+2. Pulsa **Conectar**.
+3. Autoriza en Google los permisos: leer y escribir eventos del calendario que elijas.
+4. Selecciona qué calendarios sincronizar.
+
+<Tip>
+Si te registraste con Google, el paso 3 puede ser un solo click sin re-autenticación.
+</Tip>
+
+## Cómo funciona la sincronización
+
+**Tareas → Calendar**: cualquier tarea con `scheduledStart` y duración se crea como evento en el calendario seleccionado.
+
+**Calendar → Tareas**: los eventos de Google aparecen como eventos en la vista Calendar de ThePrimeWay (no se convierten en tareas a menos que tú los conviertas manualmente).
+
+**Bidireccional**: si mueves un evento en Google, la tarea correspondiente se actualiza. Si mueves la tarea en ThePrimeWay, el evento en Google se actualiza.
+
+## Cambios de evento
+
+Si cancelas o mueves un evento ajeno (ej: una reunión) que estaba en conflicto con tus tareas, la IA detecta el cambio y propone re-agendar las tareas afectadas. Notificación accionable.
+
+## Múltiples calendarios
+
+Puedes elegir:
+- **Calendario destino**: dónde se crean los eventos de tareas (ej: "ThePrimeWay" creado dedicado).
+- **Calendarios visibles**: cuáles ver en tu vista Calendar de ThePrimeWay.
+
+## Desconectar
+
+`Ajustes → Integraciones → Google Calendar → Desconectar`. Los eventos ya creados en Google se quedan; futuras tareas dejan de sincronizar.
+
+## Privacidad
+
+ThePrimeWay solo lee/escribe en los calendarios que autorices explícitamente. No accede a contactos, Drive, ni Gmail.

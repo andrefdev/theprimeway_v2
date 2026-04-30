@@ -1,21 +1,30 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
 import { tasksApi } from './api'
 import { CACHE_TIMES } from '@repo/shared/constants'
+import type { Task } from '@repo/shared/types'
 import type { CreateTaskInput, UpdateTaskInput } from '@repo/shared/validators'
+import { listOps, patchQueries, rollbackQueries, snapshotQueries } from '@/shared/lib/optimistic'
+import { playSound } from '@/shared/lib/sound'
+
+interface TasksListResponse {
+  data: Task[]
+  count: number
+}
 
 export const tasksQueries = {
   all: () => ['tasks'] as const,
+  lists: () => [...tasksQueries.all(), 'list'] as const,
 
   list: (params?: Record<string, string>) =>
     queryOptions({
-      queryKey: [...tasksQueries.all(), 'list', params],
+      queryKey: [...tasksQueries.lists(), params],
       queryFn: () => tasksApi.list(params),
       staleTime: CACHE_TIMES.standard,
     }),
 
   today: (referenceDate: string) =>
     queryOptions({
-      queryKey: [...tasksQueries.all(), 'list', { filter: 'today', referenceDate }],
+      queryKey: [...tasksQueries.lists(), { filter: 'today', referenceDate }],
       queryFn: () => tasksApi.list({ filter: 'today', referenceDate }),
       staleTime: CACHE_TIMES.standard,
     }),
@@ -52,13 +61,6 @@ export const tasksQueries = {
         ),
       staleTime: 0, // Always fetch fresh for schedule suggestions
       enabled: !!targetDate && estimatedDuration > 0,
-    }),
-
-  insight: (taskId: string) =>
-    queryOptions({
-      queryKey: [...tasksQueries.all(), 'insight', taskId],
-      queryFn: () => tasksApi.getTaskInsight(taskId),
-      staleTime: CACHE_TIMES.long,
     }),
 
   nextTask: () =>
@@ -108,37 +110,97 @@ export const tasksQueries = {
     }),
 }
 
+function tempTaskId() {
+  return `task-tmp-${Math.random().toString(36).slice(2, 10)}`
+}
+
 export function useCreateTask() {
-  const queryClient = useQueryClient()
+  const qc = useQueryClient()
 
   return useMutation({
     mutationFn: (data: CreateTaskInput) => tasksApi.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: tasksQueries.all() })
+    onMutate: async (data) => {
+      const snaps = await snapshotQueries<TasksListResponse>(qc, tasksQueries.lists())
+      const now = new Date().toISOString()
+      const optimistic: Task = {
+        id: tempTaskId(),
+        userId: '',
+        title: data.title ?? '',
+        description: data.description ?? null,
+        status: 'pending' as Task['status'],
+        priority: (data.priority ?? 'medium') as Task['priority'],
+        dueDate: data.dueDate ?? null,
+        scheduledDate: data.scheduledDate ?? null,
+        scheduledStart: data.scheduledStart ?? null,
+        scheduledEnd: data.scheduledEnd ?? null,
+        scheduledBucket: (data.scheduledBucket ?? null) as Task['scheduledBucket'],
+        channelId: data.channelId ?? null,
+        estimatedDuration: data.estimatedDuration ?? null,
+        completedAt: null,
+        isArchived: false,
+        tags: data.tags ?? [],
+        actualStart: null,
+        actualEnd: null,
+        actualDurationSeconds: null,
+        createdAt: now,
+        updatedAt: now,
+      }
+      patchQueries<TasksListResponse>(qc, tasksQueries.lists(), (cur) => ({
+        ...cur,
+        data: [...cur.data, optimistic],
+        count: cur.count + 1,
+      }))
+      return { snaps }
     },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.snaps) rollbackQueries(qc, ctx.snaps)
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: tasksQueries.all() }),
   })
 }
 
 export function useUpdateTask() {
-  const queryClient = useQueryClient()
+  const qc = useQueryClient()
 
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<UpdateTaskInput> }) =>
       tasksApi.update(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: tasksQueries.all() })
+    onMutate: async ({ id, data }) => {
+      const snaps = await snapshotQueries<TasksListResponse>(qc, tasksQueries.lists())
+      patchQueries<TasksListResponse>(qc, tasksQueries.lists(), (cur) => ({
+        ...cur,
+        data: listOps.patch(cur.data, id, data as Partial<Task>),
+      }))
+      return { snaps }
     },
+    onSuccess: (_res, vars) => {
+      if (vars.data?.status === 'completed') playSound('taskComplete')
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.snaps) rollbackQueries(qc, ctx.snaps)
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: tasksQueries.all() }),
   })
 }
 
 export function useDeleteTask() {
-  const queryClient = useQueryClient()
+  const qc = useQueryClient()
 
   return useMutation({
     mutationFn: (id: string) => tasksApi.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: tasksQueries.all() })
+    onMutate: async (id) => {
+      const snaps = await snapshotQueries<TasksListResponse>(qc, tasksQueries.lists())
+      patchQueries<TasksListResponse>(qc, tasksQueries.lists(), (cur) => ({
+        ...cur,
+        data: listOps.remove(cur.data, id),
+        count: Math.max(0, cur.count - 1),
+      }))
+      return { snaps }
     },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.snaps) rollbackQueries(qc, ctx.snaps)
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: tasksQueries.all() }),
   })
 }
 
@@ -161,6 +223,7 @@ export function useStartTimer() {
   return useMutation({
     mutationFn: (taskId: string) => tasksApi.startTimer(taskId),
     onSuccess: () => {
+      playSound('pomodoroStart')
       queryClient.invalidateQueries({ queryKey: tasksQueries.all() })
     },
   })
@@ -171,6 +234,7 @@ export function useStopTimer() {
   return useMutation({
     mutationFn: (taskId: string) => tasksApi.stopTimer(taskId),
     onSuccess: () => {
+      playSound('pomodoroEnd')
       queryClient.invalidateQueries({ queryKey: tasksQueries.all() })
     },
   })

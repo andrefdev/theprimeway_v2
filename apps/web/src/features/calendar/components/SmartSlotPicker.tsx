@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { calendarApi } from '../api'
+import { calendarApi, type SmartSlot } from '../api'
 import { Card, CardContent } from '@/shared/components/ui/card'
 import { Badge } from '@/shared/components/ui/badge'
 import { Button } from '@/shared/components/ui/button'
@@ -21,8 +21,8 @@ export function SmartSlotPicker({ taskId, taskTitle, date, onScheduled }: SmartS
   const { locale } = useLocale()
   const targetDate = date ?? format(new Date(), 'yyyy-MM-dd')
   const [loading, setLoading] = useState(false)
-  const [slots, setSlots] = useState<any[] | null>(null)
-  const [bestSlot, setBestSlot] = useState<any>(null)
+  const [slots, setSlots] = useState<SmartSlot[] | null>(null)
+  const [bestSlot, setBestSlot] = useState<SmartSlot | null>(null)
 
   async function handleFind() {
     setLoading(true)
@@ -37,16 +37,19 @@ export function SmartSlotPicker({ taskId, taskTitle, date, onScheduled }: SmartS
     }
   }
 
-  async function handleSelect(slot: any) {
+  async function handleSelect(slot: SmartSlot) {
+    const startTime = slot.start ?? slot.startTime
+    const endTime = slot.end ?? slot.endTime
+    if (!startTime || !endTime) return
     try {
       await calendarApi.createTimeBlock({
         title: taskTitle,
         date: targetDate,
-        startTime: slot.start ?? slot.startTime,
-        endTime: slot.end ?? slot.endTime,
+        startTime,
+        endTime,
       })
       toast.success(t('save', { defaultValue: 'Scheduled!' }))
-      onScheduled?.(slot.start, slot.end)
+      onScheduled?.(startTime, endTime)
     } catch {
       toast.error(t('failedToLoad', { defaultValue: 'Failed to schedule' }))
     }
@@ -68,7 +71,7 @@ export function SmartSlotPicker({ taskId, taskTitle, date, onScheduled }: SmartS
 
         {slots && slots.length > 0 && (
           <div className="space-y-1">
-            {slots.slice(0, 5).map((slot: any, i: number) => {
+            {slots.slice(0, 5).map((slot, i) => {
               const isBest = bestSlot && (slot.start === bestSlot.start || i === 0)
               return (
                 <button

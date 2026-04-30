@@ -21,6 +21,7 @@ jobs:
       api: ${{ steps.filter.outputs.api }}
       web: ${{ steps.filter.outputs.web }}
       admin: ${{ steps.filter.outputs.admin }}
+      docs: ${{ steps.filter.outputs.docs }}
       infra: ${{ steps.filter.outputs.infra }}
     steps:
       - uses: actions/checkout@v4
@@ -43,6 +44,8 @@ jobs:
               - 'packages/shared/**'
               - 'packages/ui/**'
               - 'nginx/spa.conf'
+            docs:
+              - 'apps/docs/**'
             infra:
               - 'docker-compose.prod.yml'
               - 'nginx/**'
@@ -125,6 +128,28 @@ jobs:
           cache-to: type=gha,mode=max
           platforms: linux/amd64
 
+  # ─── Validate Mintlify Docs ─────────────────────────────────────────────────
+  # Mintlify hosted (dashboard.mintlify.com) auto-rebuilds the site from
+  # apps/docs/ on each push to main. This job only validates that the docs
+  # config and links are healthy before Mintlify picks them up.
+  validate-docs:
+    name: Validate Docs
+    needs: changes
+    if: needs.changes.outputs.docs == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Validate docs.json schema and check broken links
+        working-directory: apps/docs
+        run: |
+          npx --yes mint@latest broken-links
+
   # ─── Build & Push Admin Docker Image ────────────────────────────────────────
   build-admin:
     name: Build Admin
@@ -166,7 +191,7 @@ jobs:
   # ─── Deploy to Server via Docker Compose ────────────────────────────────────
   deploy:
     name: Deploy
-    needs: [changes, build-api, build-web, build-admin]
+    needs: [changes, build-api, build-web, build-admin, validate-docs]
     # Run if: always() means run regardless of job statuses
     # !cancelled() means don't run if cancelled
     # !contains(needs.*.result, 'failure') means don't run if any job failed
@@ -347,3 +372,10 @@ jobs:
         run: |
           curl --fail --retry 10 --retry-delay 3 --retry-max-time 60 \
             https://admin.theprimeway.app
+
+      - name: Health check - Docs
+        # Only after nginx has been reloaded with the docs server block.
+        # Mintlify hosted serves the content; nginx reverse-proxies it.
+        run: |
+          curl --fail --retry 10 --retry-delay 3 --retry-max-time 60 \
+            https://docs.theprimeway.app || echo "::warning::docs.theprimeway.app not yet reachable — verify Mintlify custom domain + DNS + cert"

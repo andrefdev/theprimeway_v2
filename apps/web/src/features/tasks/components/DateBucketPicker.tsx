@@ -21,6 +21,7 @@ interface DateBucketPickerProps {
   value: DateBucketValue
   onChange: (next: DateBucketValue) => void
   className?: string
+  trigger?: React.ReactNode
 }
 
 function formatLocalDate(d: Date): string {
@@ -77,21 +78,23 @@ function summary(v: DateBucketValue): string {
   return preset?.label ?? 'Pick'
 }
 
-export function DateBucketPicker({ value, onChange, className }: DateBucketPickerProps) {
+export function DateBucketPicker({ value, onChange, className, trigger }: DateBucketPickerProps) {
   const [open, setOpen] = React.useState(false)
   const k = activeKey(value)
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button
-          type="button"
-          variant="outline"
-          className={cn('h-9 justify-start text-left font-normal', className)}
-        >
-          <CalendarIcon className="mr-2 h-4 w-4" />
-          {summary(value)}
-        </Button>
+        {trigger ?? (
+          <Button
+            type="button"
+            variant="outline"
+            className={cn('h-9 justify-start text-left font-normal', className)}
+          >
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {summary(value)}
+          </Button>
+        )}
       </PopoverTrigger>
       <PopoverContent
         className="w-auto p-2"

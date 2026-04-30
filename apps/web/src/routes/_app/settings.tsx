@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useState, useEffect, useRef } from 'react'
 import { settingsApi, type UserSettings } from '@/features/settings/api'
 import { PreferencesForm } from '@/features/settings/components/PreferencesForm'
+import { SoundPreferences } from '@/features/settings/components/SoundPreferences'
 import { ChangePasswordForm } from '@/features/settings/components/ChangePasswordForm'
 import { DangerZone } from '@/features/settings/components/DangerZone'
 import { NotificationsPreferences } from '@/features/notifications/components/NotificationsPreferences'
@@ -104,6 +105,7 @@ function SettingsPage() {
             onSettingsChange={update}
             isPremium={customThemeCreationFeature.enabled}
           />
+          <SoundPreferences />
         </TabsContent>
 
         <TabsContent value="schedule" className="space-y-6 pt-4">

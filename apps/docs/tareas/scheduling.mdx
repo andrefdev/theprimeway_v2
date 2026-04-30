@@ -1,0 +1,51 @@
+---
+title: "Smart Scheduling con IA"
+description: "Cómo la IA agenda tus tareas en tu calendar."
+---
+
+## Cómo funciona
+
+Cuando creas una tarea con duración estimada, la IA analiza:
+
+- **Bloques libres** en tu Google Calendar conectado.
+- **Horario de trabajo** declarado en `Ajustes → Preferencias de trabajo`.
+- **Tipo de tarea** (deep work, llamada, admin, creativa).
+- **Patrones de energía** según tu historial (¿rindes mejor en la mañana?).
+- **Deadlines** y prioridad.
+
+Y propone los mejores slots disponibles. Tú aceptas, mueves o pides otra sugerencia.
+
+## Timebox automático
+
+La IA sugiere una duración estimada basada en:
+- Tareas pasadas similares (mismo tag, mismo objetivo, palabras clave).
+- Complejidad inferida del título y subtareas.
+
+Tú puedes ajustar a mano cuando quieras.
+
+## Tracking real
+
+Al iniciar la tarea (con Pomodoro o manualmente):
+- Se registra `actualStart`.
+- Al completar, se registra `actualEnd`.
+
+Esto alimenta:
+- Estimaciones más precisas a futuro.
+- Estadísticas de adherencia (¿tu estimado vs real coincide?).
+- Insights post-tarea.
+
+## Auto-reschedule
+
+Si se cancela o modifica un evento del calendar que estaba en conflicto con tareas tuyas, la IA propone moverlas a nuevos slots libres. Recibes una notificación accionable.
+
+## Configurar preferencias de trabajo
+
+`Ajustes → Preferencias de trabajo`:
+- Días laborables.
+- Horario laboral (ej: 09:00–18:00).
+- Bloques de deep work preferidos.
+- Pausas mínimas entre tareas.
+
+<Tip>
+Cuanta más data tenga (Calendar conectado, varias semanas de uso), mejores serán las sugerencias.
+</Tip>

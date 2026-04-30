@@ -1,0 +1,177 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "ThePrimeWay",
+  "description": "Documentación de usuario de ThePrimeWay — la plataforma AI-first que conecta tu visión de vida con tu ejecución diaria.",
+  "colors": {
+    "primary": "#7C5CFF",
+    "light": "#A78BFA",
+    "dark": "#5B3FE0"
+  },
+  "favicon": "/favicon.svg",
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
+  },
+  "appearance": {
+    "default": "dark"
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Guía",
+        "groups": [
+          {
+            "group": "Empezar",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "essentials/cuenta",
+              "essentials/plataformas",
+              "essentials/interfaz"
+            ]
+          },
+          {
+            "group": "Objetivos",
+            "pages": [
+              "objetivos/overview",
+              "objetivos/jerarquia",
+              "objetivos/pilares",
+              "objetivos/progreso",
+              "objetivos/ia-objetivos"
+            ]
+          },
+          {
+            "group": "Tareas",
+            "pages": [
+              "tareas/overview",
+              "tareas/crear-y-editar",
+              "tareas/scheduling",
+              "tareas/vistas",
+              "tareas/pomodoro",
+              "tareas/google-calendar"
+            ]
+          },
+          {
+            "group": "Hábitos",
+            "pages": [
+              "habitos/overview",
+              "habitos/tracking",
+              "habitos/analytics",
+              "habitos/ia-habitos"
+            ]
+          },
+          {
+            "group": "IA",
+            "pages": [
+              "ia/overview",
+              "ia/morning-briefing",
+              "ia/chat",
+              "ia/insights"
+            ]
+          },
+          {
+            "group": "Gamificación",
+            "pages": [
+              "gamificacion/xp-y-niveles",
+              "gamificacion/achievements",
+              "gamificacion/retos-diarios",
+              "gamificacion/streaks"
+            ]
+          },
+          {
+            "group": "Otros módulos",
+            "pages": [
+              "finanzas",
+              "notas",
+              "lectura"
+            ]
+          },
+          {
+            "group": "Notificaciones",
+            "pages": [
+              "notificaciones/tipos",
+              "notificaciones/configuracion"
+            ]
+          },
+          {
+            "group": "Cuenta y privacidad",
+            "pages": [
+              "suscripcion/planes",
+              "suscripcion/pagos",
+              "privacidad-y-datos"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Plataformas",
+        "groups": [
+          {
+            "group": "Desktop",
+            "pages": [
+              "desktop/overview",
+              "desktop/instalacion",
+              "desktop/tray-y-overlay",
+              "desktop/shortcuts"
+            ]
+          },
+          {
+            "group": "Mobile",
+            "pages": [
+              "mobile/overview",
+              "mobile/instalacion",
+              "mobile/widgets"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "FAQ",
+        "groups": [
+          {
+            "group": "Ayuda",
+            "pages": [
+              "faq",
+              "soporte"
+            ]
+          }
+        ]
+      }
+    ],
+    "global": {
+      "anchors": [
+        {
+          "anchor": "App",
+          "href": "https://app.theprimeway.com",
+          "icon": "rocket"
+        },
+        {
+          "anchor": "Web",
+          "href": "https://theprimeway.com",
+          "icon": "globe"
+        }
+      ]
+    }
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Soporte",
+        "href": "mailto:soporte@theprimeway.com"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Empezar gratis",
+      "href": "https://app.theprimeway.com"
+    }
+  },
+  "footer": {
+    "socials": {
+      "x": "https://x.com/theprimeway",
+      "github": "https://github.com/theprimeway",
+      "linkedin": "https://www.linkedin.com/company/theprimeway"
+    }
+  }
+}

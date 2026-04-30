@@ -1,6 +1,46 @@
-import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { queryOptions, useMutation, useQuery, useQueryClient, type QueryClient, type QueryKey } from '@tanstack/react-query'
 import { goalsApi } from './api'
 import { CACHE_TIMES } from '@repo/shared/constants'
+import { listOps, patchQueries, rollbackQueries, snapshotQueries, type Snapshot } from '@/shared/lib/optimistic'
+import { playSound } from '@/shared/lib/sound'
+
+function maybePlayGoalCompleteSound(data: unknown): void {
+  const d = data as { status?: string; completedAt?: string | null } | undefined
+  if (!d) return
+  if (d.status === 'completed' || (d.completedAt != null && d.completedAt !== '')) {
+    playSound('goalComplete')
+  }
+}
+
+interface GoalListResponse<T> { data: T[]; count: number }
+
+async function optimisticListPatch<T extends { id: string }>(
+  qc: QueryClient,
+  matchKey: QueryKey,
+  id: string,
+  patch: Partial<T>,
+): Promise<Snapshot<GoalListResponse<T>>> {
+  const snaps = await snapshotQueries<GoalListResponse<T>>(qc, matchKey)
+  patchQueries<GoalListResponse<T>>(qc, matchKey, (cur) => ({
+    ...cur,
+    data: listOps.patch(cur.data, id, patch),
+  }))
+  return snaps
+}
+
+async function optimisticListRemove<T extends { id: string }>(
+  qc: QueryClient,
+  matchKey: QueryKey,
+  id: string,
+): Promise<Snapshot<GoalListResponse<T>>> {
+  const snaps = await snapshotQueries<GoalListResponse<T>>(qc, matchKey)
+  patchQueries<GoalListResponse<T>>(qc, matchKey, (cur) => ({
+    ...cur,
+    data: listOps.remove(cur.data, id),
+    count: Math.max(0, cur.count - 1),
+  }))
+  return snaps
+}
 
 export const goalsQueries = {
   all: () => ['goals'] as const,
@@ -141,20 +181,26 @@ export function useCreateVision() {
   })
 }
 
+const visionsKey = () => [...goalsQueries.all(), 'visions'] as const
+
 export function useUpdateVision() {
-  const queryClient = useQueryClient()
+  const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Parameters<typeof goalsApi.updateVision>[1] }) =>
       goalsApi.updateVision(id, data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: goalsQueries.all() }),
+    onMutate: ({ id, data }) => optimisticListPatch(qc, visionsKey(), id, data as any).then((snaps) => ({ snaps })),
+    onError: (_e, _v, ctx) => ctx?.snaps && rollbackQueries(qc, ctx.snaps),
+    onSettled: () => qc.invalidateQueries({ queryKey: goalsQueries.all() }),
   })
 }
 
 export function useDeleteVision() {
-  const queryClient = useQueryClient()
+  const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => goalsApi.deleteVision(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: goalsQueries.all() }),
+    onMutate: (id) => optimisticListRemove(qc, visionsKey(), id).then((snaps) => ({ snaps })),
+    onError: (_e, _v, ctx) => ctx?.snaps && rollbackQueries(qc, ctx.snaps),
+    onSettled: () => qc.invalidateQueries({ queryKey: goalsQueries.all() }),
   })
 }
 
@@ -174,37 +220,51 @@ export function useCreateAnnualGoal() {
   })
 }
 
+const threeYearKey = () => [...goalsQueries.all(), 'three-year'] as const
+
 export function useUpdateThreeYearGoal() {
-  const queryClient = useQueryClient()
+  const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Parameters<typeof goalsApi.updateThreeYearGoal>[1] }) =>
       goalsApi.updateThreeYearGoal(id, data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: goalsQueries.all() }),
+    onMutate: ({ id, data }) => optimisticListPatch(qc, threeYearKey(), id, data as any).then((snaps) => ({ snaps })),
+    onSuccess: (_res, vars) => maybePlayGoalCompleteSound(vars.data),
+    onError: (_e, _v, ctx) => ctx?.snaps && rollbackQueries(qc, ctx.snaps),
+    onSettled: () => qc.invalidateQueries({ queryKey: goalsQueries.all() }),
   })
 }
 
 export function useDeleteThreeYearGoal() {
-  const queryClient = useQueryClient()
+  const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => goalsApi.deleteThreeYearGoal(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: goalsQueries.all() }),
+    onMutate: (id) => optimisticListRemove(qc, threeYearKey(), id).then((snaps) => ({ snaps })),
+    onError: (_e, _v, ctx) => ctx?.snaps && rollbackQueries(qc, ctx.snaps),
+    onSettled: () => qc.invalidateQueries({ queryKey: goalsQueries.all() }),
   })
 }
 
+const annualKey = () => [...goalsQueries.all(), 'annual'] as const
+
 export function useUpdateAnnualGoal() {
-  const queryClient = useQueryClient()
+  const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Parameters<typeof goalsApi.updateAnnualGoal>[1] }) =>
       goalsApi.updateAnnualGoal(id, data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: goalsQueries.all() }),
+    onMutate: ({ id, data }) => optimisticListPatch(qc, annualKey(), id, data as any).then((snaps) => ({ snaps })),
+    onSuccess: (_res, vars) => maybePlayGoalCompleteSound(vars.data),
+    onError: (_e, _v, ctx) => ctx?.snaps && rollbackQueries(qc, ctx.snaps),
+    onSettled: () => qc.invalidateQueries({ queryKey: goalsQueries.all() }),
   })
 }
 
 export function useDeleteAnnualGoal() {
-  const queryClient = useQueryClient()
+  const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => goalsApi.deleteAnnualGoal(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: goalsQueries.all() }),
+    onMutate: (id) => optimisticListRemove(qc, annualKey(), id).then((snaps) => ({ snaps })),
+    onError: (_e, _v, ctx) => ctx?.snaps && rollbackQueries(qc, ctx.snaps),
+    onSettled: () => qc.invalidateQueries({ queryKey: goalsQueries.all() }),
   })
 }
 
@@ -216,20 +276,27 @@ export function useCreateQuarterlyGoal() {
   })
 }
 
+const quarterlyKey = () => [...goalsQueries.all(), 'quarterly'] as const
+
 export function useUpdateQuarterlyGoal() {
-  const queryClient = useQueryClient()
+  const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Parameters<typeof goalsApi.updateQuarterlyGoal>[1] }) =>
       goalsApi.updateQuarterlyGoal(id, data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: goalsQueries.all() }),
+    onMutate: ({ id, data }) => optimisticListPatch(qc, quarterlyKey(), id, data as any).then((snaps) => ({ snaps })),
+    onSuccess: (_res, vars) => maybePlayGoalCompleteSound(vars.data),
+    onError: (_e, _v, ctx) => ctx?.snaps && rollbackQueries(qc, ctx.snaps),
+    onSettled: () => qc.invalidateQueries({ queryKey: goalsQueries.all() }),
   })
 }
 
 export function useDeleteQuarterlyGoal() {
-  const queryClient = useQueryClient()
+  const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => goalsApi.deleteQuarterlyGoal(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: goalsQueries.all() }),
+    onMutate: (id) => optimisticListRemove(qc, quarterlyKey(), id).then((snaps) => ({ snaps })),
+    onError: (_e, _v, ctx) => ctx?.snaps && rollbackQueries(qc, ctx.snaps),
+    onSettled: () => qc.invalidateQueries({ queryKey: goalsQueries.all() }),
   })
 }
 
@@ -241,20 +308,27 @@ export function useCreateWeeklyGoal() {
   })
 }
 
+const weeklyKey = () => [...goalsQueries.all(), 'weekly'] as const
+
 export function useUpdateWeeklyGoal() {
-  const queryClient = useQueryClient()
+  const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Parameters<typeof goalsApi.updateWeeklyGoal>[1] }) =>
       goalsApi.updateWeeklyGoal(id, data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: goalsQueries.all() }),
+    onMutate: ({ id, data }) => optimisticListPatch(qc, weeklyKey(), id, data as any).then((snaps) => ({ snaps })),
+    onSuccess: (_res, vars) => maybePlayGoalCompleteSound(vars.data),
+    onError: (_e, _v, ctx) => ctx?.snaps && rollbackQueries(qc, ctx.snaps),
+    onSettled: () => qc.invalidateQueries({ queryKey: goalsQueries.all() }),
   })
 }
 
 export function useDeleteWeeklyGoal() {
-  const queryClient = useQueryClient()
+  const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => goalsApi.deleteWeeklyGoal(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: goalsQueries.all() }),
+    onMutate: (id) => optimisticListRemove(qc, weeklyKey(), id).then((snaps) => ({ snaps })),
+    onError: (_e, _v, ctx) => ctx?.snaps && rollbackQueries(qc, ctx.snaps),
+    onSettled: () => qc.invalidateQueries({ queryKey: goalsQueries.all() }),
   })
 }
 

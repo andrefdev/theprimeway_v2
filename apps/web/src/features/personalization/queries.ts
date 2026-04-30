@@ -2,6 +2,9 @@ import { queryOptions, useQuery, useMutation, useQueryClient } from '@tanstack/r
 import { personalizationApi } from './api'
 import type { SectionCustomization, SectionId, UpsertSectionCustomizationRequest } from './model/types'
 import { CACHE_TIMES } from '@repo/shared/constants'
+import { patchQueries, rollbackQueries, snapshotQueries } from '@/shared/lib/optimistic'
+
+interface CustomizationsResponse { data: SectionCustomization[] }
 
 const CUSTOMIZATION_KEY = ['personalization', 'customizations'] as const
 
@@ -28,16 +31,13 @@ export function useSectionCustomization(sectionId: SectionId) {
 }
 
 export function useUpdateCustomization() {
-  const queryClient = useQueryClient()
+  const qc = useQueryClient()
 
   return useMutation({
     mutationFn: (data: UpsertSectionCustomizationRequest) => personalizationApi.upsert(data),
     onMutate: async (newData) => {
-      await queryClient.cancelQueries({ queryKey: CUSTOMIZATION_KEY })
-      const previous = queryClient.getQueryData<{ data: SectionCustomization[] }>(CUSTOMIZATION_KEY)
-
-      queryClient.setQueryData<{ data: SectionCustomization[] }>(CUSTOMIZATION_KEY, (old) => {
-        if (!old) return old
+      const snaps = await snapshotQueries<CustomizationsResponse>(qc, CUSTOMIZATION_KEY)
+      patchQueries<CustomizationsResponse>(qc, CUSTOMIZATION_KEY, (old) => {
         const existing = old.data.find((c) => c.sectionId === newData.sectionId)
         if (existing) {
           return {
@@ -49,20 +49,24 @@ export function useUpdateCustomization() {
         return {
           data: [
             ...old.data,
-            { id: 'temp', userId: '', ...newData, coverPositionY: 50, coverImageUrl: null, coverImageType: 'none' as const, iconType: 'default' as const, iconValue: null, ...newData } as SectionCustomization,
+            {
+              id: `tmp-${newData.sectionId}`,
+              userId: '',
+              coverPositionY: 50,
+              coverImageUrl: null,
+              coverImageType: 'none' as const,
+              iconType: 'default' as const,
+              iconValue: null,
+              ...newData,
+            } as SectionCustomization,
           ],
         }
       })
-
-      return { previous }
+      return { snaps }
     },
-    onError: (_err, _vars, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(CUSTOMIZATION_KEY, context.previous)
-      }
+    onError: (_e, _v, ctx) => {
+      if (ctx?.snaps) rollbackQueries(qc, ctx.snaps)
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: CUSTOMIZATION_KEY })
-    },
+    onSettled: () => qc.invalidateQueries({ queryKey: CUSTOMIZATION_KEY }),
   })
 }

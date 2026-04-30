@@ -1,0 +1,68 @@
+---
+title: "Tray y Overlay"
+description: "Presencia persistente sin estorbar."
+---
+
+## System Tray
+
+Cerrar la ventana **no cierra la app**: la minimiza al tray (icono cerca del reloj). La app sigue corriendo.
+
+### Tray icon dinámico
+
+| Estado | Indicador |
+|--------|-----------|
+| Normal | Icono base |
+| Timer activo | Punto pulsante + tiempo en tooltip |
+| Tareas atrasadas | Badge rojo |
+| Achievement nuevo | Brillo dorado |
+
+### Menú del tray
+
+Click derecho en el icono:
+- ▶ Iniciar / ⏸ Pausar timer
+- ✅ Completar tarea activa
+- 🪟 Mostrar dashboard
+- 👁 Mostrar / ocultar overlay
+- ⚙ Ajustes
+- ⏻ Salir completamente
+
+Para cerrar de verdad la app: menú tray → **Salir completamente**.
+
+## Overlay inteligente
+
+Ventana flotante always-on-top, semi-transparente, en la esquina inferior derecha (movible).
+
+### Estado colapsado
+
+Muestra:
+- Tarea activa
+- Tiempo corriendo
+- % progreso de objetivo padre
+- Indicador de focus mode
+
+### Estado expandido (hover)
+
+- Lista de tareas pendientes con checklist.
+- Timer Pomodoro con controles.
+- Botones rápidos: completar, posponer, pausar, agregar nota, siguiente tarea.
+- Quick capture de tarea.
+- Quick check-in de hábitos.
+
+### Personalización
+
+- **Posición**: arrastra a cualquier parte de la pantalla. Se persiste entre sesiones.
+- **Opacidad**: del 30% al 100% en `Ajustes → Overlay`.
+- **Mostrar/ocultar**: shortcut `Ctrl + Shift + O`.
+
+<Tip>
+El overlay es la forma más eficiente de trabajar sin perder de vista lo que importa: no necesitas cambiar de ventana.
+</Tip>
+
+## Smart productivity (experimental)
+
+Si concedes el permiso, ThePrimeWay puede:
+- **Detectar app activa** y sugerir tarea relevante ("Abriste VS Code, ¿continuar Integración API?").
+- **Detectar idle** (5 min sin actividad) y sugerir focus o break.
+- **Auto-iniciar timer** al detectar actividad en una app vinculada.
+
+`Ajustes → Desktop → Smart productivity`. Off por defecto.

@@ -1,4 +1,10 @@
-import { QueryClient, onlineManager, focusManager } from '@tanstack/react-query';
+import {
+  QueryClient,
+  onlineManager,
+  focusManager,
+  QueryCache,
+  MutationCache,
+} from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -6,8 +12,37 @@ import NetInfo from '@react-native-community/netinfo';
 import { AppState, type AppStateStatus, Platform } from 'react-native';
 import { useEffect, type ReactNode } from 'react';
 import axios from 'axios';
+import { toast } from '@/shared/lib/toast';
+
+function extractErrorMessage(error: unknown): string | null {
+  if (axios.isAxiosError(error)) {
+    const status = error.response?.status;
+    if (status === 401 || status === 403) return null;
+    const data = error.response?.data as { error?: string; message?: string } | undefined;
+    return data?.error ?? data?.message ?? error.message ?? 'Network error';
+  }
+  if (error instanceof Error) return error.message;
+  return null;
+}
 
 const queryClient = new QueryClient({
+  queryCache: new QueryCache({
+    onError: (error, query) => {
+      // Only toast if there's already cached data (background refetch failure is loud)
+      // or if this is an explicit refetch. Initial loads handled by component-level UI.
+      if (query.state.data === undefined) return;
+      const msg = extractErrorMessage(error);
+      if (msg) toast.error(msg);
+    },
+  }),
+  mutationCache: new MutationCache({
+    onError: (error, _vars, _ctx, mutation) => {
+      // Skip toast if mutation provided its own onError (avoid double messages)
+      if (mutation.options.onError) return;
+      const msg = extractErrorMessage(error);
+      if (msg) toast.error(msg);
+    },
+  }),
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5,

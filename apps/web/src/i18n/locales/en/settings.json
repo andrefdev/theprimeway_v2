@@ -65,6 +65,13 @@
       "6": "Saturday"
     }
   },
+  "sounds": {
+    "title": "Sounds",
+    "description": "Play feedback sounds for completions and navigation.",
+    "enabled": "Enable sounds",
+    "volume": "Volume",
+    "test": "Test sound"
+  },
   "googleCal": {
     "title": "Google Calendar",
     "description": "Connect your Google account and pick which calendars to sync.",

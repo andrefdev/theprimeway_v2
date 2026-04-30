@@ -3,6 +3,8 @@ import type { QueryClient } from '@tanstack/react-query'
 import { notificationsApi } from './api'
 import type { InboxResponse } from './api'
 import { CACHE_TIMES } from '@repo/shared/constants'
+import { patchQueries, rollbackQueries, snapshotQueries } from '@/shared/lib/optimistic'
+import type { Snapshot } from '@/shared/lib/optimistic'
 
 export const notificationQueries = {
   all: () => ['notifications'] as const,
@@ -46,35 +48,22 @@ export const notificationQueries = {
     }),
 }
 
+const inboxKey = () => [...notificationQueries.all(), 'inbox'] as const
+
 function invalidateAll(qc: QueryClient) {
   qc.invalidateQueries({ queryKey: notificationQueries.all() })
 }
 
-function inboxQueriesSnapshot(qc: QueryClient) {
-  return qc.getQueriesData<InboxResponse>({
-    queryKey: [...notificationQueries.all(), 'inbox'],
-  })
+async function snapshotInbox(qc: QueryClient): Promise<Snapshot<InboxResponse>> {
+  return snapshotQueries<InboxResponse>(qc, inboxKey())
 }
 
-function patchInboxQueries(
-  qc: QueryClient,
-  updater: (cur: InboxResponse) => InboxResponse,
-) {
-  const snapshots = inboxQueriesSnapshot(qc)
-  for (const [key, value] of snapshots) {
-    if (!value) continue
-    qc.setQueryData<InboxResponse>(key, updater(value))
-  }
-  return snapshots
+function patchInbox(qc: QueryClient, updater: (cur: InboxResponse) => InboxResponse) {
+  patchQueries<InboxResponse>(qc, inboxKey(), updater)
 }
 
-function rollbackInboxQueries(
-  qc: QueryClient,
-  snapshots: ReadonlyArray<readonly [readonly unknown[], InboxResponse | undefined]>,
-) {
-  for (const [key, value] of snapshots) {
-    qc.setQueryData(key, value)
-  }
+function rollbackInbox(qc: QueryClient, snapshots: Snapshot<InboxResponse>) {
+  rollbackQueries(qc, snapshots)
 }
 
 export function useMarkNotificationRead() {
@@ -82,9 +71,9 @@ export function useMarkNotificationRead() {
   return useMutation({
     mutationFn: (id: string) => notificationsApi.markRead(id),
     onMutate: async (id) => {
-      await qc.cancelQueries({ queryKey: notificationQueries.all() })
+      const snapshots = await snapshotInbox(qc)
       const now = new Date().toISOString()
-      const snapshots = patchInboxQueries(qc, (cur) => {
+      patchInbox(qc, (cur) => {
         let unreadDelta = 0
         const next = cur.data.map((n) => {
           if (n.id !== id) return n
@@ -96,7 +85,7 @@ export function useMarkNotificationRead() {
       return { snapshots }
     },
     onError: (_e, _id, ctx) => {
-      if (ctx?.snapshots) rollbackInboxQueries(qc, ctx.snapshots)
+      if (ctx?.snapshots) rollbackInbox(qc, ctx.snapshots)
     },
     onSettled: () => invalidateAll(qc),
   })
@@ -107,8 +96,8 @@ export function useDismissNotification() {
   return useMutation({
     mutationFn: (id: string) => notificationsApi.dismiss(id),
     onMutate: async (id) => {
-      await qc.cancelQueries({ queryKey: notificationQueries.all() })
-      const snapshots = patchInboxQueries(qc, (cur) => {
+      const snapshots = await snapshotInbox(qc)
+      patchInbox(qc, (cur) => {
         const target = cur.data.find((n) => n.id === id)
         const wasUnread = target ? !target.readAt : false
         const data = cur.data.filter((n) => n.id !== id)
@@ -122,7 +111,7 @@ export function useDismissNotification() {
       return { snapshots }
     },
     onError: (_e, _id, ctx) => {
-      if (ctx?.snapshots) rollbackInboxQueries(qc, ctx.snapshots)
+      if (ctx?.snapshots) rollbackInbox(qc, ctx.snapshots)
     },
     onSettled: () => invalidateAll(qc),
   })
@@ -133,8 +122,8 @@ export function useDeleteNotification() {
   return useMutation({
     mutationFn: (id: string) => notificationsApi.remove(id),
     onMutate: async (id) => {
-      await qc.cancelQueries({ queryKey: notificationQueries.all() })
-      const snapshots = patchInboxQueries(qc, (cur) => {
+      const snapshots = await snapshotInbox(qc)
+      patchInbox(qc, (cur) => {
         const target = cur.data.find((n) => n.id === id)
         const wasUnread = target ? !target.readAt : false
         return {
@@ -147,7 +136,7 @@ export function useDeleteNotification() {
       return { snapshots }
     },
     onError: (_e, _id, ctx) => {
-      if (ctx?.snapshots) rollbackInboxQueries(qc, ctx.snapshots)
+      if (ctx?.snapshots) rollbackInbox(qc, ctx.snapshots)
     },
     onSettled: () => invalidateAll(qc),
   })
@@ -158,9 +147,9 @@ export function useMarkAllNotificationsRead() {
   return useMutation({
     mutationFn: () => notificationsApi.markAllRead(),
     onMutate: async () => {
-      await qc.cancelQueries({ queryKey: notificationQueries.all() })
+      const snapshots = await snapshotInbox(qc)
       const now = new Date().toISOString()
-      const snapshots = patchInboxQueries(qc, (cur) => ({
+      patchInbox(qc, (cur) => ({
         ...cur,
         data: cur.data.map((n) => (n.readAt ? n : { ...n, readAt: now })),
         unread: 0,
@@ -168,7 +157,7 @@ export function useMarkAllNotificationsRead() {
       return { snapshots }
     },
     onError: (_e, _v, ctx) => {
-      if (ctx?.snapshots) rollbackInboxQueries(qc, ctx.snapshots)
+      if (ctx?.snapshots) rollbackInbox(qc, ctx.snapshots)
     },
     onSettled: () => invalidateAll(qc),
   })
@@ -179,8 +168,8 @@ export function useDismissAllNotifications() {
   return useMutation({
     mutationFn: () => notificationsApi.dismissAll(),
     onMutate: async () => {
-      await qc.cancelQueries({ queryKey: notificationQueries.all() })
-      const snapshots = patchInboxQueries(qc, (cur) => ({
+      const snapshots = await snapshotInbox(qc)
+      patchInbox(qc, (cur) => ({
         ...cur,
         data: [],
         count: 0,
@@ -189,7 +178,7 @@ export function useDismissAllNotifications() {
       return { snapshots }
     },
     onError: (_e, _v, ctx) => {
-      if (ctx?.snapshots) rollbackInboxQueries(qc, ctx.snapshots)
+      if (ctx?.snapshots) rollbackInbox(qc, ctx.snapshots)
     },
     onSettled: () => invalidateAll(qc),
   })

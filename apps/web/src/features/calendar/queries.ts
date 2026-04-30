@@ -1,6 +1,10 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
 import { calendarApi } from './api'
 import { CACHE_TIMES } from '@repo/shared/constants'
+import { listOps, patchQueries, rollbackQueries, snapshotQueries } from '@/shared/lib/optimistic'
+
+interface GoogleEventLike { id: string }
+interface GoogleEventsResponse { data: GoogleEventLike[]; count: number }
 
 export const calendarQueries = {
   all: () => ['calendar'] as const,
@@ -77,28 +81,49 @@ export function useUpdateCalendar() {
   })
 }
 
+const googleEventsKey = () => [...calendarQueries.all(), 'google-events'] as const
+
 export function useUpdateGoogleEvent() {
-  const queryClient = useQueryClient()
+  const qc = useQueryClient()
   return useMutation({
     mutationFn: (args: {
       calendarId: string
       eventId: string
       body: Parameters<typeof calendarApi.updateGoogleEvent>[2]
     }) => calendarApi.updateGoogleEvent(args.calendarId, args.eventId, args.body),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: calendarQueries.all() })
+    onMutate: async ({ eventId, body }) => {
+      const snaps = await snapshotQueries<GoogleEventsResponse>(qc, googleEventsKey())
+      patchQueries<GoogleEventsResponse>(qc, googleEventsKey(), (cur) => ({
+        ...cur,
+        data: listOps.patch(cur.data, eventId, body as Partial<GoogleEventLike>),
+      }))
+      return { snaps }
     },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.snaps) rollbackQueries(qc, ctx.snaps)
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: calendarQueries.all() }),
   })
 }
 
 export function useDeleteGoogleEvent() {
-  const queryClient = useQueryClient()
+  const qc = useQueryClient()
   return useMutation({
     mutationFn: (args: { calendarId: string; eventId: string }) =>
       calendarApi.deleteGoogleEvent(args.calendarId, args.eventId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: calendarQueries.all() })
+    onMutate: async ({ eventId }) => {
+      const snaps = await snapshotQueries<GoogleEventsResponse>(qc, googleEventsKey())
+      patchQueries<GoogleEventsResponse>(qc, googleEventsKey(), (cur) => ({
+        ...cur,
+        data: listOps.remove(cur.data, eventId),
+        count: Math.max(0, cur.count - 1),
+      }))
+      return { snaps }
     },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.snaps) rollbackQueries(qc, ctx.snaps)
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: calendarQueries.all() }),
   })
 }
 

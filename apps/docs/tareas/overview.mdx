@@ -1,0 +1,48 @@
+---
+title: "Tareas"
+description: "Motor de ejecución potenciado por IA. Captura, programa, ejecuta."
+---
+
+El módulo de Tareas es el lugar donde la jerarquía de objetivos se vuelve acción. Cada tarea puede vincularse a un objetivo, programarse en tu calendar y trackear tiempo real vs estimado.
+
+<CardGroup cols={2}>
+  <Card title="Crear y editar" icon="plus" href="/tareas/crear-y-editar">
+    Subtareas, recurrencias, tags, prioridades.
+  </Card>
+  <Card title="Smart scheduling" icon="wand-magic-sparkles" href="/tareas/scheduling">
+    La IA agenda en los mejores slots.
+  </Card>
+  <Card title="Vistas" icon="grid" href="/tareas/vistas">
+    Lista, Kanban, Calendar, Timeline.
+  </Card>
+  <Card title="Pomodoro" icon="clock" href="/tareas/pomodoro">
+    Sesiones vinculadas a la tarea activa.
+  </Card>
+  <Card title="Google Calendar sync" icon="calendar" href="/tareas/google-calendar">
+    Bidireccional, en tiempo real.
+  </Card>
+</CardGroup>
+
+## Anatomía de una tarea
+
+- **Título** (obligatorio).
+- **Descripción** — markdown soportado.
+- **Prioridad** — low / medium / high.
+- **Tags** — etiquetas libres.
+- **Subtareas** — checklist con estado independiente.
+- **Programación** — fecha + hora de inicio/fin estimadas.
+- **Tiempo real** — start/end automáticos al usar Pomodoro o marcar inicio manual.
+- **Vinculación** — a un objetivo de cualquier nivel.
+- **Recurrencia** — diaria, semanal por día, mensual, custom.
+- **Estado** — open / completed / archived.
+
+## Estados y flujo
+
+```
+open ──► in progress ──► completed ──► (auto-archive en N días)
+   └──► archived (manual)
+```
+
+## Backlog
+
+Vista especial: tareas sin fecha asignada. Punto de partida del weekly planning. `Tareas → Backlog`.

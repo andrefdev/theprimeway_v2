@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { schedulingApi, type AutoScheduleInput, type DeconflictInput, type EarlyCompleteInput, type TimerStartInput } from './api'
-import { workingSessionsApi } from './working-sessions-api'
+import { workingSessionsApi, type WorkingSession } from './working-sessions-api'
 import { calendarEventsApi } from './calendar-events-api'
+import { listOps, patchQueries, rollbackQueries, snapshotQueries } from '@/shared/lib/optimistic'
 
 export const schedulingKeys = {
   commands: ['scheduling', 'commands'] as const,
@@ -43,7 +44,15 @@ export function useDeleteWorkingSession() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => workingSessionsApi.remove(id),
-    onSuccess: () => {
+    onMutate: async (id) => {
+      const snaps = await snapshotQueries<WorkingSession[]>(qc, schedulingKeys.sessions)
+      patchQueries<WorkingSession[]>(qc, schedulingKeys.sessions, (cur) => listOps.remove(cur, id))
+      return { snaps }
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.snaps) rollbackQueries(qc, ctx.snaps)
+    },
+    onSettled: () => {
       qc.invalidateQueries({ queryKey: schedulingKeys.sessions })
       qc.invalidateQueries({ queryKey: ['tasks'] })
     },

@@ -1,0 +1,42 @@
+---
+title: "Privacidad y datos"
+description: "Qué guardamos, cómo lo protegemos, cómo exportarlo o borrarlo."
+---
+
+## Qué datos guardamos
+
+- Cuenta: email, nombre, foto opcional.
+- Tu contenido: objetivos, tareas, hábitos, notas, finanzas, lectura.
+- Telemetría mínima: errores anónimos para mejorar la app.
+- Logs de IA: prompts y respuestas para debugging, anonimizados tras 30 días.
+
+## Cifrado
+
+- **En tránsito**: TLS 1.3 en todas las comunicaciones.
+- **En reposo**: encriptación a nivel de base de datos.
+- **Tokens**: JWT en almacenamiento seguro del SO (Tauri secure storage, Keychain, Keystore).
+
+## IA y tus datos
+
+- Solo se envía a la IA el contexto necesario para cada interacción.
+- **No** se entrenan modelos públicos con tus datos.
+- Puedes desactivar la IA en `Ajustes → IA`.
+
+## Exportar tus datos
+
+`Ajustes → Cuenta → Exportar datos`. Recibes un ZIP con:
+- JSON estructurado de objetivos, tareas, hábitos, notas, finanzas, lectura.
+- Markdown legible de las notas.
+- CSV de transacciones financieras.
+
+## Eliminar cuenta
+
+`Ajustes → Cuenta → Eliminar cuenta`. Acción **irreversible**. Borra todos tus datos personales en un máximo de 30 días.
+
+## Solicitudes GDPR / CCPA
+
+Escribe a privacy@theprimeway.com. Respondemos en menos de 30 días.
+
+## Cambios en la política
+
+Cualquier cambio material se notifica por email y dentro de la app antes de aplicarse.

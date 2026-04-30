@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ritualsApi, type RitualCreateInput, type RitualStatus } from './api'
+import { ritualsApi, type Ritual, type RitualCreateInput, type RitualStatus } from './api'
+import { listOps, patchQueries, rollbackQueries, snapshotQueries } from '@/shared/lib/optimistic'
 
 export const ritualsKeys = {
   today: ['rituals', 'today'] as const,
@@ -34,7 +35,17 @@ export function useUpdateRitual() {
   return useMutation({
     mutationFn: ({ id, input }: { id: string; input: Partial<RitualCreateInput> }) =>
       ritualsApi.update(id, input),
-    onSuccess: () => {
+    onMutate: async ({ id, input }) => {
+      const snaps = await snapshotQueries<Ritual[]>(qc, ritualsKeys.list)
+      patchQueries<Ritual[]>(qc, ritualsKeys.list, (cur) =>
+        listOps.patch(cur, id, input as Partial<Ritual>),
+      )
+      return { snaps }
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.snaps) rollbackQueries(qc, ctx.snaps)
+    },
+    onSettled: () => {
       qc.invalidateQueries({ queryKey: ritualsKeys.list })
       qc.invalidateQueries({ queryKey: ritualsKeys.today })
       qc.invalidateQueries({ queryKey: ritualsKeys.week })
@@ -46,7 +57,15 @@ export function useDeleteRitual() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => ritualsApi.remove(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ritualsKeys.list }),
+    onMutate: async (id) => {
+      const snaps = await snapshotQueries<Ritual[]>(qc, ritualsKeys.list)
+      patchQueries<Ritual[]>(qc, ritualsKeys.list, (cur) => listOps.remove(cur, id))
+      return { snaps }
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.snaps) rollbackQueries(qc, ctx.snaps)
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ritualsKeys.list }),
   })
 }
 

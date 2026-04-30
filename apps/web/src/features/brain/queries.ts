@@ -1,12 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { brainApi } from './api'
 import type { BrainEntry } from '@repo/shared/types'
+import { listOps, patchQueries, rollbackQueries, snapshotQueries } from '@/shared/lib/optimistic'
 
 const ACTIVE_STATUSES = new Set(['pending', 'transcribing', 'analyzing'])
 
 export const brainKeys = {
-  feed: (params: { status?: string; search?: string } = {}) => ['brain', 'feed', params] as const,
+  feeds: () => ['brain', 'feed'] as const,
+  feed: (params: { status?: string; search?: string } = {}) => [...brainKeys.feeds(), params] as const,
   entry: (id: string) => ['brain', 'entry', id] as const,
+}
+
+function tempBrainId() {
+  return `brain-tmp-${Math.random().toString(36).slice(2, 10)}`
 }
 
 export function useBrainFeed(params: { status?: string; search?: string } = {}) {
@@ -38,9 +44,23 @@ export function useCreateBrainEntry() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (content: string) => brainApi.create(content),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['brain', 'feed'] })
+    onMutate: async (content) => {
+      const snaps = await snapshotQueries<BrainEntry[]>(qc, brainKeys.feeds())
+      const now = new Date().toISOString()
+      const optimistic = {
+        id: tempBrainId(),
+        content,
+        status: 'pending',
+        createdAt: now,
+        updatedAt: now,
+      } as unknown as BrainEntry
+      patchQueries<BrainEntry[]>(qc, brainKeys.feeds(), (cur) => [optimistic, ...cur])
+      return { snaps }
     },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.snaps) rollbackQueries(qc, ctx.snaps)
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: brainKeys.feeds() }),
   })
 }
 
@@ -49,7 +69,7 @@ export function useReprocessBrainEntry() {
   return useMutation({
     mutationFn: (id: string) => brainApi.reprocess(id),
     onSuccess: (entry) => {
-      qc.invalidateQueries({ queryKey: ['brain', 'feed'] })
+      qc.invalidateQueries({ queryKey: brainKeys.feeds() })
       qc.invalidateQueries({ queryKey: brainKeys.entry(entry.id) })
     },
   })
@@ -59,7 +79,15 @@ export function useDeleteBrainEntry() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => brainApi.delete(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['brain', 'feed'] }),
+    onMutate: async (id) => {
+      const snaps = await snapshotQueries<BrainEntry[]>(qc, brainKeys.feeds())
+      patchQueries<BrainEntry[]>(qc, brainKeys.feeds(), (cur) => listOps.remove(cur, id))
+      return { snaps }
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.snaps) rollbackQueries(qc, ctx.snaps)
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: brainKeys.feeds() }),
   })
 }
 
@@ -79,9 +107,22 @@ export function useUpdateBrainEntry(id: string) {
   return useMutation({
     mutationFn: (patch: Partial<{ userTitle: string; topics: string[]; isPinned: boolean; isArchived: boolean }>) =>
       brainApi.userUpdate(id, patch),
-    onSuccess: () => {
+    onMutate: async (patch) => {
+      const feedSnaps = await snapshotQueries<BrainEntry[]>(qc, brainKeys.feeds())
+      const entrySnaps = await snapshotQueries<BrainEntry>(qc, brainKeys.entry(id))
+      patchQueries<BrainEntry[]>(qc, brainKeys.feeds(), (cur) =>
+        listOps.patch(cur, id, patch as Partial<BrainEntry>),
+      )
+      patchQueries<BrainEntry>(qc, brainKeys.entry(id), (cur) => ({ ...cur, ...(patch as Partial<BrainEntry>) }))
+      return { feedSnaps, entrySnaps }
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.feedSnaps) rollbackQueries(qc, ctx.feedSnaps)
+      if (ctx?.entrySnaps) rollbackQueries(qc, ctx.entrySnaps)
+    },
+    onSettled: () => {
       qc.invalidateQueries({ queryKey: brainKeys.entry(id) })
-      qc.invalidateQueries({ queryKey: ['brain', 'feed'] })
+      qc.invalidateQueries({ queryKey: brainKeys.feeds() })
     },
   })
 }

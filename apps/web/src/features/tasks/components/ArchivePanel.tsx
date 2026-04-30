@@ -3,6 +3,8 @@ import { Button } from '@/shared/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/shared/components/ui/card'
 import { ScrollArea } from '@/shared/components/ui/scroll-area'
 import { EmptyState } from '@/shared/components/ui/empty-state'
+import { DateBucketPicker, type DateBucketValue } from '@/features/tasks/components/DateBucketPicker'
+import { Calendar as CalendarIcon } from 'lucide-react'
 import type { Task } from '@repo/shared/types'
 import { useTranslation } from 'react-i18next'
 
@@ -44,17 +46,23 @@ export function ArchivePanel({ tasks, onReschedule, onDelete }: ArchivePanelProp
                 />
               </div>
               <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 text-[10px]"
-                  onClick={() => {
-                    const today = new Date().toISOString().split('T')[0]!
-                    onReschedule(task, today)
+                <DateBucketPicker
+                  value={{ scheduledDate: null, scheduledBucket: null }}
+                  onChange={(v: DateBucketValue) => {
+                    const date = v.scheduledDate ?? new Date().toISOString().split('T')[0]!
+                    onReschedule(task, date)
                   }}
-                >
-                  {t('rescheduleToday')}
-                </Button>
+                  trigger={
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0"
+                      aria-label={t('reschedule', { defaultValue: 'Reschedule' })}
+                    >
+                      <CalendarIcon className="h-3.5 w-3.5" />
+                    </Button>
+                  }
+                />
                 <Button
                   variant="ghost"
                   size="sm"

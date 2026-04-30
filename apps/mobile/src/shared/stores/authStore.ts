@@ -3,6 +3,7 @@ import * as SecureStore from 'expo-secure-store';
 import axios from 'axios';
 import type { User, LoginCredentials, RegisterData, AuthResponse } from '@shared/types/models';
 import { AUTH } from '@shared/api/endpoints';
+import { apiClient } from '@shared/api/client';
 
 const TOKEN_KEY = 'auth_token';
 const REFRESH_TOKEN_KEY = 'refresh_token';
@@ -19,9 +20,17 @@ interface AuthState {
   refreshToken: () => Promise<void>;
   loadStoredAuth: () => Promise<void>;
   setUser: (user: User) => void;
+  setTokens: (token: string, refreshToken?: string | null) => void;
 }
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL;
+let loadStoredAuthPromise: Promise<void> | null = null;
+
+async function persistAuth(token: string, refreshToken?: string | null) {
+  await SecureStore.setItemAsync(TOKEN_KEY, token);
+  if (refreshToken) {
+    await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, refreshToken);
+  }
+}
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   token: null,
@@ -30,64 +39,42 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isLoading: true,
 
   login: async (credentials) => {
-    console.log('[AUTH] Login request:', {
-      url: `${API_BASE_URL}${AUTH.LOGIN}`,
-      body: { email: credentials.email, password: '***' },
-    });
     try {
-      const { data } = await axios.post<AuthResponse>(
-        `${API_BASE_URL}${AUTH.LOGIN}`,
-        credentials
-      );
-      await SecureStore.setItemAsync(TOKEN_KEY, data.token);
-      if (data.refreshToken) {
-        await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, data.refreshToken);
-      }
+      const { data } = await apiClient.post<AuthResponse>(AUTH.LOGIN, credentials);
+      await persistAuth(data.token, data.refreshToken);
       set({ token: data.token, user: data.user, isAuthenticated: true });
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        console.error('[AUTH] Login failed:', {
-          status: error.response?.status,
-          data: error.response?.data,
-          headers: error.response?.headers,
-        });
-        throw new Error(error.response?.data?.error || error.message);
+        const status = error.response?.status;
+        const message =
+          (error.response?.data as { error?: string } | undefined)?.error ?? error.message;
+        console.warn('[AUTH] Login failed', { status });
+        throw new Error(message);
       }
       throw error;
     }
   },
 
   loginWithOAuth: async (provider, accessToken) => {
-    const { data } = await axios.post<AuthResponse>(
-      `${API_BASE_URL}${AUTH.OAUTH}`,
-      { provider, accessToken }
-    );
-    await SecureStore.setItemAsync(TOKEN_KEY, data.token);
-    if (data.refreshToken) {
-      await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, data.refreshToken);
-    }
+    const { data } = await apiClient.post<AuthResponse>(AUTH.OAUTH, {
+      provider,
+      accessToken,
+    });
+    await persistAuth(data.token, data.refreshToken);
     set({ token: data.token, user: data.user, isAuthenticated: true });
   },
 
-  register: async (data) => {
-    const { data: response } = await axios.post<AuthResponse>(
-      `${API_BASE_URL}${AUTH.REGISTER}`,
-      data
-    );
-    await SecureStore.setItemAsync(TOKEN_KEY, response.token);
-    if (response.refreshToken) {
-      await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, response.refreshToken);
-    }
-    set({ token: response.token, user: response.user, isAuthenticated: true });
+  register: async (payload) => {
+    const { data } = await apiClient.post<AuthResponse>(AUTH.REGISTER, payload);
+    await persistAuth(data.token, data.refreshToken);
+    set({ token: data.token, user: data.user, isAuthenticated: true });
   },
 
   logout: async () => {
     const token = get().token;
     try {
       if (token) {
-        await axios.delete(`${API_BASE_URL}${AUTH.LOGOUT}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        await apiClient.delete(AUTH.LOGOUT);
       }
     } catch {
       // Silently fail — we're logging out anyway
@@ -104,46 +91,58 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         await get().logout();
         return;
       }
+      // Use raw axios to bypass interceptor and avoid recursion
       const { data } = await axios.post<AuthResponse>(
-        `${API_BASE_URL}${AUTH.REFRESH}`,
+        `${process.env.EXPO_PUBLIC_API_URL}${AUTH.REFRESH}`,
         { refreshToken },
-        { timeout: 8000 }
+        { timeout: 8000, headers: { 'Content-Type': 'application/json' } }
       );
-      await SecureStore.setItemAsync(TOKEN_KEY, data.token);
-      set({ token: data.token, user: data.user, isAuthenticated: true });
+      await persistAuth(data.token, data.refreshToken);
+      set({
+        token: data.token,
+        user: data.user ?? get().user,
+        isAuthenticated: true,
+      });
     } catch {
       await get().logout();
     }
   },
 
   loadStoredAuth: async () => {
-    try {
-      const token = await SecureStore.getItemAsync(TOKEN_KEY);
-      if (!token) {
-        set({ isLoading: false });
-        return;
-      }
-      const { data } = await axios.get<{ user: User }>(
-        `${API_BASE_URL}${AUTH.ME}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          timeout: 8000,
-        }
-      );
-      set({ token, user: data.user, isAuthenticated: true, isLoading: false });
-    } catch {
-      // Token expired, invalid, or network unreachable — try refresh
+    if (loadStoredAuthPromise) return loadStoredAuthPromise;
+    loadStoredAuthPromise = (async () => {
       try {
-        await get().refreshToken();
+        const token = await SecureStore.getItemAsync(TOKEN_KEY);
+        if (!token) {
+          set({ isLoading: false });
+          return;
+        }
+        // Hydrate token first so apiClient interceptor can attach it
+        set({ token });
+        try {
+          const { data } = await apiClient.get<{ user: User }>(AUTH.ME, {
+            timeout: 8000,
+          });
+          set({ user: data.user, isAuthenticated: true, isLoading: false });
+        } catch {
+          // 401 will have been handled by interceptor (refresh attempt or logout)
+          // If still unauthenticated, ensure cleanup
+          if (!get().isAuthenticated) {
+            await SecureStore.deleteItemAsync(TOKEN_KEY);
+            await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
+            set({ token: null, user: null, isAuthenticated: false });
+          }
+          set({ isLoading: false });
+        }
       } catch {
-        // Clear invalid tokens so user goes to login
-        await SecureStore.deleteItemAsync(TOKEN_KEY);
-        await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
-        set({ token: null, user: null, isAuthenticated: false });
+        set({ isLoading: false });
+      } finally {
+        loadStoredAuthPromise = null;
       }
-      set({ isLoading: false });
-    }
+    })();
+    return loadStoredAuthPromise;
   },
 
   setUser: (user) => set({ user }),
+  setTokens: (token, _refreshToken) => set({ token, isAuthenticated: true }),
 }));

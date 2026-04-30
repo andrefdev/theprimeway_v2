@@ -17,6 +17,9 @@ import {
 } from '@/shared/components/ui/sidebar'
 import { PanelLeftClose, HelpCircle } from 'lucide-react'
 import type { FeatureKey } from '@repo/shared/constants'
+import { playSound } from '@/shared/lib/sound'
+
+const handleNavClick = () => playSound('uiClick')
 
 interface NavItem {
   title: string
@@ -149,7 +152,7 @@ export function AppSidebar() {
             {planDoItems.map((item) => (
               <SidebarMenuItem key={item.to}>
                 <SidebarMenuButton asChild isActive={isActive(item.to)}>
-                  <Link to={item.to as '/'}>
+                  <Link to={item.to as '/'} onClick={handleNavClick}>
                     {item.icon}
                     <span className="text-sm">{item.title}</span>
                   </Link>
@@ -165,7 +168,7 @@ export function AppSidebar() {
             {directionItems.map((item) => (
               <SidebarMenuItem key={item.to}>
                 <SidebarMenuButton asChild isActive={isActive(item.to)}>
-                  <Link to={item.to as '/'}>
+                  <Link to={item.to as '/'} onClick={handleNavClick}>
                     {item.icon}
                     <span className="text-sm">{item.title}</span>
                   </Link>
@@ -199,7 +202,7 @@ export function AppSidebar() {
             {assistItems.map((item) => (
               <SidebarMenuItem key={item.to}>
                 <SidebarMenuButton asChild isActive={isActive(item.to)}>
-                  <Link to={item.to as '/'}>
+                  <Link to={item.to as '/'} onClick={handleNavClick}>
                     {item.icon}
                     <span className="text-sm">{item.title}</span>
                   </Link>

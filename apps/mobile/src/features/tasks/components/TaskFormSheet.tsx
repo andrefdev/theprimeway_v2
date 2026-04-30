@@ -52,7 +52,7 @@ export function TaskFormSheet({ isOpen, onClose }: TaskFormSheetProps) {
         estimatedDurationMinutes: duration,
         tags: [],
         isAllDay: false,
-        ...(linkedGoal ? { goal_id: linkedGoal.id } : {}),
+        ...(linkedGoal ? { goalId: linkedGoal.id } : {}),
       } as any);
       setTitle('');
       setDescription('');

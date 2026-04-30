@@ -1,0 +1,36 @@
+---
+title: "Tu cuenta"
+description: "Registro, login, OAuth, recuperación de contraseña y seguridad."
+---
+
+## Métodos de registro
+
+- **Email + contraseña** — verificación por email obligatoria.
+- **Google** — un click, recomendado si planeas usar sync con Google Calendar.
+- **Apple** — disponible en iOS y web.
+
+## Login
+
+Tu sesión persiste en cada dispositivo. Si cambias de plataforma (ej: web → desktop), inicias sesión una vez y se mantiene.
+
+<Note>
+El token de autenticación se guarda de forma segura: en navegador (localStorage cifrado), en desktop (Tauri secure storage) y en mobile (Keychain/Keystore).
+</Note>
+
+## Recuperar contraseña
+
+1. En la pantalla de login → "¿Olvidaste tu contraseña?"
+2. Recibirás un email con un enlace válido por 1 hora.
+3. Define una contraseña nueva (mínimo 8 caracteres).
+
+## Cerrar sesión en todos los dispositivos
+
+`Ajustes → Seguridad → Cerrar todas las sesiones`. Útil si pierdes un dispositivo.
+
+## Borrar cuenta
+
+`Ajustes → Cuenta → Eliminar cuenta`. Acción **irreversible**: borra tus objetivos, tareas, hábitos, notas y registro de gamificación. Antes de borrar, [exporta tus datos](/privacidad-y-datos).
+
+<Warning>
+Si tienes una suscripción activa, cancélala antes de eliminar la cuenta para evitar cargos posteriores.
+</Warning>

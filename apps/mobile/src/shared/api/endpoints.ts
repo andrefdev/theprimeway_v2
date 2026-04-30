@@ -55,6 +55,15 @@ export const CALENDAR = {
   CALENDARS: '/api/calendar/calendars',
 } as const;
 
+// Brain (capture + AI processing)
+export const BRAIN = {
+  ENTRIES: '/api/brain/entries',
+  BY_ID: (id: string) => `/api/brain/entries/${id}`,
+  REPROCESS: (id: string) => `/api/brain/entries/${id}/reprocess`,
+  APPLY_ACTION_ITEM: (entryId: string, index: number) =>
+    `/api/brain/entries/${entryId}/action-items/${index}/apply`,
+} as const;
+
 // AI
 export const AI = {
   CHAT: '/api/chat',

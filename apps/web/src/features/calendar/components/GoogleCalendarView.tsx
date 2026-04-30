@@ -347,7 +347,21 @@ function TimeGrid({
 
   const gridCols = `${LABEL_WIDTH}px repeat(${days.length}, minmax(0, 1fr))`
 
-  const hasAllDay = days.some((d) => getItemsForDay(items, d).some((i) => i.isAllDay))
+  const dayBuckets = useMemo(
+    () =>
+      days.map((day) => {
+        const dayItems = getItemsForDay(items, day)
+        const allDay = dayItems.filter((i) => i.isAllDay)
+        const timed = dayItems.filter((i) => !i.isAllDay)
+        return { day, allDay, timed, laidOut: layoutItems(timed) }
+      }),
+    [days, items],
+  )
+
+  const hasAllDay = useMemo(
+    () => dayBuckets.some((b) => b.allDay.length > 0),
+    [dayBuckets],
+  )
 
   return (
     <div ref={scrollRef} className="h-full overflow-auto">
@@ -381,19 +395,16 @@ function TimeGrid({
             <div className="pr-2 py-1 text-right text-[9px] uppercase text-muted-foreground tracking-wide self-start pt-1">
               {t('allDay')}
             </div>
-            {days.map((day) => {
-              const allDay = getItemsForDay(items, day).filter((i) => i.isAllDay)
-              return (
-                <div
-                  key={day.toISOString()}
-                  className="border-l border-border p-1 space-y-0.5 min-h-[28px]"
-                >
-                  {allDay.map((item) => (
-                    <AllDayChip key={item.id} item={item} />
-                  ))}
-                </div>
-              )
-            })}
+            {dayBuckets.map(({ day, allDay }) => (
+              <div
+                key={day.toISOString()}
+                className="border-l border-border p-1 space-y-0.5 min-h-[28px]"
+              >
+                {allDay.map((item) => (
+                  <AllDayChip key={item.id} item={item} />
+                ))}
+              </div>
+            ))}
           </div>
         )}
       </div>
@@ -417,10 +428,8 @@ function TimeGrid({
         </div>
 
         {/* Day columns */}
-        {days.map((day) => {
+        {dayBuckets.map(({ day, laidOut }) => {
           const isToday = isSameDay(day, today)
-          const dayItems = getItemsForDay(items, day).filter((i) => !i.isAllDay)
-          const laidOut = layoutItems(dayItems)
 
           return (
             <div
@@ -556,15 +565,24 @@ function MonthGrid({
   onDayClick: (d: Date) => void
 }) {
   const { t } = useTranslation('calendar')
-  const start = startOfWeek(startOfMonth(currentDate), { weekStartsOn: 1 })
-  const days: Date[] = []
-  let d = start
-  const end = endOfWeek(endOfMonth(currentDate), { weekStartsOn: 1 })
-  while (d <= end) {
-    days.push(d)
-    d = addDays(d, 1)
-  }
+
+  const days = useMemo(() => {
+    const start = startOfWeek(startOfMonth(currentDate), { weekStartsOn: 1 })
+    const end = endOfWeek(endOfMonth(currentDate), { weekStartsOn: 1 })
+    const out: Date[] = []
+    let d = start
+    while (d <= end) {
+      out.push(d)
+      d = addDays(d, 1)
+    }
+    return out
+  }, [currentDate])
   const rows = days.length / 7
+
+  const dayBuckets = useMemo(
+    () => days.map((day) => ({ day, items: getItemsForDay(items, day) })),
+    [days, items],
+  )
 
   const headers = [t('dayMon'), t('dayTue'), t('dayWed'), t('dayThu'), t('dayFri'), t('daySat'), t('daySun')]
 
@@ -590,10 +608,9 @@ function MonthGrid({
           gridTemplateRows: `repeat(${rows}, minmax(100px, 1fr))`,
         }}
       >
-        {days.map((day, idx) => {
+        {dayBuckets.map(({ day, items: dayItems }, idx) => {
           const isCurrentMonth = isSameMonth(day, currentDate)
           const isToday = isSameDay(day, today)
-          const dayItems = getItemsForDay(items, day)
           const col = idx % 7
           const row = Math.floor(idx / 7)
           const isLastRow = row === rows - 1

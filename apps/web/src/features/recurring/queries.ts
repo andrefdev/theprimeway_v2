@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { recurringApi, type RecurringInput } from './api'
+import { recurringApi, type RecurringInput, type RecurringSeries } from './api'
+import { listOps, patchQueries, rollbackQueries, snapshotQueries } from '@/shared/lib/optimistic'
 
 const keys = {
   list: ['recurring-series', 'list'] as const,
@@ -21,7 +22,17 @@ export function useUpdateRecurring() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, body }: { id: string; body: Partial<RecurringInput> }) => recurringApi.update(id, body),
-    onSuccess: () => qc.invalidateQueries({ queryKey: keys.list }),
+    onMutate: async ({ id, body }) => {
+      const snaps = await snapshotQueries<RecurringSeries[]>(qc, keys.list)
+      patchQueries<RecurringSeries[]>(qc, keys.list, (cur) =>
+        listOps.patch(cur, id, body as Partial<RecurringSeries>),
+      )
+      return { snaps }
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.snaps) rollbackQueries(qc, ctx.snaps)
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: keys.list }),
   })
 }
 
@@ -29,7 +40,15 @@ export function useDeleteRecurring() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => recurringApi.delete(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: keys.list }),
+    onMutate: async (id) => {
+      const snaps = await snapshotQueries<RecurringSeries[]>(qc, keys.list)
+      patchQueries<RecurringSeries[]>(qc, keys.list, (cur) => listOps.remove(cur, id))
+      return { snaps }
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.snaps) rollbackQueries(qc, ctx.snaps)
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: keys.list }),
   })
 }
 

@@ -14,6 +14,7 @@ import { AuthProvider } from '@/shared/providers/AuthProvider';
 import { useAuthStore } from '@/shared/stores/authStore';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { OfflineBanner } from '@/shared/components/ui/offline-banner';
+import { Toaster } from '@/shared/components/ui/toaster';
 import {
   registerForPushNotifications,
   addNotificationResponseListener,
@@ -76,6 +77,7 @@ export default function RootLayout() {
               </Stack>
               <PortalHost />
               <OfflineBanner />
+              <Toaster />
             </BottomSheetModalProvider>
           </AuthProvider>
         </QueryProvider>

@@ -7,7 +7,7 @@ export interface AppNotification {
   title: string;
   message: string;
   href: string;
-  created_at: string;
+  createdAt: string;
 }
 
 export interface AggregatedNotificationsResponse {

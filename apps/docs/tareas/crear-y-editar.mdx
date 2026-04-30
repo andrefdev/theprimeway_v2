@@ -1,0 +1,53 @@
+---
+title: "Crear y editar tareas"
+description: "Captura rápida, lenguaje natural, subtareas y recurrencias."
+---
+
+## Captura rápida
+
+Tres formas:
+
+- **Web/Desktop**: `Ctrl + Shift + N` o botón `+`.
+- **Desktop overlay**: campo de captura siempre visible.
+- **Mobile**: botón flotante `+`.
+
+## Lenguaje natural
+
+Escribe la tarea en lenguaje natural y la IA extrae estructura:
+
+- *"llamar a María mañana 4pm 30min"* → fecha mañana, hora 16:00, duración 30 min.
+- *"informe trimestral viernes urgente"* → due date viernes, prioridad high.
+- *"correr lunes miércoles viernes 7am"* → recurring lun/mié/vie 07:00.
+
+## Subtareas
+
+Dentro de una tarea, añade ítems con `+ subtarea`. Cada uno se marca independientemente. La tarea padre completa cuando todas las subtareas están hechas (configurable).
+
+<Tip>La IA puede generar subtareas automáticamente basándose en el título. Útil para tareas grandes ("Lanzar landing page" → 5-7 pasos).</Tip>
+
+## Recurrencia
+
+Patrones soportados:
+- Diario.
+- Semanal por días específicos (lun, mié, vie).
+- Mensual (día 1, día 15, último día).
+- Custom (cada N días/semanas/meses).
+
+Al completar una tarea recurrente, se genera la próxima ocurrencia automáticamente.
+
+## Tags y prioridad
+
+- **Tags**: libres, agregables al vuelo. Útiles para `#trabajo`, `#personal`, `#deep-work`.
+- **Prioridad**: 3 niveles. La vista Kanban y la lista los muestran con color.
+
+## Vincular a objetivo
+
+Campo "Objetivo" en el detalle de tarea. Selecciona cualquier nivel: visión, estratégico, anual, foco trimestral o meta semanal. Tareas vinculadas a focos trimestrales [otorgan más XP](/gamificacion/xp-y-niveles).
+
+<Note>
+Tareas sin objetivo vinculado siguen funcionando, pero la IA las trata como ruido y rebaja su prioridad sugerida.
+</Note>
+
+## Auto-archive
+
+Tareas completadas hace más de N días (default 14, configurable en Ajustes) se mueven al archivo. Sigues pudiendo verlas en `Tareas → Archivo`.

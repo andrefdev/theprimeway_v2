@@ -20,7 +20,6 @@ import {
   TagsField,
   RepeatField,
   ScheduleSuggestionPanel,
-  AIInsightsPanel,
 } from '../form'
 
 interface Props {
@@ -90,10 +89,6 @@ export function TaskFullDialog({ open, onClose, task, defaultDate, defaultStart,
             {!tf.isEdit && <RepeatField value={tf.repeat} onChange={tf.setRepeat} />}
 
             <WeeklyGoalField form={tf.form} />
-
-            {tf.isEdit && task && (
-              <AIInsightsPanel taskId={task.id} form={tf.form} addTag={tf.addTag} />
-            )}
           </div>
 
           <DialogFooter>

@@ -1,0 +1,32 @@
+---
+title: "Plataformas y sincronización"
+description: "Cómo se comportan web, desktop y mobile, y cómo se mantienen sincronizadas."
+---
+
+ThePrimeWay corre en cuatro entornos. Mismo backend, misma cuenta, misma data.
+
+| Plataforma | Tecnología | Mejor para |
+|------------|-----------|------------|
+| Web | React 19 + Vite | Trabajo profundo en pantalla grande |
+| Desktop | Tauri (Win/Mac/Linux) | Productividad continua: tray, overlay, shortcuts |
+| Mobile iOS | Expo / React Native | Check-in rápido, widgets, captura sobre la marcha |
+| Mobile Android | Expo / React Native | Idem iOS |
+
+## Sincronización en tiempo real
+
+Los cambios en cualquier plataforma se replican casi inmediatamente:
+
+- **WebSocket** mantiene conectados los dispositivos abiertos. Si completas una tarea en mobile, el desktop la actualiza al instante.
+- **REST fallback** se usa cuando el WebSocket no está disponible.
+- **Optimistic updates**: tus cambios se aplican localmente al instante; si el servidor rechaza algo, se revierte y verás un aviso.
+
+## Modo offline
+
+- Mobile y desktop guardan una copia local en SQLite.
+- Puedes crear tareas, marcar hábitos y tomar notas sin conexión.
+- Al reconectar, la app sincroniza automáticamente.
+- Si dos dispositivos modificaron lo mismo offline, gana el cambio más reciente y verás una notificación.
+
+<Tip>
+Para garantizar buen rendimiento offline, abre la app al menos una vez con conexión cada 7 días para que refresque su cache local.
+</Tip>

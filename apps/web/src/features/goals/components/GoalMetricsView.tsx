@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { goalsQueries } from '@/features/goals/queries'
@@ -19,34 +20,65 @@ export function GoalMetricsView() {
 
   const isLoading = threeYearQuery.isLoading || annualQuery.isLoading || quarterlyQuery.isLoading || weeklyQuery.isLoading
 
-  const threeYear = toArray<ThreeYearGoal>(threeYearQuery.data)
-  const annual = toArray<AnnualGoal>(annualQuery.data)
-  const quarterly = toArray<QuarterlyGoal>(quarterlyQuery.data)
-  const weekly = toArray<WeeklyGoal>(weeklyQuery.data)
+  const threeYear = useMemo(() => toArray<ThreeYearGoal>(threeYearQuery.data), [threeYearQuery.data])
+  const annual = useMemo(() => toArray<AnnualGoal>(annualQuery.data), [annualQuery.data])
+  const quarterly = useMemo(() => toArray<QuarterlyGoal>(quarterlyQuery.data), [quarterlyQuery.data])
+  const weekly = useMemo(() => toArray<WeeklyGoal>(weeklyQuery.data), [weeklyQuery.data])
 
-  const isArchived = (g: any) => g.status === 'archived' || g.archived === true
-  const isCompleted = (g: any) => g.status === 'completed' || (typeof g.progress === 'number' && g.progress >= 100)
+  const metrics = useMemo(() => {
+    const activeThreeYear = threeYear.filter((g) => !isArchived(g))
+    const archivedThreeYear = threeYear.filter(isArchived)
+    const activeAnnual = annual.filter((g) => !isArchived(g))
+    const archivedAnnual = annual.filter(isArchived)
+    const activeQuarterly = quarterly.filter((g) => !isArchived(g))
+    const archivedQuarterly = quarterly.filter(isArchived)
 
-  const activeThreeYear = threeYear.filter((g) => !isArchived(g))
-  const archivedThreeYear = threeYear.filter(isArchived)
-  const activeAnnual = annual.filter((g) => !isArchived(g))
-  const archivedAnnual = annual.filter(isArchived)
-  const activeQuarterly = quarterly.filter((g) => !isArchived(g))
-  const archivedQuarterly = quarterly.filter(isArchived)
+    const annualCompletion = avg(activeAnnual.map((g) => (g as any).progress ?? 0))
+    const quarterlyCompletion = avg(activeQuarterly.map((g) => (g as any).progress ?? 0))
+    const threeYearCompletion = percent(activeThreeYear.filter(isCompleted).length, activeThreeYear.length)
 
-  const annualCompletion = avg(annual.filter((g) => !isArchived(g)).map((g) => (g as any).progress ?? 0))
-  const quarterlyCompletion = avg(quarterly.filter((g) => !isArchived(g)).map((g) => (g as any).progress ?? 0))
-  const threeYearCompletion = percent(activeThreeYear.filter(isCompleted).length, activeThreeYear.length)
+    const now = new Date()
+    const currentYear = now.getFullYear()
+    const currentQuarter = Math.floor(now.getMonth() / 3) + 1
+    const currentQuarterGoals = quarterly.filter(
+      (g) => g.year === currentYear && g.quarter === currentQuarter && !isArchived(g),
+    )
+    const currentQuarterProgress = avg(currentQuarterGoals.map((g) => (g as any).progress ?? 0))
 
-  const now = new Date()
-  const currentYear = now.getFullYear()
-  const currentQuarter = Math.floor(now.getMonth() / 3) + 1
-  const currentQuarterGoals = quarterly.filter(
-    (g) => g.year === currentYear && g.quarter === currentQuarter && !isArchived(g),
-  )
-  const currentQuarterProgress = avg(currentQuarterGoals.map((g) => (g as any).progress ?? 0))
+    return {
+      activeThreeYear,
+      archivedThreeYear,
+      activeAnnual,
+      archivedAnnual,
+      activeQuarterly,
+      archivedQuarterly,
+      annualCompletion,
+      quarterlyCompletion,
+      threeYearCompletion,
+      currentYear,
+      currentQuarter,
+      currentQuarterGoals,
+      currentQuarterProgress,
+    }
+  }, [threeYear, annual, quarterly])
 
-  const weeklyStreak = computeWeeklyStreak(weekly)
+  const {
+    activeThreeYear,
+    archivedThreeYear,
+    activeAnnual,
+    archivedAnnual,
+    activeQuarterly,
+    archivedQuarterly,
+    annualCompletion,
+    quarterlyCompletion,
+    threeYearCompletion,
+    currentYear,
+    currentQuarter,
+    currentQuarterGoals,
+    currentQuarterProgress,
+  } = metrics
+
+  const weeklyStreak = useMemo(() => computeWeeklyStreak(weekly), [weekly])
 
   if (isLoading) {
     return (
@@ -118,6 +150,10 @@ function ProgressRow({ label, value }: { label: string; value: number }) {
     </div>
   )
 }
+
+const isArchived = (g: any) => g.status === 'archived' || g.archived === true
+const isCompleted = (g: any) =>
+  g.status === 'completed' || (typeof g.progress === 'number' && g.progress >= 100)
 
 function avg(xs: number[]): number {
   if (xs.length === 0) return 0

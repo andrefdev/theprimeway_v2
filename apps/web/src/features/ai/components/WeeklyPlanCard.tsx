@@ -1,23 +1,13 @@
 import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { aiApi } from '../api'
+import { aiApi, type WeeklyPlan } from '../api'
 import { Card, CardContent } from '@/shared/components/ui/card'
 import { Button } from '@/shared/components/ui/button'
 import { Badge } from '@/shared/components/ui/badge'
 import { SkeletonList } from '@/shared/components/ui/skeleton-list'
 import { CalendarDays, Clock } from 'lucide-react'
 import { startOfWeek, format } from 'date-fns'
-
-interface DayPlan {
-  title: string
-  timeBlock?: string
-}
-
-interface WeeklyPlan {
-  plan: Record<string, DayPlan[]>
-  rationale: string
-}
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] as const
 
@@ -30,8 +20,8 @@ export function WeeklyPlanCard() {
       const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 })
       return aiApi.getWeeklyPlan(format(weekStart, 'yyyy-MM-dd'))
     },
-    onSuccess: (result: any) => {
-      setPlan(result.data ?? result)
+    onSuccess: (result) => {
+      setPlan(result)
     },
   })
 

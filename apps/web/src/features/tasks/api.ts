@@ -25,16 +25,6 @@ interface TimeboxEstimateResponse {
   }
 }
 
-interface TaskInsightResponse {
-  data: {
-    contextBrief: string
-    suggestedSubtasks: string[]
-    tips: string[]
-    suggestedGoalId?: string
-    suggestedGoalTitle?: string
-  }
-}
-
 interface TaskScheduleResponse {
   data: {
     slot: {
@@ -142,11 +132,6 @@ export const tasksApi = {
         description,
         taskId,
       })
-      .then((r) => r.data.data),
-
-  getTaskInsight: (taskId: string) =>
-    api
-      .get<TaskInsightResponse>(`/tasks/ai/insight/${taskId}`)
       .then((r) => r.data.data),
 
   scheduleTask: (taskId: string, duration?: number) =>
