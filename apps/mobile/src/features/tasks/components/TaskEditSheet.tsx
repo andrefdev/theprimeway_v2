@@ -11,7 +11,6 @@ import { cn } from '@/shared/utils/cn';
 import { format } from 'date-fns';
 import type { Task, WeeklyGoal } from '@shared/types/models';
 import { GoalPickerSheet } from '@features/goals/components/GoalPickerSheet';
-import { TaskAiInsights } from './TaskAiInsights';
 import { SubtaskList } from './SubtaskList';
 import { deleteAllSubtasks } from '../services/localSubtasks';
 
@@ -196,9 +195,6 @@ export function TaskEditSheet({ task, isOpen, onClose }: TaskEditSheetProps) {
 
       {/* Subtasks */}
       {task && <SubtaskList taskId={task.id} />}
-
-      {/* AI Insights */}
-      {task && <TaskAiInsights taskId={task.id} />}
 
       <Button className="h-12 rounded-xl" onPress={handleUpdate} disabled={updateTask.isPending || !title.trim()}>
         {updateTask.isPending ? (

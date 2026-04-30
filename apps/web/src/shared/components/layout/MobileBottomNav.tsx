@@ -10,6 +10,7 @@ import {
   SheetTitle,
 } from '@/shared/components/ui/sheet'
 import { MoreHorizontal } from 'lucide-react'
+import { playSound } from '@/shared/lib/sound'
 
 export function MobileBottomNav() {
   const { t } = useTranslation('common')
@@ -82,6 +83,7 @@ export function MobileBottomNav() {
             <Link
               key={item.href}
               to={item.href as '/'}
+              onClick={() => playSound('uiClick')}
               className={cn(
                 'flex flex-col items-center justify-center gap-1 rounded-lg p-2 transition-colors',
                 isActive(item.href)
@@ -122,7 +124,7 @@ export function MobileBottomNav() {
               <Link
                 key={item.href}
                 to={item.href as '/'}
-                onClick={() => setMoreOpen(false)}
+                onClick={() => { playSound('uiClick'); setMoreOpen(false) }}
                 className={cn(
                   'flex flex-col items-center justify-center gap-2 rounded-xl p-3 transition-colors',
                   isActive(item.href)

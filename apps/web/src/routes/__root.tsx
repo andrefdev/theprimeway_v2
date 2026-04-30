@@ -1,5 +1,5 @@
 import { Suspense, useEffect } from 'react'
-import { createRootRouteWithContext, Outlet } from '@tanstack/react-router'
+import { createRootRouteWithContext, Outlet, useRouter } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/router-devtools'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import type { QueryClient } from '@tanstack/react-query'
@@ -61,6 +61,24 @@ function RootLayout() {
 
     syncTokenToTauri()
   }, [authState.token, authState.refreshToken])
+
+  const router = useRouter()
+  useEffect(() => {
+    let unlisten: (() => void) | null = null
+    const setup = async () => {
+      try {
+        const modulePath = '@tauri-apps' + '/' + 'api' + '/' + 'event'
+        const m = await import(/* @vite-ignore */ modulePath)
+        unlisten = await m.listen('tray-navigate', (e: { payload: string }) => {
+          if (typeof e.payload === 'string') router.navigate({ to: e.payload })
+        })
+      } catch {
+        // Not in Tauri context
+      }
+    }
+    setup()
+    return () => unlisten?.()
+  }, [router])
 
   return (
     <Suspense fallback={<div className="flex h-screen items-center justify-center bg-background" />}>

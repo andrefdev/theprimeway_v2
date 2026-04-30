@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "tauri dev",
+    "dev:web+overlay": "concurrently -k -n web,overlay \"pnpm --filter @repo/web dev\" \"pnpm dev:overlay\"",
     "build": "pnpm run build:overlay && tauri build",
     "build:overlay": "vite build --config overlay/vite.config.ts",
     "dev:overlay": "vite --config overlay/vite.config.ts",
@@ -33,6 +34,7 @@
     "@tailwindcss/vite": "^4.1.0",
     "@tauri-apps/cli": "^2.5.0",
     "@tauri-apps/plugin-notification": "^2.3.3",
+    "concurrently": "^9.1.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.4.0",

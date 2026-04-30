@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { CACHE_TIMES } from '@repo/shared/constants'
 import { channelsApi, type ContextInput, type ChannelInput } from './api'
 
 export const channelsKeys = {
@@ -7,11 +8,11 @@ export const channelsKeys = {
 }
 
 export function useContexts() {
-  return useQuery({ queryKey: channelsKeys.contexts, queryFn: channelsApi.listContexts, staleTime: 30_000 })
+  return useQuery({ queryKey: channelsKeys.contexts, queryFn: channelsApi.listContexts, staleTime: CACHE_TIMES.short })
 }
 
 export function useChannels() {
-  return useQuery({ queryKey: channelsKeys.channels, queryFn: channelsApi.list, staleTime: 30_000 })
+  return useQuery({ queryKey: channelsKeys.channels, queryFn: channelsApi.list, staleTime: CACHE_TIMES.short })
 }
 
 function invalidateAll(qc: ReturnType<typeof useQueryClient>) {

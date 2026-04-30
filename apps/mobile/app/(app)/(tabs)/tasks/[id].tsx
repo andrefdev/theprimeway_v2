@@ -12,7 +12,6 @@ import { ErrorState } from '@/shared/components/feedback/ErrorState';
 import { useTaskById } from '@/features/tasks/hooks/useTasks';
 import { TaskEditSheet } from '@/features/tasks/components/TaskEditSheet';
 import { SubtaskList } from '@/features/tasks/components/SubtaskList';
-import { TaskAiInsights } from '@/features/tasks/components/TaskAiInsights';
 import { format } from 'date-fns';
 import { cn } from '@/shared/utils/cn';
 
@@ -76,8 +75,6 @@ export default function TaskDetailScreen() {
           </View>
 
           <SubtaskList taskId={task.id} />
-
-          <TaskAiInsights taskId={task.id} />
 
           <Button onPress={() => setEditOpen(true)} className="flex-row items-center gap-2">
             <Icon as={Edit2} size={14} className="text-primary-foreground" />

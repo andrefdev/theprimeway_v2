@@ -1,21 +1,17 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useCallback } from 'react'
 import { toast } from 'sonner'
-import { api } from '@/shared/lib/api-client'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { CACHE_TIMES } from '@repo/shared/constants'
 import { formatAmountWithSymbol } from '@/shared/lib/currency'
+import {
+  settingsApi,
+  type CurrencySettings,
+  type UpdateCurrencySettingsRequest,
+} from '../api'
 
-export interface CurrencySettings {
-  id?: string
-  userId: string
-  baseCurrency: string
-  preferredCurrencies: string[]
-  createdAt?: string
-  updatedAt?: string
-}
+export type { CurrencySettings, UpdateCurrencySettingsRequest } from '../api'
 
-export interface UpdateCurrencySettingsRequest {
-  baseCurrency?: string
-  preferredCurrencies?: string[]
-}
+const CURRENCY_KEY = ['settings', 'currency'] as const
 
 interface UseCurrencySettingsReturn {
   settings: CurrencySettings | null
@@ -27,92 +23,73 @@ interface UseCurrencySettingsReturn {
 }
 
 export function useCurrencySettings(): UseCurrencySettingsReturn {
-  const [settings, setSettings] = useState<CurrencySettings | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const qc = useQueryClient()
 
-  const fetchSettings = useCallback(async () => {
-    try {
-      setLoading(true)
-      setError(null)
+  const query = useQuery({
+    queryKey: CURRENCY_KEY,
+    queryFn: () => settingsApi.getCurrencySettings(),
+    staleTime: CACHE_TIMES.long,
+  })
 
-      const { data: result } = await api.get('/user/currency-settings')
-
-      setSettings(result.data as CurrencySettings)
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Failed to fetch currency settings'
-      setError(errorMessage)
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  const updateSettings = useCallback(
-    async (updates: UpdateCurrencySettingsRequest): Promise<boolean> => {
-      try {
-        setError(null)
-
-        const { data: result } = await api.post(
-          '/user/currency-settings',
-          updates,
-        )
-
-        setSettings(result.data as CurrencySettings)
-
-        toast.success('Currency settings updated successfully')
-        return true
-      } catch (err) {
-        const errorMessage =
-          err instanceof Error
-            ? err.message
-            : 'Failed to update currency settings'
-        setError(errorMessage)
-        toast.error(errorMessage)
-        return false
-      }
+  const updateMut = useMutation({
+    mutationFn: (updates: UpdateCurrencySettingsRequest) =>
+      settingsApi.updateCurrencySettings(updates),
+    onSuccess: (next) => {
+      qc.setQueryData(CURRENCY_KEY, next)
+      toast.success('Currency settings updated successfully')
     },
-    [],
-  )
+    onError: (err) => {
+      const msg = err instanceof Error ? err.message : 'Failed to update currency settings'
+      toast.error(msg)
+    },
+  })
 
-  const resetSettings = useCallback(async (): Promise<boolean> => {
-    try {
-      setError(null)
-
-      await api.delete('/user/currency-settings')
-
-      const defaultSettings: CurrencySettings = {
-        userId: settings?.userId || '',
+  const resetMut = useMutation({
+    mutationFn: () => settingsApi.resetCurrencySettings(),
+    onSuccess: () => {
+      const fallback: CurrencySettings = {
+        userId: query.data?.userId ?? '',
         baseCurrency: 'USD',
         preferredCurrencies: ['USD', 'PEN'],
       }
-
-      setSettings(defaultSettings)
+      qc.setQueryData(CURRENCY_KEY, fallback)
       toast.success('Currency settings reset to defaults')
+    },
+    onError: (err) => {
+      const msg = err instanceof Error ? err.message : 'Failed to reset currency settings'
+      toast.error(msg)
+    },
+  })
+
+  const updateSettings = useCallback(
+    async (updates: UpdateCurrencySettingsRequest) => {
+      try {
+        await updateMut.mutateAsync(updates)
+        return true
+      } catch {
+        return false
+      }
+    },
+    [updateMut],
+  )
+
+  const resetSettings = useCallback(async () => {
+    try {
+      await resetMut.mutateAsync()
       return true
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error
-          ? err.message
-          : 'Failed to reset currency settings'
-      setError(errorMessage)
-      toast.error(errorMessage)
+    } catch {
       return false
     }
-  }, [settings?.userId])
+  }, [resetMut])
 
   const refresh = useCallback(async () => {
-    await fetchSettings()
-  }, [fetchSettings])
-
-  useEffect(() => {
-    fetchSettings()
-  }, [fetchSettings])
+    await qc.invalidateQueries({ queryKey: CURRENCY_KEY })
+  }, [qc])
 
   return {
-    settings,
-    loading,
-    error,
+    settings: query.data ?? null,
+    loading: query.isLoading,
+    error: query.error instanceof Error ? query.error.message : null,
     updateSettings,
     resetSettings,
     refresh,
@@ -128,21 +105,14 @@ export function useSupportedCurrencies() {
 
 export function useCurrencyFormatter() {
   const formatCurrency = useCallback(
-    (amount: number, currency: string): string => {
-      return formatAmountWithSymbol(amount, currency)
-    },
+    (amount: number, currency: string): string => formatAmountWithSymbol(amount, currency),
     [],
   )
 
   const formatCurrencyCompact = useCallback(
-    (amount: number, currency: string): string => {
-      return formatAmountWithSymbol(amount, currency)
-    },
+    (amount: number, currency: string): string => formatAmountWithSymbol(amount, currency),
     [],
   )
 
-  return {
-    formatCurrency,
-    formatCurrencyCompact,
-  }
+  return { formatCurrency, formatCurrencyCompact }
 }

@@ -1,11 +1,5 @@
 import { useState, useEffect } from 'react'
-
-interface PomodoroSession {
-  id: string
-  startedAt: string
-  durationMinutes: number
-  isCompleted: boolean
-}
+import type { PomodoroSession } from '@repo/shared'
 
 export interface LiveTimer {
   minutes: number

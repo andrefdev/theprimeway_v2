@@ -25,6 +25,9 @@ import { PanelLeftOpen, LogOut, Settings, User } from 'lucide-react'
 import { NotificationBell } from '@/features/notifications/components/NotificationBell'
 import { PomodoroMiniTimer } from '@/shared/components/PomodoroMiniTimer'
 import { ActiveTaskHeaderBadge } from '@/features/tasks/components/ActiveTaskHeaderBadge'
+import { playSound } from '@/shared/lib/sound'
+
+const handleNavClick = () => playSound('uiClick')
 
 // Route segment to i18n key mapping
 const ROUTE_LABELS: Record<string, string> = {
@@ -119,7 +122,7 @@ export function Header() {
                       <BreadcrumbPage>{segment.label}</BreadcrumbPage>
                     ) : (
                       <BreadcrumbLink asChild>
-                        <Link to={segment.href}>{segment.label}</Link>
+                        <Link to={segment.href} onClick={handleNavClick}>{segment.label}</Link>
                       </BreadcrumbLink>
                     )}
                   </BreadcrumbItem>
@@ -161,13 +164,13 @@ export function Header() {
               </div>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link to={'/profile' as const}>
+                <Link to={'/profile' as const} onClick={handleNavClick}>
                   <User className="mr-2 h-4 w-4" />
                   {t('navProfile')}
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link to={'/settings' as const}>
+                <Link to={'/settings' as const} onClick={handleNavClick}>
                   <Settings className="mr-2 h-4 w-4" />
                   {t('navSettings')}
                 </Link>

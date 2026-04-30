@@ -15,7 +15,7 @@ import {
   SidebarRail,
   useSidebar,
 } from '@/shared/components/ui/sidebar'
-import { PanelLeftClose, HelpCircle } from 'lucide-react'
+import { PanelLeftClose, BookOpen } from 'lucide-react'
 import type { FeatureKey } from '@repo/shared/constants'
 import { playSound } from '@/shared/lib/sound'
 
@@ -185,7 +185,7 @@ export function AppSidebar() {
               {knowledgeItems.map((item) => (
                 <SidebarMenuItem key={item.to}>
                   <SidebarMenuButton asChild isActive={isActive(item.to)}>
-                    <Link to={item.to as '/'}>
+                    <Link to={item.to as '/'} onClick={handleNavClick}>
                       {item.icon}
                       <span className="text-sm">{item.title}</span>
                     </Link>
@@ -218,7 +218,7 @@ export function AppSidebar() {
           {footerItems.map((item) => (
             <SidebarMenuItem key={item.to}>
               <SidebarMenuButton size="sm" asChild isActive={isActive(item.to)}>
-                <Link to={item.to as '/'}>
+                <Link to={item.to as '/'} onClick={handleNavClick}>
                   {item.icon}
                   <span>{item.title}</span>
                 </Link>
@@ -227,8 +227,13 @@ export function AppSidebar() {
           ))}
           <SidebarMenuItem>
             <SidebarMenuButton size="sm" asChild>
-              <a href="https://theprimeway.com/help" target="_blank" rel="noopener noreferrer">
-                <HelpCircle className="size-4" />
+              <a
+                href="https://docs.theprimeway.app"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={handleNavClick}
+              >
+                <BookOpen className="size-4" />
                 <span>{t('navHelp')}</span>
               </a>
             </SidebarMenuButton>

@@ -1,0 +1,172 @@
+---
+title: 'Checkpoint Auditoría Mobile (2026-04-30)'
+description: 'Estado actual del app móvil tras auditoría completa y fases 1–3 de remediación'
+---
+
+## Contexto
+
+Auditoría completa del app móvil ThePrimeWay (`apps/mobile/`) ejecutada 2026-04-30 para evaluar arquitectura, paridad con web y peticiones API. Plan de remediación dividido en 3 fases. Este doc resume qué se hizo, qué quedó pendiente y cómo seguir.
+
+**Plan original:** `~/.claude/plans/robust-strolling-peacock.md`
+
+**Commits relevantes:**
+- `c6cdddd` "add stuff" — Fases 1–2 (P0 + P1)
+- `6e9c1ec` "mobile: phase 3 polish" — Fase 3 (P2) + cierres
+
+---
+
+## Estado de las 3 fases
+
+### Fase 1 — Bloqueantes MVP (P0) ✅ Completa
+
+| # | Item | Resultado |
+|---|------|-----------|
+| 1 | Refresh interceptor + authStore refactor | `client.ts` con queue + dedupe; `authStore` usa `apiClient`; `loadStoredAuth` con lock |
+| 2 | Toast global + manejo de errores | `src/shared/lib/toast.ts` + `Toaster` montado en root; `QueryCache.onError` + `MutationCache.onError` globales; `error.tsx` por route group |
+| 3 | Pomodoro UI components | 5 componentes en `src/features/pomodoro/components/`; screen refactorizado consume todos |
+| 4 | Brain module from scratch | Tipos en `repo-shared`, endpoints, service, hooks (con auto-poll status), 3 componentes UI, 2 pantallas; entry point en home QuickAction |
+
+**Bug crítico fix bonus:** removido transformer snake↔camel del apiClient. API es 100% camelCase (`apps/api/src/lib/utils.ts:5-6` lo documenta). El transformer corrompía silenciosamente todos los campos multi-palabra (`dueDate` → `due_date` → 400 zod). Callsites consecuentes corregidos: `goal_id` → `goalId` en `TaskEditSheet` y `TaskFormSheet`; `created_at` → `createdAt` en `notificationsService` y `notifications.tsx`.
+
+### Fase 2 — Paridad de features (P1) ✅ Completa
+
+| # | Item | Resultado |
+|---|------|-----------|
+| 5 | AI Chat UI | `ChatPanel`, `ChatMessage`, `ChatInput`, `ToolCallCard`, `MarkdownRenderer` (usa `react-native-markdown-display`); `useChatStream` hook con SSE; screen `ai.tsx` reducido a 25 líneas |
+| 6 | Tasks gaps | Detail page real (`[id].tsx`), `TaskComposer` (quick capture con bucket pills + duration), `ArchivePanel` (completed + restore) |
+| 7 | Habits gaps | `HabitHeatmap` ahora scroll horizontal + adaptive cell size (soporta año, weeks=53); `HabitsAnalytics` screen con stats globales + heatmap por hábito; `HabitStackPrompt` Modal (reemplazo del Alert.alert) |
+| 8 | Calendar gaps | Endpoints (event by id, smart slots) + service + hooks; componentes `EventQuickView` (modal), `EventEditDialog` (bottom sheet con DateTimePicker), `CalendarWeekView` (scroll horizontal), `CalendarDayView` (24h grid); screen con tabs Month/Week/Day |
+
+### Fase 3 — Hardening (P2) ✅ Completa
+
+| # | Item | Resultado |
+|---|------|-----------|
+| 9 | Optimistic helpers + query keys | `src/shared/lib/optimistic.ts` (mirror exacto del web). Las "colisiones" en `useGoals` resultaron ser aliases intencionales — sin fix necesario |
+| 10 | Multi-env + eas.json | 4 perfiles (`development`, `development-simulator`, `preview` staging, `production` con autoIncrement); `EXPO_PUBLIC_ENV` añadido; `.env.example` template |
+| 11 | BiometricGate fallback + log hygiene | Link "Use password instead" → logout → vuelve a login; logs `src/` ya limpios (sin PII) |
+| 12 | i18n + skeletons | i18n ya estaba completo (`en.json`, `es.json`, `useTranslation` hook con sync locale/settings) — audit original incorrecto. `Skeleton` + `SkeletonList` componentes Reanimated creados, listos para integrar |
+
+---
+
+## Qué NO se hizo (deferred)
+
+Refactors de scope amplio dejados como TODO. Mejor en commits dedicados:
+
+### typedRoutes migration
+- `app.json` ya tiene `typedRoutes: true` habilitado
+- Código usa string literals: `href="/(auth)/login"`, `router.push('/(app)/pomodoro')`
+- **Acción:** migrar a tipos generados en cada `<Link>` y `router.push()`. Decenas de callsites; ejecutar con `tsc --noEmit` para detectar typos.
+
+### expo-image migration
+- Package instalado, raramente usado
+- `<Image>` de RN dispersa por el código
+- **Acción:** sustituir todas las `<Image>` por `expo-image` con blurhash; mejora caché + carga progresiva.
+
+### Suspense + skeletons en pantallas
+- `Skeleton` y `SkeletonList` ya creados en `src/shared/components/feedback/Skeleton.tsx`
+- Falta integrar en pantallas con loading states inconsistentes
+- **Acción:** activar Suspense mode en react-query (`useSuspenseQuery`), envolver pantallas en `<Suspense fallback={<SkeletonList />}>`.
+
+### Test manual en device
+- TypeScript pass (`tsc --noEmit` clean)
+- Falta probar golden path en simulador iOS/Android
+- **Comando:** `cd apps/mobile && pnpm ios` (o `pnpm android`)
+
+### Golden path manual
+1. Login → home
+2. QuickAction "Brain" → capture entry → ver auto-poll status hasta `complete`
+3. QuickAction "Focus" (Pomodoro) → start/pause → background 30s → resume (verificar timer correcto)
+4. Tasks tab → tap task → edit → save (toast)
+5. Calendar tab → switch Month/Week/Day → tap evento → quick view → edit/delete
+6. AI tab → mandar mensaje → ver streaming + markdown render + tool call card
+7. Settings → enable biometric → background → resume → unlock o "Use password"
+8. Modo avión → crear task → restaurar red → verificar sync (offline mutation queue)
+
+---
+
+## Archivos clave
+
+**Modificados (Fase 1–3):**
+- `src/shared/api/client.ts` — refresh queue, sin transformer
+- `src/shared/api/endpoints.ts` — `BRAIN`, calendar event endpoints
+- `src/shared/api/queryKeys.ts` — brain keys
+- `src/shared/stores/authStore.ts` — usa apiClient + dedupe
+- `src/shared/providers/QueryProvider.tsx` — global onError
+- `src/shared/repo-shared/types.ts` — tipos Brain
+- `app/_layout.tsx` — Toaster + provider order
+- `app/(app)/_layout.tsx` — habits-analytics + brain stack screens
+- `app/(app)/(tabs)/index.tsx` — Brain QuickAction
+- `app/(app)/(tabs)/tasks/[id].tsx` — detail real
+- `app/(app)/pomodoro.tsx` — refactor a componentes
+- `app/(app)/ai.tsx` — refactor a ChatPanel
+- `app/(app)/calendar.tsx` — Week/Day tabs + dialogs
+- `app/(app)/notifications.tsx` — fix `createdAt`
+- `eas.json` — 4 perfiles
+- `src/features/auth/components/BiometricGate.tsx` — fallback link
+- `src/features/habits/components/HabitHeatmap.tsx` — scroll horizontal
+- `src/features/tasks/components/TaskEditSheet.tsx` + `TaskFormSheet.tsx` — `goalId` fix
+
+**Creados:**
+- `src/shared/lib/toast.ts` + `src/shared/components/ui/toaster.tsx`
+- `src/shared/lib/optimistic.ts`
+- `src/shared/components/feedback/Skeleton.tsx`
+- `src/features/brain/{services,hooks,components,types}/` (módulo completo)
+- `src/features/pomodoro/components/Pomodoro{Timer,Controls,ModeSelector,Stats,SessionList}.tsx`
+- `src/features/ai/components/{ChatPanel,ChatMessage,ChatInput,ToolCallCard,MarkdownRenderer}.tsx`
+- `src/features/ai/hooks/useChatStream.ts`
+- `src/features/tasks/components/{TaskComposer,ArchivePanel}.tsx`
+- `src/features/habits/components/{HabitsAnalytics,HabitStackPrompt}.tsx`
+- `src/features/calendar/components/{EventQuickView,EventEditDialog,CalendarWeekView,CalendarDayView}.tsx`
+- `app/(auth)/error.tsx`, `app/(app)/error.tsx`, `app/(onboarding)/error.tsx`
+- `app/(app)/brain/index.tsx` + `app/(app)/brain/[id].tsx`
+- `app/(app)/habits-analytics.tsx`
+- `.env.example`
+
+---
+
+## Cómo seguir la próxima sesión
+
+1. **Probar en device primero** — `pnpm ios` y ejecutar golden path. Reportar bugs encontrados antes de seguir refactorizando.
+2. **typedRoutes migration** — pasada completa, generar tipos con `pnpm expo router build` o similar, sustituir string literals.
+3. **expo-image migration** — grep `from 'react-native'` con `Image` y migrar.
+4. **Suspense integration** — empezar por una pantalla piloto (tasks today o brain feed) y replicar.
+5. **Decidir tabs** — el 5to tab (`ai`) puede dejarse o reemplazarse por Brain si AI Chat usa menos. Consultar uso real.
+6. **Optional follow-ups del audit que no estaban en el plan:**
+   - Mutation ordering offline (riesgo de mutaciones paralelas que violan invariantes)
+   - WebSocket/SSE para notifications (actualmente polling)
+   - Sentinel/Sentry para crash reporting + sanitización stack
+   - Limpiar fallback `created_at`/`started_at` en `ProactiveSuggestionsCard.tsx` (ya no necesario tras quitar transformer)
+
+---
+
+## Métricas estimadas
+
+| Métrica | Antes | Después |
+|---------|-------|---------|
+| Cobertura módulos requeridos vs web | ~60% | ~90% |
+| Pomodoro completitud | 43% | ~85% |
+| Brain | 0% | 75% |
+| AI Chat | 75% | 90% (con markdown + componentes extraídos) |
+| Auth resilience | C (sin refresh interceptor) | A− (queue + dedupe + fallback) |
+| Error UX | C (Alert.alert puntual) | A− (toast global + error.tsx) |
+| Multi-env | F (single hardcoded) | B+ (3 perfiles eas.json) |
+| Arquitectura general | A− | A |
+
+---
+
+## Comando de referencia
+
+```bash
+# Typecheck
+cd apps/mobile
+../../node_modules/.bin/tsc --noEmit
+
+# Dev
+pnpm dev          # Expo start
+pnpm ios          # iOS simulator
+pnpm android      # Android emulator
+
+# Build
+eas build --profile preview --platform ios
+eas build --profile production --platform all
+```

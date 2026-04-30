@@ -93,8 +93,4 @@ export const tasksService = {
     return data;
   },
 
-  getTaskInsight: async (id: string) => {
-    const { data: response } = await apiClient.get(`${TASKS.BY_ID(id)}/ai/insight`);
-    return response.data ?? response;
-  },
 };

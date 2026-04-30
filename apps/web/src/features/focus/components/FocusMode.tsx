@@ -1,16 +1,14 @@
-import { useEffect, useMemo, useState } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { toast } from 'sonner'
+import { useEffect, useState } from 'react'
 import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
 import { Textarea } from '@/shared/components/ui/textarea'
 import { Label } from '@/shared/components/ui/label'
 import { X, Pause, Play, Check, LogOut } from 'lucide-react'
 import { useFocusStore } from '../focus-store'
-import { tasksApi } from '@/features/tasks/api'
-import { schedulingApi } from '@/features/scheduling/api'
-import { schedulingKeys } from '@/features/scheduling/queries'
-import { useStartTimer, useStopTimer, useUpdateTask } from '@/features/tasks/queries'
+import { useFocusTask } from '../hooks/use-focus-task'
+import { useFocusTimer } from '../hooks/use-focus-timer'
+import { useFocusActions } from '../hooks/use-focus-actions'
+import { useFocusKeyboard } from '../hooks/use-focus-keyboard'
 import { VisionThreadChip } from '@/features/vision/components/VisionThreadChip'
 import { FocusSubtasksPanel } from './FocusSubtasksPanel'
 
@@ -26,50 +24,30 @@ function formatDuration(ms: number): string {
   return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`
 }
 
-function computeElapsedSeconds(task: any | null | undefined): number {
-  if (!task) return 0
-  const prev = task.actualDurationSeconds ?? 0
-  if (!task.actualStart || task.actualEnd) return prev
-  const started = new Date(task.actualStart).getTime()
-  return prev + Math.floor((Date.now() - started) / 1000)
-}
+const PRESET_DURATIONS = [15, 25, 45, 60, 90]
 
 export function FocusMode() {
   const { open, taskId, close } = useFocusStore()
 
-  const taskQuery = useQuery({
-    queryKey: ['tasks', 'focus', taskId],
-    queryFn: () => tasksApi.get(taskId!).then((r) => r.data),
-    enabled: !!taskId && open,
-    staleTime: 5_000,
-    refetchInterval: 30_000,
-  })
-  const task = taskQuery.data as any
-
-  const qc = useQueryClient()
-  const startTimer = useStartTimer()
-  const stopTimer = useStopTimer()
-  const updateTask = useUpdateTask()
+  const taskQuery = useFocusTask(taskId, open)
+  const task = taskQuery.data ?? null
 
   const [phase, setPhase] = useState<Phase>('preflight')
   const [acceptance, setAcceptance] = useState('')
   const [durationMinutes, setDurationMinutes] = useState<number | null>(null)
   const [nextStep, setNextStep] = useState('')
-  const [savingNextStep, setSavingNextStep] = useState(false)
-  const [now, setNow] = useState(() => Date.now())
 
-  // Init/sync from task: preload acceptance + duration; jump to running if backend timer active
+  // Sync from task on open / when timer state changes
   useEffect(() => {
     if (!open || !task) return
     setAcceptance(task.acceptanceCriteria ?? '')
-    setDurationMinutes(task.plannedTimeMinutes ?? task.estimatedDurationMinutes ?? task.estimatedDuration ?? null)
+    setDurationMinutes(task.plannedTimeMinutes ?? task.estimatedDuration ?? null)
     if (task.actualStart && !task.actualEnd) {
       setPhase('running')
     } else if (phase !== 'completed') {
       setPhase('preflight')
     }
     setNextStep('')
-    setSavingNextStep(false)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, taskId, task?.actualStart, task?.actualEnd])
 
@@ -83,136 +61,38 @@ export function FocusMode() {
     }
   }, [open])
 
-  // Tick for live elapsed display while running
-  useEffect(() => {
-    if (phase !== 'running') return
-    const id = setInterval(() => setNow(Date.now()), 1000)
-    return () => clearInterval(id)
-  }, [phase])
-
-  const elapsedMs = useMemo(() => {
-    void now
-    return computeElapsedSeconds(task) * 1000
-  }, [task, now])
-
+  const elapsedMs = useFocusTimer(task, phase === 'running')
   const targetMs = durationMinutes ? durationMinutes * 60_000 : null
   const over = targetMs != null && elapsedMs > targetMs
 
-  async function start() {
-    if (!taskId) return
-    try {
-      const patch: Record<string, unknown> = {}
-      if ((task?.acceptanceCriteria ?? '') !== acceptance) {
-        patch.acceptanceCriteria = acceptance || null
-      }
-      const taskDur = task?.estimatedDuration ?? task?.estimatedDurationMinutes ?? null
-      if (durationMinutes && durationMinutes !== taskDur) {
-        patch.estimatedDuration = durationMinutes
-      }
-      if (Object.keys(patch).length > 0) {
-        await updateTask.mutateAsync({ id: taskId, data: patch as any })
-      }
-      await startTimer.mutateAsync(taskId)
-      schedulingApi.timerStart({ taskId }).catch(() => undefined)
-      setPhase('running')
-    } catch (err) {
-      toast.error((err as Error).message || 'Could not start')
-    }
-  }
+  const actions = useFocusActions({
+    taskId,
+    task,
+    acceptance,
+    durationMinutes,
+    onStarted: () => setPhase('running'),
+    onPaused: () => setPhase('paused'),
+    onResumed: () => setPhase('running'),
+    onCompleted: () => setPhase('completed'),
+    onClose: close,
+  })
 
-  async function pause() {
-    if (phase !== 'running' || !taskId) return
-    try {
-      await stopTimer.mutateAsync(taskId)
-      setPhase('paused')
-    } catch (err) {
-      toast.error((err as Error).message || 'Pause failed')
-    }
-  }
-
-  async function resume() {
-    if (phase !== 'paused' || !taskId) return
-    try {
-      await startTimer.mutateAsync(taskId)
-      setPhase('running')
-    } catch (err) {
-      toast.error((err as Error).message || 'Resume failed')
-    }
-  }
-
-  async function complete() {
-    if (!taskId) return
-    try {
-      if (task?.actualStart && !task?.actualEnd) {
-        await stopTimer.mutateAsync(taskId)
-      }
-      await tasksApi.update(taskId, { status: 'completed' } as any)
-      await schedulingApi.completeEarly({ taskId }).catch(() => undefined)
-      qc.invalidateQueries({ queryKey: ['tasks'] })
-      qc.invalidateQueries({ queryKey: schedulingKeys.sessions })
-      toast.success(over ? 'Completed (overtime)' : 'Task completed')
-      setPhase('completed')
-    } catch (err) {
-      toast.error((err as Error).message || 'Complete failed')
-    }
-  }
-
-  async function saveNextStep() {
-    const title = nextStep.trim()
-    if (!title) {
-      close()
-      return
-    }
-    setSavingNextStep(true)
-    try {
-      await tasksApi.create({ title } as any)
-      qc.invalidateQueries({ queryKey: ['tasks'] })
-      toast.success('Next step added to backlog')
-    } catch (err) {
-      toast.error((err as Error).message || 'Failed to add next step')
-    } finally {
-      setSavingNextStep(false)
-      close()
-    }
-  }
-
-  function closeKeepingTimer() {
-    close()
-  }
-
-  useEffect(() => {
-    if (!open) return
-    function handle(e: KeyboardEvent) {
-      if (phase === 'preflight' || phase === 'completed') return
-      const tgt = e.target as HTMLElement | null
-      if (tgt && (tgt.tagName === 'INPUT' || tgt.tagName === 'TEXTAREA' || tgt.isContentEditable)) return
-      if (e.key === ' ') {
-        e.preventDefault()
-        phase === 'running' ? pause() : resume()
-      } else if (e.key === 'Enter') {
-        e.preventDefault()
-        complete()
-      } else if (e.key === 'Escape') {
-        e.preventDefault()
-        closeKeepingTimer()
-      }
-    }
-    document.addEventListener('keydown', handle)
-    return () => document.removeEventListener('keydown', handle)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, phase])
+  useFocusKeyboard({
+    enabled: open && (phase === 'running' || phase === 'paused'),
+    onTogglePlay: () => (phase === 'running' ? actions.pause() : actions.resume()),
+    onComplete: () => actions.complete(over),
+    onClose: close,
+  })
 
   if (!open || !taskId) return null
 
   const title = task?.title ?? 'Focus'
-  const isStarting = startTimer.isPending || updateTask.isPending
-  const isPausing = stopTimer.isPending
 
   return (
     <div className="fixed inset-0 z-[100] flex flex-col bg-background">
       <div className="flex items-center justify-between px-6 py-3 border-b border-border/40">
         <div className="text-xs text-muted-foreground uppercase tracking-wide">Focus mode</div>
-        <Button variant="ghost" size="sm" onClick={closeKeepingTimer} aria-label="Close">
+        <Button variant="ghost" size="sm" onClick={close} aria-label="Close">
           <X className="h-4 w-4" />
         </Button>
       </div>
@@ -234,9 +114,9 @@ export function FocusMode() {
                 value={nextStep}
                 onChange={(e) => setNextStep(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !savingNextStep) {
+                  if (e.key === 'Enter' && !actions.savingNextStep) {
                     e.preventDefault()
-                    saveNextStep()
+                    actions.saveNextStep(nextStep)
                   } else if (e.key === 'Escape') {
                     e.preventDefault()
                     close()
@@ -250,9 +130,9 @@ export function FocusMode() {
             </div>
 
             <div className="flex items-center justify-between pt-2">
-              <Button variant="ghost" onClick={close} disabled={savingNextStep}>Skip</Button>
-              <Button onClick={saveNextStep} disabled={savingNextStep}>
-                {savingNextStep ? 'Saving…' : nextStep.trim() ? 'Add next step' : 'Done'}
+              <Button variant="ghost" onClick={close} disabled={actions.savingNextStep}>Skip</Button>
+              <Button onClick={() => actions.saveNextStep(nextStep)} disabled={actions.savingNextStep}>
+                {actions.savingNextStep ? 'Saving…' : nextStep.trim() ? 'Add next step' : 'Done'}
               </Button>
             </div>
           </div>
@@ -278,7 +158,7 @@ export function FocusMode() {
             <div className="space-y-2">
               <Label className="text-sm font-medium">How long do you actually need?</Label>
               <div className="flex items-center gap-2 text-sm">
-                {[15, 25, 45, 60, 90].map((m) => (
+                {PRESET_DURATIONS.map((m) => (
                   <Button
                     key={m}
                     type="button"
@@ -294,8 +174,10 @@ export function FocusMode() {
                   min={1}
                   max={480}
                   placeholder="custom"
-                  value={durationMinutes && ![15, 25, 45, 60, 90].includes(durationMinutes) ? durationMinutes : ''}
-                  onChange={(e) => setDurationMinutes(e.target.value ? Math.min(480, Math.max(1, Number(e.target.value))) : null)}
+                  value={durationMinutes && !PRESET_DURATIONS.includes(durationMinutes) ? durationMinutes : ''}
+                  onChange={(e) =>
+                    setDurationMinutes(e.target.value ? Math.min(480, Math.max(1, Number(e.target.value))) : null)
+                  }
                   className="w-20"
                 />
                 <span className="text-muted-foreground">min</span>
@@ -304,8 +186,8 @@ export function FocusMode() {
 
             <div className="flex items-center justify-between pt-2">
               <Button variant="ghost" onClick={close}>Cancel</Button>
-              <Button onClick={start} disabled={isStarting}>
-                {isStarting ? 'Starting…' : 'Start focus'}
+              <Button onClick={actions.start} disabled={actions.isStarting}>
+                {actions.isStarting ? 'Starting…' : 'Start focus'}
               </Button>
             </div>
           </div>
@@ -343,18 +225,18 @@ export function FocusMode() {
 
               <div className="flex items-center justify-center gap-3 pt-4">
                 {phase === 'running' ? (
-                  <Button variant="outline" onClick={pause} disabled={isPausing}>
+                  <Button variant="outline" onClick={actions.pause} disabled={actions.isPausing}>
                     <Pause className="h-4 w-4 mr-1" /> Pause
                   </Button>
                 ) : (
-                  <Button variant="outline" onClick={resume} disabled={isStarting}>
+                  <Button variant="outline" onClick={actions.resume} disabled={actions.isStarting}>
                     <Play className="h-4 w-4 mr-1" /> Resume
                   </Button>
                 )}
-                <Button onClick={complete}>
+                <Button onClick={() => actions.complete(over)}>
                   <Check className="h-4 w-4 mr-1" /> Complete
                 </Button>
-                <Button variant="ghost" onClick={closeKeepingTimer}>
+                <Button variant="ghost" onClick={close}>
                   <LogOut className="h-4 w-4 mr-1" /> Exit (keep timer)
                 </Button>
               </div>

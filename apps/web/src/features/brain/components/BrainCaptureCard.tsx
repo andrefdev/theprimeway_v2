@@ -20,21 +20,8 @@ export function BrainCaptureCard() {
       await createMut.mutateAsync(content)
       setValue('')
       toast.success('Thought captured — AI is processing…')
-    } catch (err) {
-      const e = err as { response?: { status?: number; data?: { error?: string; reason?: string } }; message?: string }
-      const status = e.response?.status
-      const apiError = e.response?.data?.error
-      const reason = e.response?.data?.reason
-      console.error('[brain.create]', err)
-      if (status === 403) {
-        toast.error(apiError ? `${apiError}${reason ? ` (${reason})` : ''}` : 'Brain module not available on your plan')
-      } else if (status === 401) {
-        toast.error('Session expired — please log in again')
-      } else if (apiError) {
-        toast.error(apiError)
-      } else {
-        toast.error(`Could not save thought${e.message ? ` — ${e.message}` : ''}`)
-      }
+    } catch {
+      // Errors surface via global MutationCache toast + axios 401 refresh interceptor.
     }
   }
 

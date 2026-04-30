@@ -1,4 +1,5 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
+import { CACHE_TIMES } from '@repo/shared/constants'
 import { authApi, isVerificationPending } from './api'
 import { useAuthStore } from '@/shared/stores/auth.store'
 import { useFeaturesStore } from '@/shared/stores/features.store'
@@ -10,7 +11,7 @@ export const authQueries = {
     queryOptions({
       queryKey: ['auth', 'me'],
       queryFn: () => authApi.me(),
-      staleTime: 5 * 60 * 1000,
+      staleTime: CACHE_TIMES.standard,
       retry: false,
     }),
 }

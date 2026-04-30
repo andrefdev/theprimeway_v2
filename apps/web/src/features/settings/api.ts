@@ -16,8 +16,33 @@ export interface PasswordChangeRequest {
   newPassword: string
 }
 
+export interface CurrencySettings {
+  id?: string
+  userId: string
+  baseCurrency: string
+  preferredCurrencies: string[]
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface UpdateCurrencySettingsRequest {
+  baseCurrency?: string
+  preferredCurrencies?: string[]
+}
+
 export const settingsApi = {
   getSettings: () => api.get<{ data: UserSettings }>('/user/settings'),
   updateSettings: (settings: UserSettings) => api.put('/user/settings', settings),
   changePassword: (payload: PasswordChangeRequest) => api.put('/user/password', payload),
+
+  getCurrencySettings: () =>
+    api.get<{ data: CurrencySettings }>('/user/currency-settings').then((r) => r.data.data),
+
+  updateCurrencySettings: (body: UpdateCurrencySettingsRequest) =>
+    api
+      .post<{ data: CurrencySettings }>('/user/currency-settings', body)
+      .then((r) => r.data.data),
+
+  resetCurrencySettings: () =>
+    api.delete('/user/currency-settings').then((r) => r.data),
 }

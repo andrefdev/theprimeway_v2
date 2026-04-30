@@ -143,12 +143,12 @@
       "anchors": [
         {
           "anchor": "App",
-          "href": "https://app.theprimeway.com",
+          "href": "https://app.theprimeway.app",
           "icon": "rocket"
         },
         {
           "anchor": "Web",
-          "href": "https://theprimeway.com",
+          "href": "https://theprimeway.app",
           "icon": "globe"
         }
       ]
@@ -158,13 +158,13 @@
     "links": [
       {
         "label": "Soporte",
-        "href": "mailto:soporte@theprimeway.com"
+        "href": "mailto:soporte@theprimeway.app"
       }
     ],
     "primary": {
       "type": "button",
       "label": "Empezar gratis",
-      "href": "https://app.theprimeway.com"
+      "href": "https://app.theprimeway.app"
     }
   },
   "footer": {

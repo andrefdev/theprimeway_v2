@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { toast } from 'sonner'
+import { useMutation } from '@tanstack/react-query'
 import { Sparkles } from 'lucide-react'
 import { ritualsApi } from '../api'
 import { Button } from '@/shared/components/ui/button'
@@ -24,18 +24,14 @@ interface Props {
  */
 export function AiRitualSummary({ instanceId, label = 'Generate AI summary', cached = null, cachedAt = null }: Props) {
   const [insight, setInsight] = useState<Insight | null>(cached)
-  const [loading, setLoading] = useState(false)
 
-  async function run() {
-    setLoading(true)
-    try {
-      setInsight(await ritualsApi.aiSummary(instanceId))
-    } catch (err) {
-      toast.error((err as Error).message || 'AI summary failed')
-    } finally {
-      setLoading(false)
-    }
-  }
+  const summaryMut = useMutation({
+    mutationFn: () => ritualsApi.aiSummary(instanceId),
+    onSuccess: (data) => setInsight(data),
+  })
+
+  const loading = summaryMut.isPending
+  const run = () => summaryMut.mutate()
 
   if (!insight) {
     return (

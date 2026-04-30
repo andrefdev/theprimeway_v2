@@ -6,7 +6,7 @@
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:5173",
-    "beforeDevCommand": "pnpm --filter @repo/web dev & pnpm dev:overlay",
+    "beforeDevCommand": "pnpm dev:web+overlay",
     "beforeBuildCommand": "pnpm build:overlay"
   },
   "app": {
