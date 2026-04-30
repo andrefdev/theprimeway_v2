@@ -144,12 +144,17 @@ const groupedRoute = createRoute({
 taskRoutes.openapi(groupedRoute, (async (c: any) => {
   const { userId } = c.get('user')
   const referenceDate = c.req.query('referenceDate') || c.req.query('reference_date')
+  const startDate = c.req.query('startDate') || c.req.query('start_date')
+  const endDate = c.req.query('endDate') || c.req.query('end_date')
 
   if (!referenceDate) {
     return c.json({ error: 'referenceDate query param is required' }, 400)
   }
 
-  const result = await tasksService.getGroupedTasks(userId, referenceDate)
+  const result = await tasksService.getGroupedTasks(userId, referenceDate, {
+    startDate,
+    endDate,
+  })
   return c.json(result, 200)
 }) as any)
 

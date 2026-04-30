@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { tasksQueries, useUpdateTask, useDeleteTask } from '@/features/tasks/queries'
-import { TaskDialog } from '@/features/tasks/components/TaskDialog'
+import { TaskFullDialog } from '@/features/tasks/components/dialogs'
 import { TaskComposer } from '@/features/tasks/components/TaskComposer'
 import { TaskItem } from '@/shared/components/TaskItem'
 import { QueryError } from '@/shared/components/QueryError'
@@ -164,7 +164,7 @@ function TasksBacklogPage() {
         )}
       </div>
 
-      <TaskDialog
+      <TaskFullDialog
         open={!!editingTask}
         onClose={() => setEditingTask(null)}
         task={editingTask}

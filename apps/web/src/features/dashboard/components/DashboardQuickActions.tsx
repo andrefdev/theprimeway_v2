@@ -3,7 +3,7 @@ import { Link } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/shared/components/ui/button'
 import { Plus, Play } from 'lucide-react'
-import { QuickTaskDialog } from '@/features/tasks/components/QuickTaskDialog'
+import { TaskQuickDialog } from '@/features/tasks/components/dialogs'
 
 export function DashboardQuickActions() {
   const { t } = useTranslation('dashboard')
@@ -27,7 +27,7 @@ export function DashboardQuickActions() {
           </Button>
         </Link>
       </div>
-      <QuickTaskDialog open={taskDialogOpen} onClose={() => setTaskDialogOpen(false)} />
+      <TaskQuickDialog open={taskDialogOpen} onClose={() => setTaskDialogOpen(false)} />
     </>
   )
 }

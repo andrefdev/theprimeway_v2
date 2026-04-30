@@ -11,6 +11,7 @@ import { useConnectGoogleCalendar } from '@/features/calendar/queries'
 import { ApiKeysCard } from '@/features/integrations/components/ApiKeysCard'
 import { WebhooksCard } from '@/features/integrations/components/WebhooksCard'
 import { ChannelsManager } from '@/features/channels/components/ChannelsManager'
+import { WorkingHoursManager } from '@/features/working-hours/components/WorkingHoursManager'
 import { UsageLimits } from '@/features/subscriptions/components/UsageLimits'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/components/ui/tabs'
 import { useFeature } from '@/features/feature-flags/hooks'
@@ -88,6 +89,7 @@ function SettingsPage() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="flex flex-wrap h-auto justify-start gap-1">
           <TabsTrigger value="general">{t('tabGeneral')}</TabsTrigger>
+          <TabsTrigger value="schedule">{t('tabSchedule', { defaultValue: 'Schedule' })}</TabsTrigger>
           <TabsTrigger value="notifications">{t('tabNotifications')}</TabsTrigger>
           <TabsTrigger value="channels">{t('tabChannels')}</TabsTrigger>
           <TabsTrigger value="integrations">{t('tabIntegrations')}</TabsTrigger>
@@ -102,6 +104,10 @@ function SettingsPage() {
             onSettingsChange={update}
             isPremium={customThemeCreationFeature.enabled}
           />
+        </TabsContent>
+
+        <TabsContent value="schedule" className="space-y-6 pt-4">
+          <WorkingHoursManager />
         </TabsContent>
 
         <TabsContent value="notifications" className="space-y-6 pt-4">

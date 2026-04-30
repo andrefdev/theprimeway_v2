@@ -135,13 +135,28 @@ class TasksService {
   }
 
   /** Get grouped tasks for dashboard view */
-  async getGroupedTasks(userId: string, referenceDate: string): Promise<GroupedTasksResult> {
+  async getGroupedTasks(
+    userId: string,
+    referenceDate: string,
+    opts?: { startDate?: string; endDate?: string },
+  ): Promise<GroupedTasksResult> {
     // Auto-archive past incomplete tasks
     await tasksRepository.archivePastTasks(userId, referenceDate)
 
+    const hasRange = !!(opts?.startDate && opts?.endDate)
+    const scheduledDateFilter = hasRange
+      ? {
+          gte: new Date(`${opts!.startDate}T00:00:00.000Z`),
+          lte: new Date(`${opts!.endDate}T23:59:59.999Z`),
+        }
+      : undefined
+
     // Fetch all non-archived tasks (open + completed) and archive
     const [activeTasks, archivedTasks] = await Promise.all([
-      tasksRepository.findMany(userId, { archivedAt: null }),
+      tasksRepository.findMany(userId, {
+        archivedAt: null,
+        ...(scheduledDateFilter ? { scheduledDate: scheduledDateFilter } : {}),
+      }),
       tasksRepository.findArchivedTasks(userId),
     ])
 

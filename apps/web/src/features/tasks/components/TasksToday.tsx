@@ -1,8 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { tasksQueries, useUpdateTask, useDeleteTask } from '@/features/tasks/queries'
 import { DayPlanner } from '@/features/tasks/components/DayPlanner'
-import { TaskDialog } from '@/features/tasks/components/TaskDialog'
-import { QuickTaskDialog } from '@/features/tasks/components/QuickTaskDialog'
+import { TaskFullDialog, TaskQuickDialog } from '@/features/tasks/components/dialogs'
 import { QueryError } from '@/shared/components/QueryError'
 import { PlusIcon } from '@/shared/components/Icons'
 import { Button } from '@/shared/components/ui/button'
@@ -178,13 +177,13 @@ export function TasksToday() {
         )}
       </div>
 
-      <TaskDialog
+      <TaskFullDialog
         open={dialogOpen}
         onClose={() => { setDialogOpen(false); setEditingTask(null) }}
         task={editingTask}
         defaultDate={today}
       />
-      <QuickTaskDialog
+      <TaskQuickDialog
         open={quickOpen}
         onClose={() => setQuickOpen(false)}
         defaultDate={today}

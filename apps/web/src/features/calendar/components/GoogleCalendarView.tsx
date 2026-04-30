@@ -19,8 +19,12 @@ import { SkeletonList } from '@/shared/components/ui/skeleton-list'
 import { useLocale } from '@/i18n/useLocale'
 import { cn } from '@/shared/lib/utils'
 import { useCalendarItems, getItemsForDay, type CalendarItem } from '../hooks/use-calendar-items'
-import { TaskDialog } from '@/features/tasks/components/TaskDialog'
-import { QuickTaskDialog } from '@/features/tasks/components/QuickTaskDialog'
+import {
+  TaskCalendarDialog,
+  TaskQuickDialog,
+  TaskQuickView,
+} from '@/features/tasks/components/dialogs'
+import { useUpdateTask, useDeleteTask } from '@/features/tasks/queries'
 import { EventQuickView } from './EventQuickView'
 import { EventEditDialog } from './EventEditDialog'
 import type { Task } from '@repo/shared/types'
@@ -62,9 +66,12 @@ export function GoogleCalendarView() {
   const [slotDialog, setSlotDialog] = useState<{ start: Date; end: Date } | null>(null)
   const [eventCreateSlot, setEventCreateSlot] = useState<{ start: Date; end: Date } | null>(null)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
-  const [quickView, setQuickView] = useState<{ item: CalendarItem; anchor: HTMLElement } | null>(null)
+  const [taskQuickView, setTaskQuickView] = useState<{ task: Task; anchor: HTMLElement } | null>(null)
+  const [eventQuickView, setEventQuickView] = useState<{ item: CalendarItem; anchor: HTMLElement } | null>(null)
   const [editingEvent, setEditingEvent] = useState<CalendarItem | null>(null)
   const deleteEvent = useDeleteGoogleEvent()
+  const updateTask = useUpdateTask()
+  const deleteTask = useDeleteTask()
   const today = new Date()
 
   const range = useMemo(() => {
@@ -185,9 +192,9 @@ export function GoogleCalendarView() {
             }}
             onItemClick={(item, anchor) => {
               if (item.type === 'task' && item.task) {
-                setEditingTask(item.task)
+                setTaskQuickView({ task: item.task, anchor })
               } else if (item.type === 'event') {
-                setQuickView({ item, anchor })
+                setEventQuickView({ item, anchor })
               }
             }}
           />
@@ -195,7 +202,7 @@ export function GoogleCalendarView() {
       </div>
 
       {slotDialog && (
-        <QuickTaskDialog
+        <TaskQuickDialog
           open
           onClose={() => setSlotDialog(null)}
           defaultDate={format(slotDialog.start, 'yyyy-MM-dd')}
@@ -205,27 +212,61 @@ export function GoogleCalendarView() {
       )}
 
       {editingTask && (
-        <TaskDialog
+        <TaskCalendarDialog
           open
           onClose={() => setEditingTask(null)}
           task={editingTask}
         />
       )}
 
-      <EventQuickView
-        item={quickView?.item ?? null}
-        anchorEl={quickView?.anchor ?? null}
-        open={!!quickView}
-        onClose={() => setQuickView(null)}
+      <TaskQuickView
+        task={taskQuickView?.task ?? null}
+        anchorEl={taskQuickView?.anchor ?? null}
+        open={!!taskQuickView}
+        onClose={() => setTaskQuickView(null)}
         onEdit={() => {
-          if (quickView) {
-            setEditingEvent(quickView.item)
-            setQuickView(null)
+          if (taskQuickView) {
+            setEditingTask(taskQuickView.task)
+            setTaskQuickView(null)
           }
         }}
         onDelete={async () => {
-          if (!quickView) return
-          const it = quickView.item
+          if (!taskQuickView) return
+          if (!window.confirm(t('confirmDelete', { ns: 'tasks', defaultValue: 'Delete this task?' }))) return
+          try {
+            await deleteTask.mutateAsync(taskQuickView.task.id)
+            toast.success(t('taskDeleted', { ns: 'tasks' }))
+            setTaskQuickView(null)
+          } catch {
+            toast.error(t('failedToDelete', { ns: 'tasks' }))
+          }
+        }}
+        onToggleComplete={async () => {
+          if (!taskQuickView) return
+          const newStatus = taskQuickView.task.status === 'completed' ? 'open' : 'completed'
+          try {
+            await updateTask.mutateAsync({ id: taskQuickView.task.id, data: { status: newStatus } })
+            setTaskQuickView(null)
+          } catch {
+            toast.error(t('failedToUpdate', { ns: 'tasks' }))
+          }
+        }}
+      />
+
+      <EventQuickView
+        item={eventQuickView?.item ?? null}
+        anchorEl={eventQuickView?.anchor ?? null}
+        open={!!eventQuickView}
+        onClose={() => setEventQuickView(null)}
+        onEdit={() => {
+          if (eventQuickView) {
+            setEditingEvent(eventQuickView.item)
+            setEventQuickView(null)
+          }
+        }}
+        onDelete={async () => {
+          if (!eventQuickView) return
+          const it = eventQuickView.item
           if (!it.googleCalendarId || !it.googleEventId) return
           if (!window.confirm('Delete this event from Google Calendar?')) return
           try {
@@ -234,7 +275,7 @@ export function GoogleCalendarView() {
               eventId: it.googleEventId,
             })
             toast.success('Event deleted')
-            setQuickView(null)
+            setEventQuickView(null)
           } catch (e: any) {
             toast.error(e?.message ?? 'Failed to delete')
           }

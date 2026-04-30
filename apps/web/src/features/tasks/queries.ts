@@ -20,10 +20,10 @@ export const tasksQueries = {
       staleTime: CACHE_TIMES.standard,
     }),
 
-  grouped: (referenceDate: string) =>
+  grouped: (params: { referenceDate: string; startDate?: string; endDate?: string }) =>
     queryOptions({
-      queryKey: [...tasksQueries.all(), 'grouped', referenceDate],
-      queryFn: () => tasksApi.grouped(referenceDate),
+      queryKey: [...tasksQueries.all(), 'grouped', params],
+      queryFn: () => tasksApi.grouped(params),
       staleTime: CACHE_TIMES.standard,
     }),
 

@@ -1,6 +1,7 @@
 {
   "title": "Settings",
   "tabGeneral": "General",
+  "tabSchedule": "Schedule",
   "tabNotifications": "Notifications",
   "tabChannels": "Channels & contexts",
   "tabIntegrations": "Integrations",
@@ -45,6 +46,25 @@
   "failedToChangePassword": "Failed to change password. Check your current password.",
   "notifSaveInfo": "Notification preferences will be saved with backend integration",
   "accountDeleteInfo": "Account deletion requires confirmation via email. Coming soon.",
+  "workingHours": {
+    "title": "Working hours",
+    "description": "Auto-Schedule uses these hours to find slots. Days left off cannot be auto-scheduled.",
+    "enabled": "Enabled",
+    "start": "Start",
+    "end": "End",
+    "save": "Save",
+    "reset": "Use defaults (Mon–Fri 9–5)",
+    "invalidRange": "End time must be after start time",
+    "day": {
+      "0": "Sunday",
+      "1": "Monday",
+      "2": "Tuesday",
+      "3": "Wednesday",
+      "4": "Thursday",
+      "5": "Friday",
+      "6": "Saturday"
+    }
+  },
   "googleCal": {
     "title": "Google Calendar",
     "description": "Connect your Google account and pick which calendars to sync.",

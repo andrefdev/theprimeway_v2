@@ -3,13 +3,14 @@ import { useQuery } from '@tanstack/react-query'
 import { tasksQueries, useUpdateTask, useDeleteTask } from '@/features/tasks/queries'
 import { TaskGroup } from '@/features/tasks/components/TaskGroup'
 import { ArchivePanel } from '@/features/tasks/components/ArchivePanel'
-import { TaskDialog } from '@/features/tasks/components/TaskDialog'
-import { QuickTaskDialog } from '@/features/tasks/components/QuickTaskDialog'
+import { TaskFullDialog, TaskQuickDialog } from '@/features/tasks/components/dialogs'
 import { QueryError } from '@/shared/components/QueryError'
 import { FilterBar } from '@/shared/components/FilterBar'
 import { PlusIcon } from '@/shared/components/Icons'
 import { Button } from '@/shared/components/ui/button'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/shared/components/ui/select'
+import { DateRangePicker } from '@/shared/components/ui/date-range-picker'
+import { usePersistentDateRange } from '@/shared/hooks/use-persistent-date-range'
 import { SectionHeader } from '@/shared/components/SectionHeader'
 import { TasksNav } from '@/features/tasks/components/TasksNav'
 import { SkeletonList } from '@/shared/components/ui/skeleton-list'
@@ -31,7 +32,14 @@ function TasksAllPage() {
   // Get today's date in local timezone (not UTC)
   const now = new Date()
   const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
-  const groupedQuery = useQuery(tasksQueries.grouped(today))
+  const [dateRange, setDateRange] = usePersistentDateRange('tasks.all.dateRange', 'this_month')
+  const groupedQuery = useQuery(
+    tasksQueries.grouped({
+      referenceDate: today,
+      startDate: dateRange.start ?? undefined,
+      endDate: dateRange.end ?? undefined,
+    }),
+  )
   const updateTask = useUpdateTask()
   const deleteTask = useDeleteTask()
   const showImpact = useCompletionImpact()
@@ -150,6 +158,7 @@ function TasksAllPage() {
 
           <TabsContent value="tasks" className="space-y-6 pt-4">
             <FilterBar search={search} onSearchChange={setSearch} searchPlaceholder={t('searchPlaceholder')}>
+              <DateRangePicker value={dateRange} onChange={setDateRange} />
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="max-w-[160px]">
                   <SelectValue />
@@ -207,12 +216,12 @@ function TasksAllPage() {
         </Tabs>
       </div>
 
-      <TaskDialog
+      <TaskFullDialog
         open={dialogOpen}
         onClose={() => { setDialogOpen(false); setEditingTask(null) }}
         task={editingTask}
       />
-      <QuickTaskDialog
+      <TaskQuickDialog
         open={quickOpen}
         onClose={() => setQuickOpen(false)}
       />

@@ -20,6 +20,20 @@ type WeeklyKind = 'WEEKLY_PLAN' | 'WEEKLY_REVIEW'
 type QuarterlyKind = 'QUARTERLY_REVIEW'
 type AnnualKind = 'ANNUAL_REVIEW'
 
+function expectedHorizonForRitual(kind: string | undefined): 'WEEK' | 'QUARTER' | 'ONE_YEAR' | null {
+  switch (kind) {
+    case 'WEEKLY_PLAN':
+    case 'WEEKLY_REVIEW':
+      return 'WEEK'
+    case 'QUARTERLY_REVIEW':
+      return 'QUARTER'
+    case 'ANNUAL_REVIEW':
+      return 'ONE_YEAR'
+    default:
+      return null
+  }
+}
+
 const DAILY_DEFAULTS: Record<DailyKind, { name: string; time: 'plan' | 'end'; steps: unknown[] }> = {
   DAILY_PLAN: {
     name: 'Daily Plan',
@@ -121,6 +135,25 @@ function yearBounds(ref: Date = new Date()) {
   return { start, end, year }
 }
 
+const PERIOD_REVIEW_WINDOW_DAYS: Record<'QUARTERLY_REVIEW' | 'ANNUAL_REVIEW', number> = {
+  QUARTERLY_REVIEW: 7,
+  ANNUAL_REVIEW: 14,
+}
+
+function isPeriodReviewUnlocked(
+  kind: RitualKind,
+  scheduledFor: Date,
+  now: Date = new Date(),
+): boolean {
+  if (kind !== 'QUARTERLY_REVIEW' && kind !== 'ANNUAL_REVIEW') return true
+  const windowMs = PERIOD_REVIEW_WINDOW_DAYS[kind] * 24 * 60 * 60 * 1000
+  return scheduledFor.getTime() - now.getTime() <= windowMs
+}
+
+function periodReviewUnlockAt(kind: 'QUARTERLY_REVIEW' | 'ANNUAL_REVIEW', scheduledFor: Date) {
+  return new Date(scheduledFor.getTime() - PERIOD_REVIEW_WINDOW_DAYS[kind] * 24 * 60 * 60 * 1000)
+}
+
 // ---------------------------------------------------------------------------
 // Service
 // ---------------------------------------------------------------------------
@@ -135,11 +168,41 @@ class RitualsService {
 
   listInstances(userId: string) { return ritualsRepo.listInstancesForUser(userId) }
   createInstance(userId: string, data: { ritualId: string; scheduledFor: Date }) { return ritualsRepo.createInstance(userId, data) }
-  patchInstance(userId: string, id: string, data: InstancePatch) { return ritualsRepo.patchInstance(id, userId, data) }
+
+  async patchInstance(userId: string, id: string, data: InstancePatch) {
+    if (data.status === 'COMPLETED') {
+      const existing = await ritualsRepo.findInstanceByIdAndUser(id, userId)
+      if (!existing) return { ok: false as const, reason: 'not_found' as const }
+      const kind = existing.ritual.kind as RitualKind
+      if ((kind === 'QUARTERLY_REVIEW' || kind === 'ANNUAL_REVIEW')
+        && !isPeriodReviewUnlocked(kind, existing.scheduledFor)) {
+        return {
+          ok: false as const,
+          reason: 'too_early' as const,
+          unlocksAt: periodReviewUnlockAt(kind, existing.scheduledFor),
+        }
+      }
+    }
+    const row = await ritualsRepo.patchInstance(id, userId, data)
+    if (!row) return { ok: false as const, reason: 'not_found' as const }
+    return { ok: true as const, instance: row }
+  }
 
   async createReflection(userId: string, body: { ritualInstanceId: string; promptKey: string; body: string; attachedGoalId?: string }) {
     const instance = await ritualsRepo.findInstanceByIdAndUser(body.ritualInstanceId, userId)
     if (!instance) return { ok: false as const, reason: 'not_found' as const }
+    if (body.attachedGoalId) {
+      const goal = await prisma.goal.findFirst({
+        where: { id: body.attachedGoalId, userId },
+        select: { horizon: true },
+      })
+      if (!goal) return { ok: false as const, reason: 'invalid_goal' as const }
+      const kind = (instance as any).ritual?.kind as string | undefined
+      const expected = expectedHorizonForRitual(kind)
+      if (expected && goal.horizon !== expected) {
+        return { ok: false as const, reason: 'horizon_mismatch' as const }
+      }
+    }
     return { ok: true as const, reflection: await ritualsRepo.createReflection(body) }
   }
 

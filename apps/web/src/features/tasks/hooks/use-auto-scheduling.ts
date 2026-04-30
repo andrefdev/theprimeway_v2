@@ -25,7 +25,7 @@ const DEFAULT_PREFS: WorkPreferences = {
 
 /**
  * Finds available time slots in a day given existing tasks.
- * Used by TaskDialog to suggest scheduling times.
+ * Used by task dialogs to suggest scheduling times.
  */
 export function useAutoScheduling(
   existingTasks: Task[],

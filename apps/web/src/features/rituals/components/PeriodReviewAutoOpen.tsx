@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useRitualsQuarter, useRitualsYear } from '../queries'
 import { PeriodReviewDialog } from './PeriodReviewDialog'
+import { periodReviewUnlocked } from '../lib/period-review-unlock'
 
 /**
  * Mounts on the Vision surface. Auto-opens the Quarterly review during
@@ -18,10 +19,7 @@ export function PeriodReviewAutoOpen() {
   useEffect(() => {
     if (!quarter?.review || quarter.review.status !== 'PENDING') return
     if (dismissedKey.has(`q:${quarter.periodKey}`)) return
-    const scheduled = new Date(quarter.review.scheduledFor).getTime()
-    const now = Date.now()
-    const sevenDaysMs = 7 * 24 * 60 * 60 * 1000
-    if (scheduled - now <= sevenDaysMs && scheduled - now > -sevenDaysMs) {
+    if (periodReviewUnlocked('QUARTERLY_REVIEW', quarter.review.scheduledFor)) {
       setQuarterOpen(true)
     }
   }, [quarter, dismissedKey])
@@ -29,10 +27,7 @@ export function PeriodReviewAutoOpen() {
   useEffect(() => {
     if (!year?.review || year.review.status !== 'PENDING') return
     if (dismissedKey.has(`y:${year.periodKey}`)) return
-    const scheduled = new Date(year.review.scheduledFor).getTime()
-    const now = Date.now()
-    const fourteenDaysMs = 14 * 24 * 60 * 60 * 1000
-    if (scheduled - now <= fourteenDaysMs && scheduled - now > -fourteenDaysMs) {
+    if (periodReviewUnlocked('ANNUAL_REVIEW', year.review.scheduledFor)) {
       setYearOpen(true)
     }
   }, [year, dismissedKey])
@@ -49,6 +44,7 @@ export function PeriodReviewAutoOpen() {
           }}
           title="Quarterly Review"
           periodLabel={quarter.periodKey}
+          unlocked
         />
       )}
       {year?.review && (
@@ -61,6 +57,7 @@ export function PeriodReviewAutoOpen() {
           }}
           title="Annual Review"
           periodLabel={year.periodKey}
+          unlocked
         />
       )}
     </>

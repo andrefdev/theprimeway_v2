@@ -2,8 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { tasksQueries, useUpdateTask, useDeleteTask } from '@/features/tasks/queries'
 import { WeekPlanner } from '@/features/tasks/components/WeekPlanner'
-import { TaskDialog } from '@/features/tasks/components/TaskDialog'
-import { QuickTaskDialog } from '@/features/tasks/components/QuickTaskDialog'
+import { TaskFullDialog, TaskQuickDialog } from '@/features/tasks/components/dialogs'
 import { QueryError } from '@/shared/components/QueryError'
 import { Button } from '@/shared/components/ui/button'
 import { SectionHeader } from '@/shared/components/SectionHeader'
@@ -146,13 +145,13 @@ function TasksWeeklyPage() {
         )}
       </div>
 
-      <TaskDialog
+      <TaskFullDialog
         open={dialogOpen}
         onClose={() => { setDialogOpen(false); setEditingTask(null); setDefaultDate(undefined) }}
         task={editingTask}
         defaultDate={defaultDate}
       />
-      <QuickTaskDialog
+      <TaskQuickDialog
         open={quickOpen}
         onClose={() => { setQuickOpen(false); setDefaultDate(undefined) }}
         defaultDate={defaultDate}

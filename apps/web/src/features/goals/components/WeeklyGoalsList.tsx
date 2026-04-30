@@ -40,7 +40,7 @@ export function WeeklyGoalsList() {
   const weekStartDate = ymd(weekStart)
 
   const { data, isLoading } = useQuery(goalsQueries.weeklyGoals({ weekStartDate }))
-  const goals = (data?.data ?? []) as WeeklyGoal[]
+  const goals = (Array.isArray(data) ? data : []) as WeeklyGoal[]
 
   const create = useCreateWeeklyGoal()
   const update = useUpdateWeeklyGoal()

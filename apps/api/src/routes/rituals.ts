@@ -86,9 +86,14 @@ ritualsRoutes.post('/instances', async (c) => {
 ritualsRoutes.patch('/instances/:id', async (c) => {
   const userId = c.get('user').userId
   const body = instancePatch.parse(await c.req.json())
-  const row = await ritualsService.patchInstance(userId, c.req.param('id'), body)
-  if (!row) return c.json({ error: 'Not Found' }, 404)
-  return c.json({ data: row })
+  const result = await ritualsService.patchInstance(userId, c.req.param('id'), body)
+  if (!result.ok) {
+    if (result.reason === 'not_found') return c.json({ error: 'Not Found' }, 404)
+    if (result.reason === 'too_early') {
+      return c.json({ error: 'Review not yet unlocked', unlocksAt: result.unlocksAt }, 400)
+    }
+  }
+  return c.json({ data: result.instance })
 })
 
 // ── Ensure today / week ─────────────────────────────────
@@ -117,7 +122,12 @@ ritualsRoutes.post('/reflections', async (c) => {
   const userId = c.get('user').userId
   const body = reflectionCreate.parse(await c.req.json())
   const result = await ritualsService.createReflection(userId, body)
-  if (!result.ok) return c.json({ error: 'Instance not found' }, 404)
+  if (!result.ok) {
+    if (result.reason === 'not_found') return c.json({ error: 'Instance not found' }, 404)
+    if (result.reason === 'invalid_goal') return c.json({ error: 'Attached goal not found' }, 400)
+    if (result.reason === 'horizon_mismatch') return c.json({ error: 'Attached goal horizon does not match ritual scope' }, 400)
+    return c.json({ error: 'Failed to create reflection' }, 400)
+  }
   return c.json({ data: result.reflection }, 201)
 })
 

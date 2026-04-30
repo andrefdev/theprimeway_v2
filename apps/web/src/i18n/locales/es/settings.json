@@ -1,6 +1,7 @@
 {
   "title": "Configuración",
   "tabGeneral": "General",
+  "tabSchedule": "Horario",
   "tabNotifications": "Notificaciones",
   "tabChannels": "Canales y contextos",
   "tabIntegrations": "Integraciones",
@@ -45,6 +46,25 @@
   "failedToChangePassword": "Error al cambiar contraseña. Verifica tu contraseña actual.",
   "notifSaveInfo": "Las preferencias de notificación se guardarán con la integración del backend",
   "accountDeleteInfo": "La eliminación de cuenta requiere confirmación por correo. Próximamente.",
+  "workingHours": {
+    "title": "Horario de trabajo",
+    "description": "Auto-Programar usa estas horas para encontrar huecos. Los días desactivados no se pueden auto-programar.",
+    "enabled": "Activado",
+    "start": "Inicio",
+    "end": "Fin",
+    "save": "Guardar",
+    "reset": "Usar predeterminados (Lun–Vie 9–5)",
+    "invalidRange": "La hora de fin debe ser posterior a la de inicio",
+    "day": {
+      "0": "Domingo",
+      "1": "Lunes",
+      "2": "Martes",
+      "3": "Miércoles",
+      "4": "Jueves",
+      "5": "Viernes",
+      "6": "Sábado"
+    }
+  },
   "googleCal": {
     "title": "Google Calendar",
     "description": "Conecta tu cuenta de Google y elige qué calendarios sincronizar.",
