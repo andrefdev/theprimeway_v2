@@ -172,12 +172,12 @@ class TasksService {
       groupMap.get(dateKey)!.push(task)
     }
 
-    // Sort groups: dates ascending, 'no-date' at end
+    // Sort groups: dates descending (newest first), 'no-date' at end
     const groups = Array.from(groupMap.entries())
       .sort(([a], [b]) => {
         if (a === 'no-date') return 1
         if (b === 'no-date') return -1
-        return a.localeCompare(b)
+        return b.localeCompare(a)
       })
       .map(([date_key, tasks]) => ({ date_key, tasks }))
 

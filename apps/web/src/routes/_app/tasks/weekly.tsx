@@ -10,7 +10,7 @@ import { TasksNav } from '@/features/tasks/components/TasksNav'
 import { SkeletonList } from '@/shared/components/ui/skeleton-list'
 import { ChevronLeftIcon, ChevronRightIcon, PlusIcon } from '@/shared/components/Icons'
 import { toast } from 'sonner'
-import { format, addWeeks, addDays } from 'date-fns'
+import { format, addWeeks, addDays, startOfWeek } from 'date-fns'
 import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLocale } from '@/i18n/useLocale'
@@ -28,11 +28,20 @@ function TasksWeeklyPage() {
 
   const weekStart = useMemo(() => {
     const today = new Date()
-    return weekOffset === 0 ? today : addWeeks(today, weekOffset)
+    const base = weekOffset === 0 ? today : addWeeks(today, weekOffset)
+    return startOfWeek(base, { weekStartsOn: 1 })
   }, [weekOffset])
 
-  const referenceDate = format(weekStart, 'yyyy-MM-dd')
-  const tasksQuery = useQuery(tasksQueries.list({ weekStart: referenceDate, limit: '200' }))
+  const weekStartStr = format(weekStart, 'yyyy-MM-dd')
+  const weekEndStr = format(addDays(weekStart, 6), 'yyyy-MM-dd')
+  const tasksQuery = useQuery(
+    tasksQueries.list({
+      filter: 'week',
+      weekStart: weekStartStr,
+      weekEnd: weekEndStr,
+      limit: '200',
+    }),
+  )
   const updateTask = useUpdateTask()
   const deleteTask = useDeleteTask()
   const showImpact = useCompletionImpact()
