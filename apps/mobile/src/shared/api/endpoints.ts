@@ -53,6 +53,10 @@ export const CALENDAR = {
   GOOGLE_CONNECT: '/api/calendar/google/connect',
   SYNC: '/api/calendar/sync',
   CALENDARS: '/api/calendar/calendars',
+  EVENT_BY_ID: (calendarId: string, eventId: string) =>
+    `/api/calendar/events/${calendarId}/${eventId}`,
+  EVENTS_RANGE: '/api/calendar/events',
+  SMART_SLOTS: '/api/calendar/ai/smart-slots',
 } as const;
 
 // Brain (capture + AI processing)

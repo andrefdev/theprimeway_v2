@@ -29,6 +29,7 @@ export default function AppLayout() {
         <Stack.Screen name="weekly-review" />
         <Stack.Screen name="alignment-setup" />
         <Stack.Screen name="notifications" />
+        <Stack.Screen name="habits-analytics" />
         <Stack.Screen name="brain/index" />
         <Stack.Screen name="brain/[id]" />
         </Stack>

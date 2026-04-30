@@ -8,10 +8,22 @@
       "developmentClient": true,
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://app.theprimeway.app"
+        "EXPO_PUBLIC_API_URL": "http://localhost:3000",
+        "EXPO_PUBLIC_ENV": "development"
       },
       "ios": {
         "simulator": false
+      }
+    },
+    "development-simulator": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "http://localhost:3000",
+        "EXPO_PUBLIC_ENV": "development"
+      },
+      "ios": {
+        "simulator": true
       }
     },
     "preview": {
@@ -20,13 +32,16 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://app.theprimeway.app"
+        "EXPO_PUBLIC_API_URL": "https://staging.theprimeway.app",
+        "EXPO_PUBLIC_ENV": "staging"
       }
     },
     "production": {
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://app.theprimeway.app"
-      }
+        "EXPO_PUBLIC_API_URL": "https://app.theprimeway.app",
+        "EXPO_PUBLIC_ENV": "production"
+      },
+      "autoIncrement": true
     }
   },
   "submit": {

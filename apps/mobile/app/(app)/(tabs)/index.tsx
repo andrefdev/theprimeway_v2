@@ -17,7 +17,7 @@ import { useHabits, useHabitStats, useLogHabit } from '@features/habits/hooks/us
 import { useAuthStore } from '@/shared/stores/authStore';
 import { router } from 'expo-router';
 import {
-  CheckSquare, Flame, Timer, Plus, Sparkles, Bell, LayoutGrid,
+  CheckSquare, Flame, Timer, Plus, Sparkles, Bell, LayoutGrid, Brain,
 } from 'lucide-react-native';
 import { useAggregatedNotifications } from '@features/notifications/hooks/useNotifications';
 import { ProactiveSuggestionsCard } from '@features/ai/components/ProactiveSuggestionsCard';
@@ -152,6 +152,7 @@ export default function DashboardScreen() {
           <View className="flex-row justify-between">
             <QuickAction icon={Plus} label={t('quickActions.taskShort')} color="primary" onPress={() => setShowTaskForm(true)} />
             <QuickAction icon={Timer} label={t('quickActions.focusShort')} color="destructive" onPress={() => router.push('/(app)/pomodoro')} />
+            <QuickAction icon={Brain} label="Brain" color="accent" onPress={() => router.push('/(app)/brain' as any)} />
             <QuickAction icon={Flame} label={t('quickActions.habitShort')} color="success" onPress={() => router.push('/(app)/(tabs)/habits')} />
             <QuickAction icon={LayoutGrid} label={t('quickActions.goalShort')} color="accent" onPress={() => router.push('/(app)/(tabs)/goals')} />
           </View>

@@ -25,15 +25,44 @@ import {
   useCalendarAccounts,
   useCalendarEvents,
   useSyncCalendar,
+  useDeleteCalendarEvent,
 } from '@features/calendar/hooks/useCalendar';
 import { useGoogleCalendarOAuth } from '@features/calendar/hooks/useGoogleCalendarOAuth';
+import { EventQuickView } from '@features/calendar/components/EventQuickView';
+import { EventEditDialog } from '@features/calendar/components/EventEditDialog';
+import { CalendarWeekView } from '@features/calendar/components/CalendarWeekView';
+import { CalendarDayView } from '@features/calendar/components/CalendarDayView';
+import { toast } from '@/shared/lib/toast';
+import type { CalendarEvent } from '@shared/types/models';
 
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+type ViewMode = 'month' | 'week' | 'day';
 
 export default function CalendarScreen() {
   const { t } = useTranslation('features.calendar');
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [viewMode, setViewMode] = useState<ViewMode>('month');
+  const [quickEvent, setQuickEvent] = useState<CalendarEvent | null>(null);
+  const [editEvent, setEditEvent] = useState<CalendarEvent | null>(null);
+  const deleteEvent = useDeleteCalendarEvent();
+
+  const handleDelete = (ev: CalendarEvent) => {
+    if (!ev.calendarId) {
+      toast.error('Missing calendar id');
+      return;
+    }
+    deleteEvent.mutate(
+      { calendarId: ev.calendarId, eventId: ev.id },
+      {
+        onSuccess: () => {
+          setQuickEvent(null);
+          toast.success('Event deleted');
+        },
+      }
+    );
+  };
 
   const { data: accounts } = useCalendarAccounts();
   const hasConnected = (accounts ?? []).some((a) => a.isConnected);
@@ -122,9 +151,30 @@ export default function CalendarScreen() {
           </View>
         )}
 
-        {/* Sync button */}
+        {/* View mode tabs + sync */}
         {hasConnected && (
-          <View className="flex-row items-center justify-end px-4 pt-2">
+          <View className="flex-row items-center justify-between gap-2 px-4 pt-2">
+            <View className="flex-row gap-1 rounded-full bg-muted p-1">
+              {(['month', 'week', 'day'] as ViewMode[]).map((m) => (
+                <Pressable
+                  key={m}
+                  onPress={() => setViewMode(m)}
+                  className={cn(
+                    'rounded-full px-3 py-1',
+                    viewMode === m && 'bg-card'
+                  )}
+                >
+                  <Text
+                    className={cn(
+                      'text-2xs font-semibold capitalize',
+                      viewMode === m ? 'text-foreground' : 'text-muted-foreground'
+                    )}
+                  >
+                    {m}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
             <Pressable
               onPress={() => sync.mutate()}
               disabled={sync.isPending}
@@ -138,6 +188,30 @@ export default function CalendarScreen() {
           </View>
         )}
 
+        {viewMode === 'week' && hasConnected && (
+          <View className="mt-2">
+            <CalendarWeekView
+              anchorDate={selectedDate}
+              events={events ?? []}
+              onEventPress={setQuickEvent}
+            />
+          </View>
+        )}
+
+        {viewMode === 'day' && hasConnected && (
+          <View className="mt-2">
+            <CalendarDayView
+              date={selectedDate}
+              events={events ?? []}
+              onEventPress={setQuickEvent}
+            />
+          </View>
+        )}
+
+        {viewMode !== 'month' && <View className="h-8" />}
+
+        {viewMode === 'month' && (
+        <>
         {/* Month Navigation */}
         <View className="flex-row items-center justify-between px-4 py-3">
           <Pressable
@@ -237,37 +311,52 @@ export default function CalendarScreen() {
           ) : (
             <View className="gap-2">
               {selectedDayEvents.map((ev) => (
-                <Card key={ev.id}>
-                  <CardContent className="flex-row items-start gap-3 p-3">
-                    <View
-                      className="mt-1 h-3 w-3 rounded-full"
-                      style={{ backgroundColor: ev.color ?? '#6366f1' }}
-                    />
-                    <View className="flex-1">
-                      <Text className="text-sm font-semibold text-foreground">
-                        {ev.title}
-                      </Text>
-                      <Text className="text-xs text-muted-foreground">
-                        {ev.isAllDay
-                          ? 'All day'
-                          : `${format(parseISO(ev.startDate), 'HH:mm')} – ${format(parseISO(ev.endDate), 'HH:mm')}`}
-                      </Text>
-                      {ev.description ? (
-                        <Text
-                          className="mt-1 text-xs text-muted-foreground"
-                          numberOfLines={2}
-                        >
-                          {ev.description}
+                <Pressable key={ev.id} onPress={() => setQuickEvent(ev)}>
+                  <Card>
+                    <CardContent className="flex-row items-start gap-3 p-3">
+                      <View
+                        className="mt-1 h-3 w-3 rounded-full"
+                        style={{ backgroundColor: ev.color ?? '#6366f1' }}
+                      />
+                      <View className="flex-1">
+                        <Text className="text-sm font-semibold text-foreground">
+                          {ev.title}
                         </Text>
-                      ) : null}
-                    </View>
-                  </CardContent>
-                </Card>
+                        <Text className="text-xs text-muted-foreground">
+                          {ev.isAllDay
+                            ? 'All day'
+                            : `${format(parseISO(ev.startDate), 'HH:mm')} – ${format(parseISO(ev.endDate), 'HH:mm')}`}
+                        </Text>
+                        {ev.description ? (
+                          <Text
+                            className="mt-1 text-xs text-muted-foreground"
+                            numberOfLines={2}
+                          >
+                            {ev.description}
+                          </Text>
+                        ) : null}
+                      </View>
+                    </CardContent>
+                  </Card>
+                </Pressable>
               ))}
             </View>
           )}
         </Animated.View>
+        </>
+        )}
       </ScrollView>
+
+      <EventQuickView
+        event={quickEvent}
+        onClose={() => setQuickEvent(null)}
+        onEdit={(ev) => {
+          setQuickEvent(null);
+          setEditEvent(ev);
+        }}
+        onDelete={handleDelete}
+      />
+      <EventEditDialog event={editEvent} onClose={() => setEditEvent(null)} />
     </SafeAreaView>
   );
 }

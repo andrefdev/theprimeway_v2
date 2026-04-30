@@ -27,4 +27,34 @@ export const calendarService = {
     const { data } = await apiClient.get(CALENDAR.CALENDARS);
     return data;
   },
+
+  getEvent: async (calendarId: string, eventId: string): Promise<CalendarEvent> => {
+    const { data } = await apiClient.get<{ data: CalendarEvent }>(
+      CALENDAR.EVENT_BY_ID(calendarId, eventId)
+    );
+    return (data as any)?.data ?? (data as unknown as CalendarEvent);
+  },
+
+  updateEvent: async (
+    calendarId: string,
+    eventId: string,
+    patch: Partial<CalendarEvent>
+  ): Promise<CalendarEvent> => {
+    const { data } = await apiClient.patch<{ data: CalendarEvent }>(
+      CALENDAR.EVENT_BY_ID(calendarId, eventId),
+      patch
+    );
+    return (data as any)?.data ?? (data as unknown as CalendarEvent);
+  },
+
+  deleteEvent: async (calendarId: string, eventId: string): Promise<void> => {
+    await apiClient.delete(CALENDAR.EVENT_BY_ID(calendarId, eventId));
+  },
+
+  getSmartSlots: async (taskId: string, date: string) => {
+    const { data } = await apiClient.get(CALENDAR.SMART_SLOTS, {
+      params: { taskId, date },
+    });
+    return (data as any)?.data ?? data;
+  },
 };

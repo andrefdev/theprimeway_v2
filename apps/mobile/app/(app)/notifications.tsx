@@ -54,7 +54,7 @@ function NotificationItem({ item }: { item: AppNotification }) {
 
   const timeAgo = (() => {
     try {
-      return formatDistanceToNow(new Date(item.created_at), { addSuffix: true });
+      return formatDistanceToNow(new Date(item.createdAt), { addSuffix: true });
     } catch {
       return '';
     }

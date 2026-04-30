@@ -31,3 +31,38 @@ export function useSyncCalendar() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.calendar.events }),
   });
 }
+
+export function useUpdateCalendarEvent() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      calendarId,
+      eventId,
+      patch,
+    }: {
+      calendarId: string;
+      eventId: string;
+      patch: Record<string, unknown>;
+    }) => calendarService.updateEvent(calendarId, eventId, patch as any),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: queryKeys.calendar.events }),
+  });
+}
+
+export function useDeleteCalendarEvent() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ calendarId, eventId }: { calendarId: string; eventId: string }) =>
+      calendarService.deleteEvent(calendarId, eventId),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: queryKeys.calendar.events }),
+  });
+}
+
+export function useSmartSlots(taskId: string | null, date: string) {
+  return useQuery({
+    queryKey: ['calendar', 'smart-slots', taskId, date],
+    queryFn: () => calendarService.getSmartSlots(taskId!, date),
+    enabled: !!taskId,
+  });
+}

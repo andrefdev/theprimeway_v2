@@ -1,4 +1,4 @@
-import { View } from 'react-native';
+import { View, ScrollView } from 'react-native';
 import { Text } from '@/shared/components/ui/text';
 import { useMemo } from 'react';
 import { format, subDays, startOfDay } from 'date-fns';
@@ -52,6 +52,7 @@ export function HabitHeatmap({ logs = [], targetFrequency, color = '#6366f1', we
   }, [logs, targetFrequency, weeks]);
 
   const totalCompleted = logs.reduce((sum, l) => sum + l.completedCount, 0);
+  const cellSize = weeks > 26 ? 8 : 10;
 
   return (
     <View className="gap-2">
@@ -59,15 +60,19 @@ export function HabitHeatmap({ logs = [], targetFrequency, color = '#6366f1', we
         <Text className="text-xs font-semibold text-slate-500">Last {weeks} weeks</Text>
         <Text className="text-xs text-muted-foreground">{totalCompleted} completions</Text>
       </View>
-      <View className="flex-row gap-[2px]">
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ flexDirection: 'row', gap: 2 }}
+      >
         {grid.map((column, ci) => (
-          <View key={ci} className="gap-[2px]">
+          <View key={ci} style={{ gap: 2 }}>
             {column.map((cell, ri) => (
               <View
                 key={ri}
                 style={{
-                  width: 10,
-                  height: 10,
+                  width: cellSize,
+                  height: cellSize,
                   borderRadius: 2,
                   backgroundColor: shade(color, cell.intensity),
                 }}
@@ -75,7 +80,7 @@ export function HabitHeatmap({ logs = [], targetFrequency, color = '#6366f1', we
             ))}
           </View>
         ))}
-      </View>
+      </ScrollView>
       <View className="flex-row items-center justify-end gap-1">
         <Text className="text-[10px] text-muted-foreground">Less</Text>
         {[0, 0.25, 0.5, 0.75, 1].map((i) => (
