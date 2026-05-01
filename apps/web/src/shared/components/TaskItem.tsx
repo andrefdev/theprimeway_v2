@@ -19,6 +19,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/shared/components/ui/alert-dialog'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/shared/components/ui/tooltip'
 import { EditIcon, TrashIcon } from './Icons'
 import { ArchiveIcon } from 'lucide-react'
 import type { Task } from '@repo/shared/types'
@@ -117,9 +122,16 @@ export function TaskItem({
             <CompletionToggle completed={isCompleted} onClick={onToggle} size="sm" />
 
             <div className="flex-1 min-w-0">
-              <p className={`text-sm font-medium break-words line-clamp-3 ${isCompleted ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
-                {task.title}
-              </p>
+              <Tooltip delayDuration={400}>
+                <TooltipTrigger asChild>
+                  <p className={`text-sm font-medium break-words line-clamp-3 ${isCompleted ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
+                    {task.title}
+                  </p>
+                </TooltipTrigger>
+                <TooltipContent side="top" align="start" className="max-w-sm whitespace-pre-wrap break-words">
+                  {task.title}
+                </TooltipContent>
+              </Tooltip>
               <VisionThreadChip taskId={task.id} />
               <div className="flex items-center gap-2 mt-1 flex-wrap">
                 {showDate && task.scheduledDate && (

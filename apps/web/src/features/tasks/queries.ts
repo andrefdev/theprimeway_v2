@@ -228,13 +228,16 @@ export function useUpdateTask() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<UpdateTaskInput> }) =>
       tasksApi.update(id, data),
-    onMutate: async ({ id, data }) => {
-      const snaps = await snapshotQueries<TasksListResponse>(qc, tasksQueries.lists())
-      patchQueries<TasksListResponse>(qc, tasksQueries.lists(), (cur) => ({
+    onMutate: ({ id, data }) => {
+      // Fire-and-forget cancel — don't block optimistic patch on it.
+      qc.cancelQueries({ queryKey: tasksQueries.lists() })
+      qc.cancelQueries({ queryKey: groupedKey })
+
+      const snaps = patchQueries<TasksListResponse>(qc, tasksQueries.lists(), (cur) => ({
         ...cur,
         data: listOps.patch(cur.data, id, data as Partial<Task>),
       }))
-      const groupedSnaps = await snapshotQueries<GroupedTasksResponse>(qc, groupedKey)
+      const groupedSnaps = qc.getQueriesData<GroupedTasksResponse>({ queryKey: groupedKey })
       if (data?.archivedAt === null) {
         moveArchiveToGroup(qc, id, data as Partial<Task>)
       } else {
@@ -258,14 +261,16 @@ export function useDeleteTask() {
 
   return useMutation({
     mutationFn: (id: string) => tasksApi.delete(id),
-    onMutate: async (id) => {
-      const snaps = await snapshotQueries<TasksListResponse>(qc, tasksQueries.lists())
-      patchQueries<TasksListResponse>(qc, tasksQueries.lists(), (cur) => ({
+    onMutate: (id) => {
+      qc.cancelQueries({ queryKey: tasksQueries.lists() })
+      qc.cancelQueries({ queryKey: groupedKey })
+
+      const snaps = patchQueries<TasksListResponse>(qc, tasksQueries.lists(), (cur) => ({
         ...cur,
         data: listOps.remove(cur.data, id),
         count: Math.max(0, cur.count - 1),
       }))
-      const groupedSnaps = await snapshotQueries<GroupedTasksResponse>(qc, groupedKey)
+      const groupedSnaps = qc.getQueriesData<GroupedTasksResponse>({ queryKey: groupedKey })
       removeFromGrouped(qc, id)
       return { snaps, groupedSnaps }
     },

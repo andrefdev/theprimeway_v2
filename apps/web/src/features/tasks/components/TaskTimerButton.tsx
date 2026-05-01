@@ -29,10 +29,10 @@ export function TaskTimerButton({ task }: TaskTimerButtonProps) {
   }, [isRunning, getElapsed])
 
   const formatTime = (secs: number) => {
-    const h = Math.floor(secs / 3600)
-    const m = Math.floor((secs % 3600) / 60)
+    if (secs >= 3600) return `${Math.floor(secs / 3600)}h`
+    if (secs >= 600) return `${Math.floor(secs / 60)}m`
+    const m = Math.floor(secs / 60)
     const s = secs % 60
-    if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
     return `${m}:${String(s).padStart(2, '0')}`
   }
 

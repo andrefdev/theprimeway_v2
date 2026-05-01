@@ -132,45 +132,85 @@ export function ArchivePanel({
       ) : (
         <div className="max-h-[calc(100vh-14rem)] overflow-y-auto px-2 pb-2 pt-1 space-y-1.5">
           {tasks.map((task) => (
-            <div
+            <ArchivedTaskRow
               key={task.id}
-              className="group flex items-center gap-2 rounded-md bg-muted/30 px-2 py-1.5 hover:bg-muted/50 transition-colors"
-            >
-              <div className="flex-1 min-w-0">
-                <TaskItem task={task} onToggle={() => {}} />
-              </div>
-              <div className="flex shrink-0 gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                <DateBucketPicker
-                  value={{ scheduledDate: null, scheduledBucket: null }}
-                  onChange={(v: DateBucketValue) => {
-                    const date = v.scheduledDate ?? new Date().toISOString().split('T')[0]!
-                    onReschedule(task, date)
-                  }}
-                  trigger={
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 w-6 p-0"
-                      aria-label={t('reschedule', { defaultValue: 'Reschedule' })}
-                    >
-                      <CalendarIcon className="h-3.5 w-3.5" />
-                    </Button>
-                  }
-                />
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0 text-destructive hover:text-destructive"
-                  aria-label={t('delete', { ns: 'common', defaultValue: 'Delete' })}
-                  onClick={() => onDelete(task)}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            </div>
+              task={task}
+              onReschedule={onReschedule}
+              onDelete={onDelete}
+            />
           ))}
         </div>
       )}
     </Card>
+  )
+}
+
+interface ArchivedTaskRowProps {
+  task: Task
+  onReschedule: (task: Task, date: string) => void
+  onDelete: (task: Task) => void
+}
+
+function ArchivedTaskRow({ task, onReschedule, onDelete }: ArchivedTaskRowProps) {
+  const { t } = useTranslation('tasks')
+
+  return (
+    <div className="group flex items-start gap-2 rounded-md bg-muted/30 px-2 py-1.5 hover:bg-muted/50 transition-colors">
+      <div className="flex-1 min-w-0">
+        <TaskItem task={task} onToggle={() => {}} />
+      </div>
+      <div className="flex shrink-0 flex-col gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+        <DateBucketPicker
+          value={{ scheduledDate: null, scheduledBucket: null }}
+          onChange={(v: DateBucketValue) => {
+            const date = v.scheduledDate ?? new Date().toISOString().split('T')[0]!
+            onReschedule(task, date)
+          }}
+          trigger={
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0"
+              aria-label={t('reschedule', { defaultValue: 'Reschedule' })}
+            >
+              <CalendarIcon className="h-3.5 w-3.5" />
+            </Button>
+          }
+        />
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+              aria-label={t('delete', { ns: 'common', defaultValue: 'Delete' })}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {t('deleteTaskConfirmTitle', { defaultValue: 'Delete this task?' })}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {t('deleteTaskConfirmBody', {
+                  title: task.title,
+                  defaultValue: `"${task.title}" will be permanently deleted. This cannot be undone.`,
+                })}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>
+                {t('cancel', { ns: 'common', defaultValue: 'Cancel' })}
+              </AlertDialogCancel>
+              <AlertDialogAction variant="destructive" onClick={() => onDelete(task)}>
+                {t('delete', { ns: 'common', defaultValue: 'Delete' })}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+    </div>
   )
 }
