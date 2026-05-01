@@ -138,10 +138,17 @@ class TasksService {
   async getGroupedTasks(
     userId: string,
     referenceDate: string,
-    opts?: { startDate?: string; endDate?: string },
+    opts?: {
+      startDate?: string
+      endDate?: string
+      autoArchive?: boolean
+      autoArchiveDays?: number
+    },
   ): Promise<GroupedTasksResult> {
-    // Auto-archive past incomplete tasks
-    await tasksRepository.archivePastTasks(userId, referenceDate)
+    // Auto-archive past incomplete tasks (skipped when user disabled the toggle)
+    if (opts?.autoArchive !== false) {
+      await tasksRepository.archivePastTasks(userId, referenceDate, opts?.autoArchiveDays ?? 1)
+    }
 
     const hasRange = !!(opts?.startDate && opts?.endDate)
     const scheduledDateFilter = hasRange
@@ -680,77 +687,6 @@ ${taskHistory ? `Recent:\n${taskHistory}` : ''}`,
     }
   }
 
-  async getTaskInsight(userId: string, taskId: string): Promise<{ contextBrief: string; suggestedSubtasks: string[]; tips: string[]; suggestedGoalId?: string; suggestedGoalTitle?: string }> {
-    const task = await tasksRepository.findById(userId, taskId)
-    if (!task) {
-      return { contextBrief: '', suggestedSubtasks: [], tips: [] }
-    }
-
-    // Get parent goal if exists
-    let goalContext = ''
-    if ((task as any).weeklyGoalId) {
-      const goal = await prisma.goal.findUnique({
-        where: { id: (task as any).weeklyGoalId },
-        select: { title: true, description: true },
-      })
-      if (goal) {
-        goalContext = `Parent goal: ${goal.title}${goal.description ? ` (${goal.description})` : ''}`
-      }
-    }
-
-    // Fetch user's active weekly goals for recommendation
-    const weeklyGoals = await prisma.goal.findMany({
-      where: { userId, horizon: 'WEEK' },
-      select: { id: true, title: true, description: true },
-      take: 10,
-    })
-
-    const goalsList = weeklyGoals
-      .map((g) => `- ${g.title}${g.description ? ` (${g.description})` : ''}`)
-      .join('\n')
-
-    let result
-    try {
-      result = await generateObject({
-        model: taskModel,
-        schema: z.object({
-          contextBrief: z.string().describe('Brief context about the task'),
-          suggestedSubtasks: z.array(z.string()).describe('3-5 suggested subtasks'),
-          tips: z.array(z.string()).describe('2-3 practical tips for completing this task'),
-          suggestedGoalId: z.string().optional().describe('If task belongs to a weekly goal, provide its ID'),
-          suggestedGoalTitle: z.string().optional().describe('If task belongs to a weekly goal, provide its title'),
-        }),
-        prompt: `
-Analyze this task and provide insights:
-Title: ${task.title}
-${task.description ? `Description: ${task.description}` : ''}
-Priority: ${task.priority || 'normal'}
-${goalContext}
-
-Available weekly goals:
-${goalsList || '(No weekly goals created yet)'}
-
-Provide:
-1. A brief context summary
-2. 3-5 suggested subtasks to break this down
-3. 2-3 practical tips
-4. If the task clearly belongs to one of the listed weekly goals, provide suggestedGoalId and suggestedGoalTitle. Otherwise omit these fields.
-      `,
-      })
-    } catch (err) {
-      console.error('[TASK_INSIGHT]', err)
-      throw new Error(err instanceof Error ? err.message : 'AI insight generation failed')
-    }
-
-    if (taskId) {
-      await tasksRepository.update(userId, taskId, {
-        aiInsightJson: result.object,
-      })
-    }
-
-    return result.object
-  }
-
   async suggestNextTask(userId: string): Promise<{ taskId: string; title: string; reason: string; confidence: number } | null> {
     // Get open tasks
     const openTasks = await tasksRepository.findMany(userId, {
@@ -1102,89 +1038,6 @@ Pick the single best task to do next. Return its exact ID from the list.
       timeStats,
       xpAwarded: (task as any).weeklyGoalId ? 40 : 15,
     }
-  }
-
-  async generateTaskInsights(
-    userId: string,
-    taskId: string,
-  ): Promise<{
-    contextBrief: string
-    suggestedSubtasks: string[]
-    tips: string[]
-    estimatedFocusBlocks: number
-  }> {
-    const task = await tasksRepository.findById(userId, taskId)
-    if (!task) {
-      return { contextBrief: '', suggestedSubtasks: [], tips: [], estimatedFocusBlocks: 0 }
-    }
-
-    // Fetch parent goal context if linked via weeklyGoalId
-    let goalContext = ''
-    if ((task as any).weeklyGoalId) {
-      const goal = await prisma.goal.findUnique({
-        where: { id: (task as any).weeklyGoalId },
-        select: { id: true, title: true, description: true },
-      })
-      if (goal) {
-        goalContext = `Parent goal: "${goal.title}"${goal.description ? ` — ${goal.description}` : ''}`
-      }
-    }
-
-    // Fetch sibling tasks (same weeklyGoalId)
-    let siblingContext = ''
-    if ((task as any).weeklyGoalId) {
-      const siblings = await tasksRepository.findMany(userId, {
-        weeklyGoalId: (task as any).weeklyGoalId,
-        limit: 10,
-      })
-      const siblingTitles = siblings
-        .filter((s) => s.id !== taskId)
-        .map((s) => `- ${s.title} (${s.status})`)
-        .join('\n')
-      if (siblingTitles) {
-        siblingContext = `Sibling tasks under the same goal:\n${siblingTitles}`
-      }
-    }
-
-    const result = await generateObject({
-      model: taskModel,
-      schema: z.object({
-        contextBrief: z
-          .string()
-          .describe('2-3 sentence summary of why this task matters in context of the user\'s goals'),
-        suggestedSubtasks: z
-          .array(z.string())
-          .describe('3-5 actionable subtask titles to break this task down'),
-        tips: z
-          .array(z.string())
-          .describe('1-2 productivity tips specific to this task type'),
-        estimatedFocusBlocks: z
-          .number()
-          .int()
-          .positive()
-          .describe('Number of 25-minute pomodoro focus blocks suggested'),
-      }),
-      prompt: `
-You are a productivity assistant for a personal task management app called ThePrimeWay.
-
-Analyze this task and provide contextual insights:
-Title: "${task.title}"
-${task.description ? `Description: ${task.description}` : ''}
-Priority: ${task.priority || 'medium'}
-Status: ${task.status}
-${task.estimatedDurationMinutes ? `Estimated duration: ${task.estimatedDurationMinutes} minutes` : ''}
-${goalContext}
-${siblingContext}
-
-Provide:
-1. contextBrief: A 2-3 sentence summary of why this task matters and how it fits in the user's broader goals.
-2. suggestedSubtasks: 3-5 concrete, actionable subtask titles to break this task down effectively.
-3. tips: 1-2 short productivity tips specific to this type of task.
-4. estimatedFocusBlocks: How many 25-minute pomodoro blocks this task would realistically require.
-      `,
-    })
-
-    return result.object
   }
 
   async getStatistics(userId: string, days: number = 30) {

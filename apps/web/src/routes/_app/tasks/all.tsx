@@ -11,6 +11,7 @@ import { Button } from '@/shared/components/ui/button'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/shared/components/ui/select'
 import { DateRangePicker } from '@/shared/components/ui/date-range-picker'
 import { usePersistentDateRange } from '@/shared/hooks/use-persistent-date-range'
+import { usePersistentAutoArchiveSettings } from '@/shared/hooks/use-auto-archive-settings'
 import { SectionHeader } from '@/shared/components/SectionHeader'
 import { TasksNav } from '@/features/tasks/components/TasksNav'
 import { SkeletonList } from '@/shared/components/ui/skeleton-list'
@@ -33,11 +34,14 @@ function TasksAllPage() {
   const now = new Date()
   const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
   const [dateRange, setDateRange] = usePersistentDateRange('tasks.all.dateRange', 'this_month')
+  const [autoArchiveSettings, autoArchiveActions] = usePersistentAutoArchiveSettings()
   const groupedQuery = useQuery(
     tasksQueries.grouped({
       referenceDate: today,
       startDate: dateRange.start ?? undefined,
       endDate: dateRange.end ?? undefined,
+      autoArchive: autoArchiveSettings.enabled,
+      autoArchiveDays: autoArchiveSettings.days,
     }),
   )
   const updateTask = useUpdateTask()
@@ -121,11 +125,21 @@ function TasksAllPage() {
     try {
       await updateTask.mutateAsync({
         id: task.id,
-        data: { scheduledDate: date, status: 'open', isArchived: false },
+        data: { scheduledDate: date, status: 'open', archivedAt: null },
       })
       toast.success(t('taskRescheduled'))
     } catch {
       toast.error(t('failedToUpdate'))
+    }
+  }
+
+  async function handleDeleteAllArchived() {
+    if (archive.length === 0) return
+    try {
+      await Promise.all(archive.map((t) => deleteTask.mutateAsync(t.id)))
+      toast.success(t('archiveCleared', { defaultValue: 'Archive cleared' }))
+    } catch {
+      toast.error(t('failedToDelete'))
     }
   }
 
@@ -201,8 +215,13 @@ function TasksAllPage() {
                   <div>
                     <ArchivePanel
                       tasks={archive}
+                      autoArchive={autoArchiveSettings.enabled}
+                      onAutoArchiveChange={autoArchiveActions.setEnabled}
+                      rolloverDays={autoArchiveSettings.days}
+                      onRolloverDaysChange={autoArchiveActions.setDays}
                       onReschedule={handleReschedule}
                       onDelete={handleDelete}
+                      onDeleteAll={handleDeleteAllArchived}
                     />
                   </div>
                 )}

@@ -136,5 +136,12 @@
   "rescheduleToday": "Reschedule to today",
   "remove": "Remove",
   "showArchived": "Show archived",
-  "hideArchived": "Hide archived"
+  "hideArchived": "Hide archived",
+  "autoArchive": "Auto-archive",
+  "deleteAll": "Delete all",
+  "deleteAllConfirmTitle": "Delete all archived tasks?",
+  "deleteAllConfirmBody": "This will permanently delete {{count}} archived task(s). This cannot be undone.",
+  "rolloverPrefix": "Tasks which have rolled over at least:",
+  "rolloverSuffix": "consecutive days",
+  "archiveCleared": "Archive cleared"
 }

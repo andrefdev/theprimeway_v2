@@ -77,10 +77,18 @@ export const tasksApi = {
   list: (params?: Record<string, string>) =>
     api.get<TasksResponse>('/tasks', { params }).then((r) => r.data),
 
-  grouped: (params: { referenceDate: string; startDate?: string; endDate?: string }) => {
+  grouped: (params: {
+    referenceDate: string
+    startDate?: string
+    endDate?: string
+    autoArchive?: boolean
+    autoArchiveDays?: number
+  }) => {
     const queryParams: Record<string, string> = { referenceDate: params.referenceDate }
     if (params.startDate) queryParams.startDate = params.startDate
     if (params.endDate) queryParams.endDate = params.endDate
+    if (params.autoArchive !== undefined) queryParams.autoArchive = String(params.autoArchive)
+    if (params.autoArchiveDays !== undefined) queryParams.autoArchiveDays = String(params.autoArchiveDays)
     return api.get<{ groups: Array<{ date_key: string; tasks: Task[] }>; archive: Task[] }>(
       '/tasks/grouped',
       { params: queryParams },

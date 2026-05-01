@@ -35,7 +35,7 @@ export const createTaskSchema = z.object({
 
 export const updateTaskSchema = createTaskSchema.partial().extend({
   status: z.enum(['open', 'completed', 'archived']).optional(),
-  isArchived: z.boolean().optional(),
+  archivedAt: z.string().nullable().optional(),
 })
 
 export type CreateTaskInput = z.input<typeof createTaskSchema>

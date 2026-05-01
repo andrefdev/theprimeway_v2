@@ -136,5 +136,12 @@
   "rescheduleToday": "Reprogramar a hoy",
   "remove": "Eliminar",
   "showArchived": "Mostrar archivadas",
-  "hideArchived": "Ocultar archivadas"
+  "hideArchived": "Ocultar archivadas",
+  "autoArchive": "Auto-archivado",
+  "deleteAll": "Eliminar todas",
+  "deleteAllConfirmTitle": "¿Eliminar todas las tareas archivadas?",
+  "deleteAllConfirmBody": "Se eliminarán permanentemente {{count}} tarea(s) archivada(s). Esto no se puede deshacer.",
+  "rolloverPrefix": "Tareas que se han trasladado al menos:",
+  "rolloverSuffix": "días consecutivos",
+  "archiveCleared": "Archivo vaciado"
 }

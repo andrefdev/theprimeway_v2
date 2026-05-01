@@ -18,5 +18,6 @@ config.resolver.extraNodeModules = {
   ...config.resolver.extraNodeModules,
   punycode: require.resolve('punycode/'),
 };
+config.resolver.unstable_enablePackageExports = false;
 
 module.exports = withNativeWind(config, { input: './global.css' });

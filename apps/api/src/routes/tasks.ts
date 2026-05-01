@@ -146,6 +146,11 @@ taskRoutes.openapi(groupedRoute, (async (c: any) => {
   const referenceDate = c.req.query('referenceDate') || c.req.query('reference_date')
   const startDate = c.req.query('startDate') || c.req.query('start_date')
   const endDate = c.req.query('endDate') || c.req.query('end_date')
+  const autoArchiveRaw = c.req.query('autoArchive') ?? c.req.query('auto_archive')
+  const autoArchive = autoArchiveRaw === undefined ? true : autoArchiveRaw !== 'false'
+  const autoArchiveDaysRaw = c.req.query('autoArchiveDays') ?? c.req.query('auto_archive_days')
+  const parsedDays = Number(autoArchiveDaysRaw ?? '1')
+  const autoArchiveDays = Number.isFinite(parsedDays) && parsedDays >= 1 ? parsedDays : 1
 
   if (!referenceDate) {
     return c.json({ error: 'referenceDate query param is required' }, 400)
@@ -154,6 +159,8 @@ taskRoutes.openapi(groupedRoute, (async (c: any) => {
   const result = await tasksService.getGroupedTasks(userId, referenceDate, {
     startDate,
     endDate,
+    autoArchive,
+    autoArchiveDays,
   })
   return c.json(result, 200)
 }) as any)

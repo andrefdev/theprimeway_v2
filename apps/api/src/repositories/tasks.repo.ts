@@ -253,14 +253,16 @@ class TasksRepository {
     return true
   }
 
-  async archivePastTasks(userId: string, referenceDate: string): Promise<number> {
-    const dayEnd = new Date(`${referenceDate}T00:00:00.000Z`)
+  async archivePastTasks(userId: string, referenceDate: string, daysThreshold: number = 1): Promise<number> {
+    const cutoff = new Date(`${referenceDate}T00:00:00.000Z`)
+    const offset = Math.max(0, daysThreshold - 1)
+    if (offset > 0) cutoff.setUTCDate(cutoff.getUTCDate() - offset)
     const result = await prisma.task.updateMany({
       where: {
         userId,
         status: 'open',
         archivedAt: null,
-        scheduledDate: { lt: dayEnd },
+        scheduledDate: { lt: cutoff },
       },
       data: { archivedAt: new Date() },
     })
