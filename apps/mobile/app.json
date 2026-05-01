@@ -40,7 +40,7 @@
     },
     "android": {
       "package": "app.theprimeway.twa",
-      "versionCode": 14,
+      "versionCode": 16,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#1a08c7"
@@ -105,7 +105,9 @@
         {
           "microphonePermission": "To capture voice input for AI chat and task creation",
           "speechRecognitionPermission": "To transcribe your speech to text",
-          "androidSpeechServicePackages": ["com.google.android.googlequicksearchbox"]
+          "androidSpeechServicePackages": [
+            "com.google.android.googlequicksearchbox"
+          ]
         }
       ],
       "expo-localization",
