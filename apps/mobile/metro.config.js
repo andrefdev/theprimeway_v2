@@ -14,5 +14,9 @@ config.resolver.nodeModulesPaths = [
 ];
 config.resolver.disableHierarchicalLookup = true;
 config.resolver.unstable_enableSymlinks = true;
+config.resolver.extraNodeModules = {
+  ...config.resolver.extraNodeModules,
+  punycode: require.resolve('punycode/'),
+};
 
 module.exports = withNativeWind(config, { input: './global.css' });
