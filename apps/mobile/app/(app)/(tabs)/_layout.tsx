@@ -101,7 +101,7 @@ export default function TabLayout() {
       <Tabs.Screen name="index" options={{ title: t('home') }} />
       <Tabs.Screen name="tasks" options={{ title: t('tasks') }} />
       <Tabs.Screen name="habits" options={{ title: t('habits') }} />
-      <Tabs.Screen name="goals" options={{ title: t('goals'), popToTopOnBlur: true }} />
+      <Tabs.Screen name="goals" options={{ title: t('more'), popToTopOnBlur: true }} />
       <Tabs.Screen name="ai" options={{ title: t('ai') }} />
     </Tabs>
   );

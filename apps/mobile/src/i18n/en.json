@@ -228,7 +228,7 @@
     "goals": "Goals",
     "finances": "Finances",
     "pomodoro": "Pomodoro",
-    "ai": "AI Assistant",
+    "ai": "Fenrir AI",
     "settings": "Settings",
     "profile": "Profile",
     "today": "Today",
@@ -239,7 +239,7 @@
     "more": "More",
     "calendar": "Calendar",
     "home": "Home",
-    "aiChat": "AI Chat",
+    "aiChat": "Fenrir AI",
     "premium": "Premium",
     "subscription": "Subscription",
     "notifications": "Notifications",
@@ -281,7 +281,7 @@
         "pomodoro": "Pomodoro",
         "addTransaction": "Transaction",
         "addNote": "New Note",
-        "aiChat": "AI Chat",
+        "aiChat": "Fenrir AI",
         "taskShort": "Task",
         "focusShort": "Focus",
         "habitShort": "Habit",
@@ -1274,12 +1274,12 @@
       }
     },
     "ai": {
-      "title": "AI Assistant",
+      "title": "Fenrir AI",
       "description": "Your personal productivity assistant",
       "inputPlaceholder": "Ask me anything...",
       "welcome": "Hi, how can I help you today?",
       "disclaimer": "AI can make mistakes. Please verify important information.",
-      "openButton": "Open AI Assistant",
+      "openButton": "Open Fenrir AI",
       "examples": {
         "title": "Try asking about:",
         "tasks": "How can I improve my task management?",
@@ -1287,7 +1287,7 @@
         "goals": "Help me set realistic goals"
       },
       "chat": {
-        "emptyTitle": "Vision Assistant",
+        "emptyTitle": "Fenrir AI",
         "emptyDescription": "Your companion to reach your Prime State. Ask me about your vision, finances, tasks, or productivity.",
         "placeholder": "Type a message...",
         "microphone": "Microphone",
@@ -1302,7 +1302,7 @@
         "proposalRejectedSystem": "User rejected the proposal. Ask if they want to modify something."
       },
       "comingSoon": "AI chat coming soon! Connect your backend to enable this feature.",
-      "primeAI": "Prime AI",
+      "primeAI": "Fenrir AI",
       "askAnything": "Ask anything...",
       "suggestions": {
         "vision": "I want to create my personal vision",
@@ -1663,7 +1663,7 @@
       "features": {
         "unlimitedTasks": "Unlimited tasks",
         "unlimitedHabits": "Unlimited habits",
-        "aiAssistant": "AI Assistant",
+        "aiAssistant": "Fenrir AI",
         "advancedFinances": "Advanced finances",
         "prioritySupport": "Priority support",
         "calendarSync": "Calendar sync"

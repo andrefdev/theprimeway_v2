@@ -18,11 +18,9 @@ function TasksHeader({ onAddTask }: { onAddTask: () => void }) {
     { key: 'today', label: t('today') },
     { key: 'weekly', label: t('weeklyPlan') },
     { key: 'all', label: t('all') },
-    { key: 'focus', label: t('focus') },
   ];
 
   const getActiveTab = useCallback(() => {
-    if (pathname.includes('/focus')) return 'focus';
     if (pathname.includes('/weekly')) return 'weekly';
     if (pathname.includes('/all')) return 'all';
     return 'today';
@@ -35,7 +33,6 @@ function TasksHeader({ onAddTask }: { onAddTask: () => void }) {
       today: '/(app)/(tabs)/tasks/today',
       weekly: '/(app)/(tabs)/tasks/weekly',
       all: '/(app)/(tabs)/tasks/all',
-      focus: '/(app)/(tabs)/tasks/focus',
     };
     router.replace(routes[key] as never);
   }, []);
@@ -74,7 +71,6 @@ export default function TasksLayout() {
           <Stack.Screen name="today" />
           <Stack.Screen name="weekly" />
           <Stack.Screen name="all" />
-          <Stack.Screen name="focus" />
           <Stack.Screen name="new" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
           <Stack.Screen name="[id]" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
         </Stack>

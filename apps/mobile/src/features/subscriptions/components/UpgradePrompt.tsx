@@ -14,8 +14,8 @@ interface UpgradePromptProps {
 
 const featureMessages: Record<FeatureKey, { title: string; description: string }> = {
   AI_ASSISTANT: {
-    title: 'AI Assistant Unlock',
-    description: 'Get unlimited AI-powered insights and support. Upgrade to Premium to access this feature.',
+    title: 'Fenrir AI Unlock',
+    description: 'Get unlimited Fenrir AI insights and support. Upgrade to Premium to access this feature.',
   },
   ADVANCED_ANALYTICS: {
     title: 'Advanced Analytics Unlock',

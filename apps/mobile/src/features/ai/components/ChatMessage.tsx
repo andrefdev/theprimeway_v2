@@ -1,10 +1,8 @@
 import { View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { Text } from '@/shared/components/ui/text';
-import { Icon } from '@/shared/components/ui/icon';
-import { Sparkles } from 'lucide-react-native';
 import { cn } from '@/shared/utils/cn';
-import { useTranslation } from '@/shared/hooks/useTranslation';
+import { FenrirGlyph } from '@/shared/components/icons/FenrirGlyph';
 import { ToolCallCard, type ToolCall } from './ToolCallCard';
 import { MarkdownRenderer } from './MarkdownRenderer';
 
@@ -17,7 +15,6 @@ export interface ChatMessageData {
 }
 
 export function ChatMessage({ message }: { message: ChatMessageData }) {
-  const { t } = useTranslation('features.ai');
   const isUser = message.role === 'user';
 
   return (
@@ -35,8 +32,9 @@ export function ChatMessage({ message }: { message: ChatMessageData }) {
       >
         {!isUser && (
           <View className="mb-1 flex-row items-center gap-1.5">
-            <Icon as={Sparkles} size={10} className="text-accent" />
-            <Text className="text-2xs font-medium text-accent">{t('primeAI')}</Text>
+            <View className="h-4 w-4 items-center justify-center rounded-md bg-accent/15">
+              <FenrirGlyph size={10} />
+            </View>
           </View>
         )}
 

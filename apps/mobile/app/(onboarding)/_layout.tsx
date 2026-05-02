@@ -10,6 +10,7 @@ export default function OnboardingLayout() {
       }}
     >
       <Stack.Screen name="welcome" />
+      <Stack.Screen name="referral" />
       <Stack.Screen name="goals" />
       <Stack.Screen name="habits" />
       <Stack.Screen name="tasks" />

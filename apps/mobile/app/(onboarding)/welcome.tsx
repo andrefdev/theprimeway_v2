@@ -42,7 +42,7 @@ export default function WelcomeScreen() {
         <Button
           size="lg"
           className="w-full"
-          onPress={() => router.push('/(onboarding)/goals')}
+          onPress={() => router.push('/(onboarding)/referral')}
         >
           <Text className="text-base font-semibold text-primary-foreground">
             {t('buttons.getStarted')}

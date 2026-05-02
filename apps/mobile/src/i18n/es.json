@@ -228,7 +228,7 @@
     "goals": "Objetivos",
     "finances": "Finanzas",
     "pomodoro": "Pomodoro",
-    "ai": "Asistente IA",
+    "ai": "Fenrir AI",
     "settings": "Configuracion",
     "profile": "Perfil",
     "today": "Hoy",
@@ -239,7 +239,7 @@
     "more": "Mas",
     "calendar": "Calendario",
     "home": "Inicio",
-    "aiChat": "Chat IA",
+    "aiChat": "Fenrir AI",
     "premium": "Premium",
     "subscription": "Suscripcion",
     "notifications": "Notificaciones",
@@ -281,7 +281,7 @@
         "pomodoro": "Pomodoro",
         "addTransaction": "Transaccion",
         "addNote": "Nueva Nota",
-        "aiChat": "Chat IA",
+        "aiChat": "Fenrir AI",
         "taskShort": "Tarea",
         "focusShort": "Foco",
         "habitShort": "Hábito",
@@ -1254,12 +1254,12 @@
       }
     },
     "ai": {
-      "title": "Asistente IA",
+      "title": "Fenrir AI",
       "description": "Tu asistente personal de productividad",
       "inputPlaceholder": "Preguntame lo que sea...",
       "welcome": "Hola, en que puedo ayudarte hoy?",
       "disclaimer": "La IA puede cometer errores. Verifica la informacion importante.",
-      "openButton": "Abrir Asistente IA",
+      "openButton": "Abrir Fenrir AI",
       "examples": {
         "title": "Prueba preguntando sobre:",
         "tasks": "Como puedo mejorar mi gestion de tareas?",
@@ -1267,7 +1267,7 @@
         "goals": "Ayudame a establecer metas realistas"
       },
       "chat": {
-        "emptyTitle": "Vision Assistant",
+        "emptyTitle": "Fenrir AI",
         "emptyDescription": "Tu companero para alcanzar tu Prime State. Preguntame sobre tu vision, finanzas, tareas o productividad.",
         "placeholder": "Escribe un mensaje...",
         "microphone": "Microfono",
@@ -1282,7 +1282,7 @@
         "proposalRejectedSystem": "El usuario rechazo la propuesta. Pregunta si desea modificar algo."
       },
       "comingSoon": "Chat IA disponible pronto! Conecta tu backend para habilitar esta funcion.",
-      "primeAI": "Prime IA",
+      "primeAI": "Fenrir AI",
       "askAnything": "Pregunta lo que sea...",
       "suggestions": {
         "vision": "Quiero crear mi vision personal",
@@ -1643,7 +1643,7 @@
       "features": {
         "unlimitedTasks": "Tareas ilimitadas",
         "unlimitedHabits": "Habitos ilimitados",
-        "aiAssistant": "Asistente IA",
+        "aiAssistant": "Fenrir AI",
         "advancedFinances": "Finanzas avanzadas",
         "prioritySupport": "Soporte prioritario",
         "calendarSync": "Sincronizacion de calendario"

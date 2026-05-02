@@ -37,7 +37,6 @@ export async function setupReminderChannel() {
       description: 'Task due dates and morning briefings',
       importance: Notifications.AndroidImportance.HIGH,
       vibrationPattern: [0, 250, 250, 250],
-      sound: 'default',
       lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
     });
     // Default-importance channel for habit reminders — Android's DND will silence these.
@@ -46,7 +45,6 @@ export async function setupReminderChannel() {
       description: 'Daily habit nudges (respect Do Not Disturb)',
       importance: Notifications.AndroidImportance.DEFAULT,
       vibrationPattern: [0, 200],
-      sound: 'default',
       lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
     });
   }
