@@ -141,6 +141,7 @@ function HabitRow({
   onDelete?: (habit: Habit) => void
 }) {
   const { t } = useTranslation('habits')
+  const tz = useUserTimezone()
   const logs = habit.logs ?? []
   const streak = computeStreak(habit, logs)
 

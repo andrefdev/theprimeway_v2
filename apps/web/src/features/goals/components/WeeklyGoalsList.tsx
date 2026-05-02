@@ -53,13 +53,13 @@ export function WeeklyGoalsList() {
   const [newTitle, setNewTitle] = useState('')
 
   const isCurrentWeek = useMemo(() => {
-    return ymd(startOfISOWeek(new Date())) === weekStartDate
-  }, [weekStartDate])
+    return ymd(startOfISOWeekInTz(new Date(), tz)) === weekStartDate
+  }, [weekStartDate, tz])
 
   function shiftWeek(deltaDays: number) {
     const d = new Date(weekStart)
     d.setDate(d.getDate() + deltaDays)
-    setWeekStart(startOfISOWeek(d))
+    setWeekStart(startOfISOWeekInTz(d, tz))
   }
 
   async function handleCreate() {
