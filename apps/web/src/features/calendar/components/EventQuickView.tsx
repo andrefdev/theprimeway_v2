@@ -17,6 +17,7 @@ import {
   X,
 } from 'lucide-react'
 import type { CalendarItem } from '../hooks/use-calendar-items'
+import { googleColorIdToHex, colorTokenToHex } from '../lib/colors'
 
 interface Props {
   item: CalendarItem | null
@@ -53,9 +54,13 @@ export function EventQuickView({ item, anchorEl, open, onClose, onEdit, onDelete
   if (!item) return null
 
   const sameDay = item.start.toDateString() === item.end.toDateString()
-  const timeLine = sameDay
-    ? `${format(item.start, 'EEE, MMM d')} · ${format(item.start, 'h:mm a')} – ${format(item.end, 'h:mm a')}`
-    : `${format(item.start, 'EEE, MMM d, h:mm a')} – ${format(item.end, 'EEE, MMM d, h:mm a')}`
+  const timeLine = item.isAllDay
+    ? sameDay
+      ? `${format(item.start, 'EEE, MMM d')} · All day`
+      : `${format(item.start, 'EEE, MMM d')} – ${format(item.end, 'EEE, MMM d')} · All day`
+    : sameDay
+      ? `${format(item.start, 'EEE, MMM d')} · ${format(item.start, 'h:mm a')} – ${format(item.end, 'h:mm a')}`
+      : `${format(item.start, 'EEE, MMM d, h:mm a')} – ${format(item.end, 'EEE, MMM d, h:mm a')}`
 
   return (
     <Popover open={open} onOpenChange={(v) => !v && onClose()}>
@@ -172,35 +177,3 @@ export function EventQuickView({ item, anchorEl, open, onClose, onEdit, onDelete
   )
 }
 
-// Google Calendar API event color palette (colorId 1-11)
-const GOOGLE_EVENT_COLORS: Record<string, string> = {
-  '1': '#7986cb', // Lavender
-  '2': '#33b679', // Sage
-  '3': '#8e24aa', // Grape
-  '4': '#e67c73', // Flamingo
-  '5': '#f6bf26', // Banana
-  '6': '#f4511e', // Tangerine
-  '7': '#039be5', // Peacock
-  '8': '#616161', // Graphite
-  '9': '#3f51b5', // Blueberry
-  '10': '#0b8043', // Basil
-  '11': '#d50000', // Tomato
-}
-
-export function googleColorIdToHex(id?: string): string | undefined {
-  if (!id) return undefined
-  return GOOGLE_EVENT_COLORS[id]
-}
-
-const COLOR_TOKENS: Record<string, string> = {
-  red: '#ef4444',
-  yellow: '#eab308',
-  blue: '#3b82f6',
-  green: '#22c55e',
-  purple: '#a855f7',
-  muted: '#6b7280',
-}
-
-function colorTokenToHex(color: string): string {
-  return COLOR_TOKENS[color] ?? '#6b7280'
-}

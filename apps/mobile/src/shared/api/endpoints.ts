@@ -1,13 +1,15 @@
 // Auth
 export const AUTH = {
-  LOGIN: '/api/auth/mobile/login',
-  REGISTER: '/api/auth/mobile/register',
-  OAUTH: '/api/auth/mobile/oauth',
-  REFRESH: '/api/auth/mobile/refresh',
-  LOGOUT: '/api/auth/mobile/logout',
-  ME: '/api/auth/mobile/me',
-  REQUEST_OTP: '/api/auth/register/request-otp',
-  VERIFY_OTP: '/api/auth/register/verify-otp',
+  LOGIN: '/api/auth/login',
+  REGISTER: '/api/auth/register',
+  OAUTH: '/api/auth/oauth',
+  REFRESH: '/api/auth/refresh',
+  LOGOUT: '/api/auth/logout',
+  ME: '/api/auth/me',
+  VERIFY_EMAIL: '/api/auth/verify-email',
+  RESEND_OTP: '/api/auth/resend-otp',
+  FORGOT_PASSWORD: '/api/auth/forgot-password',
+  RESET_PASSWORD: '/api/auth/reset-password',
 } as const;
 
 // Tasks

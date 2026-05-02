@@ -1,4 +1,4 @@
-import { TaskItem } from '@/shared/components/TaskItem'
+import { ArchivedTaskCard } from '@/features/tasks/components/ArchivedTaskCard'
 import { Button } from '@/shared/components/ui/button'
 import { Card, CardContent } from '@/shared/components/ui/card'
 import { Switch } from '@/shared/components/ui/switch'
@@ -155,11 +155,9 @@ function ArchivedTaskRow({ task, onReschedule, onDelete }: ArchivedTaskRowProps)
   const { t } = useTranslation('tasks')
 
   return (
-    <div className="group flex items-start gap-2 rounded-md bg-muted/30 px-2 py-1.5 hover:bg-muted/50 transition-colors">
-      <div className="flex-1 min-w-0">
-        <TaskItem task={task} onToggle={() => {}} />
-      </div>
-      <div className="flex shrink-0 flex-col gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+    <div className="group flex items-stretch gap-2 rounded-md bg-muted/30 px-2 py-2 hover:bg-muted/50 transition-colors">
+      <ArchivedTaskCard task={task} />
+      <div className="flex shrink-0 flex-col justify-between self-stretch opacity-0 group-hover:opacity-100 transition-opacity">
         <DateBucketPicker
           value={{ scheduledDate: null, scheduledBucket: null }}
           onChange={(v: DateBucketValue) => {

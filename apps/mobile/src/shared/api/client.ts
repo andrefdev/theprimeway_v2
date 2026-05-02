@@ -45,10 +45,10 @@ apiClient.interceptors.response.use(
       error.response?.status !== 401 ||
       !originalRequest ||
       originalRequest._retry ||
-      originalRequest.url?.includes('/auth/mobile/refresh') ||
-      originalRequest.url?.includes('/auth/mobile/login') ||
-      originalRequest.url?.includes('/auth/mobile/register') ||
-      originalRequest.url?.includes('/auth/mobile/oauth')
+      originalRequest.url?.includes('/auth/refresh') ||
+      originalRequest.url?.includes('/auth/login') ||
+      originalRequest.url?.includes('/auth/register') ||
+      originalRequest.url?.includes('/auth/oauth')
     ) {
       return Promise.reject(error);
     }

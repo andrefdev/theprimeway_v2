@@ -1,9 +1,12 @@
 import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
 import axios from 'axios';
+import { router } from 'expo-router';
 import type { User, LoginCredentials, RegisterData, AuthResponse } from '@shared/types/models';
 import { AUTH } from '@shared/api/endpoints';
 import { apiClient } from '@shared/api/client';
+
+type LoginResponse = AuthResponse | { requiresVerification: true; email: string };
 
 const TOKEN_KEY = 'auth_token';
 const REFRESH_TOKEN_KEY = 'refresh_token';
@@ -40,9 +43,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   login: async (credentials) => {
     try {
-      const { data } = await apiClient.post<AuthResponse>(AUTH.LOGIN, credentials);
-      await persistAuth(data.token, data.refreshToken);
-      set({ token: data.token, user: data.user, isAuthenticated: true });
+      const { data } = await apiClient.post<LoginResponse>(AUTH.LOGIN, credentials);
+      if ('requiresVerification' in data) {
+        router.replace({ pathname: '/(auth)/verify-otp', params: { email: data.email } });
+        const err = new Error('verification_required') as Error & { code?: string };
+        err.code = 'verification_required';
+        throw err;
+      } else {
+        await persistAuth(data.token, data.refreshToken);
+        set({ token: data.token, user: data.user, isAuthenticated: true });
+      }
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const status = error.response?.status;

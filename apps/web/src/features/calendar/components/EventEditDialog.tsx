@@ -1,19 +1,15 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import { format } from 'date-fns'
 import { useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
   Dialog,
   DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
 } from '@/shared/components/ui/dialog'
 import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
 import { Textarea } from '@/shared/components/ui/textarea'
 import { Switch } from '@/shared/components/ui/switch'
-import { Label } from '@/shared/components/ui/label'
 import { Calendar } from '@/shared/components/ui/calendar'
 import {
   Popover,
@@ -27,7 +23,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shared/components/ui/select'
-import { Trash2, X, Plus, Video, ChevronDownIcon } from 'lucide-react'
+import {
+  Trash2,
+  Video,
+  ChevronDownIcon,
+  Users,
+  Eye,
+  Bell,
+  Calendar as CalendarIcon,
+  MapPin,
+  X,
+  Copy,
+  Check,
+  ArrowRight,
+} from 'lucide-react'
+import { cn } from '@/shared/lib/utils'
 import {
   calendarQueries,
   useCreateTimeBlock,
@@ -60,15 +70,21 @@ const COLOR_OPTIONS: { id: string; label: string; hex: string }[] = [
   { id: '11', label: 'Tomato', hex: '#d50000' },
 ]
 
-const REMINDER_PRESETS: { value: string; label: string; minutes: number | null }[] = [
-  { value: 'default', label: 'Use calendar default', minutes: null },
-  { value: '0', label: 'At time of event', minutes: 0 },
-  { value: '5', label: '5 minutes before', minutes: 5 },
-  { value: '10', label: '10 minutes before', minutes: 10 },
-  { value: '30', label: '30 minutes before', minutes: 30 },
-  { value: '60', label: '1 hour before', minutes: 60 },
-  { value: '1440', label: '1 day before', minutes: 1440 },
+const REMINDER_PRESETS: { value: string; label: string }[] = [
+  { value: 'default', label: 'Calendar default' },
+  { value: '0', label: 'At time of event' },
+  { value: '5', label: '5 mins before' },
+  { value: '10', label: '10 mins before' },
+  { value: '30', label: '30 mins before' },
+  { value: '60', label: '1 hour before' },
+  { value: '1440', label: '1 day before' },
 ]
+
+const VISIBILITY_LABEL: Record<string, string> = {
+  default: 'Calendar default',
+  public: 'Public',
+  private: 'Private',
+}
 
 export function EventEditDialog({ open, onClose, item, defaultStart, defaultEnd }: Props) {
   const isEdit = Boolean(item?.googleEventId && item?.googleCalendarId)
@@ -103,20 +119,24 @@ export function EventEditDialog({ open, onClose, item, defaultStart, defaultEnd 
   const [location, setLocation] = useState(item?.location ?? '')
   const [dateObj, setDateObj] = useState<Date>(initialStart)
   const [datePopoverOpen, setDatePopoverOpen] = useState(false)
+  const [colorPopoverOpen, setColorPopoverOpen] = useState(false)
   const [startTime, setStartTime] = useState(format(initialStart, 'HH:mm'))
   const [endTime, setEndTime] = useState(format(initialEnd, 'HH:mm'))
   const date = format(dateObj, 'yyyy-MM-dd')
   const [colorId, setColorId] = useState(item?.colorId ?? '9')
   const [calendarId, setCalendarId] = useState(item?.googleCalendarId ?? '')
-  const [attendeesText, setAttendeesText] = useState(
-    item?.attendees?.map((a) => a.email).join(', ') ?? '',
+  const [attendees, setAttendees] = useState<string[]>(
+    item?.attendees?.map((a) => a.email) ?? [],
   )
+  const [attendeeDraft, setAttendeeDraft] = useState('')
+  const attendeeInputRef = useRef<HTMLInputElement>(null)
   const [reminder, setReminder] = useState<string>('default')
   const [visibility, setVisibility] = useState<'default' | 'public' | 'private'>(
     (item?.visibility as any) ?? 'default',
   )
   const [hasMeet, setHasMeet] = useState(Boolean(item?.hangoutLink))
   const [meetWasOriginallyOn] = useState(Boolean(item?.hangoutLink))
+  const [meetCopied, setMeetCopied] = useState(false)
 
   // Default calendar when in create mode and accounts loaded
   useEffect(() => {
@@ -125,13 +145,43 @@ export function EventEditDialog({ open, onClose, item, defaultStart, defaultEnd 
     }
   }, [isEdit, calendarId, calendarOptions])
 
-  function parseAttendees(): { email: string }[] {
-    return attendeesText
+  const tzLabel = useMemo(() => {
+    const offsetMin = -dateObj.getTimezoneOffset()
+    const sign = offsetMin >= 0 ? '+' : '-'
+    const h = Math.floor(Math.abs(offsetMin) / 60)
+    const m = Math.abs(offsetMin) % 60
+    const offsetStr = `${sign}${h}:${m.toString().padStart(2, '0')}`
+    const city = browserTz.split('/').pop()?.replace(/_/g, ' ') ?? browserTz
+    return `(GMT ${offsetStr}) ${city}`
+  }, [browserTz, dateObj])
+
+  const colorHex = COLOR_OPTIONS.find((c) => c.id === colorId)?.hex ?? '#3f51b5'
+
+  function commitAttendeeDraft() {
+    const raw = attendeeDraft.trim().replace(/[,;]+$/, '').trim()
+    if (!raw) return
+    const emails = raw
       .split(/[\s,;]+/)
       .map((s) => s.trim())
       .filter(Boolean)
       .filter((e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e))
-      .map((email) => ({ email }))
+      .filter((e) => !attendees.includes(e))
+    if (emails.length === 0) {
+      toast.error('Invalid email')
+      return
+    }
+    setAttendees((cur) => [...cur, ...emails])
+    setAttendeeDraft('')
+  }
+
+  function handleAttendeeKey(e: KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter' || e.key === ',' || e.key === ';') {
+      e.preventDefault()
+      commitAttendeeDraft()
+    } else if (e.key === 'Backspace' && !attendeeDraft && attendees.length > 0) {
+      e.preventDefault()
+      setAttendees((cur) => cur.slice(0, -1))
+    }
   }
 
   function buildReminders() {
@@ -154,6 +204,10 @@ export function EventEditDialog({ open, onClose, item, defaultStart, defaultEnd 
       return
     }
 
+    // Flush pending attendee draft
+    if (attendeeDraft.trim()) commitAttendeeDraft()
+    const attendeeList = attendees.map((email) => ({ email }))
+
     try {
       if (isEdit && item?.googleCalendarId && item.googleEventId) {
         const patch = {
@@ -165,7 +219,7 @@ export function EventEditDialog({ open, onClose, item, defaultStart, defaultEnd 
           endTime,
           timeZone: browserTz,
           colorId,
-          attendees: parseAttendees(),
+          attendees: attendeeList,
           reminders: buildReminders(),
           visibility,
           ...(hasMeet && !meetWasOriginallyOn ? { addGoogleMeet: true } : {}),
@@ -191,7 +245,7 @@ export function EventEditDialog({ open, onClose, item, defaultStart, defaultEnd 
           location: location || undefined,
           color: colorId,
           timeZone: browserTz,
-          attendees: parseAttendees(),
+          attendees: attendeeList,
           reminders: buildReminders(),
           addGoogleMeet: hasMeet || undefined,
           calendarId,
@@ -217,135 +271,211 @@ export function EventEditDialog({ open, onClose, item, defaultStart, defaultEnd 
     }
   }
 
+  async function copyMeetLink() {
+    if (!item?.hangoutLink) return
+    try {
+      await navigator.clipboard.writeText(item.hangoutLink)
+      setMeetCopied(true)
+      setTimeout(() => setMeetCopied(false), 1500)
+    } catch {
+      toast.error('Copy failed')
+    }
+  }
+
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{isEdit ? 'Edit event' : 'New event'}</DialogTitle>
-        </DialogHeader>
+      <DialogContent
+        className="sm:max-w-2xl max-h-[90vh] overflow-y-auto p-0 gap-0"
+        showCloseButton={false}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between border-b px-6 py-3">
+          <span className="text-sm font-medium text-muted-foreground">
+            {isEdit ? 'Edit event' : 'New event'}
+          </span>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={onClose}
+            className="rounded-full"
+          >
+            <X size={14} />
+            <span className="sr-only">Close</span>
+          </Button>
+        </div>
 
-        <div className="space-y-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="event-title">Title</Label>
-            <Input
-              id="event-title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Add a title"
-              autoFocus
-            />
-          </div>
-
-          <div className="flex flex-wrap items-end gap-2">
-            <div className="space-y-1.5 flex-1 min-w-[160px]">
-              <Label htmlFor="event-date">Date</Label>
-              <Popover open={datePopoverOpen} onOpenChange={setDatePopoverOpen}>
+        {/* Body */}
+        <div className="px-6 py-5 space-y-5">
+          {/* Title + Description */}
+          <div className="space-y-1">
+            <div className="flex items-start gap-3">
+              <Popover open={colorPopoverOpen} onOpenChange={setColorPopoverOpen}>
                 <PopoverTrigger asChild>
-                  <Button
-                    id="event-date"
-                    variant="outline"
-                    className="w-full justify-between font-normal"
-                  >
-                    {format(dateObj, 'PPP')}
-                    <ChevronDownIcon size={16} />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto overflow-hidden p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={dateObj}
-                    captionLayout="dropdown"
-                    defaultMonth={dateObj}
-                    onSelect={(d) => {
-                      if (d) {
-                        setDateObj(d)
-                        setDatePopoverOpen(false)
-                      }
-                    }}
+                  <button
+                    type="button"
+                    className="mt-3 size-3 rounded-full ring-offset-2 ring-foreground/20 hover:ring-2 transition shrink-0"
+                    style={{ backgroundColor: colorHex }}
+                    title="Change color"
                   />
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-2" align="start">
+                  <div className="grid grid-cols-6 gap-1.5">
+                    {COLOR_OPTIONS.map((c) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => {
+                          setColorId(c.id)
+                          setColorPopoverOpen(false)
+                        }}
+                        className={cn(
+                          'size-6 rounded-full ring-offset-2 transition',
+                          colorId === c.id ? 'ring-2 ring-foreground' : 'hover:scale-110',
+                        )}
+                        style={{ backgroundColor: c.hex }}
+                        title={c.label}
+                      />
+                    ))}
+                  </div>
                 </PopoverContent>
               </Popover>
-            </div>
-            <div className="space-y-1.5 w-28">
-              <Label htmlFor="event-start">Start</Label>
               <Input
-                id="event-start"
-                type="time"
-                value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
-                className="appearance-none bg-background [&::-webkit-calendar-picker-indicator]:hidden"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Add title"
+                autoFocus
+                className="!text-xl font-semibold border-0 focus-visible:ring-0 shadow-none px-0 h-auto py-1 placeholder:font-normal placeholder:text-muted-foreground/60"
               />
             </div>
-            <div className="space-y-1.5 w-28">
-              <Label htmlFor="event-end">End</Label>
-              <Input
-                id="event-end"
-                type="time"
-                value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
-                className="appearance-none bg-background [&::-webkit-calendar-picker-indicator]:hidden"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="event-location">Location</Label>
-            <Input
-              id="event-location"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              placeholder="Add a location"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="event-description">Description</Label>
             <Textarea
-              id="event-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              rows={3}
-              placeholder="Add a description"
+              placeholder="Add description here…"
+              rows={2}
+              className="border-0 focus-visible:ring-0 shadow-none px-0 ml-6 resize-none text-sm placeholder:text-muted-foreground/60"
             />
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="event-attendees">Guests</Label>
-            <Input
-              id="event-attendees"
-              value={attendeesText}
-              onChange={(e) => setAttendeesText(e.target.value)}
-              placeholder="email@example.com, another@example.com"
-            />
-            <p className="text-[11px] text-muted-foreground">
-              Comma- or space-separated emails
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1.5">
-              <Label>Color</Label>
-              <div className="flex flex-wrap gap-1">
-                {COLOR_OPTIONS.map((c) => (
-                  <button
-                    key={c.id}
-                    type="button"
-                    onClick={() => setColorId(c.id)}
-                    className={
-                      'size-6 rounded-full ring-offset-2 transition ' +
-                      (colorId === c.id ? 'ring-2 ring-foreground' : 'hover:scale-110')
-                    }
-                    style={{ backgroundColor: c.hex }}
-                    title={c.label}
-                  />
-                ))}
+          {/* Time row */}
+          <div className="flex items-end justify-between gap-3 flex-wrap">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <Input
+                  type="time"
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
+                  className="w-[110px] text-base font-semibold border-0 px-1 shadow-none focus-visible:ring-1 [&::-webkit-calendar-picker-indicator]:hidden"
+                />
+                <ArrowRight size={16} className="text-muted-foreground" />
+                <Input
+                  type="time"
+                  value={endTime}
+                  onChange={(e) => setEndTime(e.target.value)}
+                  className="w-[110px] text-base font-semibold border-0 px-1 shadow-none focus-visible:ring-1 [&::-webkit-calendar-picker-indicator]:hidden"
+                />
+              </div>
+              <div className="flex items-center gap-2 text-xs ml-1">
+                <Popover open={datePopoverOpen} onOpenChange={setDatePopoverOpen}>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      className="font-medium text-foreground hover:underline inline-flex items-center gap-1"
+                    >
+                      {format(dateObj, 'EEE, MMM d')}
+                      <ChevronDownIcon size={12} />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={dateObj}
+                      captionLayout="dropdown"
+                      defaultMonth={dateObj}
+                      onSelect={(d) => {
+                        if (d) {
+                          setDateObj(d)
+                          setDatePopoverOpen(false)
+                        }
+                      }}
+                    />
+                  </PopoverContent>
+                </Popover>
+                <span className="text-muted-foreground">{tzLabel}</span>
               </div>
             </div>
-            <div className="space-y-1.5">
-              <Label>Visibility</Label>
+          </div>
+
+          {/* Metadata rows */}
+          <div className="space-y-3 border-t pt-4">
+            <Row icon={<Users size={15} />} label="Participants">
+              <div
+                className="flex flex-wrap items-center gap-1.5 min-h-[28px] cursor-text"
+                onClick={() => attendeeInputRef.current?.focus()}
+              >
+                {attendees.map((email) => (
+                  <span
+                    key={email}
+                    className="inline-flex items-center gap-1 rounded-full bg-muted text-xs pl-2 pr-1 py-0.5"
+                  >
+                    {email}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setAttendees((cur) => cur.filter((x) => x !== email))
+                      }}
+                      className="rounded-full p-0.5 hover:bg-foreground/10"
+                    >
+                      <X size={10} />
+                    </button>
+                  </span>
+                ))}
+                <input
+                  ref={attendeeInputRef}
+                  value={attendeeDraft}
+                  onChange={(e) => setAttendeeDraft(e.target.value)}
+                  onKeyDown={handleAttendeeKey}
+                  onBlur={() => attendeeDraft.trim() && commitAttendeeDraft()}
+                  placeholder={attendees.length === 0 ? 'Add guests by email' : ''}
+                  className="flex-1 min-w-[140px] bg-transparent text-xs outline-none placeholder:text-muted-foreground/60"
+                />
+              </div>
+            </Row>
+
+            <Row icon={<Video size={15} />} label="Conferencing">
+              <div className="flex items-center justify-between gap-2">
+                {hasMeet && item?.hangoutLink ? (
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <a
+                      href={item.hangoutLink}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs font-medium text-primary underline truncate"
+                    >
+                      Join Google Meet
+                    </a>
+                    <button
+                      type="button"
+                      onClick={copyMeetLink}
+                      className="text-muted-foreground hover:text-foreground shrink-0"
+                      title="Copy link"
+                    >
+                      {meetCopied ? <Check size={12} /> : <Copy size={12} />}
+                    </button>
+                  </div>
+                ) : (
+                  <span className="text-xs text-muted-foreground flex-1">
+                    {hasMeet ? 'Meet link added on save' : 'No conferencing'}
+                  </span>
+                )}
+                <Switch checked={hasMeet} onCheckedChange={setHasMeet} />
+              </div>
+            </Row>
+
+            <Row icon={<Eye size={15} />} label="Visibility">
               <Select value={visibility} onValueChange={(v: any) => setVisibility(v)}>
-                <SelectTrigger>
-                  <SelectValue />
+                <SelectTrigger className="h-7 text-xs border-0 shadow-none px-1 focus:ring-1 w-fit gap-1">
+                  <SelectValue>{VISIBILITY_LABEL[visibility]}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="default">Calendar default</SelectItem>
@@ -353,15 +483,14 @@ export function EventEditDialog({ open, onClose, item, defaultStart, defaultEnd 
                   <SelectItem value="private">Private</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-          </div>
+            </Row>
 
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1.5">
-              <Label>Reminder</Label>
+            <Row icon={<Bell size={15} />} label="Reminders">
               <Select value={reminder} onValueChange={setReminder}>
-                <SelectTrigger>
-                  <SelectValue />
+                <SelectTrigger className="h-7 text-xs border-0 shadow-none px-1 focus:ring-1 w-fit gap-1">
+                  <SelectValue>
+                    {REMINDER_PRESETS.find((r) => r.value === reminder)?.label}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {REMINDER_PRESETS.map((r) => (
@@ -371,12 +500,12 @@ export function EventEditDialog({ open, onClose, item, defaultStart, defaultEnd 
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-            {!isEdit && (
-              <div className="space-y-1.5">
-                <Label>Calendar</Label>
+            </Row>
+
+            {!isEdit && calendarOptions.length > 0 && (
+              <Row icon={<CalendarIcon size={15} />} label="Calendar">
                 <Select value={calendarId} onValueChange={setCalendarId}>
-                  <SelectTrigger>
+                  <SelectTrigger className="h-7 text-xs border-0 shadow-none px-1 focus:ring-1 w-fit gap-1">
                     <SelectValue placeholder="Pick calendar" />
                   </SelectTrigger>
                   <SelectContent>
@@ -387,41 +516,29 @@ export function EventEditDialog({ open, onClose, item, defaultStart, defaultEnd 
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
+              </Row>
             )}
-          </div>
 
-          <div className="flex items-center justify-between rounded-md border p-3">
-            <div className="flex items-center gap-2">
-              <Video size={16} className="text-muted-foreground" />
-              <div>
-                <Label htmlFor="event-meet" className="cursor-pointer">
-                  Add Google Meet
-                </Label>
-                {item?.hangoutLink && hasMeet && (
-                  <a
-                    href={item.hangoutLink}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="block text-[11px] text-primary underline truncate max-w-[280px]"
-                  >
-                    {item.hangoutLink}
-                  </a>
-                )}
-              </div>
-            </div>
-            <Switch id="event-meet" checked={hasMeet} onCheckedChange={setHasMeet} />
+            <Row icon={<MapPin size={15} />} label="Location">
+              <Input
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                placeholder="Add location"
+                className="h-7 text-xs border-0 shadow-none px-1 focus-visible:ring-1 placeholder:text-muted-foreground/60"
+              />
+            </Row>
           </div>
         </div>
 
-        <DialogFooter className="sm:justify-between">
+        {/* Footer */}
+        <div className="flex items-center justify-between gap-2 border-t px-6 py-3 bg-muted/40">
           {isEdit ? (
             <Button
               variant="ghost"
               size="sm"
               onClick={handleDelete}
               disabled={del.isPending}
-              className="text-destructive gap-1"
+              className="text-destructive gap-1 h-8"
             >
               <Trash2 size={14} />
               Delete
@@ -430,21 +547,38 @@ export function EventEditDialog({ open, onClose, item, defaultStart, defaultEnd 
             <span />
           )}
           <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={onClose}>
+            <Button variant="outline" size="sm" onClick={onClose} className="h-8">
               Cancel
             </Button>
             <Button
+              size="sm"
               onClick={handleSubmit}
               disabled={update.isPending || create.isPending}
+              className="h-8"
             >
-              {isEdit ? 'Save' : 'Create'}
+              {isEdit ? 'Save' : attendees.length > 0 ? 'Send invites' : 'Create'}
             </Button>
           </div>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   )
 }
 
-// Re-export icons used by parent components if needed
-export { Plus as PlusIcon, X as CloseIcon }
+function Row({
+  icon,
+  label,
+  children,
+}: {
+  icon: React.ReactNode
+  label: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className="grid grid-cols-[20px_110px_1fr] items-center gap-3 text-xs">
+      <span className="text-muted-foreground flex justify-center">{icon}</span>
+      <span className="text-muted-foreground">{label}</span>
+      <div className="min-w-0">{children}</div>
+    </div>
+  )
+}

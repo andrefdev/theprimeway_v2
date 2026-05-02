@@ -8,22 +8,6 @@ export const LABEL_WIDTH = 56
 export const HOURS = Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i)
 export const TOTAL_HEIGHT = HOURS.length * HOUR_HEIGHT
 
-export const COLOR_BG: Record<string, string> = {
-  red: 'bg-destructive/15 border-l-destructive',
-  yellow: 'bg-yellow-500/15 border-l-yellow-500',
-  blue: 'bg-blue-500/15 border-l-blue-500',
-  green: 'bg-emerald-500/15 border-l-emerald-500',
-  purple: 'bg-violet-500/15 border-l-violet-500',
-}
-
-export const DOT_COLORS: Record<string, string> = {
-  red: 'bg-destructive',
-  yellow: 'bg-yellow-500',
-  blue: 'bg-blue-500',
-  green: 'bg-emerald-500',
-  purple: 'bg-violet-500',
-}
-
 export interface LaidOutItem {
   item: CalendarItem
   col: number

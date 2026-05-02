@@ -28,6 +28,9 @@ export default function LoginScreen() {
       await login(data);
       router.replace('/(app)/(tabs)');
     } catch (error: unknown) {
+      if (error instanceof Error && (error as Error & { code?: string }).code === 'verification_required') {
+        return;
+      }
       const message = error instanceof Error ? error.message : t('errorTitle');
       Alert.alert(tCommon('status.error'), message);
     } finally {

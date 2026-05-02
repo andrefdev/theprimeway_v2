@@ -38,7 +38,7 @@
     },
     "production": {
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://app.theprimeway.app",
+        "EXPO_PUBLIC_API_URL": "https://api.theprimeway.app",
         "EXPO_PUBLIC_ENV": "production"
       },
       "autoIncrement": true

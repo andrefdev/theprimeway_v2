@@ -135,8 +135,11 @@ class TasksRepository {
   }
 
   async findArchivedTasks(userId: string) {
+    // Only rolled-over open tasks belong in the archive panel; completed
+    // tasks may have archivedAt set by the autoArchiveCompleted cron, but
+    // they're hidden from this view (the user can't act on them anyway).
     const tasks = await prisma.task.findMany({
-      where: { userId, archivedAt: { not: null } },
+      where: { userId, archivedAt: { not: null }, status: 'open' },
       include: defaultInclude,
       orderBy: [{ archivedAt: 'desc' }],
     })

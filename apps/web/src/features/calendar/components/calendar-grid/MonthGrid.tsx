@@ -12,7 +12,7 @@ import {
 } from 'date-fns'
 import { cn } from '@/shared/lib/utils'
 import { getItemsForDay, type CalendarItem } from '../../hooks/use-calendar-items'
-import { COLOR_BG, DOT_COLORS } from './constants'
+import { resolveItemColor, withAlpha } from '../../lib/colors'
 
 interface MonthGridProps {
   currentDate: Date
@@ -106,24 +106,25 @@ export function MonthGrid({ currentDate, items, today, onDayClick }: MonthGridPr
                 </span>
               </div>
               <div className="flex-1 space-y-0.5 overflow-hidden">
-                {dayItems.slice(0, 3).map((item) => (
-                  <div
-                    key={item.id}
-                    className={cn(
-                      'flex items-center gap-1 rounded px-1 py-0.5 text-[10px] truncate',
-                      COLOR_BG[item.color] ?? 'bg-muted',
-                      item.status === 'completed' && 'line-through text-muted-foreground',
-                    )}
-                  >
-                    <span
+                {dayItems.slice(0, 3).map((item) => {
+                  const hex = resolveItemColor(item)
+                  return (
+                    <div
+                      key={item.id}
+                      style={{ backgroundColor: withAlpha(hex) }}
                       className={cn(
-                        'h-1.5 w-1.5 rounded-full flex-shrink-0',
-                        DOT_COLORS[item.color] ?? 'bg-foreground/50',
+                        'flex items-center gap-1 rounded px-1 py-0.5 text-[10px] truncate',
+                        item.status === 'completed' && 'line-through text-muted-foreground',
                       )}
-                    />
-                    <span className="truncate">{item.title}</span>
-                  </div>
-                ))}
+                    >
+                      <span
+                        style={{ backgroundColor: hex }}
+                        className="h-1.5 w-1.5 rounded-full flex-shrink-0"
+                      />
+                      <span className="truncate">{item.title}</span>
+                    </div>
+                  )
+                })}
                 {dayItems.length > 3 && (
                   <div className="text-[10px] text-muted-foreground px-1">
                     +{dayItems.length - 3}

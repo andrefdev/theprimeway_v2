@@ -19,11 +19,11 @@ export const authService = {
   },
 
   requestOtp: async (email: string): Promise<void> => {
-    await apiClient.post(AUTH.REQUEST_OTP, { email });
+    await apiClient.post(AUTH.RESEND_OTP, { email });
   },
 
   verifyOtp: async (email: string, otp: string): Promise<AuthResponse> => {
-    const { data } = await apiClient.post<AuthResponse>(AUTH.VERIFY_OTP, { email, otp });
+    const { data } = await apiClient.post<AuthResponse>(AUTH.VERIFY_EMAIL, { email, otp });
     return data;
   },
 

@@ -5,8 +5,8 @@ import { CheckIcon } from '@/shared/components/Icons'
 import { useLocale } from '@/i18n/useLocale'
 import { cn } from '@/shared/lib/utils'
 import { getItemsForDay, type CalendarItem } from '../../hooks/use-calendar-items'
+import { resolveItemColor, withAlpha } from '../../lib/colors'
 import {
-  COLOR_BG,
   HOUR_HEIGHT,
   HOURS,
   LABEL_WIDTH,
@@ -105,7 +105,7 @@ export function TimeGrid({ days, items, today, onSlotClick, onItemClick }: TimeG
                 className="border-l border-border p-1 space-y-0.5 min-h-[28px]"
               >
                 {allDay.map((item) => (
-                  <AllDayChip key={item.id} item={item} />
+                  <AllDayChip key={item.id} item={item} onItemClick={onItemClick} />
                 ))}
               </div>
             ))}
@@ -164,7 +164,7 @@ export function TimeGrid({ days, items, today, onSlotClick, onItemClick }: TimeG
                 const durationMin = Math.max(differenceInMinutes(item.end, item.start), 15)
                 const top = Math.max((startHour - START_HOUR) * HOUR_HEIGHT, 0)
                 const height = Math.max((durationMin / 60) * HOUR_HEIGHT, 20)
-                const colorClass = COLOR_BG[item.color] ?? 'bg-muted/50 border-l-muted-foreground'
+                const hex = resolveItemColor(item)
                 const widthPct = 100 / cols
                 const leftPct = col * widthPct
 
@@ -176,15 +176,14 @@ export function TimeGrid({ days, items, today, onSlotClick, onItemClick }: TimeG
                       e.stopPropagation()
                       onItemClick(item, e.currentTarget)
                     }}
-                    className={cn(
-                      'absolute rounded-md border-l-[3px] px-1.5 py-0.5 overflow-hidden cursor-pointer hover:shadow-md transition-shadow',
-                      colorClass,
-                    )}
+                    className="absolute rounded-md border-l-[3px] px-1.5 py-0.5 overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
                     style={{
                       top,
                       height,
                       left: `calc(${leftPct}% + 2px)`,
                       width: `calc(${widthPct}% - 4px)`,
+                      backgroundColor: withAlpha(hex),
+                      borderLeftColor: hex,
                     }}
                     title={`${item.title} (${format(item.start, 'h:mm a')} – ${format(item.end, 'h:mm a')})`}
                   >
@@ -231,13 +230,27 @@ export function TimeGrid({ days, items, today, onSlotClick, onItemClick }: TimeG
   )
 }
 
-function AllDayChip({ item }: { item: CalendarItem }) {
-  const colorClass = COLOR_BG[item.color] ?? 'bg-muted/50 border-l-muted-foreground'
+function AllDayChip({
+  item,
+  onItemClick,
+}: {
+  item: CalendarItem
+  onItemClick: (item: CalendarItem, anchor: HTMLElement) => void
+}) {
+  const hex = resolveItemColor(item)
   return (
-    <div
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation()
+        onItemClick(item, e.currentTarget)
+      }}
+      style={{
+        backgroundColor: withAlpha(hex),
+        borderLeftColor: hex,
+      }}
       className={cn(
-        'rounded border-l-[3px] px-1.5 py-0.5 text-[11px] leading-tight truncate',
-        colorClass,
+        'w-full text-left rounded border-l-[3px] px-1.5 py-0.5 text-[11px] leading-tight truncate cursor-pointer hover:shadow-md transition-shadow',
         item.status === 'completed' && 'line-through text-muted-foreground',
       )}
       title={item.title}
@@ -246,6 +259,6 @@ function AllDayChip({ item }: { item: CalendarItem }) {
         <CheckIcon size={8} className="inline text-emerald-500 mr-0.5" />
       )}
       {item.title}
-    </div>
+    </button>
   )
 }
