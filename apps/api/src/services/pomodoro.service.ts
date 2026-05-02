@@ -2,6 +2,12 @@ import { pomodoroRepo } from '../repositories/pomodoro.repo'
 import { enforceLimit } from '../lib/limits'
 import { FEATURES } from '@repo/shared/constants'
 import { gamificationEvents } from './gamification/events'
+import {
+  endOfLocalDayUtc,
+  localDayOfWeek,
+  startOfLocalDayUtc,
+} from '@repo/shared/utils'
+import { prisma } from '../lib/prisma'
 
 const XP_VALUES = { pomodoro: 15 }
 
@@ -112,14 +118,17 @@ class PomodoroService {
   }
 
   async getStats(userId: string) {
-    const todayStart = new Date()
-    todayStart.setHours(0, 0, 0, 0)
-    const todayEnd = new Date()
-    todayEnd.setHours(23, 59, 59, 999)
-
-    const weekStart = new Date()
-    weekStart.setDate(weekStart.getDate() - weekStart.getDay())
-    weekStart.setHours(0, 0, 0, 0)
+    const settings = await prisma.userSettings.findUnique({
+      where: { userId },
+      select: { timezone: true },
+    })
+    const tz = settings?.timezone ?? 'UTC'
+    const now = new Date()
+    const todayStart = startOfLocalDayUtc(now, tz)
+    const todayEnd = endOfLocalDayUtc(now, tz)
+    const dow = localDayOfWeek(now, tz) // 0=Sun..6=Sat
+    const weekAnchor = new Date(now.getTime() - dow * 24 * 60 * 60 * 1000)
+    const weekStart = startOfLocalDayUtc(weekAnchor, tz)
 
     const [totalSessions, totalFocusMinutes, todaySessions, weekSessions] = await Promise.all([
       pomodoroRepo.countCompletedFocus(userId),

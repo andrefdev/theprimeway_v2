@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/shared/components/ui/button'
 import { useStopTimer } from '../queries'
-import { useFocusStore } from '@/features/focus/focus-store'
+import { useFocusStart } from '@/features/focus/hooks/use-focus-start'
 import type { Task } from '@repo/shared/types'
 
 interface TaskTimerButtonProps {
@@ -10,6 +10,7 @@ interface TaskTimerButtonProps {
 
 export function TaskTimerButton({ task }: TaskTimerButtonProps) {
   const stopTimer = useStopTimer()
+  const startFocus = useFocusStart()
   const isRunning = !!task.actualStart && !task.actualEnd
   const [elapsed, setElapsed] = useState(0)
 
@@ -41,7 +42,7 @@ export function TaskTimerButton({ task }: TaskTimerButtonProps) {
     if (isRunning) {
       stopTimer.mutate(task.id)
     } else {
-      useFocusStore.getState().start(task.id)
+      startFocus(task)
     }
   }
 

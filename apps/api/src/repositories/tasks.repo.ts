@@ -11,6 +11,15 @@
  * Writes that set `weeklyGoalId` are translated to TaskGoal upsert/delete.
  */
 import { prisma } from '../lib/prisma'
+import { endOfLocalDayUtc, startOfLocalDayUtc } from '@repo/shared/utils'
+
+async function getUserTz(userId: string): Promise<string> {
+  const settings = await prisma.userSettings.findUnique({
+    where: { userId },
+    select: { timezone: true },
+  })
+  return settings?.timezone ?? 'UTC'
+}
 
 // ---------------------------------------------------------------------------
 // Types
@@ -312,8 +321,8 @@ class TasksRepository {
   }
 
   async findRecurringTasks(userId: string) {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
+    const tz = await getUserTz(userId)
+    const today = startOfLocalDayUtc(new Date(), tz)
     const tasks = await prisma.task.findMany({
       where: {
         userId,
@@ -330,10 +339,9 @@ class TasksRepository {
   }
 
   async findInstancesForDate(userId: string, parentId: string, date: Date) {
-    const dayStart = new Date(date)
-    dayStart.setHours(0, 0, 0, 0)
-    const dayEnd = new Date(date)
-    dayEnd.setHours(23, 59, 59, 999)
+    const tz = await getUserTz(userId)
+    const dayStart = startOfLocalDayUtc(date, tz)
+    const dayEnd = endOfLocalDayUtc(date, tz)
     return prisma.task.findMany({
       where: {
         userId,

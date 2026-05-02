@@ -10,6 +10,12 @@ import {
   type RitualKind,
 } from '../repositories/rituals.repo'
 import { recurringService } from './recurring.service'
+import {
+  endOfLocalDayUtc,
+  localDayOfWeek,
+  localTimeToUtc,
+  startOfLocalDayUtc,
+} from '@repo/shared/utils'
 
 // ---------------------------------------------------------------------------
 // Template defaults
@@ -106,17 +112,17 @@ export const WEEKLY_DEFAULTS: Record<WeeklyKind, { name: string; dayOfWeek: numb
 // Date helpers
 // ---------------------------------------------------------------------------
 
-function dayBounds(ref: Date = new Date()) {
-  const start = new Date(ref); start.setUTCHours(0, 0, 0, 0)
-  const end = new Date(ref); end.setUTCHours(23, 59, 59, 999)
-  return { start, end }
+function dayBounds(ref: Date = new Date(), tz: string = 'UTC') {
+  return { start: startOfLocalDayUtc(ref, tz), end: endOfLocalDayUtc(ref, tz) }
 }
 
-function weekBounds(ref: Date = new Date()) {
-  const start = new Date(ref); start.setUTCHours(0, 0, 0, 0)
-  const dow = start.getUTCDay()
-  start.setUTCDate(start.getUTCDate() - ((dow + 6) % 7))
-  const end = new Date(start); end.setUTCDate(end.getUTCDate() + 7)
+function weekBounds(ref: Date = new Date(), tz: string = 'UTC') {
+  const dow = localDayOfWeek(ref, tz)
+  // Walk back to Monday using a 12:00 anchor so DST shifts can't cross day boundaries.
+  const noonAnchor = new Date(ref.getTime() - ((dow + 6) % 7) * 24 * 60 * 60 * 1000)
+  const start = startOfLocalDayUtc(noonAnchor, tz)
+  const endAnchor = new Date(noonAnchor.getTime() + 7 * 24 * 60 * 60 * 1000)
+  const end = startOfLocalDayUtc(endAnchor, tz)
   return { start, end }
 }
 
@@ -213,13 +219,14 @@ class RitualsService {
       .materializeForUser(userId, new Date())
       .catch((err) => console.error('[RITUALS_TODAY] materialize failed', err))
 
-    const planTemplate = await this.ensureDailyTemplate(userId, 'DAILY_PLAN')
-    const shutdownTemplate = await this.ensureDailyTemplate(userId, 'DAILY_SHUTDOWN')
+    const tz = await this.getUserTz(userId)
+    const planTemplate = await this.ensureDailyTemplate(userId, 'DAILY_PLAN', tz)
+    const shutdownTemplate = await this.ensureDailyTemplate(userId, 'DAILY_SHUTDOWN', tz)
 
-    const plan = await this.ensureDailyInstance(userId, planTemplate.id, planTemplate.scheduledTime)
-    const shutdown = await this.ensureDailyInstance(userId, shutdownTemplate.id, shutdownTemplate.scheduledTime)
+    const plan = await this.ensureDailyInstance(userId, planTemplate.id, planTemplate.scheduledTime, tz)
+    const shutdown = await this.ensureDailyInstance(userId, shutdownTemplate.id, shutdownTemplate.scheduledTime, tz)
 
-    const { start, end } = dayBounds()
+    const { start, end } = dayBounds(new Date(), tz)
     const pending = await ritualsRepo.findPendingDaily(userId, start, end)
     return { pending, plan, shutdown }
   }
@@ -239,10 +246,11 @@ class RitualsService {
     const errors: string[] = []
     for (const u of users) {
       try {
-        const planTemplate = await this.ensureDailyTemplate(u.id, 'DAILY_PLAN')
-        const shutdownTemplate = await this.ensureDailyTemplate(u.id, 'DAILY_SHUTDOWN')
-        await this.ensureDailyInstance(u.id, planTemplate.id, planTemplate.scheduledTime, referenceDate)
-        await this.ensureDailyInstance(u.id, shutdownTemplate.id, shutdownTemplate.scheduledTime, referenceDate)
+        const tz = await this.getUserTz(u.id)
+        const planTemplate = await this.ensureDailyTemplate(u.id, 'DAILY_PLAN', tz)
+        const shutdownTemplate = await this.ensureDailyTemplate(u.id, 'DAILY_SHUTDOWN', tz)
+        await this.ensureDailyInstance(u.id, planTemplate.id, planTemplate.scheduledTime, tz, referenceDate)
+        await this.ensureDailyInstance(u.id, shutdownTemplate.id, shutdownTemplate.scheduledTime, tz, referenceDate)
         ensured++
       } catch (err) {
         errors.push(`${u.id}: ${(err as Error).message}`)
@@ -253,6 +261,7 @@ class RitualsService {
 
   // ── Ensure-week ──────────────────────────────────────
   async week(userId: string) {
+    const tz = await this.getUserTz(userId)
     const planTemplate = await this.ensureWeeklyTemplate(userId, 'WEEKLY_PLAN')
     const reviewTemplate = await this.ensureWeeklyTemplate(userId, 'WEEKLY_REVIEW')
 
@@ -261,35 +270,41 @@ class RitualsService {
       planTemplate.id,
       WEEKLY_DEFAULTS.WEEKLY_PLAN.dayOfWeek,
       planTemplate.scheduledTime ?? WEEKLY_DEFAULTS.WEEKLY_PLAN.time,
+      tz,
     )
     const review = await this.ensureWeeklyInstance(
       userId,
       reviewTemplate.id,
       WEEKLY_DEFAULTS.WEEKLY_REVIEW.dayOfWeek,
       reviewTemplate.scheduledTime ?? WEEKLY_DEFAULTS.WEEKLY_REVIEW.time,
+      tz,
     )
 
-    const { start, end } = weekBounds()
+    const { start, end } = weekBounds(new Date(), tz)
     const pending = await ritualsRepo.findPendingWeekly(userId, start, end)
     return { pending, plan, review }
   }
 
   // ── Ensure-quarter ───────────────────────────────────
   async quarter(userId: string) {
+    const tz = await this.getUserTz(userId)
     const template = await this.ensureQuarterlyTemplate(userId)
     const { start, year, quarter } = quarterBounds()
-    // Schedule the review on the last day of the quarter at 17:00.
-    const endOfQuarter = new Date(Date.UTC(year, (quarter - 1) * 3 + 3, 0, 17, 0, 0, 0))
+    // Schedule the review on the last day of the quarter at 17:00 user-local.
+    const lastDayNoonUtc = new Date(Date.UTC(year, (quarter - 1) * 3 + 3, 0, 12, 0, 0, 0))
+    const endOfQuarter = localTimeToUtc(lastDayNoonUtc, '17:00', tz)
     const review = await this.ensureQuarterlyInstance(userId, template.id, start, endOfQuarter)
     return { review, periodKey: `${year}-Q${quarter}` }
   }
 
   // ── Ensure-year ──────────────────────────────────────
   async year(userId: string) {
+    const tz = await this.getUserTz(userId)
     const template = await this.ensureAnnualTemplate(userId)
     const { start, year } = yearBounds()
-    // Schedule on Dec 31 at 17:00.
-    const endOfYear = new Date(Date.UTC(year, 11, 31, 17, 0, 0, 0))
+    // Schedule on Dec 31 at 17:00 user-local.
+    const dec31NoonUtc = new Date(Date.UTC(year, 11, 31, 12, 0, 0, 0))
+    const endOfYear = localTimeToUtc(dec31NoonUtc, '17:00', tz)
     const review = await this.ensureAnnualInstance(userId, template.id, start, endOfYear)
     return { review, periodKey: `${year}` }
   }
@@ -304,16 +319,15 @@ class RitualsService {
     const { taskModel } = await import('../lib/ai-models')
 
     const isWeekly = instance.ritual.kind === 'WEEKLY_REVIEW' || instance.ritual.kind === 'WEEKLY_PLAN'
-    const windowStart = new Date(instance.scheduledFor)
+    const tz = await this.getUserTz(userId)
+    let windowStart = startOfLocalDayUtc(instance.scheduledFor, tz)
     if (isWeekly) {
-      windowStart.setUTCHours(0, 0, 0, 0)
-      const dow = windowStart.getUTCDay()
-      windowStart.setUTCDate(windowStart.getUTCDate() - ((dow + 6) % 7))
-    } else {
-      windowStart.setUTCHours(0, 0, 0, 0)
+      const dow = localDayOfWeek(instance.scheduledFor, tz)
+      const noonAnchor = new Date(instance.scheduledFor.getTime() - ((dow + 6) % 7) * 24 * 60 * 60 * 1000)
+      windowStart = startOfLocalDayUtc(noonAnchor, tz)
     }
-    const windowEnd = new Date(windowStart)
-    windowEnd.setUTCDate(windowEnd.getUTCDate() + (isWeekly ? 7 : 1))
+    const windowEndAnchor = new Date(windowStart.getTime() + (isWeekly ? 7 : 1) * 24 * 60 * 60 * 1000)
+    const windowEnd = startOfLocalDayUtc(windowEndAnchor, tz)
 
     const [completed, goalsTouched] = await Promise.all([
       ritualsRepo.findCompletedTasksInWindow(userId, windowStart, windowEnd),
@@ -373,12 +387,13 @@ Produce structured insights.`
     const { z: zod } = await import('zod')
     const { taskModel } = await import('../lib/ai-models')
 
+    const tz = await this.getUserTz(userId)
     const now = new Date()
-    const lastWeekEnd = new Date(now); lastWeekEnd.setUTCHours(0, 0, 0, 0)
-    const dow = lastWeekEnd.getUTCDay()
-    lastWeekEnd.setUTCDate(lastWeekEnd.getUTCDate() - ((dow + 6) % 7)) // this Monday
-    const lastWeekStart = new Date(lastWeekEnd)
-    lastWeekStart.setUTCDate(lastWeekStart.getUTCDate() - 7) // last Monday
+    const dow = localDayOfWeek(now, tz)
+    const thisMondayAnchor = new Date(now.getTime() - ((dow + 6) % 7) * 24 * 60 * 60 * 1000)
+    const lastWeekEnd = startOfLocalDayUtc(thisMondayAnchor, tz)
+    const lastMondayAnchor = new Date(thisMondayAnchor.getTime() - 7 * 24 * 60 * 60 * 1000)
+    const lastWeekStart = startOfLocalDayUtc(lastMondayAnchor, tz)
 
     const [completedLastWeek, openUnscheduled, activeQuarter] = await Promise.all([
       ritualsRepo.findCompletedTasksInWindow(userId, lastWeekStart, lastWeekEnd, 40),
@@ -428,7 +443,23 @@ Respond with 3–5 objectives that ladder up to the quarterly goals and address 
   }
 
   // ── Private: ensure helpers ──────────────────────────
-  private async ensureDailyTemplate(userId: string, kind: DailyKind) {
+  private async getUserTz(userId: string): Promise<string> {
+    const settings = await ritualsRepo.findUserSettings(userId)
+    return settings?.timezone ?? 'UTC'
+  }
+
+  private async resolveDailyDefaultTime(userId: string, kind: DailyKind, tz: string): Promise<string> {
+    // Use today's working hours (in user's tz) as the default when settings are blank.
+    const dow = localDayOfWeek(new Date(), tz)
+    const wh = await prisma.workingHours.findFirst({
+      where: { userId, channelId: null, dayOfWeek: dow },
+      select: { startTime: true, endTime: true },
+    })
+    if (kind === 'DAILY_PLAN') return wh?.startTime ?? '08:00'
+    return wh?.endTime ?? '18:00'
+  }
+
+  private async ensureDailyTemplate(userId: string, kind: DailyKind, tz: string = 'UTC') {
     const existing =
       (await ritualsRepo.findEnabledByKind(userId, kind)) ??
       (await ritualsRepo.findEnabledByKind(null, kind))
@@ -436,7 +467,8 @@ Respond with 3–5 objectives that ladder up to the quarterly goals and address 
 
     const settings = await ritualsRepo.findUserSettings(userId)
     const cfg = DAILY_DEFAULTS[kind]
-    const time = cfg.time === 'plan' ? settings?.planDayAtTime ?? '08:00' : settings?.endDayAtTime ?? '18:00'
+    const explicit = cfg.time === 'plan' ? settings?.planDayAtTime : settings?.endDayAtTime
+    const time = explicit ?? (await this.resolveDailyDefaultTime(userId, kind, tz))
     return ritualsRepo.createForUser(userId, {
       kind,
       name: cfg.name,
@@ -464,14 +496,18 @@ Respond with 3–5 objectives that ladder up to the quarterly goals and address 
     })
   }
 
-  private async ensureDailyInstance(userId: string, ritualId: string, scheduledTime: string | null, ref: Date = new Date()) {
-    const { start, end } = dayBounds(ref)
+  private async ensureDailyInstance(
+    userId: string,
+    ritualId: string,
+    scheduledTime: string | null,
+    tz: string = 'UTC',
+    ref: Date = new Date(),
+  ) {
+    const { start, end } = dayBounds(ref, tz)
     const existing = await ritualsRepo.findInstanceInRange(userId, ritualId, { gte: start, lte: end })
     if (existing) return existing
 
-    const [hh, mm] = (scheduledTime ?? '08:00').split(':').map(Number)
-    const scheduledFor = new Date(start)
-    scheduledFor.setUTCHours(hh ?? 8, mm ?? 0, 0, 0)
+    const scheduledFor = localTimeToUtc(ref, scheduledTime ?? '08:00', tz)
     return ritualsRepo.createInstance(userId, { ritualId, scheduledFor })
   }
 
@@ -528,15 +564,16 @@ Respond with 3–5 objectives that ladder up to the quarterly goals and address 
     ritualId: string,
     dayOfWeek: number,
     time: string,
+    tz: string = 'UTC',
   ) {
-    const { start, end } = weekBounds()
+    const { start, end } = weekBounds(new Date(), tz)
     const existing = await ritualsRepo.findInstanceInRange(userId, ritualId, { gte: start, lt: end })
     if (existing) return existing
 
-    const [hh, mm] = time.split(':').map(Number)
-    const scheduledFor = new Date(start)
-    scheduledFor.setUTCDate(start.getUTCDate() + ((dayOfWeek + 6) % 7))
-    scheduledFor.setUTCHours(hh ?? 8, mm ?? 0, 0, 0)
+    // Anchor noon on the target weekday to avoid DST drift, then materialize local HH:mm.
+    const offsetDays = (dayOfWeek + 6) % 7
+    const noonAnchor = new Date(start.getTime() + offsetDays * 24 * 60 * 60 * 1000 + 12 * 60 * 60 * 1000)
+    const scheduledFor = localTimeToUtc(noonAnchor, time, tz)
     return ritualsRepo.createInstance(userId, { ritualId, scheduledFor })
   }
 }

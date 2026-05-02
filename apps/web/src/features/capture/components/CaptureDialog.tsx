@@ -8,6 +8,7 @@ import { schedulingApi } from '@/features/scheduling/api'
 import { channelsApi } from '../channels-api'
 import { parseCapture } from '../parser'
 import { schedulingKeys } from '@/features/scheduling/queries'
+import { useUserTimezone } from '@/features/settings/hooks/use-user-timezone'
 
 interface Props {
   open: boolean
@@ -33,7 +34,8 @@ export function CaptureDialog({ open, onClose }: Props) {
     }
   }, [open])
 
-  const parsed = useMemo(() => parseCapture(text), [text])
+  const tz = useUserTimezone()
+  const parsed = useMemo(() => parseCapture(text, new Date(), tz), [text, tz])
   const matchedChannel = useMemo(() => {
     if (!parsed.channelName) return null
     const lower = parsed.channelName.toLowerCase()

@@ -1,6 +1,8 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { localTimeToUtc } from '@repo/shared/utils';
+import { useSettingsStore } from '@/shared/stores/settingsStore';
 import { buildTaskReminderBody } from './taskReminderContext';
 
 interface TaskReminderContext {
@@ -56,6 +58,12 @@ export async function setupReminderChannel() {
 
 /**
  * Schedules a daily reminder for a habit at a specific time.
+ *
+ * Note: Expo's DAILY trigger fires at the given hour/minute in the device's
+ * local timezone, NOT the user's selected `UserSettings.timezone`. If the
+ * device tz differs (user travelling without changing settings), reminders
+ * will fire at the wrong wall-clock time. Switching to per-occurrence DATE
+ * triggers + re-scheduling on app foreground is tracked as a follow-up.
  */
 export async function scheduleHabitReminder(
   habitId: string,
@@ -208,9 +216,9 @@ export async function scheduleTaskReminder(
     triggerDate = new Date(scheduledStart);
     triggerDate.setMinutes(triggerDate.getMinutes() - 15);
   } else {
-    // Remind at 9:00 AM on the due date
-    triggerDate = new Date(dueDate);
-    triggerDate.setHours(9, 0, 0, 0);
+    // Remind at 9:00 AM on the due date in the user's selected timezone.
+    const tz = useSettingsStore.getState().timezone || 'UTC';
+    triggerDate = localTimeToUtc(new Date(dueDate), '09:00', tz);
   }
 
   // Don't schedule if the reminder time has already passed

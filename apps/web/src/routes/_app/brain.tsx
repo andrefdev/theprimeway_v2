@@ -59,7 +59,7 @@ function BrainPageContent() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 max-h-[480px] overflow-y-auto pr-1">
                 {entries.map((e) => (
                   <BrainEntryCard
                     key={e.id}

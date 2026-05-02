@@ -1,5 +1,4 @@
 import * as React from 'react'
-import { format } from 'date-fns'
 import { Calendar as CalendarIcon } from 'lucide-react'
 
 import { cn } from '@/shared/lib/utils'
@@ -13,6 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shared/components/ui/select'
+import { formatInTz, localTimeToUtc } from '@repo/shared/utils'
+import { useUserTimezone } from '@/features/settings/hooks/use-user-timezone'
 
 interface DateTimePickerProps {
   value?: Date
@@ -32,17 +33,18 @@ export function DateTimePicker({
   minuteStep = 15,
 }: DateTimePickerProps) {
   const [open, setOpen] = React.useState(false)
+  const tz = useUserTimezone()
 
-  const hour = value?.getHours() ?? 9
-  const minute = value?.getMinutes() ?? 0
+  const hour = value ? Number(formatInTz(value, tz, 'HH')) : 9
+  const minute = value ? Number(formatInTz(value, tz, 'mm')) : 0
 
   const minuteOptions: number[] = []
   for (let m = 0; m < 60; m += minuteStep) minuteOptions.push(m)
 
   function withTime(base: Date, h: number, m: number): Date {
-    const next = new Date(base)
-    next.setHours(h, m, 0, 0)
-    return next
+    const hh = String(h).padStart(2, '0')
+    const mm = String(m).padStart(2, '0')
+    return localTimeToUtc(base, `${hh}:${mm}`, tz)
   }
 
   function handleDateSelect(d: Date | undefined) {
@@ -76,7 +78,7 @@ export function DateTimePicker({
           disabled={disabled}
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
-          {value ? format(value, 'PPP · HH:mm') : <span>{placeholder}</span>}
+          {value ? formatInTz(value, tz, 'PPP · HH:mm') : <span>{placeholder}</span>}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">

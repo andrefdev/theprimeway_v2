@@ -135,6 +135,94 @@ async function send(to: string, subject: string, html: string, text: string) {
   })
 }
 
+function ambassadorApprovedTemplate(name: string | null, code: string, tierName: string, commissionPct: number) {
+  const greet = name ? `¡Felicitaciones, ${name}!` : '¡Felicitaciones!'
+  const link = `${APP_URL}/?ref=${code}`
+  const html = baseLayout(
+    `Bienvenido al Programa de Embajadores de ${BRAND}`,
+    `<h1 style="font-size:22px;color:#1a1a1f;margin:0 0 8px 0;">${greet}</h1>
+     <p style="color:#374151;line-height:1.5;margin:0 0 16px 0;">Tu solicitud para ser embajador de <strong>${BRAND}</strong> ha sido <strong>aprobada</strong>. Ahora eres parte de un grupo selecto de creadores que comparten nuestra misión.</p>
+     <div style="margin:24px 0;padding:24px;background:#f5f6f8;border:1px solid #e5e7eb;border-radius:12px;text-align:center;">
+       <div style="font-size:12px;letter-spacing:2px;color:#6b7280;text-transform:uppercase;margin-bottom:8px;">Tu código de referido</div>
+       <div style="font-size:32px;font-weight:700;letter-spacing:4px;color:#4f46e5;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;">${code}</div>
+       <div style="margin-top:12px;font-size:13px;color:#6b7280;">Link: <a href="${link}" style="color:#4f46e5;">${link}</a></div>
+     </div>
+     <h2 style="font-size:16px;color:#1a1a1f;margin:24px 0 8px 0;">Tu tier inicial: ${tierName}</h2>
+     <ul style="color:#374151;line-height:1.7;padding-left:20px;margin:0 0 16px 0;">
+       <li><strong>${commissionPct}% de comisión recurrente</strong> sobre cada usuario referido que pague suscripción</li>
+       <li>Mientras más referidos pagos atraigas, subes de tier y aumenta tu %</li>
+       <li>Pagos mensuales según tu método preferido (lo configuras en tu dashboard)</li>
+     </ul>
+     <a href="${APP_URL}/ambassador" style="display:inline-block;padding:12px 20px;background:#4f46e5;color:#fff;text-decoration:none;border-radius:10px;font-weight:600;margin-top:8px;">Abrir tu dashboard</a>
+     <p style="color:#6b7280;font-size:13px;margin-top:24px;">Si tienes preguntas, responde a este correo. Estamos para apoyarte.</p>`,
+  )
+  return {
+    subject: `🎉 Eres embajador oficial de ${BRAND}`,
+    html,
+    text: `${greet} Tu solicitud fue aprobada. Tu código: ${code}. Link: ${link}. Comisión: ${commissionPct}% recurrente. Dashboard: ${APP_URL}/ambassador`,
+  }
+}
+
+function ambassadorRejectedTemplate(name: string | null, reason: string) {
+  const greet = name ? `Hola, ${name}` : 'Hola'
+  const html = baseLayout(
+    `Sobre tu solicitud de embajador`,
+    `<h1 style="font-size:22px;color:#1a1a1f;margin:0 0 8px 0;">${greet}</h1>
+     <p style="color:#374151;line-height:1.5;margin:0 0 16px 0;">Gracias por tu interés en el programa de embajadores de ${BRAND}. Después de revisar tu solicitud, no podremos avanzar contigo en este momento.</p>
+     <div style="margin:16px 0;padding:16px;background:#fef3c7;border-left:4px solid #f59e0b;border-radius:8px;">
+       <div style="font-size:13px;color:#78350f;font-weight:600;margin-bottom:4px;">Motivo:</div>
+       <div style="color:#78350f;line-height:1.5;">${reason}</div>
+     </div>
+     <p style="color:#374151;line-height:1.5;margin:16px 0;">Esto no es definitivo. Podrás reaplicar en 30 días si tu situación cambia.</p>
+     <p style="color:#6b7280;font-size:13px;margin-top:24px;">Gracias por usar ${BRAND}.</p>`,
+  )
+  return {
+    subject: `Sobre tu solicitud de embajador`,
+    html,
+    text: `${greet}, tu solicitud no fue aprobada. Motivo: ${reason}. Podrás reaplicar en 30 días.`,
+  }
+}
+
+function ambassadorTierUpTemplate(name: string | null, tierName: string, commissionPct: number, perks: string[]) {
+  const greet = name ? `¡${name}!` : '¡Felicitaciones!'
+  const perksList = perks.map((p) => `<li>${p}</li>`).join('')
+  const html = baseLayout(
+    `¡Subiste a ${tierName}!`,
+    `<h1 style="font-size:24px;color:#1a1a1f;margin:0 0 8px 0;">${greet} 🚀</h1>
+     <p style="color:#374151;line-height:1.5;margin:0 0 16px 0;">Has alcanzado el tier <strong>${tierName}</strong> en el programa de embajadores. Tu comisión recurrente sube a <strong>${commissionPct}%</strong>.</p>
+     <h2 style="font-size:16px;margin:16px 0 8px 0;">Lo que desbloqueas:</h2>
+     <ul style="color:#374151;line-height:1.7;padding-left:20px;">${perksList}</ul>
+     <a href="${APP_URL}/ambassador" style="display:inline-block;padding:12px 20px;background:#4f46e5;color:#fff;text-decoration:none;border-radius:10px;font-weight:600;margin-top:16px;">Ver dashboard</a>`,
+  )
+  return {
+    subject: `🚀 Subiste a ${tierName} — comisión ${commissionPct}%`,
+    html,
+    text: `${greet} Subiste a ${tierName}. Comisión ${commissionPct}%. Dashboard: ${APP_URL}/ambassador`,
+  }
+}
+
+function ambassadorPayoutTemplate(name: string | null, amountCents: number, method: string, ref: string | null) {
+  const amount = (amountCents / 100).toFixed(2)
+  const greet = name ? `¡Hola, ${name}!` : '¡Hola!'
+  const html = baseLayout(
+    `Pago enviado`,
+    `<h1 style="font-size:22px;color:#1a1a1f;margin:0 0 8px 0;">${greet}</h1>
+     <p style="color:#374151;line-height:1.5;margin:0 0 16px 0;">Acabamos de enviarte un pago por tus comisiones de embajador.</p>
+     <div style="margin:24px 0;padding:24px;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:12px;">
+       <div style="font-size:12px;color:#065f46;text-transform:uppercase;letter-spacing:2px;margin-bottom:8px;">Monto</div>
+       <div style="font-size:36px;font-weight:700;color:#047857;">$${amount} USD</div>
+       <div style="margin-top:12px;font-size:14px;color:#065f46;">Método: <strong>${method}</strong></div>
+       ${ref ? `<div style="font-size:13px;color:#065f46;">Referencia: ${ref}</div>` : ''}
+     </div>
+     <p style="color:#6b7280;font-size:13px;">Gracias por ayudarnos a crecer.</p>`,
+  )
+  return {
+    subject: `💰 Pago enviado: $${amount} USD`,
+    html,
+    text: `${greet} Te enviamos $${amount} USD vía ${method}.${ref ? ` Ref: ${ref}` : ''}`,
+  }
+}
+
 export const emailService = {
   async sendRegisterOtp(to: string, code: string) {
     const tpl = otpVerifyTemplate(code)
@@ -148,6 +236,26 @@ export const emailService = {
 
   async sendWelcome(to: string, name: string | null) {
     const tpl = welcomeTemplate(name)
+    await send(to, tpl.subject, tpl.html, tpl.text)
+  },
+
+  async sendAmbassadorApproved(to: string, name: string | null, code: string, tierName: string, commissionPct: number) {
+    const tpl = ambassadorApprovedTemplate(name, code, tierName, commissionPct)
+    await send(to, tpl.subject, tpl.html, tpl.text)
+  },
+
+  async sendAmbassadorRejected(to: string, name: string | null, reason: string) {
+    const tpl = ambassadorRejectedTemplate(name, reason)
+    await send(to, tpl.subject, tpl.html, tpl.text)
+  },
+
+  async sendAmbassadorTierUp(to: string, name: string | null, tierName: string, commissionPct: number, perks: string[]) {
+    const tpl = ambassadorTierUpTemplate(name, tierName, commissionPct, perks)
+    await send(to, tpl.subject, tpl.html, tpl.text)
+  },
+
+  async sendAmbassadorPayout(to: string, name: string | null, amountCents: number, method: string, ref: string | null) {
+    const tpl = ambassadorPayoutTemplate(name, amountCents, method, ref)
     await send(to, tpl.subject, tpl.html, tpl.text)
   },
 }

@@ -14,6 +14,16 @@ import {
 import { ChevronLeftIcon, ChevronRightIcon } from '@/shared/components/Icons'
 import { Button } from '@/shared/components/ui/button'
 import { SkeletonList } from '@/shared/components/ui/skeleton-list'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/shared/components/ui/alert-dialog'
 import { useLocale } from '@/i18n/useLocale'
 import { cn } from '@/shared/lib/utils'
 import { useCalendarItems, type CalendarItem } from '../hooks/use-calendar-items'
@@ -49,6 +59,8 @@ export function GoogleCalendarView() {
   const [taskQuickView, setTaskQuickView] = useState<{ task: Task; anchor: HTMLElement } | null>(null)
   const [eventQuickView, setEventQuickView] = useState<{ item: CalendarItem; anchor: HTMLElement } | null>(null)
   const [editingEvent, setEditingEvent] = useState<CalendarItem | null>(null)
+  const [pendingDeleteTask, setPendingDeleteTask] = useState<Task | null>(null)
+  const [pendingDeleteEvent, setPendingDeleteEvent] = useState<CalendarItem | null>(null)
   const deleteEvent = useDeleteGoogleEvent()
   const updateTask = useUpdateTask()
   const deleteTask = useDeleteTask()
@@ -212,16 +224,10 @@ export function GoogleCalendarView() {
             setTaskQuickView(null)
           }
         }}
-        onDelete={async () => {
+        onDelete={() => {
           if (!taskQuickView) return
-          if (!window.confirm(t('confirmDelete', { ns: 'tasks', defaultValue: 'Delete this task?' }))) return
-          try {
-            await deleteTask.mutateAsync(taskQuickView.task.id)
-            toast.success(t('taskDeleted', { ns: 'tasks' }))
-            setTaskQuickView(null)
-          } catch {
-            toast.error(t('failedToDelete', { ns: 'tasks' }))
-          }
+          setPendingDeleteTask(taskQuickView.task)
+          setTaskQuickView(null)
         }}
         onToggleComplete={async () => {
           if (!taskQuickView) return
@@ -246,21 +252,12 @@ export function GoogleCalendarView() {
             setEventQuickView(null)
           }
         }}
-        onDelete={async () => {
+        onDelete={() => {
           if (!eventQuickView) return
           const it = eventQuickView.item
           if (!it.googleCalendarId || !it.googleEventId) return
-          if (!window.confirm('Delete this event from Google Calendar?')) return
-          try {
-            await deleteEvent.mutateAsync({
-              calendarId: it.googleCalendarId,
-              eventId: it.googleEventId,
-            })
-            toast.success('Event deleted')
-            setEventQuickView(null)
-          } catch (e) {
-            toast.error(e instanceof Error ? e.message : 'Failed to delete')
-          }
+          setPendingDeleteEvent(it)
+          setEventQuickView(null)
         }}
       />
 
@@ -276,6 +273,86 @@ export function GoogleCalendarView() {
           defaultEnd={eventCreateSlot.end}
         />
       )}
+
+      <AlertDialog
+        open={!!pendingDeleteTask}
+        onOpenChange={(v) => !v && setPendingDeleteTask(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t('deleteTaskConfirmTitle', { ns: 'tasks', defaultValue: 'Delete this task?' })}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('deleteTaskConfirmBody', {
+                ns: 'tasks',
+                title: pendingDeleteTask?.title,
+                defaultValue: `"${pendingDeleteTask?.title ?? ''}" will be permanently deleted. This cannot be undone.`,
+              })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>
+              {t('cancel', { ns: 'common', defaultValue: 'Cancel' })}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              disabled={deleteTask.isPending}
+              onClick={async (e) => {
+                e.preventDefault()
+                if (!pendingDeleteTask) return
+                try {
+                  await deleteTask.mutateAsync(pendingDeleteTask.id)
+                  toast.success(t('taskDeleted', { ns: 'tasks' }))
+                  setPendingDeleteTask(null)
+                } catch {
+                  toast.error(t('failedToDelete', { ns: 'tasks' }))
+                }
+              }}
+            >
+              {t('delete', { ns: 'common', defaultValue: 'Delete' })}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={!!pendingDeleteEvent}
+        onOpenChange={(v) => !v && setPendingDeleteEvent(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this event?</AlertDialogTitle>
+            <AlertDialogDescription>
+              "{pendingDeleteEvent?.title}" will be permanently removed from Google Calendar. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              disabled={deleteEvent.isPending}
+              onClick={async (e) => {
+                e.preventDefault()
+                const it = pendingDeleteEvent
+                if (!it?.googleCalendarId || !it.googleEventId) return
+                try {
+                  await deleteEvent.mutateAsync({
+                    calendarId: it.googleCalendarId,
+                    eventId: it.googleEventId,
+                  })
+                  toast.success('Event deleted')
+                  setPendingDeleteEvent(null)
+                } catch (err) {
+                  toast.error(err instanceof Error ? err.message : 'Failed to delete')
+                }
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

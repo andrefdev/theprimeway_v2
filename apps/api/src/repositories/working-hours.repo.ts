@@ -55,3 +55,29 @@ class WorkingHoursRepository {
 }
 
 export const workingHoursRepo = new WorkingHoursRepository()
+
+export interface WorkingHoursOverrideInput {
+  startTime: string
+  endTime: string
+}
+
+class WorkingHoursOverrideRepository {
+  findByDate(userId: string, date: string) {
+    return prisma.workingHoursOverride.findUnique({ where: { userId_date: { userId, date } } })
+  }
+
+  upsert(userId: string, date: string, data: WorkingHoursOverrideInput) {
+    return prisma.workingHoursOverride.upsert({
+      where: { userId_date: { userId, date } },
+      update: data,
+      create: { userId, date, ...data },
+    })
+  }
+
+  async deleteByDate(userId: string, date: string): Promise<boolean> {
+    const r = await prisma.workingHoursOverride.deleteMany({ where: { userId, date } })
+    return r.count > 0
+  }
+}
+
+export const workingHoursOverrideRepo = new WorkingHoursOverrideRepository()

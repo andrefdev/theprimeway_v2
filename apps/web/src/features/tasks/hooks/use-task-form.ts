@@ -29,6 +29,8 @@ export interface UseTaskFormOptions {
   autoEstimate?: boolean
   /** Enable repeat controls (only meaningful on create). */
   enableRepeat?: boolean
+  /** Pass `autoSchedule: true` on create so server fits task into first free gap. */
+  autoSchedule?: boolean
   onSaved?: () => void
 }
 
@@ -64,6 +66,7 @@ export function useTaskForm({
   defaultBucket,
   autoEstimate = false,
   enableRepeat = false,
+  autoSchedule = false,
   onSaved,
 }: UseTaskFormOptions): UseTaskFormReturn {
   const { t } = useTranslation('tasks')
@@ -221,7 +224,10 @@ export function useTaskForm({
           })
           toast.success(t('seriesCreated'))
         } else {
-          await createTask.mutateAsync(data)
+          const payload = autoSchedule && !data.scheduledStart && !data.isAllDay
+            ? { ...data, autoSchedule: true }
+            : data
+          await createTask.mutateAsync(payload as typeof data)
           toast.success(t('taskCreated'))
         }
         onSaved?.()

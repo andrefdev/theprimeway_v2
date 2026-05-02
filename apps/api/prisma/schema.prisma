@@ -132,7 +132,6 @@ model Task {
   timerEvents        TimerEvent[]
   goalLinks          TaskGoal[]
   habitLogs          HabitLog[]
-  calendarBindings   TaskCalendarBinding[]
   channel            Channel?              @relation(fields: [channelId], references: [id], onDelete: SetNull)
   recurringSeries    RecurringSeries?      @relation(fields: [recurringSeriesId], references: [id], onDelete: SetNull)
   recurringParent    Task?                 @relation("RecurringInstances", fields: [recurringParentId], references: [id], onDelete: SetNull)
@@ -200,6 +199,8 @@ model UserSettings {
   lateTimerMode             LateTimerMode @default(PROMPT) @map("late_timer_mode")
 
   // RITUALS
+  // planDayAtTime / endDayAtTime are local-clock "HH:mm" strings interpreted in `timezone`.
+  // Materialized RitualInstance.scheduledFor is always UTC.
   planDayAtTime       String? @default("08:00") @map("plan_day_at_time")
   endDayAtTime        String? @default("18:00") @map("end_day_at_time")
   autoRolloverEnabled Boolean @default(true) @map("auto_rollover_enabled")
@@ -360,8 +361,9 @@ model User {
   goals               Goal[]
   contexts            Context[]
   channels            Channel[]
-  workingSessions     WorkingSession[]
-  workingHoursEntries WorkingHours[]
+  workingSessions      WorkingSession[]
+  workingHoursEntries  WorkingHours[]
+  workingHoursOverrides WorkingHoursOverride[]
   recurringSeries     RecurringSeries[]
   rituals             Ritual[]
   ritualInstances     RitualInstance[]
@@ -374,6 +376,13 @@ model User {
   // Second Brain (Phase 4 MVP — text only)
   brainEntries    BrainEntry[]
   brainCrossLinks BrainCrossLink[]
+
+  // Ambassador / Referral program
+  referredByAmbassadorId String?   @map("referred_by_ambassador_id")
+  referredByAmbassador   Ambassador? @relation("AmbassadorReferrer", fields: [referredByAmbassadorId], references: [id], onDelete: SetNull)
+  referralEnteredAt      DateTime? @map("referral_entered_at")
+  ambassador             Ambassador? @relation("AmbassadorUser")
+  referralRecord         Referral?   @relation("ReferredUser")
 }
 
 enum UserRole {
@@ -601,7 +610,6 @@ model Calendar {
   updatedAt          DateTime? @updatedAt @map("updated_at")
 
   account       CalendarAccount        @relation(fields: [calendarAccountId], references: [id], onDelete: Cascade)
-  bindings      TaskCalendarBinding[]
   watchChannels CalendarWatchChannel[]
   events        CalendarEvent[]
 
@@ -625,28 +633,6 @@ model CalendarWatchChannel {
   @@index([calendarId])
   @@index([expiresAt])
   @@map("calendar_watch_channels")
-}
-
-model TaskCalendarBinding {
-  id                       String    @id @default(uuid())
-  taskId                   String    @map("task_id")
-  calendarId               String    @map("calendar_id")
-  calendarProvider         String
-  externalEventId          String?
-  externalRecurringEventId String?
-  lastSyncedAt             DateTime?
-  lastSyncDirection        String?
-  isActive                 Boolean?  @default(true)
-  createdAt                DateTime? @default(now()) @map("created_at")
-  updatedAt                DateTime? @updatedAt @map("updated_at")
-
-  task     Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  calendar Calendar @relation(fields: [calendarId], references: [id], onDelete: Cascade)
-
-  @@index([taskId])
-  @@index([calendarId])
-  @@index([externalEventId])
-  @@map("task_calendar_bindings")
 }
 
 model UserDevice {
@@ -1027,7 +1013,8 @@ model WorkingHours {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   channelId String?  @map("channel_id")
   channel   Channel? @relation(fields: [channelId], references: [id], onDelete: Cascade)
-  dayOfWeek Int      @map("day_of_week") // 0=Sunday .. 6=Saturday
+  dayOfWeek Int      @map("day_of_week") // 0=Sunday .. 6=Saturday in user's local tz
+  // Local-clock "HH:mm" interpreted in UserSettings.timezone. Never store device-local times.
   startTime String   @map("start_time") // "09:00"
   endTime   String   @map("end_time") // "17:00"
   createdAt DateTime @default(now()) @map("created_at")
@@ -1036,6 +1023,23 @@ model WorkingHours {
   @@index([userId])
   @@index([channelId])
   @@map("working_hours")
+}
+
+// Per-day override of working hours (Sunsama-style draggable day bars).
+// When present, takes precedence over WorkingHours for that user+date.
+model WorkingHoursOverride {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date      String // YYYY-MM-DD in user's tz
+  startTime String   @map("start_time") // "HH:mm"
+  endTime   String   @map("end_time") // "HH:mm"
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, date])
+  @@index([userId])
+  @@map("working_hours_overrides")
 }
 
 // ----- RecurringSeries -----
@@ -1297,4 +1301,169 @@ model BrainCrossLink {
   @@index([entryId])
   @@index([targetType, targetId])
   @@map("brain_cross_links")
+}
+
+// ─── Ambassador / Referral Program ───────────────────────────────────────────
+
+model Ambassador {
+  id     String @id @default(cuid())
+  userId String @unique @map("user_id")
+  user   User   @relation("AmbassadorUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  status          AmbassadorStatus @default(PENDING)
+  rejectionReason String?          @map("rejection_reason")
+
+  fullName        String              @map("full_name")
+  contactPhone    String?             @map("contact_phone")
+  country         String // ISO-2
+  primaryPlatform AmbassadorPlatform  @map("primary_platform")
+  primaryHandle   String              @map("primary_handle")
+  audienceSize    Int?                @map("audience_size")
+  niche           String?
+  motivation      String              @db.Text
+  promoChannels   String[]            @map("promo_channels")
+  sampleUrls      String[]            @map("sample_urls")
+  socialLinks     Json?               @map("social_links")
+  payoutMethod    String?             @map("payout_method") // 'paypal' | 'wise' | 'bank'
+  payoutDetails   Json?               @map("payout_details")
+  agreedToTerms   Boolean             @default(false) @map("agreed_to_terms")
+
+  referralCode        String?  @unique @map("referral_code")
+  tierId              String?  @map("tier_id")
+  tier                AmbassadorTier? @relation(fields: [tierId], references: [id])
+  customCommissionPct Decimal? @map("custom_commission_pct") @db.Decimal(5, 2)
+
+  appliedAt  DateTime  @default(now()) @map("applied_at")
+  reviewedAt DateTime? @map("reviewed_at")
+  reviewedBy String?   @map("reviewed_by")
+  approvedAt DateTime? @map("approved_at")
+
+  referrals      Referral[]
+  payouts        AmbassadorPayout[]
+  commissions    Commission[]
+  referredUsers  User[]             @relation("AmbassadorReferrer")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@index([referralCode])
+  @@map("ambassadors")
+}
+
+model AmbassadorTier {
+  id                 String   @id @default(uuid())
+  name               String   @unique
+  order              Int      @unique
+  minActiveReferrals Int      @map("min_active_referrals")
+  commissionPct      Decimal  @map("commission_pct") @db.Decimal(5, 2)
+  perks              String[]
+  badgeColor         String?  @map("badge_color")
+  ambassadors        Ambassador[]
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  @@map("ambassador_tiers")
+}
+
+model Referral {
+  id             String     @id @default(cuid())
+  ambassadorId   String     @map("ambassador_id")
+  ambassador     Ambassador @relation(fields: [ambassadorId], references: [id], onDelete: Cascade)
+  referredUserId String     @unique @map("referred_user_id")
+  referredUser   User       @relation("ReferredUser", fields: [referredUserId], references: [id], onDelete: Cascade)
+
+  source      ReferralSource @default(SIGNUP_CODE)
+  status      ReferralStatus @default(SIGNED_UP)
+  firstPaidAt DateTime?      @map("first_paid_at")
+  churnedAt   DateTime?      @map("churned_at")
+
+  commissions Commission[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([ambassadorId, status])
+  @@map("referrals")
+}
+
+model Commission {
+  id           String     @id @default(cuid())
+  ambassadorId String     @map("ambassador_id")
+  ambassador   Ambassador @relation(fields: [ambassadorId], references: [id], onDelete: Cascade)
+  referralId   String     @map("referral_id")
+  referral     Referral   @relation(fields: [referralId], references: [id], onDelete: Cascade)
+
+  periodMonth      String  @map("period_month") // 'YYYY-MM'
+  subscriptionId   String? @map("subscription_id")
+  grossAmountCents Int     @map("gross_amount_cents")
+  commissionPct    Decimal @map("commission_pct") @db.Decimal(5, 2)
+  amountCents      Int     @map("amount_cents")
+
+  status   CommissionStatus  @default(PENDING)
+  payoutId String?           @map("payout_id")
+  payout   AmbassadorPayout? @relation(fields: [payoutId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([referralId, periodMonth])
+  @@index([ambassadorId, status])
+  @@map("commissions")
+}
+
+model AmbassadorPayout {
+  id           String     @id @default(cuid())
+  ambassadorId String     @map("ambassador_id")
+  ambassador   Ambassador @relation(fields: [ambassadorId], references: [id], onDelete: Cascade)
+  amountCents  Int        @map("amount_cents")
+  method       String // 'paypal' | 'wise' | 'manual' | 'bank'
+  externalRef  String?    @map("external_ref")
+  notes        String?
+  paidAt       DateTime   @map("paid_at")
+  paidBy       String     @map("paid_by")
+  commissions  Commission[]
+  createdAt    DateTime   @default(now()) @map("created_at")
+
+  @@index([ambassadorId])
+  @@map("ambassador_payouts")
+}
+
+enum AmbassadorStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum AmbassadorPlatform {
+  YOUTUBE
+  INSTAGRAM
+  TIKTOK
+  TWITTER
+  NEWSLETTER
+  BLOG
+  PODCAST
+  LINKEDIN
+  OTHER
+}
+
+enum ReferralSource {
+  SIGNUP_CODE
+  LATE_ENTRY
+  LINK
+}
+
+enum ReferralStatus {
+  SIGNED_UP
+  TRIAL
+  ACTIVE
+  CHURNED
+}
+
+enum CommissionStatus {
+  PENDING
+  APPROVED
+  PAID
+  CLAWED_BACK
 }

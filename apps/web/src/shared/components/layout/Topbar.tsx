@@ -21,7 +21,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/shared/components/ui/dropdown-menu'
-import { PanelLeftOpen, LogOut, Settings, User } from 'lucide-react'
+import { PanelLeftOpen, LogOut, Settings, User, Sparkles } from 'lucide-react'
+import { useAmbassadorMe } from '@/features/ambassador/queries'
 import { NotificationBell } from '@/features/notifications/components/NotificationBell'
 import { PomodoroMiniTimer } from '@/shared/components/PomodoroMiniTimer'
 import { ActiveTaskHeaderBadge } from '@/features/tasks/components/ActiveTaskHeaderBadge'
@@ -80,6 +81,8 @@ export function Header() {
   const isMobile = useIsMobile()
   const user = useAuthStore((s) => s.user)
   const logout = useAuthStore((s) => s.logout)
+  const { data: ambassadorMe } = useAmbassadorMe()
+  const ambassadorApproved = ambassadorMe?.status === 'APPROVED'
 
   const segments = buildBreadcrumbs(location.pathname, t)
 
@@ -175,6 +178,14 @@ export function Header() {
                   {t('navSettings')}
                 </Link>
               </DropdownMenuItem>
+              {ambassadorApproved && (
+                <DropdownMenuItem asChild>
+                  <Link to={'/ambassador' as const} onClick={handleNavClick}>
+                    <Sparkles className="mr-2 h-4 w-4 text-indigo-500" />
+                    {t('navAmbassador', { defaultValue: 'Embajador' })}
+                  </Link>
+                </DropdownMenuItem>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => {

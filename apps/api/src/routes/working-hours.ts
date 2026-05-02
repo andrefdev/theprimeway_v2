@@ -2,7 +2,7 @@ import { OpenAPIHono } from '@hono/zod-openapi'
 import { z } from 'zod'
 import type { AppEnv } from '../types/env'
 import { authMiddleware } from '../middleware/auth'
-import { workingHoursService } from '../services/working-hours.service'
+import { workingHoursService, workingHoursOverrideService } from '../services/working-hours.service'
 
 export const workingHoursRoutes = new OpenAPIHono<AppEnv>()
 workingHoursRoutes.use('*', authMiddleware)
@@ -48,4 +48,37 @@ workingHoursRoutes.put('/', async (c) => {
   const body = z.array(createSchema).parse(await c.req.json())
   const count = await workingHoursService.bulkReplace(userId, c.req.query('channelId') ?? null, body)
   return c.json({ data: { ok: true, count } })
+})
+
+// ---- Per-day overrides (Sunsama-style draggable day bars) ------------------
+const datePathRe = /^\d{4}-\d{2}-\d{2}$/
+const overrideSchema = z.object({ startTime: hhmm, endTime: hhmm })
+
+workingHoursRoutes.get('/overrides/:date', async (c) => {
+  const userId = c.get('user').userId
+  const date = c.req.param('date')
+  if (!datePathRe.test(date)) return c.json({ error: 'Invalid date' }, 400)
+  const row = await workingHoursOverrideService.find(userId, date)
+  return c.json({ data: row })
+})
+
+workingHoursRoutes.put('/overrides/:date', async (c) => {
+  const userId = c.get('user').userId
+  const date = c.req.param('date')
+  if (!datePathRe.test(date)) return c.json({ error: 'Invalid date' }, 400)
+  const body = overrideSchema.parse(await c.req.json())
+  try {
+    const row = await workingHoursOverrideService.upsert(userId, date, body)
+    return c.json({ data: row })
+  } catch (e) {
+    return c.json({ error: (e as Error).message }, 400)
+  }
+})
+
+workingHoursRoutes.delete('/overrides/:date', async (c) => {
+  const userId = c.get('user').userId
+  const date = c.req.param('date')
+  if (!datePathRe.test(date)) return c.json({ error: 'Invalid date' }, 400)
+  await workingHoursOverrideService.delete(userId, date)
+  return c.body(null, 204)
 })

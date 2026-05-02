@@ -6,6 +6,16 @@ import {
   Dialog,
   DialogContent,
 } from '@/shared/components/ui/dialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/shared/components/ui/alert-dialog'
 import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
 import { Textarea } from '@/shared/components/ui/textarea'
@@ -137,6 +147,7 @@ export function EventEditDialog({ open, onClose, item, defaultStart, defaultEnd 
   const [hasMeet, setHasMeet] = useState(Boolean(item?.hangoutLink))
   const [meetWasOriginallyOn] = useState(Boolean(item?.hangoutLink))
   const [meetCopied, setMeetCopied] = useState(false)
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
 
   // Default calendar when in create mode and accounts loaded
   useEffect(() => {
@@ -261,10 +272,10 @@ export function EventEditDialog({ open, onClose, item, defaultStart, defaultEnd 
 
   async function handleDelete() {
     if (!item?.googleCalendarId || !item.googleEventId) return
-    if (!window.confirm('Delete this event from Google Calendar?')) return
     try {
       await del.mutateAsync({ calendarId: item.googleCalendarId, eventId: item.googleEventId })
       toast.success('Event deleted')
+      setConfirmDeleteOpen(false)
       onClose()
     } catch (e: any) {
       toast.error(e?.message ?? 'Failed to delete')
@@ -307,13 +318,13 @@ export function EventEditDialog({ open, onClose, item, defaultStart, defaultEnd 
         {/* Body */}
         <div className="px-6 py-5 space-y-5">
           {/* Title + Description */}
-          <div className="space-y-1">
+          <div className="space-y-2">
             <div className="flex items-start gap-3">
               <Popover open={colorPopoverOpen} onOpenChange={setColorPopoverOpen}>
                 <PopoverTrigger asChild>
                   <button
                     type="button"
-                    className="mt-3 size-3 rounded-full ring-offset-2 ring-foreground/20 hover:ring-2 transition shrink-0"
+                    className="mt-3.5 size-3 rounded-full ring-offset-2 ring-foreground/20 hover:ring-2 transition shrink-0"
                     style={{ backgroundColor: colorHex }}
                     title="Change color"
                   />
@@ -344,7 +355,7 @@ export function EventEditDialog({ open, onClose, item, defaultStart, defaultEnd 
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Add title"
                 autoFocus
-                className="!text-xl font-semibold border-0 focus-visible:ring-0 shadow-none px-0 h-auto py-1 placeholder:font-normal placeholder:text-muted-foreground/60"
+                className="!text-xl font-semibold border-0 focus-visible:ring-0 shadow-none px-3 pr-4 h-auto py-2 min-w-0 flex-1 placeholder:font-normal placeholder:text-muted-foreground/60"
               />
             </div>
             <Textarea
@@ -352,7 +363,7 @@ export function EventEditDialog({ open, onClose, item, defaultStart, defaultEnd 
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Add description here…"
               rows={2}
-              className="border-0 focus-visible:ring-0 shadow-none px-0 ml-6 resize-none text-sm placeholder:text-muted-foreground/60"
+              className="border-0 focus-visible:ring-0 shadow-none px-3 pr-4 py-2 ml-6 mr-2 resize-none text-sm placeholder:text-muted-foreground/60"
             />
           </div>
 
@@ -536,7 +547,7 @@ export function EventEditDialog({ open, onClose, item, defaultStart, defaultEnd 
             <Button
               variant="ghost"
               size="sm"
-              onClick={handleDelete}
+              onClick={() => setConfirmDeleteOpen(true)}
               disabled={del.isPending}
               className="text-destructive gap-1 h-8"
             >
@@ -560,6 +571,30 @@ export function EventEditDialog({ open, onClose, item, defaultStart, defaultEnd 
             </Button>
           </div>
         </div>
+
+        <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete this event?</AlertDialogTitle>
+              <AlertDialogDescription>
+                "{item?.title}" will be permanently removed from Google Calendar. This cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                variant="destructive"
+                onClick={(e) => {
+                  e.preventDefault()
+                  handleDelete()
+                }}
+                disabled={del.isPending}
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </DialogContent>
     </Dialog>
   )

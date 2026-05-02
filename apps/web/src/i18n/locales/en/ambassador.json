@@ -1,0 +1,87 @@
+{
+  "tabAmbassador": "Ambassador",
+  "banner": {
+    "badge": "Ambassador Program",
+    "title": "Become a ThePrimeWay ambassador",
+    "subtitle": "Share ThePrimeWay with your audience and earn recurring commissions for every user you bring. The more paid referrals you attract, the higher your tier and your %.",
+    "perk1Title": "20% recurring commission",
+    "perk1Desc": "Every month your referral pays, you earn",
+    "perk2Title": "Tier up",
+    "perk2Desc": "Bronze → Silver → Gold → Platinum. Up to 30%",
+    "perk3Title": "Exclusive perks",
+    "perk3Desc": "Co-marketing, priority support, custom partnerships",
+    "cta": "Apply now"
+  },
+  "form": {
+    "title": "Apply as ambassador",
+    "description": "Tell us about you and your audience. We review every application manually.",
+    "fullName": "Full name",
+    "phone": "Phone (optional)",
+    "country": "Country",
+    "niche": "Niche",
+    "platform": "Primary platform",
+    "handle": "Handle / username",
+    "audienceSize": "Audience size",
+    "motivation": "Why do you want to be an ambassador? (min 100 chars)",
+    "motivationPlaceholder": "Tell us what connects you to ThePrimeWay and how you plan to share it...",
+    "promoChannels": "How will you promote",
+    "sampleUrls": "Sample URLs (relevant content)",
+    "socialLinks": "Other social media (optional)",
+    "terms": "I accept the ambassador program terms: recurring commissions while the referral keeps paying, no clawback in MVP, possible suspension for fraud or spam.",
+    "cancel": "Cancel",
+    "submit": "Submit application",
+    "submitting": "Submitting...",
+    "submitted": "Application sent. We'll notify you by email and notification.",
+    "errors": {
+      "fullName": "Full name required",
+      "motivation": "Motivation min 100 characters",
+      "terms": "You must accept the terms"
+    }
+  },
+  "pending": {
+    "title": "Application under review",
+    "message": "We're reviewing your application. Usually takes 1-3 days. We'll notify you by email and notification when there's a response."
+  },
+  "rejected": {
+    "title": "Application not approved",
+    "reason": "Reason",
+    "retry": "You'll be able to reapply after 30 days."
+  },
+  "suspended": {
+    "title": "Account suspended",
+    "message": "Contact support for more information."
+  },
+  "approved": {
+    "title": "You're an ambassador",
+    "subtitle": "Share your code and start earning recurring commissions.",
+    "code": "Your code",
+    "link": "Your link",
+    "openDashboard": "Full dashboard"
+  },
+  "copied": "Copied to clipboard",
+  "dashboard": {
+    "title": "Ambassador dashboard",
+    "tier": "Tier",
+    "nextTier": "Next tier",
+    "progressTo": "Progress to {{tier}}",
+    "totalReferrals": "Total referrals",
+    "activeReferrals": "Active",
+    "accrued": "Accrued",
+    "paid": "Paid out",
+    "owed": "Pending payout",
+    "commission": "Commission",
+    "recentReferrals": "Recent referrals",
+    "commissionsHistory": "Commissions history",
+    "period": "Period",
+    "amount": "Amount",
+    "status": "Status",
+    "noReferralsYet": "No referrals yet. Share your link to start earning.",
+    "payoutMethod": {
+      "title": "Payout method",
+      "method": "Method",
+      "details": "Details (email or account)",
+      "save": "Save",
+      "saved": "Payout method saved"
+    }
+  }
+}

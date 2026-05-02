@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { differenceInMinutes, format, isSameDay } from 'date-fns'
+import { ChevronDown } from 'lucide-react'
+import { useDroppable } from '@dnd-kit/core'
 import { CheckIcon } from '@/shared/components/Icons'
 import { useLocale } from '@/i18n/useLocale'
 import { cn } from '@/shared/lib/utils'
@@ -16,6 +18,15 @@ import {
   TOTAL_HEIGHT,
   layoutItems,
 } from './constants'
+import { localTimeToUtc } from '@repo/shared/utils'
+import { useUserTimezone } from '@/features/settings/hooks/use-user-timezone'
+
+function slotStartFromMinutes(day: Date, totalMinutes: number, tz: string): Date {
+  const startMin = START_HOUR * 60 + totalMinutes
+  const hh = String(Math.floor(startMin / 60)).padStart(2, '0')
+  const mm = String(startMin % 60).padStart(2, '0')
+  return localTimeToUtc(day, `${hh}:${mm}`, tz)
+}
 
 interface TimeGridProps {
   days: Date[]
@@ -23,13 +34,40 @@ interface TimeGridProps {
   today: Date
   onSlotClick: (start: Date) => void
   onItemClick: (item: CalendarItem, anchor: HTMLElement) => void
+  /**
+   * When provided, each 30-min slot becomes a droppable target with id
+   * `slot-{ISO}` so a parent DndContext can route task-list drops here.
+   */
+  enableSlotDrop?: boolean
+  /** Visual band representing the working-hours window for the day. */
+  dayStartHour?: number
+  dayEndHour?: number
+  /**
+   * When provided, top/bottom drag handles appear on the working-hours band.
+   * Receives clock hours [0-24] in 0.5h steps. Caller persists the override.
+   */
+  onDayBoundsChange?: (next: { startHour: number; endHour: number }) => void
 }
 
-export function TimeGrid({ days, items, today, onSlotClick, onItemClick }: TimeGridProps) {
+const ALL_DAY_COLLAPSED_LIMIT = 2
+
+export function TimeGrid({
+  days,
+  items,
+  today,
+  onSlotClick,
+  onItemClick,
+  enableSlotDrop = false,
+  dayStartHour,
+  dayEndHour,
+  onDayBoundsChange,
+}: TimeGridProps) {
+  const tz = useUserTimezone()
   const { dateFnsLocale } = useLocale()
   const { t } = useTranslation('calendar')
   const scrollRef = useRef<HTMLDivElement>(null)
   const [now, setNow] = useState(() => new Date())
+  const [allDayExpanded, setAllDayExpanded] = useState(false)
 
   useEffect(() => {
     const i = setInterval(() => setNow(new Date()), 60_000)
@@ -62,6 +100,11 @@ export function TimeGrid({ days, items, today, onSlotClick, onItemClick }: TimeG
   )
 
   const hasAllDay = useMemo(() => dayBuckets.some((b) => b.allDay.length > 0), [dayBuckets])
+  const maxAllDayCount = useMemo(
+    () => dayBuckets.reduce((m, b) => Math.max(m, b.allDay.length), 0),
+    [dayBuckets],
+  )
+  const canCollapse = maxAllDayCount > ALL_DAY_COLLAPSED_LIMIT
 
   return (
     <div ref={scrollRef} className="h-full overflow-auto">
@@ -96,19 +139,61 @@ export function TimeGrid({ days, items, today, onSlotClick, onItemClick }: TimeG
 
         {hasAllDay && (
           <div className="grid border-t border-border" style={{ gridTemplateColumns: gridCols }}>
-            <div className="pr-2 py-1 text-right text-[9px] uppercase text-muted-foreground tracking-wide self-start pt-1">
-              {t('allDay')}
+            <div className="flex flex-col items-end pr-2 py-1 self-start pt-1 gap-1">
+              <span className="text-[9px] uppercase text-muted-foreground tracking-wide">
+                {t('allDay')}
+              </span>
+              {canCollapse && (
+                <button
+                  type="button"
+                  onClick={() => setAllDayExpanded((v) => !v)}
+                  className="rounded-full p-0.5 hover:bg-muted text-muted-foreground transition-colors"
+                  title={
+                    allDayExpanded
+                      ? t('collapse', { defaultValue: 'Collapse' })
+                      : t('expand', { defaultValue: 'Expand' })
+                  }
+                  aria-label={
+                    allDayExpanded
+                      ? t('collapse', { defaultValue: 'Collapse' })
+                      : t('expand', { defaultValue: 'Expand' })
+                  }
+                  aria-expanded={allDayExpanded}
+                >
+                  <ChevronDown
+                    size={14}
+                    className={cn(
+                      'transition-transform duration-150',
+                      allDayExpanded ? 'rotate-180' : 'rotate-0',
+                    )}
+                  />
+                </button>
+              )}
             </div>
-            {dayBuckets.map(({ day, allDay }) => (
-              <div
-                key={day.toISOString()}
-                className="border-l border-border p-1 space-y-0.5 min-h-[28px]"
-              >
-                {allDay.map((item) => (
-                  <AllDayChip key={item.id} item={item} onItemClick={onItemClick} />
-                ))}
-              </div>
-            ))}
+            {dayBuckets.map(({ day, allDay }) => {
+              const collapsed = canCollapse && !allDayExpanded
+              const visible = collapsed ? allDay.slice(0, ALL_DAY_COLLAPSED_LIMIT) : allDay
+              const overflow = allDay.length - visible.length
+              return (
+                <div
+                  key={day.toISOString()}
+                  className="border-l border-border p-1 space-y-0.5 min-h-[28px]"
+                >
+                  {visible.map((item) => (
+                    <AllDayChip key={item.id} item={item} onItemClick={onItemClick} />
+                  ))}
+                  {overflow > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setAllDayExpanded(true)}
+                      className="w-full text-left text-[10px] font-medium text-muted-foreground hover:text-foreground px-1.5 py-0.5"
+                    >
+                      {t('moreCount', { count: overflow, defaultValue: `${overflow} more` })}
+                    </button>
+                  )}
+                </div>
+              )
+            })}
           </div>
         )}
       </div>
@@ -131,6 +216,9 @@ export function TimeGrid({ days, items, today, onSlotClick, onItemClick }: TimeG
 
         {dayBuckets.map(({ day, laidOut }) => {
           const isToday = isSameDay(day, today)
+          const showBand = dayStartHour != null && dayEndHour != null
+          const bandTop = showBand ? (dayStartHour! - START_HOUR) * HOUR_HEIGHT : 0
+          const bandHeight = showBand ? (dayEndHour! - dayStartHour!) * HOUR_HEIGHT : 0
 
           return (
             <div
@@ -141,16 +229,22 @@ export function TimeGrid({ days, items, today, onSlotClick, onItemClick }: TimeG
               )}
               onClick={(e) => {
                 if ((e.target as HTMLElement).closest('[data-event]')) return
+                if ((e.target as HTMLElement).closest('[data-day-handle]')) return
                 const rect = e.currentTarget.getBoundingClientRect()
                 const y = e.clientY - rect.top
                 const totalMinutes = (y / HOUR_HEIGHT) * 60
                 const snapped = Math.floor(totalMinutes / SLOT_MINUTES) * SLOT_MINUTES
-                const start = new Date(day)
-                start.setHours(0, 0, 0, 0)
-                start.setMinutes(START_HOUR * 60 + snapped)
+                const start = slotStartFromMinutes(day, snapped, tz)
                 onSlotClick(start)
               }}
             >
+              {showBand && (
+                <div
+                  className="absolute left-0 right-0 bg-primary/5 pointer-events-none"
+                  style={{ top: bandTop, height: bandHeight }}
+                />
+              )}
+
               {HOURS.map((h, i) => (
                 <div
                   key={h}
@@ -158,6 +252,42 @@ export function TimeGrid({ days, items, today, onSlotClick, onItemClick }: TimeG
                   style={{ top: i * HOUR_HEIGHT }}
                 />
               ))}
+
+              {enableSlotDrop &&
+                Array.from({ length: HOURS.length * (60 / SLOT_MINUTES) }).map((_, idx) => {
+                  const slotStart = slotStartFromMinutes(day, idx * SLOT_MINUTES, tz)
+                  return (
+                    <SlotDroppable
+                      key={idx}
+                      start={slotStart}
+                      top={(idx * SLOT_MINUTES * HOUR_HEIGHT) / 60}
+                      height={(SLOT_MINUTES * HOUR_HEIGHT) / 60}
+                    />
+                  )
+                })}
+
+              {showBand && onDayBoundsChange && (
+                <DayBoundHandle
+                  position="top"
+                  top={bandTop}
+                  onChange={(deltaPx) => {
+                    const deltaHours = (deltaPx / HOUR_HEIGHT) * 2
+                    const next = clampHour(Math.round((dayStartHour! + deltaHours) * 2) / 2)
+                    if (next < dayEndHour!) onDayBoundsChange({ startHour: next, endHour: dayEndHour! })
+                  }}
+                />
+              )}
+              {showBand && onDayBoundsChange && (
+                <DayBoundHandle
+                  position="bottom"
+                  top={bandTop + bandHeight}
+                  onChange={(deltaPx) => {
+                    const deltaHours = (deltaPx / HOUR_HEIGHT) * 2
+                    const next = clampHour(Math.round((dayEndHour! + deltaHours) * 2) / 2)
+                    if (next > dayStartHour!) onDayBoundsChange({ startHour: dayStartHour!, endHour: next })
+                  }}
+                />
+              )}
 
               {laidOut.map(({ item, col, cols }) => {
                 const startHour = item.start.getHours() + item.start.getMinutes() / 60
@@ -226,6 +356,68 @@ export function TimeGrid({ days, items, today, onSlotClick, onItemClick }: TimeG
           )
         })}
       </div>
+    </div>
+  )
+}
+
+function clampHour(h: number): number {
+  if (h < 0) return 0
+  if (h > 24) return 24
+  return h
+}
+
+function SlotDroppable({ start, top, height }: { start: Date; top: number; height: number }) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: `slot-${start.toISOString()}`,
+    data: { start: start.toISOString() },
+  })
+  return (
+    <div
+      ref={setNodeRef}
+      className={cn('absolute left-0 right-0 pointer-events-auto', isOver && 'bg-primary/10')}
+      style={{ top, height, zIndex: 1 }}
+    />
+  )
+}
+
+function DayBoundHandle({
+  position,
+  top,
+  onChange,
+}: {
+  position: 'top' | 'bottom'
+  top: number
+  onChange: (deltaPx: number) => void
+}) {
+  const startY = useRef<number | null>(null)
+  return (
+    <div
+      data-day-handle
+      className={cn(
+        'absolute left-0 right-0 h-2 cursor-ns-resize z-20 group',
+        position === 'top' ? '-translate-y-1' : '-translate-y-1',
+      )}
+      style={{ top }}
+      onPointerDown={(e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
+        startY.current = e.clientY
+      }}
+      onPointerMove={(e) => {
+        if (startY.current == null) return
+        const delta = e.clientY - startY.current
+        if (Math.abs(delta) >= HOUR_HEIGHT / 2) {
+          onChange(delta)
+          startY.current = e.clientY
+        }
+      }}
+      onPointerUp={(e) => {
+        startY.current = null
+        ;(e.target as HTMLElement).releasePointerCapture(e.pointerId)
+      }}
+    >
+      <div className="h-0.5 bg-primary/40 group-hover:bg-primary transition-colors" />
     </div>
   )
 }

@@ -1,5 +1,6 @@
 import { subscriptionsRepo } from '../repositories/subscriptions.repo'
 import { bustFeatureCache } from './features.service'
+import { commissionService } from './commission.service'
 import * as crypto from 'crypto'
 
 function verifyLemonSqueezySignature(rawBody: string, signature: string): boolean {
@@ -181,6 +182,13 @@ class SubscriptionsService {
           },
         )
         bustFeatureCache(userId)
+        if (mapLsStatus(subData.status) === 'active') {
+          commissionService.onSubscriptionPaymentSuccess(userId).catch((e) => console.error('[REFERRAL_HOOK]', e))
+        }
+        break
+      }
+      case 'subscription_payment_success': {
+        commissionService.onSubscriptionPaymentSuccess(userId).catch((e) => console.error('[REFERRAL_HOOK]', e))
         break
       }
       case 'subscription_cancelled':
@@ -190,6 +198,7 @@ class SubscriptionsService {
           cancelledAt: new Date(),
         })
         bustFeatureCache(userId)
+        commissionService.onSubscriptionCancelled(userId).catch((e) => console.error('[REFERRAL_HOOK]', e))
         break
       }
     }

@@ -124,3 +124,16 @@ cronRoutes.post('/quarterly-nudge', async (c) => {
     return c.json({ error: err.message || 'Failed to process quarterly nudge' }, 500)
   }
 })
+
+// POST /monthly-commissions — accrue ambassador commissions for the period
+import { commissionService } from '../services/commission.service'
+cronRoutes.post('/monthly-commissions', async (c) => {
+  try {
+    const period = c.req.query('period') || undefined
+    const result = await commissionService.runMonthlyJob(period)
+    return c.json({ data: result }, 200)
+  } catch (err: any) {
+    console.error('[CRON_MONTHLY_COMMISSIONS]', err)
+    return c.json({ error: err.message || 'Failed' }, 500)
+  }
+})

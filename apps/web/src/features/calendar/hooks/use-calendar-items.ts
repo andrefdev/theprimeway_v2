@@ -60,23 +60,15 @@ export function useCalendarItems(dateRange: { from: string; to: string }) {
   const items = useMemo<CalendarItem[]>(() => {
     const result: CalendarItem[] = []
 
-    // Tasks → calendar items
+    // Tasks → calendar items. Only tasks with an explicit scheduledStart are
+    // placed on the grid; unscheduled tasks (or all-day) live in their list view
+    // and must not pollute the time grid.
     const tasks = (tasksQuery.data?.data ?? []) as Task[]
     for (const task of tasks) {
-      if (!task.scheduledDate) continue
+      if (!task.scheduledStart) continue
 
-      let start: Date
-      let end: Date
-
-      if (task.scheduledStart) {
-        start = parseISO(task.scheduledStart)
-        end = task.scheduledEnd ? parseISO(task.scheduledEnd) : addMinutes(start, task.estimatedDuration ?? 30)
-      } else {
-        // All-day style — place at noon
-        const datePart = task.scheduledDate.includes('T') ? task.scheduledDate.split('T')[0]! : task.scheduledDate
-        start = new Date(`${datePart}T12:00:00`)
-        end = addMinutes(start, task.estimatedDuration ?? 30)
-      }
+      const start = parseISO(task.scheduledStart)
+      const end = task.scheduledEnd ? parseISO(task.scheduledEnd) : addMinutes(start, task.estimatedDuration ?? 30)
 
       if (isNaN(start.getTime())) continue
 
@@ -87,7 +79,7 @@ export function useCalendarItems(dateRange: { from: string; to: string }) {
         title: task.title,
         start,
         end,
-        isAllDay: !task.scheduledStart,
+        isAllDay: false,
         color: colorMap[task.priority] ?? 'green',
         type: 'task',
         status: task.status,

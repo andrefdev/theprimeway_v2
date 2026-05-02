@@ -542,3 +542,120 @@ adminRoutes.openapi(sendPushRoute, async (c) => {
   if ('error' in result) return c.json({ error: 'Missing title or body' }, 400)
   return c.json(result, 200)
 })
+
+// ─── Ambassador / Referral Program admin endpoints ─────────────────────────
+import { ambassadorService } from '../services/ambassador.service'
+import type { AmbassadorStatus } from '@prisma/client'
+
+const VALID_STATUSES: AmbassadorStatus[] = ['PENDING', 'APPROVED', 'REJECTED', 'SUSPENDED']
+
+adminRoutes.get('/ambassadors', async (c) => {
+  const status = c.req.query('status')
+  const tierId = c.req.query('tierId')
+  const search = c.req.query('search')
+  const skip = Number(c.req.query('skip') || 0)
+  const take = Number(c.req.query('take') || 50)
+  const data = await ambassadorService.list({
+    status: status && (VALID_STATUSES as string[]).includes(status) ? (status as AmbassadorStatus) : undefined,
+    tierId: tierId || undefined,
+    search: search || undefined,
+    skip,
+    take,
+  })
+  return c.json({ data })
+})
+
+adminRoutes.get('/ambassadors/:id', async (c) => {
+  const data = await ambassadorService.detail(c.req.param('id'))
+  if (!data) return c.json({ error: 'Not found' }, 404)
+  return c.json({ data })
+})
+
+adminRoutes.post('/ambassadors/:id/approve', async (c) => {
+  const adminId = (c as any).get('user').userId
+  try {
+    const data = await ambassadorService.approve(c.req.param('id'), adminId)
+    return c.json({ data })
+  } catch (e) {
+    return c.json({ error: (e as Error).message }, 400)
+  }
+})
+
+adminRoutes.post('/ambassadors/:id/reject', async (c) => {
+  const adminId = (c as any).get('user').userId
+  const body = await c.req.json().catch(() => ({}))
+  const reason = typeof body.reason === 'string' && body.reason.trim() ? body.reason.trim() : null
+  if (!reason) return c.json({ error: 'reason requerido' }, 400)
+  try {
+    const data = await ambassadorService.reject(c.req.param('id'), adminId, reason)
+    return c.json({ data })
+  } catch (e) {
+    return c.json({ error: (e as Error).message }, 400)
+  }
+})
+
+adminRoutes.patch('/ambassadors/:id/tier', async (c) => {
+  const adminId = (c as any).get('user').userId
+  const body = await c.req.json().catch(() => ({}))
+  const tierId = typeof body.tierId === 'string' ? body.tierId : null
+  if (!tierId) return c.json({ error: 'tierId requerido' }, 400)
+  try {
+    const data = await ambassadorService.setTier(c.req.param('id'), tierId, adminId)
+    return c.json({ data })
+  } catch (e) {
+    return c.json({ error: (e as Error).message }, 400)
+  }
+})
+
+adminRoutes.patch('/ambassadors/:id/commission', async (c) => {
+  const body = await c.req.json().catch(() => ({}))
+  const pct = body.commissionPct === null ? null : typeof body.commissionPct === 'number' ? body.commissionPct : NaN
+  if (pct !== null && (Number.isNaN(pct) || pct < 0 || pct > 100)) {
+    return c.json({ error: 'commissionPct inválido (0-100 o null)' }, 400)
+  }
+  const data = await ambassadorService.setCommissionOverride(c.req.param('id'), pct)
+  return c.json({ data })
+})
+
+adminRoutes.post('/ambassadors/:id/suspend', async (c) => {
+  const data = await ambassadorService.suspend(c.req.param('id'))
+  return c.json({ data })
+})
+
+adminRoutes.get('/ambassadors/:id/payouts/owed', async (c) => {
+  const data = await ambassadorService.owedForAmbassador(c.req.param('id'))
+  return c.json({ data })
+})
+
+adminRoutes.post('/ambassadors/:id/payouts', async (c) => {
+  const adminId = (c as any).get('user').userId
+  const body = await c.req.json().catch(() => ({}))
+  const amountCents = typeof body.amountCents === 'number' ? body.amountCents : NaN
+  const method = typeof body.method === 'string' ? body.method : ''
+  if (!Number.isInteger(amountCents) || amountCents <= 0) return c.json({ error: 'amountCents inválido' }, 400)
+  if (!['paypal', 'wise', 'bank', 'manual'].includes(method)) return c.json({ error: 'method inválido' }, 400)
+  const data = await ambassadorService.registerPayout(c.req.param('id'), adminId, {
+    amountCents,
+    method,
+    externalRef: typeof body.externalRef === 'string' ? body.externalRef : undefined,
+    notes: typeof body.notes === 'string' ? body.notes : undefined,
+  })
+  return c.json({ data })
+})
+
+adminRoutes.get('/ambassador-tiers', async (c) => {
+  const data = await ambassadorService.listTiers()
+  return c.json({ data })
+})
+
+adminRoutes.patch('/ambassador-tiers/:id', async (c) => {
+  const body = await c.req.json().catch(() => ({}))
+  const patch: { name?: string; minActiveReferrals?: number; commissionPct?: number; perks?: string[]; badgeColor?: string } = {}
+  if (typeof body.name === 'string') patch.name = body.name
+  if (typeof body.minActiveReferrals === 'number') patch.minActiveReferrals = body.minActiveReferrals
+  if (typeof body.commissionPct === 'number') patch.commissionPct = body.commissionPct
+  if (Array.isArray(body.perks)) patch.perks = body.perks.filter((p: unknown): p is string => typeof p === 'string')
+  if (typeof body.badgeColor === 'string') patch.badgeColor = body.badgeColor
+  const data = await ambassadorService.updateTier(c.req.param('id'), patch)
+  return c.json({ data })
+})

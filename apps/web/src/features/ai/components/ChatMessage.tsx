@@ -1,5 +1,6 @@
 import { cn } from '@/shared/lib/utils'
 import { Markdown } from './Markdown'
+import { FenrirGlyph } from '@/shared/assets/FenrirGlyph'
 
 interface ChatMessageProps {
   role: 'user' | 'assistant'
@@ -13,13 +14,13 @@ export function ChatMessage({ role, content }: ChatMessageProps) {
     <div className={cn('flex gap-3', isUser && 'flex-row-reverse')}>
       <div
         className={cn(
-          'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold',
+          'flex h-8 w-8 shrink-0 items-center justify-center text-xs font-bold',
           isUser
-            ? 'bg-primary text-primary-foreground'
-            : 'bg-violet-500/15 text-violet-500',
+            ? 'rounded-full bg-primary text-primary-foreground'
+            : 'rounded-lg bg-primary/15 text-primary',
         )}
       >
-        {isUser ? 'U' : 'AI'}
+        {isUser ? 'U' : <FenrirGlyph className="h-4 w-4" />}
       </div>
 
       <div

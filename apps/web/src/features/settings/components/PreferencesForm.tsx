@@ -9,7 +9,7 @@ import { toast } from 'sonner'
 import { useTheme } from '@/shared/providers/theme-provider'
 import { useUpdateSettings } from '../queries'
 import type { UserSettings } from '../api'
-import { getAllTimezones, getBrowserTimezone } from '@/shared/lib/timezone'
+import { getDeviceTimeZone, listAvailableTimeZones } from '@repo/shared/utils'
 
 interface PreferencesFormProps {
   settings: UserSettings | null
@@ -46,8 +46,8 @@ export function PreferencesForm({ settings, saving, onSettingsChange }: Preferen
   const { i18n } = useTranslation()
   const { setTheme } = useTheme()
   const updateSettings = useUpdateSettings()
-  const timezones = useMemo(() => getAllTimezones(), [])
-  const browserTz = useMemo(() => getBrowserTimezone(), [])
+  const timezones = useMemo(() => listAvailableTimeZones(), [])
+  const browserTz = useMemo(() => getDeviceTimeZone(), [])
 
   useEffect(() => {
     if (settings && !settings.timezone) {

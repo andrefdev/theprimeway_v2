@@ -1,42 +1,73 @@
+import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { tasksQueries, useUpdateTask, useDeleteTask } from '@/features/tasks/queries'
-import { DayPlanner } from '@/features/tasks/components/DayPlanner'
 import { TaskFullDialog, TaskQuickDialog } from '@/features/tasks/components/dialogs'
 import { QueryError } from '@/shared/components/QueryError'
-import { PlusIcon } from '@/shared/components/Icons'
+import { PlusIcon, ChevronLeftIcon, ChevronRightIcon } from '@/shared/components/Icons'
 import { Button } from '@/shared/components/ui/button'
 import { SectionHeader } from '@/shared/components/SectionHeader'
 import { TasksNav } from '@/features/tasks/components/TasksNav'
 import { SkeletonList } from '@/shared/components/ui/skeleton-list'
 import { EmptyState } from '@/shared/components/ui/empty-state'
-import { toast } from 'sonner'
-import { format } from 'date-fns'
-import { useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { useLocale } from '@/i18n/useLocale'
-import { useCompletionImpact } from '@/features/tasks/hooks/use-completion-impact'
-import { useAutoSchedule } from '@/features/scheduling/queries'
-import { WorkingSessionsPanel } from '@/features/scheduling/components/WorkingSessionsPanel'
-import { WorkloadCounter } from '@/features/scheduling/components/WorkloadCounter'
+import { TaskItem } from '@/shared/components/TaskItem'
+import { TimeGrid } from '@/features/calendar/components/calendar-grid/TimeGrid'
+import { useCalendarItems, type CalendarItem } from '@/features/calendar/hooks/use-calendar-items'
+import {
+  useWorkingHoursOverride,
+  useUpsertWorkingHoursOverride,
+  useAutoSchedule,
+} from '@/features/scheduling/queries'
 import { useRitualsToday } from '@/features/rituals/queries'
 import { DailyPlanDialog } from '@/features/rituals/components/DailyPlanDialog'
 import { DailyShutdownDialog } from '@/features/rituals/components/DailyShutdownDialog'
-import { useEffect } from 'react'
+import { WorkloadCounter } from '@/features/scheduling/components/WorkloadCounter'
+import { toast } from 'sonner'
+import { addDays, format } from 'date-fns'
+import { useTranslation } from 'react-i18next'
+import { useLocale } from '@/i18n/useLocale'
+import { useCompletionImpact } from '@/features/tasks/hooks/use-completion-impact'
+import {
+  DndContext,
+  PointerSensor,
+  useDraggable,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core'
+import { CSS } from '@dnd-kit/utilities'
 import type { Task } from '@repo/shared/types'
+
+function ymd(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+function fmtHour(h: number): string {
+  const hh = Math.floor(h)
+  const mm = Math.round((h - hh) * 60)
+  return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`
+}
 
 export function TasksToday() {
   const { t } = useTranslation('tasks')
   const { dateFnsLocale } = useLocale()
-  const now = new Date()
-  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
-  const tasksQuery = useQuery(tasksQueries.today(today))
+
+  const [day, setDay] = useState<Date>(() => new Date())
+  const dayKey = ymd(day)
+
+  const tasksQuery = useQuery(tasksQueries.today(dayKey))
   const updateTask = useUpdateTask()
   const deleteTask = useDeleteTask()
   const showImpact = useCompletionImpact()
   const autoSchedule = useAutoSchedule()
+  const overrideQuery = useWorkingHoursOverride(dayKey)
+  const upsertOverride = useUpsertWorkingHoursOverride()
+
+  const { items: calendarItems } = useCalendarItems({ from: dayKey, to: dayKey })
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [quickOpen, setQuickOpen] = useState(false)
+  const [quickStart, setQuickStart] = useState<string | undefined>(undefined)
+  const [quickEnd, setQuickEnd] = useState<string | undefined>(undefined)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [planDismissed, setPlanDismissed] = useState(false)
   const [planOpen, setPlanOpen] = useState(false)
@@ -50,7 +81,6 @@ export function TasksToday() {
     if (pendingDailyPlan && !planDismissed) setPlanOpen(true)
   }, [pendingDailyPlan, planDismissed])
 
-  // Auto-open shutdown once user is past its scheduled time and plan is already addressed.
   useEffect(() => {
     if (!pendingShutdown || shutdownDismissed || planOpen) return
     const now = new Date()
@@ -61,26 +91,38 @@ export function TasksToday() {
   const tasks = tasksQuery.data?.data ?? []
   const openTasks = tasks.filter((task: Task) => task.status === 'open')
   const completedTasks = tasks.filter((task: Task) => task.status === 'completed')
-  const unscheduledOpen = openTasks.filter((t: Task) => !t.scheduledStart)
 
-  async function planDay() {
-    if (unscheduledOpen.length === 0) return
-    let scheduled = 0
-    let failed = 0
-    for (const task of unscheduledOpen) {
-      try {
-        const r = await autoSchedule.mutateAsync({ taskId: task.id, day: today })
-        if (r.type === 'Success') scheduled++
-        else failed++
-      } catch {
-        failed++
-      }
+  const { scheduled, unscheduled } = useMemo(() => {
+    const sched: Task[] = []
+    const unsched: Task[] = []
+    for (const task of openTasks) {
+      if (task.scheduledStart) sched.push(task)
+      else unsched.push(task)
     }
-    if (scheduled > 0) toast.success(`Scheduled ${scheduled} task${scheduled === 1 ? '' : 's'}`)
-    if (failed > 0) toast.warning(`${failed} couldn't fit — review manually`)
-  }
+    sched.sort(
+      (a, b) => new Date(a.scheduledStart!).getTime() - new Date(b.scheduledStart!).getTime(),
+    )
+    return { scheduled: sched, unscheduled: unsched }
+  }, [openTasks])
 
-  function openCreate() {
+  const dayBounds = useMemo(() => {
+    const o = overrideQuery.data
+    if (o) {
+      const [sh, sm] = o.startTime.split(':').map(Number)
+      const [eh, em] = o.endTime.split(':').map(Number)
+      return { startHour: (sh ?? 9) + (sm ?? 0) / 60, endHour: (eh ?? 17) + (em ?? 0) / 60 }
+    }
+    return { startHour: 9, endHour: 17 }
+  }, [overrideQuery.data])
+
+  function openCreate(start?: Date) {
+    if (start) {
+      setQuickStart(start.toISOString())
+      setQuickEnd(new Date(start.getTime() + 30 * 60_000).toISOString())
+    } else {
+      setQuickStart(undefined)
+      setQuickEnd(undefined)
+    }
     setQuickOpen(true)
   }
 
@@ -93,11 +135,8 @@ export function TasksToday() {
     const newStatus = task.status === 'completed' ? 'open' : 'completed'
     try {
       await updateTask.mutateAsync({ id: task.id, data: { status: newStatus } })
-      if (newStatus === 'completed') {
-        showImpact(task.id)
-      } else {
-        toast.success(t('taskReopened'))
-      }
+      if (newStatus === 'completed') showImpact(task.id)
+      else toast.success(t('taskReopened'))
     } catch {
       toast.error(t('failedToUpdate'))
     }
@@ -121,15 +160,57 @@ export function TasksToday() {
     }
   }
 
-  async function handleReorder(taskId: string, newStart: string, newEnd: string) {
+  async function planDay() {
+    if (unscheduled.length === 0) return
+    let ok = 0
+    let fail = 0
+    for (const task of unscheduled) {
+      try {
+        const r = await autoSchedule.mutateAsync({ taskId: task.id, day: dayKey })
+        if (r.type === 'Success') ok++
+        else fail++
+      } catch {
+        fail++
+      }
+    }
+    if (ok > 0) toast.success(`Scheduled ${ok} task${ok === 1 ? '' : 's'}`)
+    if (fail > 0) toast.warning(`${fail} couldn't fit — review manually`)
+  }
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
+
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (!over) return
+    const overData = (over.data.current ?? {}) as { start?: string }
+    if (!overData.start) return
+    const taskId = String(active.id)
+    const task = openTasks.find((x) => x.id === taskId)
+    if (!task) return
+    const start = new Date(overData.start)
+    const duration = task.estimatedDuration ?? 30
+    const end = new Date(start.getTime() + duration * 60_000)
     try {
       await updateTask.mutateAsync({
         id: taskId,
-        data: { scheduledStart: newStart, scheduledEnd: newEnd },
+        data: {
+          scheduledStart: start.toISOString(),
+          scheduledEnd: end.toISOString(),
+          scheduledDate: dayKey,
+          isAllDay: false,
+        },
       })
     } catch {
       toast.error(t('failedToUpdate'))
     }
+  }
+
+  function handleDayBoundsChange(next: { startHour: number; endHour: number }) {
+    upsertOverride.mutate({
+      date: dayKey,
+      startTime: fmtHour(next.startHour),
+      endTime: fmtHour(next.endHour),
+    })
   }
 
   return (
@@ -137,14 +218,14 @@ export function TasksToday() {
       <TasksNav />
       <SectionHeader
         sectionId="tasks"
-        title={format(new Date(), 'EEEE, MMMM d', { locale: dateFnsLocale })}
+        title={format(day, 'EEEE, MMMM d', { locale: dateFnsLocale })}
         description={`${openTasks.length} ${t('open', { ns: 'common' })}, ${completedTasks.length} ${t('completed', { ns: 'common' })}`}
         actions={
           <div className="flex items-center gap-2">
-            <WorkloadCounter day={today} tasks={tasks} />
-            {unscheduledOpen.length > 0 && (
+            <WorkloadCounter day={dayKey} tasks={tasks} />
+            {unscheduled.length > 0 && (
               <Button variant="outline" disabled={autoSchedule.isPending} onClick={planDay}>
-                {autoSchedule.isPending ? 'Planning…' : `Plan day (${unscheduledOpen.length})`}
+                {autoSchedule.isPending ? 'Planning…' : `Plan day (${unscheduled.length})`}
               </Button>
             )}
             <Button onClick={() => openCreate()}>
@@ -153,27 +234,92 @@ export function TasksToday() {
           </div>
         }
       />
-      <div className="mx-auto max-w-5xl px-6 pb-6 space-y-6">
+
+      <div className="px-6 pb-6">
         {tasksQuery.isLoading && <SkeletonList lines={8} />}
         {tasksQuery.isError && <QueryError message={t('failedToLoad')} onRetry={() => tasksQuery.refetch()} />}
 
-        <WorkingSessionsPanel day={today} />
+        {!tasksQuery.isLoading && !tasksQuery.isError && (
+          <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+            <div className="flex flex-col gap-4 lg:flex-row lg:gap-6">
+              {/* Left pane — task list */}
+              <div className="lg:w-[420px] flex-shrink-0 space-y-2">
+                <button
+                  type="button"
+                  onClick={() => openCreate()}
+                  className="w-full text-left rounded-md border border-dashed border-border px-3 py-2 text-sm text-muted-foreground hover:border-primary hover:text-foreground transition-colors"
+                >
+                  + {t('addTask')}
+                </button>
 
-        {!tasksQuery.isLoading && !tasksQuery.isError && tasks.length > 0 && (
-          <DayPlanner
-            tasks={tasks}
-            date={today}
-            onToggle={toggleTask}
-            onEdit={openEdit}
-            onDelete={handleDelete}
-            onArchive={handleArchive}
-            onReorder={handleReorder}
-            onQuickAdd={() => openCreate()}
-          />
-        )}
+                {scheduled.map((task) => (
+                  <DraggableTask
+                    key={task.id}
+                    task={task}
+                    onToggle={() => toggleTask(task)}
+                    onEdit={() => openEdit(task)}
+                    onDelete={() => handleDelete(task)}
+                    onArchive={() => handleArchive(task)}
+                  />
+                ))}
 
-        {!tasksQuery.isLoading && !tasksQuery.isError && tasks.length === 0 && (
-          <EmptyState title={t('allDone')} description={t('noOpenTasks')} />
+                {unscheduled.length > 0 && (
+                  <p className="pt-2 text-[10px] uppercase tracking-wide text-muted-foreground">
+                    {t('unscheduled', { defaultValue: 'Unscheduled' })}
+                  </p>
+                )}
+                {unscheduled.map((task) => (
+                  <DraggableTask
+                    key={task.id}
+                    task={task}
+                    onToggle={() => toggleTask(task)}
+                    onEdit={() => openEdit(task)}
+                    onDelete={() => handleDelete(task)}
+                    onArchive={() => handleArchive(task)}
+                  />
+                ))}
+
+                {tasks.length === 0 && (
+                  <EmptyState title={t('allDone')} description={t('noOpenTasks')} />
+                )}
+              </div>
+
+              {/* Right pane — calendar */}
+              <div className="flex-1 min-w-0 rounded-md border border-border overflow-hidden flex flex-col h-[calc(100vh-220px)]">
+                <div className="flex items-center justify-between border-b border-border px-3 py-2">
+                  <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDay((d) => addDays(d, -1))}>
+                      <ChevronLeftIcon />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDay((d) => addDays(d, 1))}>
+                      <ChevronRightIcon />
+                    </Button>
+                    <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setDay(new Date())}>
+                      {t('today', { ns: 'calendar', defaultValue: 'Today' })}
+                    </Button>
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    {fmtHour(dayBounds.startHour)} – {fmtHour(dayBounds.endHour)}
+                  </span>
+                </div>
+                <div className="flex-1 min-h-0">
+                  <TimeGrid
+                    days={[day]}
+                    items={calendarItems}
+                    today={new Date()}
+                    onSlotClick={(start) => openCreate(start)}
+                    onItemClick={(item: CalendarItem) => {
+                      if (item.type === 'task' && item.task) openEdit(item.task)
+                    }}
+                    enableSlotDrop
+                    dayStartHour={dayBounds.startHour}
+                    dayEndHour={dayBounds.endHour}
+                    onDayBoundsChange={handleDayBoundsChange}
+                  />
+                </div>
+              </div>
+            </div>
+          </DndContext>
         )}
       </div>
 
@@ -181,13 +327,16 @@ export function TasksToday() {
         open={dialogOpen}
         onClose={() => { setDialogOpen(false); setEditingTask(null) }}
         task={editingTask}
-        defaultDate={today}
+        defaultDate={dayKey}
       />
       <TaskQuickDialog
         open={quickOpen}
-        onClose={() => setQuickOpen(false)}
-        defaultDate={today}
+        onClose={() => { setQuickOpen(false); setQuickStart(undefined); setQuickEnd(undefined) }}
+        defaultDate={dayKey}
         defaultBucket="TODAY"
+        defaultStart={quickStart}
+        defaultEnd={quickEnd}
+        autoSchedule={!quickStart}
       />
 
       {pendingDailyPlan && (
@@ -209,3 +358,46 @@ export function TasksToday() {
   )
 }
 
+function DraggableTask({
+  task,
+  onToggle,
+  onEdit,
+  onDelete,
+  onArchive,
+}: {
+  task: Task
+  onToggle: () => void
+  onEdit: () => void
+  onDelete: () => void
+  onArchive: () => void
+}) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: task.id })
+  const style: React.CSSProperties = {
+    transform: CSS.Translate.toString(transform),
+    opacity: isDragging ? 0.5 : 1,
+  }
+  const handle = (
+    <button
+      type="button"
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground"
+      aria-label="Drag"
+    >
+      ⋮⋮
+    </button>
+  )
+  return (
+    <div style={style}>
+      <TaskItem
+        task={task}
+        onToggle={onToggle}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        onArchive={onArchive}
+        dragHandle={handle}
+      />
+    </div>
+  )
+}

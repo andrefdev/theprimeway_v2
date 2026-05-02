@@ -2,14 +2,14 @@ import { useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/shared/components/ui/sheet'
 import { ScrollArea } from '@/shared/components/ui/scroll-area'
-import { Button } from '@/shared/components/ui/button'
 import { ChatMessage } from './ChatMessage'
 import { ChatInput } from './ChatInput'
+import { FenrirLauncher } from './FenrirLauncher'
+import { FenrirGlyph } from '@/shared/assets/FenrirGlyph'
 import { aiApi } from '../api'
 import { toast } from 'sonner'
 import { useFeature } from '@/features/feature-flags/hooks'
 import { FEATURES } from '@repo/shared/constants'
-import { BotMessageSquareIcon } from 'lucide-react'
 
 interface Message {
   id: string
@@ -64,19 +64,13 @@ export function ChatPanel() {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button
-          size="icon"
-          className="fixed bottom-20 right-4 z-50 h-12 w-12 rounded-full shadow-lg lg:bottom-6"
-          aria-label={t('title')}
-        >
-          <BotMessageSquareIcon className="size-5" />
-        </Button>
+        <FenrirLauncher aria-label={t('title')} active={isLoading} />
       </SheetTrigger>
       <SheetContent side="right" className="flex w-full flex-col p-0 sm:max-w-md">
         <SheetHeader className="border-b px-4 py-3">
           <SheetTitle className="flex items-center gap-2 text-base">
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-violet-500/15 text-xs font-bold text-violet-500">
-              AI
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/15 text-primary">
+              <FenrirGlyph className="h-4 w-4" />
             </div>
             {t('title')}
           </SheetTitle>
@@ -107,8 +101,8 @@ export function ChatPanel() {
 
             {isLoading && (
               <div className="flex gap-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-500/15 text-xs font-bold text-violet-500">
-                  AI
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
+                  <FenrirGlyph className="h-4 w-4" />
                 </div>
                 <div className="rounded-2xl rounded-bl-md bg-muted px-4 py-2.5">
                   <div className="flex gap-1">

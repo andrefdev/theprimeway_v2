@@ -56,6 +56,8 @@ $BEGIN_MARKER
 0 2 * * * $CURL $API_BASE/api/cron/quarterly-review >> $LOG_FILE 2>&1
 # Quarterly goal-setting nudge — first day of each quarter at 09:00 UTC
 0 9 1 1,4,7,10 * $CURL $API_BASE/api/cron/quarterly-nudge >> $LOG_FILE 2>&1
+# Ambassador monthly commission accrual — 1st of month at 03:00 UTC
+0 3 1 * * $CURL $API_BASE/api/cron/monthly-commissions >> $LOG_FILE 2>&1
 $END_MARKER
 EOF
 )

@@ -18,6 +18,7 @@ interface Props {
   defaultBucket?: TaskBucket | null
   defaultStart?: string
   defaultEnd?: string
+  autoSchedule?: boolean
 }
 
 /**
@@ -31,6 +32,7 @@ export function TaskQuickDialog({
   defaultBucket,
   defaultStart,
   defaultEnd,
+  autoSchedule,
 }: Props) {
   const { t } = useTranslation('tasks')
 
@@ -40,6 +42,7 @@ export function TaskQuickDialog({
     defaultStart,
     defaultEnd,
     defaultBucket: defaultBucket ?? (defaultDate ? 'TODAY' : null),
+    autoSchedule,
     onSaved: onClose,
   })
 

@@ -10,6 +10,7 @@
  */
 import { prisma } from '../lib/prisma'
 import { recurringRepo, type RecurringCreate } from '../repositories/recurring.repo'
+import { localDayOfWeek, localYmd, startOfLocalDayUtc } from '@repo/shared/utils'
 
 export interface MaterializeResult {
   created: number
@@ -17,28 +18,25 @@ export interface MaterializeResult {
   seriesChecked: number
 }
 
-function ymd(d: Date): Date {
-  const x = new Date(d)
-  x.setUTCHours(0, 0, 0, 0)
-  return x
-}
-
 function matchesPattern(
   pattern: 'DAILY' | 'WEEKDAYS' | 'WEEKLY' | 'MONTHLY',
   daysOfWeek: number[],
   startDate: Date,
   ref: Date,
+  tz: string,
 ): boolean {
-  const dow = ref.getUTCDay()
+  const dow = localDayOfWeek(ref, tz)
   switch (pattern) {
     case 'DAILY':
       return true
     case 'WEEKDAYS':
       return dow >= 1 && dow <= 5
     case 'WEEKLY':
-      return daysOfWeek.length > 0 ? daysOfWeek.includes(dow) : dow === startDate.getUTCDay()
+      return daysOfWeek.length > 0
+        ? daysOfWeek.includes(dow)
+        : dow === localDayOfWeek(startDate, tz)
     case 'MONTHLY':
-      return ref.getUTCDate() === startDate.getUTCDate()
+      return localYmd(ref, tz).slice(8) === localYmd(startDate, tz).slice(8)
     default:
       return false
   }
@@ -51,14 +49,19 @@ class RecurringService {
   delete(userId: string, id: string) { return recurringRepo.delete(id, userId) }
 
   async materializeForUser(userId: string, referenceDate: Date = new Date()): Promise<MaterializeResult> {
-    const ref = ymd(referenceDate)
+    const settings = await prisma.userSettings.findUnique({
+      where: { userId },
+      select: { timezone: true },
+    })
+    const tz = settings?.timezone ?? 'UTC'
+    const ref = startOfLocalDayUtc(referenceDate, tz)
     const series = await recurringRepo.findActiveForDate(userId, ref)
 
     let created = 0
     let skipped = 0
 
     for (const s of series) {
-      if (!matchesPattern(s.pattern as any, s.daysOfWeek ?? [], s.startDate, ref)) {
+      if (!matchesPattern(s.pattern as any, s.daysOfWeek ?? [], s.startDate, ref, tz)) {
         skipped++
         continue
       }

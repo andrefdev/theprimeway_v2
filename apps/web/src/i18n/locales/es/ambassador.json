@@ -1,0 +1,87 @@
+{
+  "tabAmbassador": "Embajador",
+  "banner": {
+    "badge": "Programa de Embajadores",
+    "title": "Conviértete en embajador de ThePrimeWay",
+    "subtitle": "Comparte ThePrimeWay con tu audiencia y gana comisiones recurrentes por cada usuario que traigas. Mientras más referidos pagos atraigas, más subes de tier y mayor es tu %.",
+    "perk1Title": "20% comisión recurrente",
+    "perk1Desc": "Cada mes que tu referido pague, ganas comisión",
+    "perk2Title": "Sube de tier",
+    "perk2Desc": "Bronze → Silver → Gold → Platinum. Hasta 30%",
+    "perk3Title": "Perks exclusivos",
+    "perk3Desc": "Co-marketing, soporte prioritario, partnership custom",
+    "cta": "Aplicar ahora"
+  },
+  "form": {
+    "title": "Aplica como embajador",
+    "description": "Cuéntanos sobre ti y tu audiencia. Revisamos cada solicitud manualmente.",
+    "fullName": "Nombre completo",
+    "phone": "Teléfono (opcional)",
+    "country": "País",
+    "niche": "Nicho",
+    "platform": "Plataforma principal",
+    "handle": "Handle / usuario",
+    "audienceSize": "Tamaño de audiencia",
+    "motivation": "¿Por qué quieres ser embajador? (mín 100 chars)",
+    "motivationPlaceholder": "Cuéntanos qué te conecta con ThePrimeWay y cómo planeas compartirlo...",
+    "promoChannels": "Cómo lo promoverás",
+    "sampleUrls": "URLs de ejemplo (contenido relevante)",
+    "socialLinks": "Otras redes sociales (opcional)",
+    "terms": "Acepto los términos del programa de embajadores: comisiones recurrentes mientras el referido siga pagando, sin clawback en MVP, posible suspensión por fraude o spam.",
+    "cancel": "Cancelar",
+    "submit": "Enviar solicitud",
+    "submitting": "Enviando...",
+    "submitted": "Solicitud enviada. Te avisaremos por email y notificación.",
+    "errors": {
+      "fullName": "Nombre completo requerido",
+      "motivation": "Motivación mínimo 100 caracteres",
+      "terms": "Debes aceptar los términos"
+    }
+  },
+  "pending": {
+    "title": "Solicitud en revisión",
+    "message": "Estamos revisando tu solicitud. Normalmente toma 1-3 días. Te notificaremos por email y notificación cuando haya respuesta."
+  },
+  "rejected": {
+    "title": "Solicitud no aprobada",
+    "reason": "Motivo",
+    "retry": "Podrás reaplicar después de 30 días."
+  },
+  "suspended": {
+    "title": "Cuenta suspendida",
+    "message": "Contacta soporte para más información."
+  },
+  "approved": {
+    "title": "Eres embajador",
+    "subtitle": "Comparte tu código y empieza a ganar comisiones recurrentes.",
+    "code": "Tu código",
+    "link": "Tu link",
+    "openDashboard": "Dashboard completo"
+  },
+  "copied": "Copiado al portapapeles",
+  "dashboard": {
+    "title": "Dashboard de embajador",
+    "tier": "Tier",
+    "nextTier": "Siguiente tier",
+    "progressTo": "Progreso a {{tier}}",
+    "totalReferrals": "Referidos totales",
+    "activeReferrals": "Activos",
+    "accrued": "Acumulado",
+    "paid": "Pagado",
+    "owed": "Pago pendiente",
+    "commission": "Comisión",
+    "recentReferrals": "Referidos recientes",
+    "commissionsHistory": "Historial de comisiones",
+    "period": "Período",
+    "amount": "Monto",
+    "status": "Estado",
+    "noReferralsYet": "Aún no tienes referidos. Comparte tu link para empezar a ganar.",
+    "payoutMethod": {
+      "title": "Método de pago",
+      "method": "Método",
+      "details": "Detalles (email o cuenta)",
+      "save": "Guardar",
+      "saved": "Método de pago guardado"
+    }
+  }
+}

@@ -13,14 +13,17 @@ import { Checkbox } from '@/shared/components/ui/checkbox'
 import { SkeletonList } from '@/shared/components/ui/skeleton-list'
 import { EmptyState } from '@/shared/components/ui/empty-state'
 import { ChevronLeft, ChevronRight, Plus, Trash2 } from 'lucide-react'
+import { localYmd } from '@repo/shared/utils'
+import { useUserTimezone } from '@/features/settings/hooks/use-user-timezone'
 
-function startOfISOWeek(d: Date): Date {
-  const x = new Date(d)
-  x.setHours(0, 0, 0, 0)
-  const day = x.getDay()
-  const diff = day === 0 ? -6 : 1 - day
-  x.setDate(x.getDate() + diff)
-  return x
+function startOfISOWeekInTz(d: Date, tz: string): Date {
+  const todayKey = localYmd(d, tz)
+  const [y, m, day] = todayKey.split('-').map(Number)
+  const local = new Date(y!, m! - 1, day!)
+  const dow = local.getDay()
+  const diff = dow === 0 ? -6 : 1 - dow
+  local.setDate(local.getDate() + diff)
+  return local
 }
 
 function ymd(d: Date): string {
@@ -36,7 +39,8 @@ function formatRange(start: Date, locale: string): string {
 
 export function WeeklyGoalsList() {
   const { t, i18n } = useTranslation('goals')
-  const [weekStart, setWeekStart] = useState<Date>(() => startOfISOWeek(new Date()))
+  const tz = useUserTimezone()
+  const [weekStart, setWeekStart] = useState<Date>(() => startOfISOWeekInTz(new Date(), tz))
   const weekStartDate = ymd(weekStart)
 
   const { data, isLoading } = useQuery(goalsQueries.weeklyGoals({ weekStartDate }))

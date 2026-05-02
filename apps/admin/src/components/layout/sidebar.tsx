@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router'
-import { Users, BarChart3, CreditCard, Bell } from 'lucide-react'
+import { Users, BarChart3, CreditCard, Bell, Sparkles } from 'lucide-react'
 import { cn } from '@repo/ui'
 
 const navItems = [
@@ -23,6 +23,11 @@ const navItems = [
     href: '/notifications',
     icon: Bell,
   },
+  {
+    label: 'Ambassadors',
+    href: '/ambassadors',
+    icon: Sparkles,
+  },
 ] as const
 
 export function Sidebar() {
@@ -32,7 +37,7 @@ export function Sidebar() {
         {navItems.map((item) => {
           const Icon = item.icon
           return (
-            <Link key={item.href} to={item.href}>
+            <Link key={item.href} to={item.href as any}>
               {({ isActive }) => (
                 <div
                   className={cn(

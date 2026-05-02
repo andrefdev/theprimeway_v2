@@ -38,10 +38,11 @@
   },
   "devDependencies": {
     "@repo/config-ts": "workspace:*",
-    "tsup": "^8.0.0",
+    "tsup": "^8.5.1",
     "typescript": "^5.8.0"
   },
   "dependencies": {
+    "date-fns-tz": "^3.2.0",
     "zod": "^3.24.0"
   }
 }

@@ -14,6 +14,7 @@ import { WebhooksCard } from '@/features/integrations/components/WebhooksCard'
 import { ChannelsManager } from '@/features/channels/components/ChannelsManager'
 import { WorkingHoursManager } from '@/features/working-hours/components/WorkingHoursManager'
 import { UsageLimits } from '@/features/subscriptions/components/UsageLimits'
+import { AmbassadorTab } from '@/features/ambassador/components/AmbassadorTab'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/components/ui/tabs'
 import { useFeature } from '@/features/feature-flags/hooks'
 import { FEATURES } from '@repo/shared/constants'
@@ -95,6 +96,7 @@ function SettingsPage() {
           <TabsTrigger value="channels">{t('tabChannels')}</TabsTrigger>
           <TabsTrigger value="integrations">{t('tabIntegrations')}</TabsTrigger>
           <TabsTrigger value="plan">{t('tabPlan', { defaultValue: 'Plan' })}</TabsTrigger>
+          <TabsTrigger value="ambassador">{t('tabAmbassador', { defaultValue: 'Embajador' })}</TabsTrigger>
           <TabsTrigger value="account">{t('tabAccount')}</TabsTrigger>
         </TabsList>
 
@@ -128,6 +130,10 @@ function SettingsPage() {
 
         <TabsContent value="plan" className="space-y-6 pt-4">
           <UsageLimits />
+        </TabsContent>
+
+        <TabsContent value="ambassador" className="space-y-6 pt-4">
+          <AmbassadorTab />
         </TabsContent>
 
         <TabsContent value="account" className="space-y-6 pt-4">

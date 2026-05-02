@@ -1,5 +1,7 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
+import { localYmd } from '@repo/shared/utils'
+import { useUserTimezone } from '@/features/settings/hooks/use-user-timezone'
 import { Card, CardContent } from '@/shared/components/ui/card'
 import {
   Tooltip,
@@ -36,6 +38,7 @@ function formatDate(d: Date): string {
 
 export function HabitHeatMap({ data, days = 365 }: HabitHeatMapProps) {
   const { t, i18n } = useTranslation('habits')
+  const tz = useUserTimezone()
 
   const { weeks, monthLabels } = useMemo(() => {
     // Build a lookup map from date string to completion rate
@@ -44,8 +47,10 @@ export function HabitHeatMap({ data, days = 365 }: HabitHeatMapProps) {
       dataMap.set(d.date, d.completionRate)
     }
 
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
+    // Anchor on user's local today
+    const todayKey = localYmd(new Date(), tz)
+    const [yy, mm, dd] = todayKey.split('-').map(Number)
+    const today = new Date(yy!, mm! - 1, dd!)
 
     // Find the start date: go back `days` days, then back to the previous Monday
     const start = new Date(today)
@@ -98,7 +103,7 @@ export function HabitHeatMap({ data, days = 365 }: HabitHeatMapProps) {
     }
 
     return { weeks: weeksArr, monthLabels: labels }
-  }, [data, days, i18n.language])
+  }, [data, days, i18n.language, tz])
 
   const dayLabels = useMemo(() => {
     const formatter = new Intl.DateTimeFormat(i18n.language, { weekday: 'short' })

@@ -3,6 +3,12 @@ import { chatService } from './chat.service'
 import { gamificationService } from './gamification.service'
 import { notificationsService } from './notifications.service'
 import { prisma } from '../lib/prisma'
+import {
+  endOfLocalDayUtc,
+  formatInTz,
+  localDayOfWeek,
+  startOfLocalDayUtc,
+} from '@repo/shared/utils'
 
 // ---------------------------------------------------------------------------
 // Motivational messages
@@ -47,45 +53,13 @@ function formatTimeUntil(minutes: number, lang: string): string {
 }
 
 function isWithinReminderWindow(now: Date, reminderTime: string, timezone: string): boolean {
-  const userNow = getDateInTimezone(now, timezone)
   const [targetHour = 0, targetMinute = 0] = reminderTime.split(':').map(Number)
-  const userHour = userNow.getHours()
-  const userMinute = userNow.getMinutes()
-
+  const hhmm = formatInTz(now, timezone, 'HH:mm')
+  const [userHour = 0, userMinute = 0] = hhmm.split(':').map(Number)
   const targetTotalMinutes = targetHour * 60 + targetMinute
   const currentTotalMinutes = userHour * 60 + userMinute
-
   const diff = currentTotalMinutes - targetTotalMinutes
   return diff >= 0 && diff < 5
-}
-
-function getDateInTimezone(date: Date, timezone: string): Date {
-  try {
-    const formatter = new Intl.DateTimeFormat('en-US', {
-      timeZone: timezone,
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false,
-    })
-    const parts = formatter.formatToParts(date)
-    const get = (type: string) =>
-      parseInt(parts.find((p) => p.type === type)?.value || '0', 10)
-
-    return new Date(
-      get('year'),
-      get('month') - 1,
-      get('day'),
-      get('hour'),
-      get('minute'),
-      get('second'),
-    )
-  } catch {
-    return date
-  }
 }
 
 class CronService {
@@ -214,12 +188,9 @@ class CronService {
 
       if (!isWithinReminderWindow(now, reminderTime, userTz)) continue
 
-      const userNow = getDateInTimezone(now, userTz)
-      const todayStart = new Date(userNow)
-      todayStart.setHours(0, 0, 0, 0)
-      const todayEnd = new Date(userNow)
-      todayEnd.setHours(23, 59, 59, 999)
-      const currentDayIndex = userNow.getDay()
+      const todayStart = startOfLocalDayUtc(now, userTz)
+      const todayEnd = endOfLocalDayUtc(now, userTz)
+      const currentDayIndex = localDayOfWeek(now, userTz)
 
       // Skip if a habit reminder already went out in the user's local day.
       const lastSent = user.notificationPreferences?.lastHabitReminderAt

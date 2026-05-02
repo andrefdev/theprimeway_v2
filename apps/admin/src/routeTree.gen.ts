@@ -16,9 +16,11 @@ import { Route as AdminNotificationsRouteImport } from './routes/_admin/notifica
 import { Route as AdminAnalyticsRouteImport } from './routes/_admin/analytics'
 import { Route as AdminUsersIndexRouteImport } from './routes/_admin/users.index'
 import { Route as AdminPlansIndexRouteImport } from './routes/_admin/plans.index'
+import { Route as AdminAmbassadorsIndexRouteImport } from './routes/_admin/ambassadors.index'
 import { Route as AdminUsersUserIdRouteImport } from './routes/_admin/users.$userId'
 import { Route as AdminPlansNewRouteImport } from './routes/_admin/plans.new'
 import { Route as AdminPlansPlanIdRouteImport } from './routes/_admin/plans.$planId'
+import { Route as AdminAmbassadorsIdRouteImport } from './routes/_admin/ambassadors.$id'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -54,6 +56,11 @@ const AdminPlansIndexRoute = AdminPlansIndexRouteImport.update({
   path: '/plans/',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminAmbassadorsIndexRoute = AdminAmbassadorsIndexRouteImport.update({
+  id: '/ambassadors/',
+  path: '/ambassadors/',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminUsersUserIdRoute = AdminUsersUserIdRouteImport.update({
   id: '/users/$userId',
   path: '/users/$userId',
@@ -69,15 +76,22 @@ const AdminPlansPlanIdRoute = AdminPlansPlanIdRouteImport.update({
   path: '/plans/$planId',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminAmbassadorsIdRoute = AdminAmbassadorsIdRouteImport.update({
+  id: '/ambassadors/$id',
+  path: '/ambassadors/$id',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/analytics': typeof AdminAnalyticsRoute
   '/notifications': typeof AdminNotificationsRoute
+  '/ambassadors/$id': typeof AdminAmbassadorsIdRoute
   '/plans/$planId': typeof AdminPlansPlanIdRoute
   '/plans/new': typeof AdminPlansNewRoute
   '/users/$userId': typeof AdminUsersUserIdRoute
+  '/ambassadors/': typeof AdminAmbassadorsIndexRoute
   '/plans/': typeof AdminPlansIndexRoute
   '/users/': typeof AdminUsersIndexRoute
 }
@@ -86,9 +100,11 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/analytics': typeof AdminAnalyticsRoute
   '/notifications': typeof AdminNotificationsRoute
+  '/ambassadors/$id': typeof AdminAmbassadorsIdRoute
   '/plans/$planId': typeof AdminPlansPlanIdRoute
   '/plans/new': typeof AdminPlansNewRoute
   '/users/$userId': typeof AdminUsersUserIdRoute
+  '/ambassadors': typeof AdminAmbassadorsIndexRoute
   '/plans': typeof AdminPlansIndexRoute
   '/users': typeof AdminUsersIndexRoute
 }
@@ -99,9 +115,11 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/_admin/analytics': typeof AdminAnalyticsRoute
   '/_admin/notifications': typeof AdminNotificationsRoute
+  '/_admin/ambassadors/$id': typeof AdminAmbassadorsIdRoute
   '/_admin/plans/$planId': typeof AdminPlansPlanIdRoute
   '/_admin/plans/new': typeof AdminPlansNewRoute
   '/_admin/users/$userId': typeof AdminUsersUserIdRoute
+  '/_admin/ambassadors/': typeof AdminAmbassadorsIndexRoute
   '/_admin/plans/': typeof AdminPlansIndexRoute
   '/_admin/users/': typeof AdminUsersIndexRoute
 }
@@ -112,9 +130,11 @@ export interface FileRouteTypes {
     | '/login'
     | '/analytics'
     | '/notifications'
+    | '/ambassadors/$id'
     | '/plans/$planId'
     | '/plans/new'
     | '/users/$userId'
+    | '/ambassadors/'
     | '/plans/'
     | '/users/'
   fileRoutesByTo: FileRoutesByTo
@@ -123,9 +143,11 @@ export interface FileRouteTypes {
     | '/login'
     | '/analytics'
     | '/notifications'
+    | '/ambassadors/$id'
     | '/plans/$planId'
     | '/plans/new'
     | '/users/$userId'
+    | '/ambassadors'
     | '/plans'
     | '/users'
   id:
@@ -135,9 +157,11 @@ export interface FileRouteTypes {
     | '/login'
     | '/_admin/analytics'
     | '/_admin/notifications'
+    | '/_admin/ambassadors/$id'
     | '/_admin/plans/$planId'
     | '/_admin/plans/new'
     | '/_admin/users/$userId'
+    | '/_admin/ambassadors/'
     | '/_admin/plans/'
     | '/_admin/users/'
   fileRoutesById: FileRoutesById
@@ -199,6 +223,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPlansIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/_admin/ambassadors/': {
+      id: '/_admin/ambassadors/'
+      path: '/ambassadors'
+      fullPath: '/ambassadors/'
+      preLoaderRoute: typeof AdminAmbassadorsIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/_admin/users/$userId': {
       id: '/_admin/users/$userId'
       path: '/users/$userId'
@@ -220,15 +251,24 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPlansPlanIdRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/_admin/ambassadors/$id': {
+      id: '/_admin/ambassadors/$id'
+      path: '/ambassadors/$id'
+      fullPath: '/ambassadors/$id'
+      preLoaderRoute: typeof AdminAmbassadorsIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
 
 interface AdminRouteChildren {
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
   AdminNotificationsRoute: typeof AdminNotificationsRoute
+  AdminAmbassadorsIdRoute: typeof AdminAmbassadorsIdRoute
   AdminPlansPlanIdRoute: typeof AdminPlansPlanIdRoute
   AdminPlansNewRoute: typeof AdminPlansNewRoute
   AdminUsersUserIdRoute: typeof AdminUsersUserIdRoute
+  AdminAmbassadorsIndexRoute: typeof AdminAmbassadorsIndexRoute
   AdminPlansIndexRoute: typeof AdminPlansIndexRoute
   AdminUsersIndexRoute: typeof AdminUsersIndexRoute
 }
@@ -236,9 +276,11 @@ interface AdminRouteChildren {
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAnalyticsRoute: AdminAnalyticsRoute,
   AdminNotificationsRoute: AdminNotificationsRoute,
+  AdminAmbassadorsIdRoute: AdminAmbassadorsIdRoute,
   AdminPlansPlanIdRoute: AdminPlansPlanIdRoute,
   AdminPlansNewRoute: AdminPlansNewRoute,
   AdminUsersUserIdRoute: AdminUsersUserIdRoute,
+  AdminAmbassadorsIndexRoute: AdminAmbassadorsIndexRoute,
   AdminPlansIndexRoute: AdminPlansIndexRoute,
   AdminUsersIndexRoute: AdminUsersIndexRoute,
 }

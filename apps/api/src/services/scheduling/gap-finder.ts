@@ -3,9 +3,27 @@
  * considering WorkingHours, CalendarEvents (busy, non-declined, visible),
  * and existing WorkingSessions. All timestamps are UTC DateTimes.
  *
+ * Working-hours strings ("HH:mm") are interpreted in the user's timezone
+ * via UserSettings.timezone (defaults to "UTC").
+ *
  * Spec: docs/TASK_SCHEDULER_ALGO.md §4.
  */
 import { prisma } from '../../lib/prisma'
+import {
+  endOfLocalDayUtc as endOfLocalDayUtcShared,
+  localDayOfWeek,
+  localTimeToUtc,
+  localYmd,
+  startOfLocalDayUtc as startOfLocalDayUtcShared,
+} from '@repo/shared/utils'
+
+async function getUserTz(userId: string): Promise<string> {
+  const settings = await prisma.userSettings.findUnique({
+    where: { userId },
+    select: { timezone: true },
+  })
+  return settings?.timezone ?? 'UTC'
+}
 
 export interface Gap {
   start: Date
@@ -25,30 +43,17 @@ export interface DayWindow {
   end: Date
 }
 
-/** Parse "HH:mm" into hours/minutes. */
-function parseHM(s: string): { h: number; m: number } {
-  const [h, m] = s.split(':').map(Number)
-  return { h: h ?? 0, m: m ?? 0 }
+/** Combine a day with a "HH:mm" string interpreted in the user's tz. */
+function combineDateTime(day: Date, hm: string, tz: string = 'UTC'): Date {
+  return localTimeToUtc(day, hm, tz)
 }
 
-/** Combine a Date (yyyy-mm-dd) with a "HH:mm" string (UTC). */
-function combineDateTime(day: Date, hm: string): Date {
-  const { h, m } = parseHM(hm)
-  const d = new Date(day)
-  d.setUTCHours(h, m, 0, 0)
-  return d
+function startOfDay(day: Date, tz: string = 'UTC'): Date {
+  return startOfLocalDayUtcShared(day, tz)
 }
 
-function startOfDay(day: Date): Date {
-  const d = new Date(day)
-  d.setUTCHours(0, 0, 0, 0)
-  return d
-}
-
-function endOfDay(day: Date): Date {
-  const d = new Date(day)
-  d.setUTCHours(23, 59, 59, 999)
-  return d
+function endOfDay(day: Date, tz: string = 'UTC'): Date {
+  return endOfLocalDayUtcShared(day, tz)
 }
 
 function addMinutes(d: Date, mins: number): Date {
@@ -68,13 +73,22 @@ export const dt = { startOfDay, endOfDay, addMinutes, subMinutes, diffMinutes, c
 /**
  * Effective working hours for (user, channel, day).
  * Channel override > user default. null if no rule (day is non-working).
+ * dayOfWeek is computed in the user's timezone.
  */
 export async function getEffectiveWorkingHours(
   userId: string,
   channelId: string | null | undefined,
   day: Date,
 ): Promise<{ startTime: string; endTime: string } | null> {
-  const dayOfWeek = day.getUTCDay()
+  const tz = await getUserTz(userId)
+  const date = localYmd(day, tz)
+  // Per-day override (Sunsama-style draggable bars) wins over everything.
+  const dayOverride = await prisma.workingHoursOverride.findUnique({
+    where: { userId_date: { userId, date } },
+  })
+  if (dayOverride) return { startTime: dayOverride.startTime, endTime: dayOverride.endTime }
+
+  const dayOfWeek = localDayOfWeek(day, tz)
   if (channelId) {
     const override = await prisma.workingHours.findFirst({ where: { userId, channelId, dayOfWeek } })
     if (override) return { startTime: override.startTime, endTime: override.endTime }
@@ -84,7 +98,7 @@ export async function getEffectiveWorkingHours(
   return { startTime: def.startTime, endTime: def.endTime }
 }
 
-/** Build the day's working window in UTC. */
+/** Build the day's working window in UTC, interpreting WorkingHours strings in the user's tz. */
 export async function getDayWindow(
   userId: string,
   channelId: string | null | undefined,
@@ -92,7 +106,8 @@ export async function getDayWindow(
 ): Promise<DayWindow | null> {
   const wh = await getEffectiveWorkingHours(userId, channelId, day)
   if (!wh) return null
-  return { start: combineDateTime(day, wh.startTime), end: combineDateTime(day, wh.endTime) }
+  const tz = await getUserTz(userId)
+  return { start: combineDateTime(day, wh.startTime, tz), end: combineDateTime(day, wh.endTime, tz) }
 }
 
 /**
@@ -105,8 +120,9 @@ export async function collectBusyBlocks(
   gapMinutes: number,
   excludeSessionId?: string,
 ): Promise<BusyBlock[]> {
-  const dayStartUtc = startOfDay(day)
-  const dayEndUtc = endOfDay(day)
+  const tz = await getUserTz(userId)
+  const dayStartUtc = startOfDay(day, tz)
+  const dayEndUtc = endOfDay(day, tz)
 
   const [events, sessions] = await Promise.all([
     prisma.calendarEvent.findMany({

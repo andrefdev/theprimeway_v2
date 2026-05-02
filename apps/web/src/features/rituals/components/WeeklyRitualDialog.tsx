@@ -10,6 +10,8 @@ import { useAddReflection, useUpdateRitualInstance } from '../queries'
 import { goalsApi } from '@/features/goals/api'
 import { ritualsApi, type RitualInstance } from '../api'
 import { Sparkles } from 'lucide-react'
+import { localYmd } from '@repo/shared/utils'
+import { useUserTimezone } from '@/features/settings/hooks/use-user-timezone'
 
 interface Props {
   instance: RitualInstance
@@ -17,12 +19,14 @@ interface Props {
   onClose: () => void
 }
 
-function mondayOfWeek(d: Date = new Date()): string {
-  const x = new Date(d)
-  x.setHours(0, 0, 0, 0)
-  const dow = x.getDay()
-  x.setDate(x.getDate() - ((dow + 6) % 7))
-  return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`
+function mondayOfWeekInTz(d: Date, tz: string): string {
+  // Anchor on the user's local day, then walk back to Monday.
+  const todayKey = localYmd(d, tz)
+  const [y, m, day] = todayKey.split('-').map(Number)
+  const local = new Date(y!, (m! - 1), day!)
+  const dow = local.getDay()
+  local.setDate(local.getDate() - ((dow + 6) % 7))
+  return `${local.getFullYear()}-${String(local.getMonth() + 1).padStart(2, '0')}-${String(local.getDate()).padStart(2, '0')}`
 }
 
 /**
@@ -31,6 +35,7 @@ function mondayOfWeek(d: Date = new Date()): string {
  *   2. Pick 3–5 weekly objectives → creates Goal{horizon: WEEK}
  */
 export function WeeklyPlanDialog({ instance, open, onClose }: Props) {
+  const tz = useUserTimezone()
   const [phase, setPhase] = useState<'checkin' | 'objectives' | 'done'>('checkin')
   const [checkin, setCheckin] = useState('')
   const [objectives, setObjectives] = useState<string[]>(['', '', ''])
@@ -134,7 +139,7 @@ export function WeeklyPlanDialog({ instance, open, onClose }: Props) {
       return
     }
     setCreating(true)
-    const weekStartDate = mondayOfWeek()
+    const weekStartDate = mondayOfWeekInTz(new Date(), tz)
     let created = 0
     let failed = 0
     for (const title of titles) {
@@ -274,7 +279,8 @@ export function WeeklyPlanDialog({ instance, open, onClose }: Props) {
 }
 
 export function WeeklyReviewDialog({ instance, open, onClose }: Props) {
-  const weekStart = mondayOfWeek(new Date(instance.scheduledFor))
+  const tz = useUserTimezone()
+  const weekStart = mondayOfWeekInTz(new Date(instance.scheduledFor), tz)
   const alignmentQuery = useQuery({
     queryKey: ['goals', 'weekly-alignment', weekStart],
     queryFn: () => goalsApi.weeklyAlignment(weekStart),

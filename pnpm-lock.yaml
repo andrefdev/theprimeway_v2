@@ -123,9 +123,6 @@ importers:
 
   apps/api:
     dependencies:
-      '@ai-sdk/anthropic':
-        specifier: ^2.0.77
-        version: 2.0.77(zod@3.25.76)
       '@ai-sdk/deepseek':
         specifier: ^1.0.37
         version: 1.0.37(zod@3.25.76)
@@ -854,6 +851,9 @@ importers:
 
   packages/shared:
     dependencies:
+      date-fns-tz:
+        specifier: ^3.2.0
+        version: 3.2.0(date-fns@4.1.0)
       zod:
         specifier: ^3.24.0
         version: 3.25.76
@@ -862,7 +862,7 @@ importers:
         specifier: workspace:*
         version: link:../config-ts
       tsup:
-        specifier: ^8.0.0
+        specifier: ^8.5.1
         version: 8.5.1(jiti@2.6.1)(postcss@8.5.12)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3)
       typescript:
         specifier: ^5.8.0
@@ -903,12 +903,6 @@ importers:
         version: 5.9.3
 
 packages:
-
-  '@ai-sdk/anthropic@2.0.77':
-    resolution: {integrity: sha512-8n7ApEzFOxqVvT3HyqLrEQlgUx/2nUmPFLTGY3fNKwUA8KVNU3Ovd2C66Qh1Y93Iq5NkHsOWuLiTyAZpRKQhgw==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      zod: ^3.25.76 || ^4.1.8
 
   '@ai-sdk/deepseek@1.0.37':
     resolution: {integrity: sha512-GXSsA1wz0r9LdtEa7uxSB3ynaLHzKP7WmExrl5v5QgNVCmjmv/P4RhEMa1T6JFVdqG2sK1Nud/VWJ38LlnxkGg==}
@@ -10430,12 +10424,6 @@ packages:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
 
 snapshots:
-
-  '@ai-sdk/anthropic@2.0.77(zod@3.25.76)':
-    dependencies:
-      '@ai-sdk/provider': 2.0.1
-      '@ai-sdk/provider-utils': 3.0.23(zod@3.25.76)
-      zod: 3.25.76
 
   '@ai-sdk/deepseek@1.0.37(zod@3.25.76)':
     dependencies:

@@ -3,6 +3,14 @@ import { schedulingApi, type AutoScheduleInput, type DeconflictInput, type Early
 import { workingSessionsApi, type WorkingSession } from './working-sessions-api'
 import { calendarEventsApi } from './calendar-events-api'
 import { listOps, patchQueries, rollbackQueries, snapshotQueries } from '@/shared/lib/optimistic'
+import { api } from '@/shared/lib/api-client'
+
+export interface WorkingHoursOverride {
+  id: string
+  date: string
+  startTime: string
+  endTime: string
+}
 
 export const schedulingKeys = {
   commands: ['scheduling', 'commands'] as const,
@@ -10,6 +18,48 @@ export const schedulingKeys = {
   sessionsDay: (day: string) => ['working-sessions', 'day', day] as const,
   sessionsRange: (from: string, to: string) => ['working-sessions', 'range', from, to] as const,
   eventsRange: (from: string, to: string) => ['calendar-events', 'range', from, to] as const,
+  whOverride: (date: string) => ['working-hours-override', date] as const,
+}
+
+export function useWorkingHoursOverride(date: string) {
+  return useQuery({
+    queryKey: schedulingKeys.whOverride(date),
+    queryFn: () =>
+      api
+        .get<{ data: WorkingHoursOverride | null }>(`/working-hours/overrides/${date}`)
+        .then((r) => r.data.data),
+    staleTime: 30_000,
+  })
+}
+
+export function useUpsertWorkingHoursOverride() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { date: string; startTime: string; endTime: string }) =>
+      api
+        .put<{ data: WorkingHoursOverride }>(`/working-hours/overrides/${input.date}`, {
+          startTime: input.startTime,
+          endTime: input.endTime,
+        })
+        .then((r) => r.data.data),
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: schedulingKeys.whOverride(vars.date) })
+      qc.invalidateQueries({ queryKey: ['tasks'] })
+      qc.invalidateQueries({ queryKey: schedulingKeys.sessions })
+    },
+  })
+}
+
+export function useDeleteWorkingHoursOverride() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (date: string) => api.delete(`/working-hours/overrides/${date}`),
+    onSuccess: (_data, date) => {
+      qc.invalidateQueries({ queryKey: schedulingKeys.whOverride(date) })
+      qc.invalidateQueries({ queryKey: ['tasks'] })
+      qc.invalidateQueries({ queryKey: schedulingKeys.sessions })
+    },
+  })
 }
 
 export function useWorkingSessionsRange(from: string, to: string) {

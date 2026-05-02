@@ -25,6 +25,7 @@ import { Route as AppNotificationsRouteImport } from './routes/_app/notification
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
 import { Route as AppBrainRouteImport } from './routes/_app/brain'
 import { Route as AppApiDocsRouteImport } from './routes/_app/api-docs'
+import { Route as AppAmbassadorRouteImport } from './routes/_app/ambassador'
 import { Route as AppAiRouteImport } from './routes/_app/ai'
 import { Route as AppSplatRouteImport } from './routes/_app/$'
 import { Route as AppTasksIndexRouteImport } from './routes/_app/tasks/index'
@@ -122,6 +123,11 @@ const AppBrainRoute = AppBrainRouteImport.update({
 const AppApiDocsRoute = AppApiDocsRouteImport.update({
   id: '/api-docs',
   path: '/api-docs',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAmbassadorRoute = AppAmbassadorRouteImport.update({
+  id: '/ambassador',
+  path: '/ambassador',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAiRoute = AppAiRouteImport.update({
@@ -229,6 +235,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$': typeof AppSplatRoute
   '/ai': typeof AppAiRoute
+  '/ambassador': typeof AppAmbassadorRoute
   '/api-docs': typeof AppApiDocsRoute
   '/brain': typeof AppBrainRoute
   '/dashboard': typeof AppDashboardRoute
@@ -265,6 +272,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$': typeof AppSplatRoute
   '/ai': typeof AppAiRoute
+  '/ambassador': typeof AppAmbassadorRoute
   '/api-docs': typeof AppApiDocsRoute
   '/brain': typeof AppBrainRoute
   '/dashboard': typeof AppDashboardRoute
@@ -304,6 +312,7 @@ export interface FileRoutesById {
   '/_auth': typeof AuthRouteWithChildren
   '/_app/$': typeof AppSplatRoute
   '/_app/ai': typeof AppAiRoute
+  '/_app/ambassador': typeof AppAmbassadorRoute
   '/_app/api-docs': typeof AppApiDocsRoute
   '/_app/brain': typeof AppBrainRoute
   '/_app/dashboard': typeof AppDashboardRoute
@@ -342,6 +351,7 @@ export interface FileRouteTypes {
     | '/'
     | '/$'
     | '/ai'
+    | '/ambassador'
     | '/api-docs'
     | '/brain'
     | '/dashboard'
@@ -378,6 +388,7 @@ export interface FileRouteTypes {
     | '/'
     | '/$'
     | '/ai'
+    | '/ambassador'
     | '/api-docs'
     | '/brain'
     | '/dashboard'
@@ -416,6 +427,7 @@ export interface FileRouteTypes {
     | '/_auth'
     | '/_app/$'
     | '/_app/ai'
+    | '/_app/ambassador'
     | '/_app/api-docs'
     | '/_app/brain'
     | '/_app/dashboard'
@@ -569,6 +581,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppApiDocsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/ambassador': {
+      id: '/_app/ambassador'
+      path: '/ambassador'
+      fullPath: '/ambassador'
+      preLoaderRoute: typeof AppAmbassadorRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/ai': {
       id: '/_app/ai'
       path: '/ai'
@@ -715,6 +734,7 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppSplatRoute: typeof AppSplatRoute
   AppAiRoute: typeof AppAiRoute
+  AppAmbassadorRoute: typeof AppAmbassadorRoute
   AppApiDocsRoute: typeof AppApiDocsRoute
   AppBrainRoute: typeof AppBrainRoute
   AppDashboardRoute: typeof AppDashboardRoute
@@ -747,6 +767,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppSplatRoute: AppSplatRoute,
   AppAiRoute: AppAiRoute,
+  AppAmbassadorRoute: AppAmbassadorRoute,
   AppApiDocsRoute: AppApiDocsRoute,
   AppBrainRoute: AppBrainRoute,
   AppDashboardRoute: AppDashboardRoute,

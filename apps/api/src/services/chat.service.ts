@@ -9,6 +9,7 @@ import { z } from 'zod'
 import { calendarService } from './calendar.service'
 import { habitsService } from './habits.service'
 import { tasksRepository } from '../repositories/tasks.repo'
+import { endOfLocalDayUtc, startOfLocalDayUtc } from '@repo/shared/utils'
 
 // ---------------------------------------------------------------------------
 // Rate limiter (simple in-memory)
@@ -523,8 +524,12 @@ Do NOT invent task or habit IDs — only reference IDs from the context above or
             })
             if (!habit) return { success: false, error: 'Habit not found' }
 
-            const today = new Date()
-            today.setHours(0, 0, 0, 0)
+            const settings = await prisma.userSettings.findUnique({
+              where: { userId },
+              select: { timezone: true },
+            })
+            const tz = settings?.timezone ?? 'UTC'
+            const today = startOfLocalDayUtc(new Date(), tz)
 
             const log = await prisma.habitLog.upsert({
               where: { taskId_date: { taskId: habitId, date: today } },
@@ -559,10 +564,14 @@ Do NOT invent task or habit IDs — only reference IDs from the context above or
   }
 
   async weeklyPlanning(userId: string, weekStartDate: string) {
-    const weekStart = new Date(weekStartDate)
-    const weekEnd = new Date(weekStart)
-    weekEnd.setDate(weekEnd.getDate() + 6)
-    weekEnd.setHours(23, 59, 59, 999)
+    const settings = await prisma.userSettings.findUnique({
+      where: { userId },
+      select: { timezone: true },
+    })
+    const tz = settings?.timezone ?? 'UTC'
+    const weekStart = startOfLocalDayUtc(new Date(weekStartDate), tz)
+    const weekEndAnchor = new Date(weekStart.getTime() + 6 * 24 * 60 * 60 * 1000)
+    const weekEnd = endOfLocalDayUtc(weekEndAnchor, tz)
 
     const [ctx, quarterlyGoals, habits, openTasks, workingHours] = await Promise.all([
       getAIContext(userId),

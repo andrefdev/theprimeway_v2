@@ -243,7 +243,13 @@ export function useUpdateTask() {
       } else {
         patchGrouped(qc, id, data as Partial<Task>)
       }
-      return { snaps, groupedSnaps }
+
+      const focusKey = ['tasks', 'focus', id] as const
+      const focusSnap = qc.getQueryData<Task>(focusKey)
+      if (focusSnap) {
+        qc.setQueryData<Task>(focusKey, { ...focusSnap, ...(data as Partial<Task>) })
+      }
+      return { snaps, groupedSnaps, focusKey, focusSnap }
     },
     onSuccess: (_res, vars) => {
       if (vars.data?.status === 'completed') playSound('taskComplete')
@@ -251,6 +257,7 @@ export function useUpdateTask() {
     onError: (_e, _v, ctx) => {
       if (ctx?.snaps) rollbackQueries(qc, ctx.snaps)
       if (ctx?.groupedSnaps) rollbackQueries(qc, ctx.groupedSnaps)
+      if (ctx?.focusSnap) qc.setQueryData(ctx.focusKey, ctx.focusSnap)
     },
     onSettled: () => qc.invalidateQueries({ queryKey: tasksQueries.all() }),
   })

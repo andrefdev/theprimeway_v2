@@ -4,6 +4,12 @@ import { prisma } from '../lib/prisma'
 import { generateObject } from 'ai'
 import { taskModel } from '../lib/ai-models'
 import { z } from 'zod'
+import {
+  endOfLocalDayUtc,
+  localDayOfWeek,
+  localTimeToUtc,
+  startOfLocalDayUtc,
+} from '@repo/shared/utils'
 
 class CalendarService {
   async listAccounts(userId: string) {
@@ -307,24 +313,25 @@ class CalendarService {
       return { error: 'no_work_preferences' as const }
     }
 
+    const userSettings = await prisma.userSettings.findUnique({
+      where: { userId },
+      select: { timezone: true },
+    })
+    const tz = userSettings?.timezone ?? 'UTC'
+
     // Parse date and create time bounds
     const dateObj = new Date(date)
-    const dayOfWeek = dateObj.getDay()
+    const dayOfWeek = localDayOfWeek(dateObj, tz)
 
     // Check if this is a work day
     const todayRow = workingHoursRows.find((r: { dayOfWeek: number }) => r.dayOfWeek === dayOfWeek)
     if (!todayRow) {
       return { freeSlots: [] }
     }
-    const workStartHour = parseInt(todayRow.startTime.split(':')[0] ?? '9', 10)
-    const workEndHour = parseInt(todayRow.endTime.split(':')[0] ?? '17', 10)
-    const workPrefs = { workStartHour, workEndHour }
 
-    // Create time range for the day in ISO format
-    const dayStart = new Date(dateObj)
-    dayStart.setUTCHours(0, 0, 0, 0)
-    const dayEnd = new Date(dateObj)
-    dayEnd.setUTCHours(23, 59, 59, 999)
+    // Day bounds in user's local day, projected back to UTC
+    const dayStart = startOfLocalDayUtc(dateObj, tz)
+    const dayEnd = endOfLocalDayUtc(dateObj, tz)
 
     // Get all events for this day
     const events = await this.getGoogleEvents(userId, dayStart.toISOString(), dayEnd.toISOString())
@@ -338,11 +345,9 @@ class CalendarService {
       }))
       .sort((a, b) => a.start.getTime() - b.start.getTime())
 
-    // Generate free slots within work hours
-    const workStartDate = new Date(dateObj)
-    workStartDate.setUTCHours(workPrefs.workStartHour, 0, 0, 0)
-    const workEndDate = new Date(dateObj)
-    workEndDate.setUTCHours(workPrefs.workEndHour, 0, 0, 0)
+    // Working hours are local-clock "HH:mm" interpreted in the user's tz.
+    const workStartDate = localTimeToUtc(dateObj, todayRow.startTime, tz)
+    const workEndDate = localTimeToUtc(dateObj, todayRow.endTime, tz)
 
     const freeSlots: Array<{ start: string; end: string; durationMinutes: number }> = []
     let currentTime = workStartDate
@@ -384,14 +389,17 @@ class CalendarService {
     workStartHour = 8,
     workEndHour = 22,
   ) {
+    const userSettings = await prisma.userSettings.findUnique({
+      where: { userId },
+      select: { timezone: true },
+    })
+    const tz = userSettings?.timezone ?? 'UTC'
     const start = new Date(startDate)
     const end = new Date(endDate)
 
     // Fetch all events for the entire range in one call
-    const rangeStart = new Date(start)
-    rangeStart.setUTCHours(0, 0, 0, 0)
-    const rangeEnd = new Date(end)
-    rangeEnd.setUTCHours(23, 59, 59, 999)
+    const rangeStart = startOfLocalDayUtc(start, tz)
+    const rangeEnd = endOfLocalDayUtc(end, tz)
 
     const allEvents = (await this.getGoogleEvents(
       userId,
@@ -410,12 +418,15 @@ class CalendarService {
       eventCount: number
     }> = []
 
-    // Iterate over each day in the range
+    // Iterate over each day in the range — anchor day boundaries in user's tz.
     const current = new Date(start)
     while (current <= end) {
       const dateStr = current.toISOString().split('T')[0]!
-      const dayStart = new Date(`${dateStr}T${String(workStartHour).padStart(2, '0')}:00:00Z`)
-      const dayEnd = new Date(`${dateStr}T${String(workEndHour).padStart(2, '0')}:00:00Z`)
+      const hh = String(workStartHour).padStart(2, '0')
+      const eh = String(workEndHour).padStart(2, '0')
+      const dayStart = localTimeToUtc(current, `${hh}:00`, tz)
+      const dayEnd = localTimeToUtc(current, `${eh}:00`, tz)
+      void dateStr // dateStr retained for downstream slot labelling
 
       // Filter events that overlap with this day's working hours
       const dayEvents = allEvents
@@ -1144,35 +1155,6 @@ SCHEDULING GUIDELINES:
     return refreshed.access_token
   }
 
-  private buildEventBody(task: {
-    title: string
-    description?: string | null
-    scheduledStart?: Date | null
-    scheduledEnd?: Date | null
-    scheduledDate?: Date | null
-    isAllDay?: boolean | null
-  }) {
-    const body: Record<string, unknown> = {
-      summary: task.title,
-      description: task.description || 'Task synced from ThePrimeWay',
-    }
-
-    if (task.isAllDay && task.scheduledDate) {
-      const date = task.scheduledDate.toISOString().split('T')[0]!
-      const next = new Date(task.scheduledDate)
-      next.setUTCDate(next.getUTCDate() + 1)
-      const nextDate = next.toISOString().split('T')[0]!
-      body.start = { date }
-      body.end = { date: nextDate }
-    } else if (task.scheduledStart && task.scheduledEnd) {
-      body.start = { dateTime: task.scheduledStart.toISOString(), timeZone: 'UTC' }
-      body.end = { dateTime: task.scheduledEnd.toISOString(), timeZone: 'UTC' }
-    } else {
-      return null // no valid schedule
-    }
-    return body
-  }
-
   /**
    * Push a WorkingSession to the Google Calendar linked via Channel.timeboxToCalendarId.
    * No-op if task has no channel or channel has no target calendar.
@@ -1288,147 +1270,6 @@ SCHEDULING GUIDELINES:
       const txt = await res.text().catch(() => '')
       return { ok: false, reason: `google_${res.status}:${txt.slice(0, 120)}` }
     }
-    return { ok: true }
-  }
-
-  /** Create a Google Calendar event for a task, persist TaskCalendarBinding. */
-  async createEventForTask(
-    userId: string,
-    task: {
-      id: string
-      title: string
-      description?: string | null
-      scheduledStart?: Date | null
-      scheduledEnd?: Date | null
-      scheduledDate?: Date | null
-      isAllDay?: boolean | null
-    },
-  ): Promise<{ ok: true; eventId: string } | { ok: false; reason: string }> {
-    const target = await calendarRepo.findTargetCalendarForUser(userId)
-    if (!target) return { ok: false, reason: 'no_target_calendar' }
-
-    const body = this.buildEventBody(task)
-    if (!body) return { ok: false, reason: 'no_schedule' }
-
-    const accessToken = await this.ensureAccessToken(target.account.id)
-    if (!accessToken) return { ok: false, reason: 'no_access_token' }
-
-    const providerCalId = (target.calendar as any).providerCalendarId
-    try {
-      const res = await fetch(
-        `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(providerCalId)}/events`,
-        {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        },
-      )
-      if (!res.ok) {
-        console.error('[CAL_SYNC] createEventForTask failed', await res.text())
-        return { ok: false, reason: 'api_error' }
-      }
-      const event = (await res.json()) as { id: string }
-      await calendarRepo.upsertTaskBinding({
-        taskId: task.id,
-        calendarId: target.calendar.id,
-        calendarProvider: 'google',
-        externalEventId: event.id,
-        direction: 'app_to_google',
-      })
-      return { ok: true, eventId: event.id }
-    } catch (err) {
-      console.error('[CAL_SYNC] createEventForTask error', err)
-      return { ok: false, reason: 'network_error' }
-    }
-  }
-
-  /** Update the Google Calendar event linked to a task. */
-  async updateEventForTask(
-    userId: string,
-    task: {
-      id: string
-      title: string
-      description?: string | null
-      scheduledStart?: Date | null
-      scheduledEnd?: Date | null
-      scheduledDate?: Date | null
-      isAllDay?: boolean | null
-    },
-  ): Promise<{ ok: true } | { ok: false; reason: string }> {
-    const binding = await calendarRepo.findBindingByTaskId(task.id)
-    if (!binding || !binding.externalEventId) {
-      // No existing binding: treat as create
-      const res = await this.createEventForTask(userId, task)
-      return res.ok ? { ok: true } : { ok: false, reason: res.reason }
-    }
-
-    const body = this.buildEventBody(task)
-    if (!body) {
-      // Task lost schedule: delete the event + binding
-      return this.deleteEventForTask(userId, task.id)
-    }
-
-    const accessToken = await this.ensureAccessToken(binding.calendar.account.id)
-    if (!accessToken) return { ok: false, reason: 'no_access_token' }
-
-    const providerCalId = (binding.calendar as any).providerCalendarId
-    try {
-      const res = await fetch(
-        `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(providerCalId)}/events/${encodeURIComponent(binding.externalEventId)}`,
-        {
-          method: 'PATCH',
-          headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        },
-      )
-      if (!res.ok) {
-        console.error('[CAL_SYNC] updateEventForTask failed', await res.text())
-        return { ok: false, reason: 'api_error' }
-      }
-      await prisma.taskCalendarBinding.update({
-        where: { id: binding.id },
-        data: { lastSyncedAt: new Date(), lastSyncDirection: 'app_to_google' },
-      })
-      return { ok: true }
-    } catch (err) {
-      console.error('[CAL_SYNC] updateEventForTask error', err)
-      return { ok: false, reason: 'network_error' }
-    }
-  }
-
-  /** Delete the Google Calendar event + binding for a task. */
-  async deleteEventForTask(
-    _userId: string,
-    taskId: string,
-  ): Promise<{ ok: true } | { ok: false; reason: string }> {
-    const binding = await calendarRepo.findBindingByTaskId(taskId)
-    if (!binding || !binding.externalEventId) return { ok: true }
-
-    const accessToken = await this.ensureAccessToken(binding.calendar.account.id)
-    if (!accessToken) {
-      await calendarRepo.deleteBindingByTaskId(taskId)
-      return { ok: false, reason: 'no_access_token' }
-    }
-
-    const providerCalId = (binding.calendar as any).providerCalendarId
-    try {
-      const res = await fetch(
-        `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(providerCalId)}/events/${encodeURIComponent(binding.externalEventId)}`,
-        {
-          method: 'DELETE',
-          headers: { Authorization: `Bearer ${accessToken}` },
-        },
-      )
-      // 404/410 are acceptable — event already gone
-      if (!res.ok && res.status !== 404 && res.status !== 410) {
-        console.error('[CAL_SYNC] deleteEventForTask failed', await res.text())
-        // still remove local binding so we don't keep retrying a broken link
-      }
-    } catch (err) {
-      console.error('[CAL_SYNC] deleteEventForTask error', err)
-    }
-
-    await calendarRepo.deleteBindingByTaskId(taskId)
     return { ok: true }
   }
 
@@ -1553,9 +1394,6 @@ SCHEDULING GUIDELINES:
         await this.upsertCalendarEventCache(channel.calendarId, evt).catch((e) =>
           console.error('[CAL_WATCH] upsert event cache error', e),
         )
-        await this.applyGoogleEventToTask(evt).catch((e) =>
-          console.error('[CAL_WATCH] apply event error', e),
-        )
       }
       if (body.nextSyncToken) {
         await (prisma as any).calendarWatchChannel.update({
@@ -1614,35 +1452,6 @@ SCHEDULING GUIDELINES:
         isAllDay,
       },
     })
-  }
-
-  private async applyGoogleEventToTask(evt: any) {
-    if (!evt?.id) return
-    const binding = await calendarRepo.findBindingByExternalEventId(evt.id)
-    if (!binding) return // Unbound events ignored in v1
-
-    if (evt.status === 'cancelled') {
-      await prisma.task.update({
-        where: { id: binding.taskId },
-        data: { scheduledStart: null, scheduledEnd: null, scheduledDate: null },
-      })
-      await calendarRepo.deleteBindingByTaskId(binding.taskId)
-      return
-    }
-
-    const start = evt.start?.dateTime ? new Date(evt.start.dateTime) : null
-    const end = evt.end?.dateTime ? new Date(evt.end.dateTime) : null
-    const title = evt.summary
-    const updateData: Record<string, unknown> = {}
-    if (title) updateData.title = title
-    if (start) {
-      updateData.scheduledStart = start
-      updateData.scheduledDate = new Date(start.toISOString().slice(0, 10))
-    }
-    if (end) updateData.scheduledEnd = end
-    if (Object.keys(updateData).length) {
-      await prisma.task.update({ where: { id: binding.taskId }, data: updateData as any })
-    }
   }
 
   /** Renew watch channels expiring within 24h. */

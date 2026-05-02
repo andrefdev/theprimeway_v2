@@ -6,6 +6,8 @@ import { useStartTimer, useStopTimer, useUpdateTask } from '@/features/tasks/que
 import { schedulingApi } from '@/features/scheduling/api'
 import { schedulingKeys } from '@/features/scheduling/queries'
 import type { Task } from '@repo/shared/types'
+import { useFocusStore } from '../focus-store'
+import { useFocusNextTask } from './use-focus-next-task'
 
 interface FocusActionsArgs {
   taskId: string | null
@@ -15,7 +17,6 @@ interface FocusActionsArgs {
   onStarted: () => void
   onPaused: () => void
   onResumed: () => void
-  onCompleted: () => void
   onClose: () => void
 }
 
@@ -27,14 +28,15 @@ export function useFocusActions({
   onStarted,
   onPaused,
   onResumed,
-  onCompleted,
   onClose,
 }: FocusActionsArgs) {
   const qc = useQueryClient()
   const startTimer = useStartTimer()
   const stopTimer = useStopTimer()
   const updateTask = useUpdateTask()
-  const [savingNextStep, setSavingNextStep] = useState(false)
+  const fetchNextTask = useFocusNextTask()
+  const replace = useFocusStore((s) => s.replace)
+  const [isLoadingNext, setIsLoadingNext] = useState(false)
 
   async function start() {
     if (!taskId) return
@@ -78,50 +80,53 @@ export function useFocusActions({
     }
   }
 
+  async function goToNextTask(justCompletedId: string) {
+    setIsLoadingNext(true)
+    try {
+      const next = await fetchNextTask(justCompletedId)
+      if (!next) {
+        toast.message('Nothing else queued')
+        onClose()
+        return
+      }
+      qc.setQueryData(['tasks', 'focus', next.id], next)
+      replace(next.id)
+    } catch (err) {
+      toast.error((err as Error).message || 'Could not load next task')
+      onClose()
+    } finally {
+      setIsLoadingNext(false)
+    }
+  }
+
   async function complete(over: boolean) {
     if (!taskId) return
+    const completingId = taskId
     try {
       if (task?.actualStart && !task?.actualEnd) {
-        await stopTimer.mutateAsync(taskId)
+        await stopTimer.mutateAsync(completingId)
       }
-      await tasksApi.update(taskId, { status: 'completed' })
-      await schedulingApi.completeEarly({ taskId }).catch(() => undefined)
+      await tasksApi.update(completingId, { status: 'completed' })
+      schedulingApi.completeEarly({ taskId: completingId }).catch(() => undefined)
       qc.invalidateQueries({ queryKey: ['tasks'] })
       qc.invalidateQueries({ queryKey: schedulingKeys.sessions })
       toast.success(over ? 'Completed (overtime)' : 'Task completed')
-      onCompleted()
+      await goToNextTask(completingId)
     } catch (err) {
       toast.error((err as Error).message || 'Complete failed')
     }
   }
 
-  async function saveNextStep(title: string) {
-    const trimmed = title.trim()
-    if (!trimmed) {
-      onClose()
-      return
-    }
-    setSavingNextStep(true)
-    try {
-      await tasksApi.create({ title: trimmed })
-      qc.invalidateQueries({ queryKey: ['tasks'] })
-      toast.success('Next step added to backlog')
-    } catch (err) {
-      toast.error((err as Error).message || 'Failed to add next step')
-    } finally {
-      setSavingNextStep(false)
-      onClose()
-    }
-  }
+  const isCompleting =
+    updateTask.isPending || stopTimer.isPending || isLoadingNext
 
   return {
     start,
     pause,
     resume,
     complete,
-    saveNextStep,
-    savingNextStep,
     isStarting: startTimer.isPending || updateTask.isPending,
     isPausing: stopTimer.isPending,
+    isCompleting,
   }
 }

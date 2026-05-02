@@ -1,8 +1,8 @@
 {
-  "title": "Asistente IA",
+  "title": "Fenrir AI",
   "subtitle": "Pregunta sobre tus tareas, hábitos, metas y más",
-  "placeholder": "Pregúntame lo que quieras...",
-  "emptyState": "Inicia una conversación con tu asistente IA",
+  "placeholder": "Pregúntale lo que quieras a Fenrir...",
+  "emptyState": "Inicia una conversación con Fenrir",
   "suggestion1": "¿En qué debería enfocarme hoy?",
   "suggestion2": "¿Cómo van mis hábitos?",
   "suggestion3": "Resume mi semana",

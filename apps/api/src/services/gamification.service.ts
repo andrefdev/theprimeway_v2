@@ -711,15 +711,15 @@ Rules:
     fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14)
 
     const xpEvents = await prisma.xpEvent.findMany({
-      where: { userId, createdAt: { gte: fourteenDaysAgo } },
-      select: { amount: true, createdAt: true, source: true },
+      where: { userId, earnedAt: { gte: fourteenDaysAgo } },
+      select: { amount: true, earnedAt: true, source: true },
     })
 
     const thisWeekXp = xpEvents
-      .filter(e => e.createdAt && e.createdAt >= sevenDaysAgo)
+      .filter(e => e.earnedAt && e.earnedAt >= sevenDaysAgo)
       .reduce((sum, e) => sum + e.amount, 0)
     const lastWeekXp = xpEvents
-      .filter(e => e.createdAt && e.createdAt < sevenDaysAgo)
+      .filter(e => e.earnedAt && e.earnedAt < sevenDaysAgo)
       .reduce((sum, e) => sum + e.amount, 0)
 
     // Get habit completion rate this week

@@ -1,5 +1,7 @@
 import { useMemo } from 'react'
 import { format, subDays } from 'date-fns'
+import { localYmd } from '@repo/shared/utils'
+import { useUserTimezone } from '@/features/settings/hooks/use-user-timezone'
 import { Badge } from '@/shared/components/ui/badge'
 import {
   DropdownMenu,
@@ -27,15 +29,18 @@ interface HabitTrackerProps {
 
 export function HabitTracker({ habits, onToggle, onEdit, onArchive, onDelete }: HabitTrackerProps) {
   const { t } = useTranslation('habits')
+  const tz = useUserTimezone()
 
   const dates = useMemo(() => {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0) // Normalize to midnight in local timezone
-    const todayKey = format(today, 'yyyy-MM-dd')
+    const todayKey = localYmd(new Date(), tz)
+    const [yStr, mStr] = todayKey.split('-')
+    const year = Number(yStr)
+    const monthIdx = Number(mStr) - 1
 
-    // Get all days of the current month
-    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1)
-    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0)
+    // Get all days of the current month (anchored on user's local month)
+    const firstDay = new Date(year, monthIdx, 1)
+    const lastDay = new Date(year, monthIdx + 1, 0)
+    const today = new Date(year, monthIdx, Number(todayKey.split('-')[2]))
 
     const result = []
     let current = new Date(firstDay)
@@ -55,7 +60,7 @@ export function HabitTracker({ habits, onToggle, onEdit, onArchive, onDelete }: 
     }
 
     return result
-  }, [])
+  }, [tz])
 
   if (habits.length === 0) return null
 
@@ -153,11 +158,9 @@ function HabitRow({
   }
 
   function isFutureDate(date: Date): boolean {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const d = new Date(date)
-    d.setHours(0, 0, 0, 0)
-    return d > today
+    const todayKey = localYmd(new Date(), tz)
+    const dKey = format(date, 'yyyy-MM-dd')
+    return dKey > todayKey
   }
 
   return (

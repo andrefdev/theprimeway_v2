@@ -14,6 +14,7 @@ import { UpgradePrompt } from '@/features/subscriptions/components/UpgradePrompt
 import { FEATURES } from '@repo/shared/constants'
 import { useAuthStore } from '@/shared/stores/auth.store'
 import { useExecuteTool } from '@/features/ai/hooks/useExecuteTool'
+import { FenrirGlyph } from '@/shared/assets/FenrirGlyph'
 
 export const Route = createFileRoute('/_app/ai')({
   component: AiPage,
@@ -174,8 +175,8 @@ function MessageBubble({
   return (
     <div className={`flex gap-3 ${isUser ? 'justify-end' : ''}`}>
       {!isUser && (
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-500/15 text-xs font-bold text-violet-500">
-          AI
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
+          <FenrirGlyph className="h-4 w-4" />
         </div>
       )}
       <div className={`flex-1 space-y-2 ${isUser ? 'max-w-[80%]' : ''}`}>
@@ -229,8 +230,8 @@ function MessageBubble({
 function TypingIndicator() {
   return (
     <div className="flex gap-3">
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-500/15 text-xs font-bold text-violet-500">
-        AI
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
+        <FenrirGlyph className="h-4 w-4" />
       </div>
       <div className="rounded-2xl rounded-bl-md bg-muted px-4 py-2.5">
         <div className="flex gap-1">

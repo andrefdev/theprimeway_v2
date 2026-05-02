@@ -5,7 +5,7 @@ import { Timer, Square, ExternalLink, Check, Maximize2 } from 'lucide-react'
 import { Link } from '@tanstack/react-router'
 import { tasksQueries } from '../queries'
 import { useStopTimer, useUpdateTask } from '../queries'
-import { useFocusStore } from '@/features/focus/focus-store'
+import { useFocusStart } from '@/features/focus/hooks/use-focus-start'
 import {
   Dialog,
   DialogContent,
@@ -74,6 +74,7 @@ export function ActiveTaskHeaderBadge() {
 
   const stopTimer = useStopTimer()
   const updateTask = useUpdateTask()
+  const startFocus = useFocusStart()
 
   if (!activeTask) return null
 
@@ -183,7 +184,7 @@ export function ActiveTaskHeaderBadge() {
               <Button
                 variant="default"
                 onClick={() => {
-                  useFocusStore.getState().start(activeTask.id)
+                  startFocus(activeTask)
                   setOpen(false)
                 }}
                 className="gap-2"

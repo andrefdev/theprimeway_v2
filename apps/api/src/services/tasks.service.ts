@@ -14,6 +14,7 @@ import { gamificationEvents } from './gamification/events'
 import { syncService } from './sync.service'
 import { webhooksService } from './webhooks.service'
 import { scheduleOptimizer } from './schedule-optimizer'
+import { autoSchedule } from './scheduling/auto-schedule'
 import { enforceLimit } from '../lib/limits'
 import { FEATURES } from '@repo/shared/constants'
 import { prisma } from '../lib/prisma'
@@ -21,6 +22,7 @@ import type { Task } from '@prisma/client'
 import { generateObject } from 'ai'
 import { taskModel, fastModel } from '../lib/ai-models'
 import { z } from 'zod'
+import { startOfLocalDayUtc } from '@repo/shared/utils'
 
 type TaskModel = Task & { weeklyGoal?: unknown }
 
@@ -47,6 +49,8 @@ export interface CreateTaskInput {
   isRecurring?: boolean
   recurrenceRule?: string
   recurrenceEndDate?: string
+  /** Auto-fit into the first free gap on scheduledDate when no times provided. */
+  autoSchedule?: boolean
 }
 
 export interface UpdateTaskInput {
@@ -231,13 +235,31 @@ class TasksService {
     }
 
     console.log('📥 TasksService.createTask - data to be saved:', data)
-    const task = await tasksRepository.create(userId, data)
+    let task = await tasksRepository.create(userId, data)
 
-    // Fire-and-forget Google Calendar sync when task has a schedule.
-    if (task && (task.scheduledStart || task.isAllDay) && task.scheduledDate) {
-      calendarService
-        .createEventForTask(userId, task as any)
-        .catch((err) => console.error('[CAL_SYNC] createTask sync error', err))
+    // Opt-in: auto-fit into the first free gap on scheduledDate when no explicit times.
+    if (
+      task &&
+      input.autoSchedule &&
+      input.scheduledDate &&
+      !input.scheduledStart &&
+      !input.isAllDay
+    ) {
+      try {
+        const day = new Date(`${input.scheduledDate.slice(0, 10)}T00:00:00.000Z`)
+        const result = await autoSchedule(task.id, day, { triggeredBy: 'USER_ACTION' })
+        if (result.type === 'Success' && result.sessions.length > 0) {
+          const first = result.sessions[0]!
+          const last = result.sessions[result.sessions.length - 1]!
+          const refreshed = await tasksRepository.update(userId, task.id, {
+            scheduledStart: first.start,
+            scheduledEnd: last.end,
+          })
+          if (refreshed) task = refreshed
+        }
+      } catch (err) {
+        console.error('[AUTO_SCHEDULE_ON_CREATE]', err)
+      }
     }
 
     if (task) syncService.publish(userId, { type: 'task.created', payload: { id: task.id } })
@@ -292,20 +314,6 @@ class TasksService {
     }
 
     const updatedTask = await tasksRepository.update(userId, taskId, data)
-
-    // Fire-and-forget Google Calendar sync when scheduling fields change.
-    const scheduleTouched =
-      input.scheduledStart !== undefined ||
-      input.scheduledEnd !== undefined ||
-      input.scheduledDate !== undefined ||
-      input.isAllDay !== undefined ||
-      input.title !== undefined ||
-      input.description !== undefined
-    if (scheduleTouched && updatedTask) {
-      calendarService
-        .updateEventForTask(userId, updatedTask as any)
-        .catch((err) => console.error('[CAL_SYNC] updateTask sync error', err))
-    }
 
     if (updatedTask) syncService.publish(userId, { type: 'task.updated', payload: { id: taskId } })
 
@@ -364,10 +372,6 @@ class TasksService {
 
   /** Delete a task */
   async deleteTask(userId: string, taskId: string): Promise<boolean> {
-    // Delete the linked Google Calendar event first (fire-and-forget on failure).
-    await calendarService
-      .deleteEventForTask(userId, taskId)
-      .catch((err) => console.error('[CAL_SYNC] deleteTask sync error', err))
     const ok = await tasksRepository.delete(userId, taskId)
     if (ok) syncService.publish(userId, { type: 'task.deleted', payload: { id: taskId } })
     return ok
@@ -497,8 +501,12 @@ class TasksService {
   /** Process all recurring tasks for a user, generating instances for today if not already created */
   async processRecurringTasks(userId: string): Promise<{ generated: TaskModel[] }> {
     const recurringTasks = await tasksRepository.findRecurringTasks(userId)
-    const today = new Date()
-    today.setUTCHours(0, 0, 0, 0)
+    const settings = await prisma.userSettings.findUnique({
+      where: { userId },
+      select: { timezone: true },
+    })
+    const tz = settings?.timezone ?? 'UTC'
+    const today = startOfLocalDayUtc(new Date(), tz)
 
     const generated: TaskModel[] = []
 
@@ -1007,9 +1015,13 @@ Pick the single best task to do next. Return its exact ID from the list.
       }
     }
 
-    // Get today's productivity stats
-    const todayStart = new Date()
-    todayStart.setHours(0, 0, 0, 0)
+    // Get today's productivity stats — anchored on user's local day
+    const settings = await prisma.userSettings.findUnique({
+      where: { userId },
+      select: { timezone: true },
+    })
+    const tz = settings?.timezone ?? 'UTC'
+    const todayStart = startOfLocalDayUtc(new Date(), tz)
     const [tasksCompletedToday, habitsCompletedToday, xpToday] = await Promise.all([
       prisma.task.count({ where: { userId, status: 'completed', completedAt: { gte: todayStart } } }),
       prisma.habitLog.count({ where: { userId, date: { gte: todayStart }, completedCount: { gt: 0 } } }),

@@ -1,4 +1,14 @@
-import { workingHoursRepo, type WorkingHoursInput } from '../repositories/working-hours.repo'
+import {
+  workingHoursRepo,
+  workingHoursOverrideRepo,
+  type WorkingHoursInput,
+  type WorkingHoursOverrideInput,
+} from '../repositories/working-hours.repo'
+
+function timeToMinutes(t: string): number {
+  const [h, m] = t.split(':').map(Number)
+  return (h ?? 0) * 60 + (m ?? 0)
+}
 
 class WorkingHoursService {
   list(userId: string, channelFilter: string | null) {
@@ -27,3 +37,22 @@ class WorkingHoursService {
 }
 
 export const workingHoursService = new WorkingHoursService()
+
+class WorkingHoursOverrideService {
+  find(userId: string, date: string) {
+    return workingHoursOverrideRepo.findByDate(userId, date)
+  }
+
+  upsert(userId: string, date: string, input: WorkingHoursOverrideInput) {
+    if (timeToMinutes(input.startTime) >= timeToMinutes(input.endTime)) {
+      throw new Error('startTime must be before endTime')
+    }
+    return workingHoursOverrideRepo.upsert(userId, date, input)
+  }
+
+  delete(userId: string, date: string) {
+    return workingHoursOverrideRepo.deleteByDate(userId, date)
+  }
+}
+
+export const workingHoursOverrideService = new WorkingHoursOverrideService()

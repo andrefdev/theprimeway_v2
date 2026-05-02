@@ -1,10 +1,13 @@
 import { FEATURES, type FeatureKey } from '@repo/shared/constants'
+import { startOfLocalDayUtc } from '@repo/shared/utils'
 import { prisma } from './prisma'
 
-function startOfTodayUtc(): Date {
-  const d = new Date()
-  d.setUTCHours(0, 0, 0, 0)
-  return d
+async function startOfTodayForUser(userId: string): Promise<Date> {
+  const settings = await prisma.userSettings.findUnique({
+    where: { userId },
+    select: { timezone: true },
+  })
+  return startOfLocalDayUtc(new Date(), settings?.timezone ?? 'UTC')
 }
 
 export async function getCurrentUsage(userId: string, featureKey: FeatureKey): Promise<number> {
@@ -19,7 +22,7 @@ export async function getCurrentUsage(userId: string, featureKey: FeatureKey): P
       return prisma.brainEntry.count({ where: { userId, deletedAt: null } })
     case FEATURES.POMODORO_DAILY_LIMIT:
       return prisma.workingSession.count({
-        where: { userId, kind: 'POMODORO', start: { gte: startOfTodayUtc() } },
+        where: { userId, kind: 'POMODORO', start: { gte: await startOfTodayForUser(userId) } },
       })
     default:
       return 0

@@ -31,6 +31,7 @@ export const createTaskSchema = z.object({
   isRecurring: z.boolean().optional(),
   recurrenceRule: z.string().optional(),
   recurrenceEndDate: z.string().optional(),
+  autoSchedule: z.boolean().optional(),
 })
 
 export const updateTaskSchema = createTaskSchema.partial().extend({

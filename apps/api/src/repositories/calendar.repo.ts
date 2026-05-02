@@ -132,63 +132,6 @@ class CalendarRepository {
     })
   }
 
-  // ---- Task ↔ Calendar bindings -------------------------------------------
-
-  async findBindingByTaskId(taskId: string) {
-    return prisma.taskCalendarBinding.findFirst({
-      where: { taskId, isActive: true },
-      include: { calendar: { include: { account: true } } },
-    })
-  }
-
-  async findBindingByExternalEventId(externalEventId: string) {
-    return prisma.taskCalendarBinding.findFirst({
-      where: { externalEventId, isActive: true },
-    })
-  }
-
-  async upsertTaskBinding(data: {
-    taskId: string
-    calendarId: string
-    calendarProvider: string
-    externalEventId: string
-    direction: 'app_to_google' | 'google_to_app'
-  }) {
-    const existing = await prisma.taskCalendarBinding.findFirst({
-      where: { taskId: data.taskId },
-    })
-
-    if (existing) {
-      return prisma.taskCalendarBinding.update({
-        where: { id: existing.id },
-        data: {
-          calendarId: data.calendarId,
-          calendarProvider: data.calendarProvider,
-          externalEventId: data.externalEventId,
-          lastSyncedAt: new Date(),
-          lastSyncDirection: data.direction,
-          isActive: true,
-        },
-      })
-    }
-
-    return prisma.taskCalendarBinding.create({
-      data: {
-        taskId: data.taskId,
-        calendarId: data.calendarId,
-        calendarProvider: data.calendarProvider,
-        externalEventId: data.externalEventId,
-        lastSyncedAt: new Date(),
-        lastSyncDirection: data.direction,
-        isActive: true,
-      },
-    })
-  }
-
-  async deleteBindingByTaskId(taskId: string) {
-    await prisma.taskCalendarBinding.deleteMany({ where: { taskId } })
-  }
-
   async findTargetCalendarForUser(userId: string) {
     // Prefer the account.defaultTargetCalendarId if set; else fall back to primary
     // isSelectedForSync calendar of the first Google account.

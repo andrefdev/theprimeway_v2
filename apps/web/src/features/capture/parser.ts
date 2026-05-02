@@ -54,7 +54,7 @@ const DAY_ABBREV: Record<string, number> = {
   sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6,
 }
 
-export function parseCapture(text: string, reference: Date = new Date()): ParsedCapture {
+export function parseCapture(text: string, reference: Date = new Date(), tz: string = 'UTC'): ParsedCapture {
   let rest = text.trim()
   const out: ParsedCapture = { title: rest }
 
@@ -84,7 +84,7 @@ export function parseCapture(text: string, reference: Date = new Date()): Parsed
       out.bucket = bucket
       rest = rest.replace(day[0], ' ').trim()
     } else {
-      const resolved = resolveDay(token, reference)
+      const resolved = resolveDay(token, reference, tz)
       if (resolved) {
         out.day = resolved
         rest = rest.replace(day[0], ' ').trim()
@@ -96,11 +96,14 @@ export function parseCapture(text: string, reference: Date = new Date()): Parsed
   return out
 }
 
-function resolveDay(token: string, reference: Date): string | null {
+import { localYmd } from '@repo/shared/utils'
+
+function resolveDay(token: string, reference: Date, tz: string = 'UTC'): string | null {
   if (/^\d{4}-\d{2}-\d{2}$/.test(token)) return token
 
-  const today = new Date(reference)
-  today.setHours(0, 0, 0, 0)
+  const todayKey = localYmd(reference, tz)
+  const [y, m, day] = todayKey.split('-').map(Number)
+  const today = new Date(y!, m! - 1, day!)
 
   if (token === 'today') return toYMD(today)
   if (token === 'tomorrow') {
