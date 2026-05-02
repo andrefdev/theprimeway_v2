@@ -336,7 +336,10 @@ jobs:
             # Reload nginx so it re-resolves upstream container IPs
             # (api/web/admin containers get new IPs when recreated; long-running
             #  nginx caches stale ones until reload).
-            docker compose -f docker-compose.prod.yml exec -T nginx nginx -s reload || true
+            # Validate config first — a bad reload silently leaves stale upstream
+            # IPs cached, producing 502s until the next successful reload.
+            docker compose -f docker-compose.prod.yml exec -T nginx nginx -t
+            docker compose -f docker-compose.prod.yml exec -T nginx nginx -s reload
 
       - name: Health check - API
         id: health_api
