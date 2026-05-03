@@ -144,5 +144,31 @@
   "deleteAllConfirmBody": "This will permanently delete {{count}} archived task(s). This cannot be undone.",
   "rolloverPrefix": "Tasks which have rolled over at least:",
   "rolloverSuffix": "consecutive days",
-  "archiveCleared": "Archive cleared"
+  "archiveCleared": "Archive cleared",
+  "quickHint": "More options (subtasks, exact time, repeat, channel, weekly goal) are available after creating the task.",
+  "weekly": {
+    "addTask": "Add task",
+    "noTasksToday": "No tasks today",
+    "medium": "Medium"
+  },
+  "composer": {
+    "placeholder": "Task description…",
+    "minutes": "Minutes…",
+    "timebox": "--:--",
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "nextWeek": "Next week",
+    "nextMonth": "Next month",
+    "nextQuarter": "Next quarter",
+    "nextYear": "Next year",
+    "someday": "Someday",
+    "never": "Never",
+    "noDate": "No date",
+    "pick": "Pick",
+    "orPickDate": "Or pick a date",
+    "bucket": "When",
+    "setStartDate": "Set start date",
+    "exactDate": "Schedule exact start date",
+    "pickDate": "Pick a date"
+  }
 }

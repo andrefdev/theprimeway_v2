@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { Dialog, DialogContent } from '@/shared/components/ui/dialog'
 import { Button } from '@/shared/components/ui/button'
 import { toast } from 'sonner'
@@ -16,6 +17,7 @@ interface Props {
 }
 
 export function CaptureDialog({ open, onClose }: Props) {
+  const { t } = useTranslation('capture')
   const [text, setText] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
   const qc = useQueryClient()
@@ -75,7 +77,7 @@ export function CaptureDialog({ open, onClose }: Props) {
       }
       onClose()
     },
-    onError: (err) => toast.error((err as Error).message || 'Failed to capture'),
+    onError: (err) => toast.error((err as Error).message || t('toast.failed', { defaultValue: 'Failed to capture' })),
   })
 
   function submit(schedule: boolean) {
@@ -99,15 +101,15 @@ export function CaptureDialog({ open, onClose }: Props) {
                 onClose()
               }
             }}
-            placeholder='e.g. "30m write blog post #writing @tomorrow"'
+            placeholder={t('placeholder', { defaultValue: 'e.g. "30m write blog post #writing @tomorrow"' })}
             className="w-full bg-transparent text-base placeholder:text-muted-foreground focus:outline-none"
           />
         </div>
 
         <div className="px-4 py-3 space-y-2 text-sm">
-          <PreviewRow label="Title" value={parsed.title || <span className="text-muted-foreground">(pending)</span>} />
+          <PreviewRow label={t('labels.title', { defaultValue: 'Title' })} value={parsed.title || <span className="text-muted-foreground">{t('pending', { defaultValue: '(pending)' })}</span>} />
           <PreviewRow
-            label="Planned"
+            label={t('labels.planned', { defaultValue: 'Planned' })}
             value={
               parsed.plannedMinutes
                 ? <span className="tabular-nums">{formatMinutes(parsed.plannedMinutes)}</span>
@@ -115,7 +117,7 @@ export function CaptureDialog({ open, onClose }: Props) {
             }
           />
           <PreviewRow
-            label="Day"
+            label={t('labels.day', { defaultValue: 'Day' })}
             value={
               parsed.day
                 ? parsed.day
@@ -125,7 +127,7 @@ export function CaptureDialog({ open, onClose }: Props) {
             }
           />
           <PreviewRow
-            label="Channel"
+            label={t('labels.channel', { defaultValue: 'Channel' })}
             value={
               parsed.channelName
                 ? matchedChannel
@@ -137,13 +139,13 @@ export function CaptureDialog({ open, onClose }: Props) {
         </div>
 
         <div className="flex items-center justify-between gap-2 border-t bg-muted/30 px-4 py-2 text-xs text-muted-foreground">
-          <span>Enter: capture · Shift+Enter: capture &amp; schedule · Esc: close</span>
+          <span>{t('help', { defaultValue: 'Enter: capture · Shift+Enter: capture & schedule · Esc: close' })}</span>
           <div className="flex items-center gap-2">
             <Button size="sm" variant="ghost" onClick={() => submit(false)} disabled={!parsed.title || createMutation.isPending}>
-              Capture
+              {t('buttons.capture', { defaultValue: 'Capture' })}
             </Button>
             <Button size="sm" onClick={() => submit(true)} disabled={!parsed.title || createMutation.isPending}>
-              {createMutation.isPending ? 'Working…' : 'Capture & schedule'}
+              {createMutation.isPending ? t('buttons.working', { defaultValue: 'Working…' }) : t('buttons.captureSchedule', { defaultValue: 'Capture & schedule' })}
             </Button>
           </div>
         </div>

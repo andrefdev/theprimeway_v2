@@ -1,6 +1,8 @@
 import { Badge } from '@/shared/components/ui/badge'
 import { formatDistanceToNow } from 'date-fns'
 import { Loader2, Pin, AlertCircle } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import { useLocale } from '@/i18n/useLocale'
 import type { BrainEntry } from '@repo/shared/types'
 
 interface Props {
@@ -12,12 +14,14 @@ interface Props {
 const ACTIVE_STATUSES = new Set(['pending', 'transcribing', 'analyzing'])
 
 export function BrainEntryCard({ entry, selected, onClick }: Props) {
+  const { t } = useTranslation('brain')
+  const { dateFnsLocale } = useLocale()
   const processing = ACTIVE_STATUSES.has(entry.status)
   const failed = entry.status === 'failed'
   const displayTitle =
     entry.userTitle ??
     entry.title ??
-    (entry.rawTranscript ? entry.rawTranscript.slice(0, 60) + (entry.rawTranscript.length > 60 ? '…' : '') : 'Untitled')
+    (entry.rawTranscript ? entry.rawTranscript.slice(0, 60) + (entry.rawTranscript.length > 60 ? '…' : '') : t('card.untitled'))
 
   return (
     <button
@@ -34,7 +38,7 @@ export function BrainEntryCard({ entry, selected, onClick }: Props) {
             {processing && <Loader2 className="h-3 w-3 text-muted-foreground animate-spin" />}
             {failed && <AlertCircle className="h-3 w-3 text-rose-500" />}
             <span className={`text-sm font-medium truncate ${processing ? 'text-muted-foreground italic' : ''}`}>
-              {processing ? 'Procesando tu idea…' : displayTitle}
+              {processing ? t('card.processing') : displayTitle}
             </span>
           </div>
           {!processing && entry.topics && entry.topics.length > 0 && (
@@ -46,7 +50,7 @@ export function BrainEntryCard({ entry, selected, onClick }: Props) {
           )}
         </div>
         <span className="text-[10px] text-muted-foreground shrink-0">
-          {formatDistanceToNow(new Date(entry.createdAt), { addSuffix: true })}
+          {formatDistanceToNow(new Date(entry.createdAt), { addSuffix: true, locale: dateFnsLocale })}
         </span>
       </div>
     </button>

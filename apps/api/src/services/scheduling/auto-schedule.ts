@@ -110,6 +110,20 @@ async function writeSessions(
       }),
     ),
   )
+  // Mirror first/last session times onto the task so it appears on calendar views
+  // that read `scheduledStart` / `scheduledEnd` (right-side day calendar, etc.)
+  if (created.length > 0) {
+    const first = created[0]!
+    const last = created[created.length - 1]!
+    await prisma.task.update({
+      where: { id: taskId },
+      data: {
+        scheduledStart: first.start,
+        scheduledEnd: last.end,
+        scheduledDate: first.start,
+      },
+    }).catch(() => undefined)
+  }
   const changes: CommandChange[] = created.map((s: any) => ({
     entity: 'WorkingSession',
     id: s.id,

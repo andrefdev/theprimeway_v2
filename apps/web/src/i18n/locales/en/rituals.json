@@ -1,0 +1,93 @@
+{
+  "title": "Rituals",
+  "tabs": {
+    "overview": "Overview",
+    "dailyPlan": "Daily Plan",
+    "dailyShutdown": "Daily Shutdown",
+    "weeklyPlan": "Weekly Plan",
+    "weeklyReview": "Weekly Review",
+    "quarterly": "Quarterly",
+    "annual": "Annual"
+  },
+  "overview": {
+    "description": "Recurring reflection and planning surfaces. Each ritual has its own page with history and AI summary."
+  },
+  "cards": {
+    "dailyPlan": {
+      "title": "Daily Plan",
+      "description": "Plan your day before you start."
+    },
+    "dailyShutdown": {
+      "title": "Daily Shutdown",
+      "description": "Close out the day, capture wins and tomorrow."
+    },
+    "weeklyPlan": {
+      "title": "Weekly Plan",
+      "description": "Set objectives for the week ahead."
+    },
+    "weeklyReview": {
+      "title": "Weekly Review",
+      "description": "Reflect on the week, learn, and reset."
+    },
+    "quarterly": {
+      "title": "Quarterly Review",
+      "description": "Long-horizon check on goals and direction."
+    },
+    "annual": {
+      "title": "Annual Review",
+      "description": "Year in review and intentions for next."
+    }
+  },
+  "status": {
+    "doneToday": "Done today",
+    "pendingToday": "Pending today",
+    "doneThisWeek": "Done this week",
+    "pendingThisWeek": "Pending this week",
+    "periodDone": "{{period}} done",
+    "periodPending": "{{period}} pending",
+    "current": "CURRENT",
+    "pending": "PENDING",
+    "scheduledAt": "Scheduled at {{time}}"
+  },
+  "buttons": {
+    "start": "Start",
+    "back": "Back",
+    "next": "Next",
+    "skip": "Skip ritual",
+    "complete": "Complete",
+    "finish": "Finish"
+  },
+  "stepOf": "Step {{current}} of {{total}}",
+  "optional": "Optional…",
+  "scheduledLabel": "scheduled",
+  "dailyPlan": {
+    "title": "Daily Plan",
+    "step1": "Step 1 of 3 — Set your highlight",
+    "step2": "Step 2 of 3 — Confirm today's tasks ({{selected}}/{{total}})",
+    "step3": "Step 3 of 3 — Plan the day",
+    "highlightHint": "The one thing that, if done, makes today a win.",
+    "highlightPlaceholder": "Today I want to…",
+    "noOpenTasks": "No open tasks for today yet. Add one above or capture with Cmd+K.",
+    "addTaskPlaceholder": "Add a task for today…",
+    "addTask": "Add",
+    "addTaskFailed": "Failed to add task",
+    "planHint": "The engine will auto-schedule selected tasks into your working hours, respecting existing calendar events.",
+    "highlight": "Highlight",
+    "none": "(none)",
+    "tasksToSchedule": "Tasks to schedule",
+    "planning": "Planning…",
+    "planDay": "Plan the day"
+  },
+  "dailyShutdown": {
+    "title": "Daily Shutdown",
+    "hint": "Close the day cleanly. Reflect, then roll over what's left.",
+    "summarize": "Summarize my day",
+    "allDone": "No open tasks left for today. Clean shutdown.",
+    "rollPrompt_one": "{{count}} open task still on today. Roll it to tomorrow?",
+    "rollPrompt_other": "{{count}} open tasks still on today. Roll them to tomorrow?",
+    "skipRollover": "Skip rollover",
+    "rolling": "Rolling…",
+    "rollAndFinish_one": "Roll over {{count}} & finish",
+    "rollAndFinish_other": "Roll over {{count}} & finish"
+  }
+}

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   useUpdateThreeYearGoal,
   useDeleteThreeYearGoal,
@@ -28,6 +29,7 @@ interface GoalDetailPanelProps {
 type GoalType = 'three-year' | 'annual' | 'quarterly' | 'vision'
 
 export function GoalDetailPanel({ goalId, onClose }: GoalDetailPanelProps) {
+  const { t } = useTranslation('goals')
   const { locale } = useLocale()
   const [isEditing, setIsEditing] = useState(false)
   const [editedTitle, setEditedTitle] = useState('')
@@ -78,15 +80,15 @@ export function GoalDetailPanel({ goalId, onClose }: GoalDetailPanelProps) {
           break
       }
 
-      toast.success('Goal updated')
+      toast.success(t('toast.updated', { defaultValue: 'Goal updated' }))
       setIsEditing(false)
     } catch {
-      toast.error('Failed to update goal')
+      toast.error(t('toast.updateFailed', { defaultValue: 'Failed to update goal' }))
     }
   }
 
   const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this goal?')) return
+    if (!confirm(t('toast.deleteConfirm', { defaultValue: 'Are you sure you want to delete this goal?' }))) return
 
     try {
       switch (goalType) {
@@ -103,10 +105,10 @@ export function GoalDetailPanel({ goalId, onClose }: GoalDetailPanelProps) {
           break
       }
 
-      toast.success('Goal deleted')
+      toast.success(t('toast.deleted', { defaultValue: 'Goal deleted' }))
       onClose()
     } catch {
-      toast.error('Failed to delete goal')
+      toast.error(t('toast.deleteFailed', { defaultValue: 'Failed to delete goal' }))
     }
   }
 
@@ -124,7 +126,7 @@ export function GoalDetailPanel({ goalId, onClose }: GoalDetailPanelProps) {
     return (
       <Card>
         <CardHeader>
-          <p className="text-sm text-muted-foreground">Goal not found</p>
+          <p className="text-sm text-muted-foreground">{t('toast.notFound', { defaultValue: 'Goal not found' })}</p>
         </CardHeader>
       </Card>
     )

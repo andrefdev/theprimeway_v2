@@ -1,4 +1,5 @@
 import { useMemo, useCallback, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   DndContext,
   DragOverlay,
@@ -193,6 +194,7 @@ function DayColumn({
   onArchive,
   onQuickAdd,
 }: DayColumnProps) {
+  const { t } = useTranslation('tasks')
   const { setNodeRef, isOver } = useDroppable({ id: dateKey })
 
   return (
@@ -253,7 +255,7 @@ function DayColumn({
 
       {tasks.length === 0 && (
         <p className="text-center text-xs text-muted-foreground/60 mb-3 py-4">
-          {today ? 'No tasks today' : 'No tasks'}
+          {today ? t('weekly.noTasksToday') : t('noTasks')}
         </p>
       )}
 
@@ -264,7 +266,7 @@ function DayColumn({
         className="w-full text-xs font-medium border-dashed border-primary/30 hover:border-primary/50"
         onClick={onQuickAdd}
       >
-        <PlusIcon size={14} className="mr-1" /> Add task
+        <PlusIcon size={14} className="mr-1" /> {t('addTask')}
       </Button>
     </div>
   )

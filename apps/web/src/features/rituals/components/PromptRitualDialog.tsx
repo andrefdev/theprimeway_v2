@@ -1,4 +1,5 @@
 import { useMemo, useState, type ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog'
 import { Button } from '@/shared/components/ui/button'
 import { toast } from 'sonner'
@@ -17,6 +18,7 @@ interface Props {
 }
 
 export function PromptRitualDialog({ instance, open, onClose, title, finalStep, hint }: Props) {
+  const { t } = useTranslation('rituals')
   const prompts = useMemo(
     () => instance.ritual.steps.filter((s) => s.type === 'PROMPT' && s.key && s.text) as RitualStep[],
     [instance.ritual.steps],
@@ -83,7 +85,7 @@ const current = prompts[idx]
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
-            Step {stepNumber} of {totalSteps}
+            {t('stepOf', { current: stepNumber, total: totalSteps, defaultValue: 'Step {{current}} of {{total}}' })}
           </DialogDescription>
         </DialogHeader>
 
@@ -98,16 +100,20 @@ const current = prompts[idx]
               value={values[current.key!] ?? ''}
               onChange={(e) => setValues((v) => ({ ...v, [current.key!]: e.target.value }))}
               className="w-full rounded-md border border-border bg-background p-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              placeholder="Optional…"
+              placeholder={t('optional', { defaultValue: 'Optional…' })}
             />
             <div className="flex items-center justify-between">
               {idx === 0 ? (
-                <Button variant="ghost" size="sm" onClick={skip}>Skip ritual</Button>
+                <Button variant="ghost" size="sm" onClick={skip}>{t('buttons.skip', { defaultValue: 'Skip ritual' })}</Button>
               ) : (
-                <Button variant="ghost" size="sm" onClick={() => setIdx(idx - 1)}>Back</Button>
+                <Button variant="ghost" size="sm" onClick={() => setIdx(idx - 1)}>{t('buttons.back', { defaultValue: 'Back' })}</Button>
               )}
               <Button onClick={saveAndAdvance} disabled={addReflection.isPending}>
-                {idx + 1 < prompts.length ? 'Next' : finalStep ? 'Next' : 'Complete'}
+                {idx + 1 < prompts.length
+                  ? t('buttons.next', { defaultValue: 'Next' })
+                  : finalStep
+                    ? t('buttons.next', { defaultValue: 'Next' })
+                    : t('buttons.complete', { defaultValue: 'Complete' })}
               </Button>
             </div>
           </div>

@@ -1,0 +1,19 @@
+{
+  "placeholder": "ej. \"30m escribir post #writing @mañana\"",
+  "pending": "(pendiente)",
+  "labels": {
+    "title": "Título",
+    "planned": "Planeado",
+    "day": "Día",
+    "channel": "Canal"
+  },
+  "help": "Enter: capturar · Shift+Enter: capturar y programar · Esc: cerrar",
+  "buttons": {
+    "capture": "Capturar",
+    "captureSchedule": "Capturar y programar",
+    "working": "Procesando…"
+  },
+  "toast": {
+    "failed": "No se pudo capturar"
+  }
+}

@@ -117,7 +117,7 @@ export function GoalMetricsView() {
           <CardContent className="p-4 space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold">{`${currentYear} · Q${currentQuarter}`}</h3>
-              <span className="text-xs text-muted-foreground">{currentQuarterGoals.length} {t('createQuarterlyGoal').toLowerCase()}</span>
+              <span className="text-xs text-muted-foreground">{t('metrics.quarterlyCount', { count: currentQuarterGoals.length, defaultValue: '{{count}} quarterly goals' })}</span>
             </div>
             <ProgressRow label={t('progress')} value={currentQuarterProgress} />
           </CardContent>

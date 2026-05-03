@@ -1,0 +1,58 @@
+{
+  "title": "Second Brain",
+  "capture": {
+    "heading": "Capture a thought",
+    "placeholder": "A thought, an idea, a question… AI will structure it and link it to your goals.",
+    "hint": "Cmd/Ctrl + Enter to submit",
+    "submit": "Capture",
+    "saving": "Saving…",
+    "captured": "Thought captured — AI is processing…"
+  },
+  "feed": {
+    "searchPlaceholder": "Search thoughts…",
+    "loading": "Loading…",
+    "empty": "No thoughts yet. Capture your first above.",
+    "noMatches": "No matches.",
+    "pickPrompt": "Pick a thought to see its structure and connections."
+  },
+  "card": {
+    "processing": "Processing your idea…",
+    "untitled": "Untitled"
+  },
+  "detail": {
+    "summary": "Summary",
+    "topics": "Topics",
+    "actionItems": "Action items",
+    "connections": "Connections",
+    "createTask": "Create task",
+    "created": "Created",
+    "noConnections": "AI processed this but didn't find connections — it's in your feed for reference.",
+    "processing": "Processing your idea…",
+    "processingFailed": "Processing failed",
+    "retry": "Retry",
+    "retryAi": "Retry AI",
+    "pin": "Pin",
+    "unpin": "Unpin",
+    "delete": "Delete",
+    "deleteTitle": "Delete this thought?",
+    "deleteDescription": "This cannot be undone.",
+    "cancel": "Cancel",
+    "deleting": "Deleting…"
+  },
+  "toast": {
+    "taskCreated": "Task created",
+    "alreadyApplied": "Already applied",
+    "createTaskFailed": "Failed to create task",
+    "deleted": "Deleted",
+    "deleteFailed": "Failed to delete",
+    "reprocessing": "Reprocessing…",
+    "reprocessFailed": "Failed to reprocess",
+    "updateFailed": "Failed to update"
+  },
+  "type": {
+    "task": "Task",
+    "goal": "Goal",
+    "habit": "Habit",
+    "note": "Note"
+  }
+}

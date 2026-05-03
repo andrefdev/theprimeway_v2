@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { Pencil } from 'lucide-react'
 import { visionApi } from '../api'
 import { Button } from '@/shared/components/ui/button'
@@ -9,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardAction }
 import { Badge } from '@/shared/components/ui/badge'
 
 export function VisionEditor() {
+  const { t } = useTranslation('goals')
   const qc = useQueryClient()
   const { data, isLoading } = useQuery({ queryKey: ['vision'], queryFn: visionApi.get })
   const vision = data?.data
@@ -50,11 +52,11 @@ export function VisionEditor() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Your vision</CardTitle>
+          <CardTitle>{t('vision.yourVision', { defaultValue: 'Your vision' })}</CardTitle>
           <CardDescription className="line-clamp-2">{vision.statement}</CardDescription>
           <CardAction>
             <Button variant="ghost" size="sm" onClick={() => setEditing(true)}>
-              <Pencil className="h-3.5 w-3.5 mr-1" /> Edit
+              <Pencil className="h-3.5 w-3.5 mr-1" /> {t('vision.edit', { defaultValue: 'Edit' })}
             </Button>
           </CardAction>
         </CardHeader>
@@ -75,44 +77,62 @@ export function VisionEditor() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{hasVision ? 'Edit vision' : 'Define your vision'}</CardTitle>
-        <CardDescription>The 10-year horizon — who you become, what you stand for.</CardDescription>
+        <CardTitle>
+          {hasVision
+            ? t('vision.editTitle', { defaultValue: 'Edit vision' })
+            : t('vision.defineTitle', { defaultValue: 'Define your vision' })}
+        </CardTitle>
+        <CardDescription>
+          {t('vision.subtitle', {
+            defaultValue: 'The 10-year horizon — who you become, what you stand for.',
+          })}
+        </CardDescription>
         {hasVision && (
           <CardAction>
-            <Button variant="ghost" size="sm" onClick={() => setEditing(false)}>Cancel</Button>
+            <Button variant="ghost" size="sm" onClick={() => setEditing(false)}>
+              {t('vision.cancel', { defaultValue: 'Cancel' })}
+            </Button>
           </CardAction>
         )}
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
-          <label className="mb-1 block text-sm font-medium">10-year statement</label>
+          <label className="mb-1 block text-sm font-medium">
+            {t('vision.statementLabel', { defaultValue: '10-year statement' })}
+          </label>
           <Textarea
             rows={4}
             value={statement}
             onChange={(e) => setStatement(e.target.value)}
-            placeholder="By 2036 I am…"
+            placeholder={t('vision.statementPlaceholder', { defaultValue: 'By 2036 I am…' })}
           />
         </div>
         <div>
-          <label className="mb-1 block text-sm font-medium">Core values (comma-separated, max 5)</label>
+          <label className="mb-1 block text-sm font-medium">
+            {t('vision.valuesLabel', { defaultValue: 'Core values (comma-separated, max 5)' })}
+          </label>
           <Input
             value={valuesText}
             onChange={(e) => setValuesText(e.target.value)}
-            placeholder="craft, integrity, learning"
+            placeholder={t('vision.valuesPlaceholder', { defaultValue: 'craft, integrity, learning' })}
           />
         </div>
         <div>
-          <label className="mb-1 block text-sm font-medium">Identity statements (one per line)</label>
+          <label className="mb-1 block text-sm font-medium">
+            {t('vision.identityLabel', { defaultValue: 'Identity statements (one per line)' })}
+          </label>
           <Textarea
             rows={4}
             value={identityText}
             onChange={(e) => setIdentityText(e.target.value)}
-            placeholder={'I am a person who…\nI am a person who…'}
+            placeholder={t('vision.identityPlaceholder', { defaultValue: 'I am a person who…\nI am a person who…' })}
           />
         </div>
         <div className="flex justify-end">
           <Button onClick={() => save.mutate()} disabled={save.isPending}>
-            {save.isPending ? 'Saving…' : 'Save vision'}
+            {save.isPending
+              ? t('vision.saving', { defaultValue: 'Saving…' })
+              : t('vision.save', { defaultValue: 'Save vision' })}
           </Button>
         </div>
       </CardContent>

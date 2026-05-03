@@ -53,7 +53,7 @@ export function AmbassadorDashboard() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 space-y-6">
+    <div className="mx-auto max-w-6xl px-6 py-6 space-y-6">
       <div className="flex items-center gap-2">
         <Sparkles className="h-6 w-6 text-indigo-500" />
         <h1 className="text-2xl font-semibold">{t('dashboard.title')}</h1>
@@ -135,7 +135,7 @@ export function AmbassadorDashboard() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div>
+            <div className="space-y-1.5">
               <Label>{t('dashboard.payoutMethod.method')}</Label>
               <Select value={payoutMethodInput} onValueChange={setPayoutMethodInput}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -146,7 +146,7 @@ export function AmbassadorDashboard() {
                 </SelectContent>
               </Select>
             </div>
-            <div>
+            <div className="space-y-1.5">
               <Label>{t('dashboard.payoutMethod.details')}</Label>
               <Input value={payoutEmail} onChange={(e) => setPayoutEmail(e.target.value)} placeholder="email@example.com" />
             </div>

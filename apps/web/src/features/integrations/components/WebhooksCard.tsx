@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { Card, CardContent } from '@/shared/components/ui/card'
 import { Button } from '@/shared/components/ui/button'
@@ -15,6 +16,7 @@ import {
 } from '../queries'
 
 export function WebhooksCard() {
+  const { t } = useTranslation('settings')
   const { data: hooks = [], isLoading } = useWebhooks()
   const { data: allEvents = [] } = useWebhookEvents()
   const createMut = useCreateWebhook()
@@ -69,16 +71,16 @@ export function WebhooksCard() {
     <Card>
       <CardContent className="space-y-4">
         <div>
-          <h3 className="text-base font-semibold">Webhooks</h3>
+          <h3 className="text-base font-semibold">{t('integrations.webhooks.title')}</h3>
           <p className="text-xs text-muted-foreground">
-            Receive POST notifications when events happen. Payloads are signed with HMAC-SHA256 in the <code className="font-mono">X-Primeway-Signature</code> header.{' '}
+            {t('integrations.webhooks.description')}{' '}
             <a href="/api-docs" className="underline">Webhook docs →</a>
           </p>
         </div>
 
         <div className="space-y-2 rounded-md border border-border/50 p-3">
           <div className="space-y-1">
-            <Label htmlFor="webhook-url" className="text-xs">Endpoint URL</Label>
+            <Label htmlFor="webhook-url" className="text-xs">{t('integrations.webhooks.endpoint')}</Label>
             <Input
               id="webhook-url"
               type="url"
@@ -89,7 +91,7 @@ export function WebhooksCard() {
           </div>
 
           <div className="space-y-1">
-            <Label className="text-xs">Events</Label>
+            <Label className="text-xs">{t('integrations.webhooks.events')}</Label>
             <div className="flex flex-wrap gap-1.5">
               {allEvents.map((ev) => {
                 const active = selected.includes(ev)
@@ -116,7 +118,7 @@ export function WebhooksCard() {
             disabled={!url.trim().startsWith('http') || selected.length === 0 || createMut.isPending}
             className="w-full"
           >
-            {createMut.isPending ? 'Creating…' : 'Add webhook'}
+            {createMut.isPending ? t('integrations.webhooks.creating') : t('integrations.webhooks.add')}
           </Button>
         </div>
 

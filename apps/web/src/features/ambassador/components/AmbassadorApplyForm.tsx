@@ -109,15 +109,15 @@ export function AmbassadorApplyForm({ onCancel, onSubmitted }: Props) {
       <CardContent>
         <form onSubmit={submit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
+            <div className="space-y-1.5">
               <Label htmlFor="fullName">{t('form.fullName', { defaultValue: 'Nombre completo' })} *</Label>
               <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
             </div>
-            <div>
+            <div className="space-y-1.5">
               <Label htmlFor="phone">{t('form.phone', { defaultValue: 'Teléfono (opcional)' })}</Label>
               <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
             </div>
-            <div>
+            <div className="space-y-1.5">
               <Label>{t('form.country', { defaultValue: 'País' })} *</Label>
               <Select value={country} onValueChange={setCountry}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -128,7 +128,7 @@ export function AmbassadorApplyForm({ onCancel, onSubmitted }: Props) {
                 </SelectContent>
               </Select>
             </div>
-            <div>
+            <div className="space-y-1.5">
               <Label>{t('form.niche', { defaultValue: 'Nicho' })}</Label>
               <Select value={niche} onValueChange={setNiche}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -142,7 +142,7 @@ export function AmbassadorApplyForm({ onCancel, onSubmitted }: Props) {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
+            <div className="space-y-1.5">
               <Label>{t('form.platform', { defaultValue: 'Plataforma principal' })} *</Label>
               <Select value={platform} onValueChange={(v) => setPlatform(v as AmbassadorPlatform)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -153,17 +153,17 @@ export function AmbassadorApplyForm({ onCancel, onSubmitted }: Props) {
                 </SelectContent>
               </Select>
             </div>
-            <div>
+            <div className="space-y-1.5">
               <Label htmlFor="handle">{t('form.handle', { defaultValue: 'Handle / usuario' })} *</Label>
               <Input id="handle" placeholder="@tucuenta" value={handle} onChange={(e) => setHandle(e.target.value)} required />
             </div>
-            <div>
+            <div className="space-y-1.5">
               <Label htmlFor="audienceSize">{t('form.audienceSize', { defaultValue: 'Tamaño de audiencia' })}</Label>
               <Input id="audienceSize" type="number" placeholder="ej. 50000" value={audienceSize} onChange={(e) => setAudienceSize(e.target.value)} />
             </div>
           </div>
 
-          <div>
+          <div className="space-y-1.5">
             <Label htmlFor="motivation">{t('form.motivation', { defaultValue: '¿Por qué quieres ser embajador? (mín 100 chars)' })} *</Label>
             <Textarea
               id="motivation"
@@ -210,12 +210,12 @@ export function AmbassadorApplyForm({ onCancel, onSubmitted }: Props) {
               {t('form.socialLinks', { defaultValue: 'Otras redes sociales (opcional)' })}
             </summary>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
-              <div><Label>Instagram</Label><Input value={instagram} onChange={(e) => setInstagram(e.target.value)} placeholder="@user" /></div>
-              <div><Label>TikTok</Label><Input value={tiktok} onChange={(e) => setTiktok(e.target.value)} placeholder="@user" /></div>
-              <div><Label>YouTube</Label><Input value={youtube} onChange={(e) => setYoutube(e.target.value)} placeholder="@channel" /></div>
-              <div><Label>Twitter / X</Label><Input value={twitter} onChange={(e) => setTwitter(e.target.value)} placeholder="@user" /></div>
-              <div><Label>LinkedIn</Label><Input value={linkedin} onChange={(e) => setLinkedin(e.target.value)} placeholder="linkedin.com/in/..." /></div>
-              <div><Label>Website</Label><Input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://..." /></div>
+              <div className="space-y-1.5"><Label>Instagram</Label><Input value={instagram} onChange={(e) => setInstagram(e.target.value)} placeholder="@user" /></div>
+              <div className="space-y-1.5"><Label>TikTok</Label><Input value={tiktok} onChange={(e) => setTiktok(e.target.value)} placeholder="@user" /></div>
+              <div className="space-y-1.5"><Label>YouTube</Label><Input value={youtube} onChange={(e) => setYoutube(e.target.value)} placeholder="@channel" /></div>
+              <div className="space-y-1.5"><Label>Twitter / X</Label><Input value={twitter} onChange={(e) => setTwitter(e.target.value)} placeholder="@user" /></div>
+              <div className="space-y-1.5"><Label>LinkedIn</Label><Input value={linkedin} onChange={(e) => setLinkedin(e.target.value)} placeholder="linkedin.com/in/..." /></div>
+              <div className="space-y-1.5"><Label>Website</Label><Input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://..." /></div>
             </div>
           </details>
 

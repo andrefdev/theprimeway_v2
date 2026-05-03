@@ -144,5 +144,31 @@
   "deleteAllConfirmBody": "Se eliminarán permanentemente {{count}} tarea(s) archivada(s). Esto no se puede deshacer.",
   "rolloverPrefix": "Tareas que se han trasladado al menos:",
   "rolloverSuffix": "días consecutivos",
-  "archiveCleared": "Archivo vaciado"
+  "archiveCleared": "Archivo vaciado",
+  "quickHint": "Más opciones (subtareas, hora exacta, repetición, canal, objetivo semanal) están disponibles después de crear la tarea.",
+  "weekly": {
+    "addTask": "Agregar tarea",
+    "noTasksToday": "Sin tareas hoy",
+    "medium": "Media"
+  },
+  "composer": {
+    "placeholder": "Descripción de la tarea…",
+    "minutes": "Minutos…",
+    "timebox": "--:--",
+    "today": "Hoy",
+    "tomorrow": "Mañana",
+    "nextWeek": "La próxima semana",
+    "nextMonth": "El próximo mes",
+    "nextQuarter": "El próximo trimestre",
+    "nextYear": "El próximo año",
+    "someday": "Algún día",
+    "never": "Nunca",
+    "noDate": "Sin fecha",
+    "pick": "Elegir",
+    "orPickDate": "O elige una fecha",
+    "bucket": "Cuándo",
+    "setStartDate": "Definir fecha de inicio",
+    "exactDate": "Programar fecha exacta de inicio",
+    "pickDate": "Elegir fecha"
+  }
 }

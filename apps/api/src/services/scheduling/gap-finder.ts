@@ -104,8 +104,10 @@ export async function getDayWindow(
   channelId: string | null | undefined,
   day: Date,
 ): Promise<DayWindow | null> {
-  const wh = await getEffectiveWorkingHours(userId, channelId, day)
-  if (!wh) return null
+  const wh = (await getEffectiveWorkingHours(userId, channelId, day)) ?? {
+    startTime: '09:00',
+    endTime: '17:00',
+  }
   const tz = await getUserTz(userId)
   return { start: combineDateTime(day, wh.startTime, tz), end: combineDateTime(day, wh.endTime, tz) }
 }

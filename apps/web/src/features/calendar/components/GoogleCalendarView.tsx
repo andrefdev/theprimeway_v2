@@ -140,7 +140,7 @@ export function GoogleCalendarView() {
               setEventCreateSlot({ start, end })
             }}
           >
-            + Event
+            + {t('addEvent', { defaultValue: 'Event' })}
           </Button>
           <div className="flex rounded-md border border-border overflow-hidden">
             {(['day', 'week', 'month'] as const).map((m) => (

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/shared/components/ui/button'
 import { toast } from 'sonner'
 import { tasksApi } from '@/features/tasks/api'
@@ -21,6 +22,7 @@ function toYMD(d: Date): string {
 }
 
 export function DailyShutdownDialog({ instance, open, onClose }: Props) {
+  const { t } = useTranslation('rituals')
   const today = toYMD(new Date())
   const tomorrowDate = new Date()
   tomorrowDate.setDate(tomorrowDate.getDate() + 1)
@@ -62,14 +64,14 @@ export function DailyShutdownDialog({ instance, open, onClose }: Props) {
       instance={instance}
       open={open}
       onClose={onClose}
-      title="Daily Shutdown"
+      title={t('dailyShutdown.title', { defaultValue: 'Daily Shutdown' })}
       hint={
         <div className="space-y-2">
-          <p>Close the day cleanly. Reflect, then roll over what's left.</p>
+          <p>{t('dailyShutdown.hint', { defaultValue: "Close the day cleanly. Reflect, then roll over what's left." })}</p>
           <FatigueSignal variant="inline" />
           <AiRitualSummary
             instanceId={instance.id}
-            label="Summarize my day"
+            label={t('dailyShutdown.summarize', { defaultValue: 'Summarize my day' })}
             cached={(instance.snapshot as any)?.aiSummary ?? null}
             cachedAt={(instance.snapshot as any)?.aiSummaryAt ?? null}
           />
@@ -81,8 +83,8 @@ export function DailyShutdownDialog({ instance, open, onClose }: Props) {
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground">
               {remaining.length === 0
-                ? 'No open tasks left for today. Clean shutdown.'
-                : `${remaining.length} open task${remaining.length === 1 ? '' : 's'} still on today. Roll them to tomorrow?`}
+                ? t('dailyShutdown.allDone', { defaultValue: 'No open tasks left for today. Clean shutdown.' })
+                : t('dailyShutdown.rollPrompt', { count: remaining.length, defaultValue: '{{count}} open tasks still on today. Roll them to tomorrow?' })}
             </p>
             {remaining.length > 0 && (
               <ul className="max-h-48 overflow-y-auto space-y-1 pr-1 rounded-md border border-border/40 bg-muted/10 p-2">
@@ -94,18 +96,20 @@ export function DailyShutdownDialog({ instance, open, onClose }: Props) {
               </ul>
             )}
             <div className="flex items-center justify-between pt-1">
-              <Button variant="ghost" size="sm" onClick={back} disabled={rolling}>Back</Button>
+              <Button variant="ghost" size="sm" onClick={back} disabled={rolling}>{t('buttons.back', { defaultValue: 'Back' })}</Button>
               <div className="flex items-center gap-2">
                 <Button variant="ghost" onClick={() => complete({ rolledOver: 0 })} disabled={rolling}>
-                  Skip rollover
+                  {t('dailyShutdown.skipRollover', { defaultValue: 'Skip rollover' })}
                 </Button>
                 {remaining.length > 0 && (
                   <Button onClick={() => rolloverAll(remaining, complete)} disabled={rolling}>
-                    {rolling ? 'Rolling…' : `Roll over ${remaining.length} & finish`}
+                    {rolling
+                      ? t('dailyShutdown.rolling', { defaultValue: 'Rolling…' })
+                      : t('dailyShutdown.rollAndFinish', { count: remaining.length, defaultValue: 'Roll over {{count}} & finish' })}
                   </Button>
                 )}
                 {remaining.length === 0 && (
-                  <Button onClick={() => complete({ rolledOver: 0 })} disabled={rolling}>Finish</Button>
+                  <Button onClick={() => complete({ rolledOver: 0 })} disabled={rolling}>{t('buttons.finish', { defaultValue: 'Finish' })}</Button>
                 )}
               </div>
             </div>

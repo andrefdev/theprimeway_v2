@@ -85,5 +85,43 @@
     "disconnect": "Disconnect",
     "disconnectConfirm": "Disconnect this Google account?",
     "primary": "primary"
+  },
+  "tabPlan": "Plan",
+  "tabAmbassador": "Ambassador",
+  "pushNotifications": "Push notifications",
+  "pushDescription": "Receive alerts on this device even when the app is closed",
+  "pushEnabled": "Push notifications enabled",
+  "pushDisabled": "Push notifications disabled",
+  "pushBlockedByBrowser": "Blocked by browser — enable in site settings",
+  "enable": "Enable",
+  "disable": "Disable",
+  "channels": {
+    "createDefaults": "Create defaults",
+    "seeding": "Seeding…",
+    "seeded": "Default contexts & channels created",
+    "seedFailed": "Seed failed",
+    "empty": {
+      "title": "No contexts yet",
+      "description": "Contexts group related channels. Start by creating a Work and Personal context."
+    }
+  },
+  "integrations": {
+    "apiKeys": {
+      "title": "API keys",
+      "description": "Use these to call the Primeway API from scripts, Zapier, or other tools. Keys are shown once at creation — save them somewhere safe.",
+      "name": "Name",
+      "create": "Create key",
+      "creating": "Creating…",
+      "loading": "Loading…",
+      "empty": "No keys yet."
+    },
+    "webhooks": {
+      "title": "Webhooks",
+      "description": "Receive POST notifications when events happen.",
+      "endpoint": "Endpoint URL",
+      "events": "Events",
+      "add": "Add webhook",
+      "creating": "Creating…"
+    }
   }
 }

@@ -209,7 +209,7 @@ export function TimeGrid({
               className="absolute right-2 -translate-y-1/2 text-xs font-medium text-muted-foreground"
               style={{ top: i * HOUR_HEIGHT }}
             >
-              {i === 0 ? '' : format(new Date(2000, 0, 1, h), 'h a')}
+              {i === 0 ? '' : format(new Date(2000, 0, 1, h), 'h a', { locale: dateFnsLocale })}
             </div>
           ))}
         </div>

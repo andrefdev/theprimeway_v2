@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useTranslation } from 'react-i18next'
 import { format } from 'date-fns'
 import { Calendar as CalendarIcon } from 'lucide-react'
 import type { TaskBucket } from '@repo/shared/types'
@@ -41,18 +42,23 @@ function tomorrowStr(): string {
   return formatLocalDate(d)
 }
 
-const PRESETS: Array<{
+interface Preset {
   key: string
-  label: string
+  i18nKey: string
+  fallback: string
   value: DateBucketValue
-}> = [
-  { key: 'today', label: 'Today', value: { scheduledDate: todayStr(), scheduledBucket: 'TODAY' } },
-  { key: 'tomorrow', label: 'Tomorrow', value: { scheduledDate: tomorrowStr(), scheduledBucket: 'TOMORROW' } },
-  { key: 'next_week', label: 'Next week', value: { scheduledDate: null, scheduledBucket: 'NEXT_WEEK' } },
-  { key: 'next_month', label: 'Next month', value: { scheduledDate: null, scheduledBucket: 'NEXT_MONTH' } },
-  { key: 'someday', label: 'Someday', value: { scheduledDate: null, scheduledBucket: 'SOMEDAY' } },
-  { key: 'no_date', label: 'No date', value: { scheduledDate: null, scheduledBucket: null } },
-]
+}
+
+function getPresets(): Preset[] {
+  return [
+    { key: 'today', i18nKey: 'composer.today', fallback: 'Today', value: { scheduledDate: todayStr(), scheduledBucket: 'TODAY' } },
+    { key: 'tomorrow', i18nKey: 'composer.tomorrow', fallback: 'Tomorrow', value: { scheduledDate: tomorrowStr(), scheduledBucket: 'TOMORROW' } },
+    { key: 'next_week', i18nKey: 'composer.nextWeek', fallback: 'Next week', value: { scheduledDate: null, scheduledBucket: 'NEXT_WEEK' } },
+    { key: 'next_month', i18nKey: 'composer.nextMonth', fallback: 'Next month', value: { scheduledDate: null, scheduledBucket: 'NEXT_MONTH' } },
+    { key: 'someday', i18nKey: 'composer.someday', fallback: 'Someday', value: { scheduledDate: null, scheduledBucket: 'SOMEDAY' } },
+    { key: 'no_date', i18nKey: 'composer.noDate', fallback: 'No date', value: { scheduledDate: null, scheduledBucket: null } },
+  ]
+}
 
 function activeKey(v: DateBucketValue): string | null {
   // Custom = scheduledDate set but doesn't match today/tomorrow
@@ -68,19 +74,20 @@ function activeKey(v: DateBucketValue): string | null {
   return 'no_date'
 }
 
-function summary(v: DateBucketValue): string {
-  const k = activeKey(v)
-  if (k === 'custom' && v.scheduledDate) {
-    const [y, m, d] = (v.scheduledDate.includes('T') ? v.scheduledDate.split('T')[0]! : v.scheduledDate).split('-').map(Number) as [number, number, number]
-    return format(new Date(y, m - 1, d), 'PPP')
-  }
-  const preset = PRESETS.find((p) => p.key === k)
-  return preset?.label ?? 'Pick'
-}
-
 export function DateBucketPicker({ value, onChange, className, trigger }: DateBucketPickerProps) {
+  const { t } = useTranslation('tasks')
   const [open, setOpen] = React.useState(false)
+  const presets = React.useMemo(() => getPresets(), [])
   const k = activeKey(value)
+  const summary = (v: DateBucketValue): string => {
+    const key = activeKey(v)
+    if (key === 'custom' && v.scheduledDate) {
+      const [y, m, d] = (v.scheduledDate.includes('T') ? v.scheduledDate.split('T')[0]! : v.scheduledDate).split('-').map(Number) as [number, number, number]
+      return format(new Date(y, m - 1, d), 'PPP')
+    }
+    const preset = presets.find((p) => p.key === key)
+    return preset ? t(preset.i18nKey, { defaultValue: preset.fallback }) : t('composer.pick', { defaultValue: 'Pick' })
+  }
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -104,7 +111,7 @@ export function DateBucketPicker({ value, onChange, className, trigger }: DateBu
         avoidCollisions={false}
       >
         <div className="grid grid-cols-2 gap-1">
-          {PRESETS.map((p) => (
+          {presets.map((p) => (
             <button
               key={p.key}
               type="button"
@@ -119,12 +126,12 @@ export function DateBucketPicker({ value, onChange, className, trigger }: DateBu
                   : 'hover:bg-accent',
               )}
             >
-              {p.label}
+              {t(p.i18nKey, { defaultValue: p.fallback })}
             </button>
           ))}
         </div>
         <div className="mt-2 border-t pt-1">
-          <div className="px-1 pb-0.5 text-[10px] text-muted-foreground">Or pick a date</div>
+          <div className="px-1 pb-0.5 text-[10px] text-muted-foreground">{t('composer.orPickDate', { defaultValue: 'Or pick a date' })}</div>
           <Calendar
             mode="single"
             className="p-0"

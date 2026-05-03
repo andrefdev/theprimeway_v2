@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { Card, CardContent } from '@/shared/components/ui/card'
 import { Button } from '@/shared/components/ui/button'
@@ -10,6 +11,7 @@ import { Copy, Trash2 } from 'lucide-react'
 import { useApiKeys, useCreateApiKey, useRevokeApiKey } from '../queries'
 
 export function ApiKeysCard() {
+  const { t } = useTranslation('settings')
   const { data: keys = [], isLoading } = useApiKeys()
   const createMut = useCreateApiKey()
   const revokeMut = useRevokeApiKey()
@@ -50,9 +52,9 @@ export function ApiKeysCard() {
     <Card>
       <CardContent className="space-y-4">
         <div>
-          <h3 className="text-base font-semibold">API keys</h3>
+          <h3 className="text-base font-semibold">{t('integrations.apiKeys.title')}</h3>
           <p className="text-xs text-muted-foreground">
-            Use these to call the Primeway API from scripts, Zapier, or other tools. Keys are shown once at creation — save them somewhere safe.{' '}
+            {t('integrations.apiKeys.description')}{' '}
             <a href="/api-docs" className="underline">API docs →</a>
           </p>
         </div>
@@ -80,7 +82,7 @@ export function ApiKeysCard() {
 
         <div className="flex items-end gap-2">
           <div className="flex-1 space-y-1">
-            <Label htmlFor="api-key-name" className="text-xs">Name</Label>
+            <Label htmlFor="api-key-name" className="text-xs">{t('integrations.apiKeys.name')}</Label>
             <Input
               id="api-key-name"
               placeholder="e.g. Zapier, home-script"
@@ -92,15 +94,15 @@ export function ApiKeysCard() {
             />
           </div>
           <Button onClick={onCreate} disabled={!name.trim() || createMut.isPending}>
-            {createMut.isPending ? 'Creating…' : 'Create key'}
+            {createMut.isPending ? t('integrations.apiKeys.creating') : t('integrations.apiKeys.create')}
           </Button>
         </div>
 
         <div className="space-y-2">
           {isLoading ? (
-            <p className="text-xs text-muted-foreground">Loading…</p>
+            <p className="text-xs text-muted-foreground">{t('integrations.apiKeys.loading')}</p>
           ) : keys.length === 0 ? (
-            <p className="text-xs text-muted-foreground">No keys yet.</p>
+            <p className="text-xs text-muted-foreground">{t('integrations.apiKeys.empty')}</p>
           ) : (
             keys.map((k) => (
               <div key={k.id} className="flex items-center justify-between rounded-md border border-border/50 p-2">

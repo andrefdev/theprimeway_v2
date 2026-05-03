@@ -1,19 +1,19 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
+import { format } from 'date-fns'
+import { useLocale } from '@/i18n/useLocale'
 import { toast } from 'sonner'
 import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
 import { Textarea } from '@/shared/components/ui/textarea'
 import { Label } from '@/shared/components/ui/label'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/shared/components/ui/select'
-import { Dialog, DialogHeader, DialogTitle, DialogContent, DialogFooter } from '@/shared/components/ui/dialog'
+import { Dialog, DialogHeader, DialogTitle, DialogDescription, DialogContent, DialogFooter } from '@/shared/components/ui/dialog'
 import { useCreateHabit, useUpdateHabit } from '@/features/habits/queries'
 import { goalsQueries } from '@/features/goals/queries'
 import { LIFE_PILLARS, CATEGORY_TO_PILLAR } from '@repo/shared/constants'
 import type { Habit } from '@repo/shared/types'
-
-const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 const COLOR_OPTIONS = [
   '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
@@ -30,6 +30,13 @@ export function HabitDialog({
   habit: Habit | null
 }) {
   const { t } = useTranslation('habits')
+  const { dateFnsLocale } = useLocale()
+  // Sunday=0..Saturday=6 — derive short labels from current locale
+  const DAY_LABELS = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(2024, 0, 7 + i) // 2024-01-07 is a Sunday
+    const s = format(d, 'EEEEEE', { locale: dateFnsLocale })
+    return s.charAt(0).toUpperCase() + s.slice(1)
+  })
   const createHabit = useCreateHabit()
   const updateHabit = useUpdateHabit()
   const threeYearGoalsQuery = useQuery(goalsQueries.threeYearGoals())
@@ -131,6 +138,11 @@ export function HabitDialog({
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>{isEdit ? t('editTitle') : t('createTitle')}</DialogTitle>
+            <DialogDescription>
+              {isEdit
+                ? t('editDescription', { defaultValue: 'Update your habit details.' })
+                : t('createDescription', { defaultValue: 'Create a new habit to track.' })}
+            </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
@@ -272,17 +284,17 @@ export function HabitDialog({
                   <SelectItem value="__none__">{t('noGoal', { ns: 'common' })}</SelectItem>
                   {(threeYearGoalsQuery.data?.data ?? []).map((goal: any) => (
                     <SelectItem key={goal.id} value={goal.id}>
-                      3-year: {goal.title}
+                      {t('horizonThreeYear', { defaultValue: '3-year' })}: {goal.title}
                     </SelectItem>
                   ))}
                   {(annualGoalsQuery.data?.data ?? []).map((goal: any) => (
                     <SelectItem key={goal.id} value={goal.id}>
-                      Annual: {goal.title}
+                      {t('horizonAnnual', { defaultValue: 'Annual' })}: {goal.title}
                     </SelectItem>
                   ))}
                   {(quarterlyGoalsQuery.data?.data ?? []).map((goal: any) => (
                     <SelectItem key={goal.id} value={goal.id}>
-                      Quarterly: Q{goal.quarter} - {goal.title}
+                      {t('horizonQuarterly', { defaultValue: 'Quarterly' })}: Q{goal.quarter} - {goal.title}
                     </SelectItem>
                   ))}
                 </SelectContent>

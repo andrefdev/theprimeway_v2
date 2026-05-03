@@ -99,5 +99,10 @@
   "doneToday": "Completados hoy",
   "completionOverTime": "Cumplimiento en el tiempo",
   "topStreaks": "Mejores rachas",
-  "days": "días"
+  "days": "días",
+  "horizonThreeYear": "3 años",
+  "horizonAnnual": "Anual",
+  "horizonQuarterly": "Trimestral",
+  "createDescription": "Crea un nuevo hábito para hacer seguimiento.",
+  "editDescription": "Actualiza los detalles de tu hábito."
 }

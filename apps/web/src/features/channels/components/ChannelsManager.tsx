@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
@@ -24,6 +25,7 @@ import {
 import type { Channel, Context } from '../api'
 
 export function ChannelsManager() {
+  const { t } = useTranslation('settings')
   const contextsQuery = useContexts()
   const channelsQuery = useChannels()
   const seedDefaults = useSeedDefaults()
@@ -44,9 +46,9 @@ export function ChannelsManager() {
   async function handleSeed() {
     try {
       await seedDefaults.mutateAsync()
-      toast.success('Default contexts & channels created')
+      toast.success(t('channels.seeded', { defaultValue: 'Default contexts & channels created' }))
     } catch (err) {
-      toast.error((err as Error).message || 'Seed failed')
+      toast.error((err as Error).message || t('channels.seedFailed', { defaultValue: 'Seed failed' }))
     }
   }
 
@@ -55,7 +57,9 @@ export function ChannelsManager() {
       {contexts.length === 0 && !loading && (
         <div className="flex justify-end mb-4">
           <Button onClick={handleSeed} disabled={seedDefaults.isPending}>
-            {seedDefaults.isPending ? 'Seeding…' : 'Create defaults'}
+            {seedDefaults.isPending
+              ? t('channels.seeding', { defaultValue: 'Seeding…' })
+              : t('channels.createDefaults', { defaultValue: 'Create defaults' })}
           </Button>
         </div>
       )}
@@ -65,8 +69,8 @@ export function ChannelsManager() {
 
         {!loading && contexts.length === 0 && (
           <EmptyState
-            title="No contexts yet"
-            description="Contexts group related channels. Start by creating a Work and Personal context."
+            title={t('channels.empty.title', { defaultValue: 'No contexts yet' })}
+            description={t('channels.empty.description', { defaultValue: 'Contexts group related channels. Start by creating a Work and Personal context.' })}
           />
         )}
 

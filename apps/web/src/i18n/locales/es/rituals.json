@@ -1,0 +1,93 @@
+{
+  "title": "Rituales",
+  "tabs": {
+    "overview": "Resumen",
+    "dailyPlan": "Plan diario",
+    "dailyShutdown": "Cierre diario",
+    "weeklyPlan": "Plan semanal",
+    "weeklyReview": "Revisión semanal",
+    "quarterly": "Trimestral",
+    "annual": "Anual"
+  },
+  "overview": {
+    "description": "Espacios recurrentes de reflexión y planificación. Cada ritual tiene su propia página con historial y resumen de IA."
+  },
+  "cards": {
+    "dailyPlan": {
+      "title": "Plan diario",
+      "description": "Planifica tu día antes de empezar."
+    },
+    "dailyShutdown": {
+      "title": "Cierre diario",
+      "description": "Cierra el día, captura logros y el plan de mañana."
+    },
+    "weeklyPlan": {
+      "title": "Plan semanal",
+      "description": "Define objetivos para la semana que viene."
+    },
+    "weeklyReview": {
+      "title": "Revisión semanal",
+      "description": "Reflexiona sobre la semana, aprende y reinicia."
+    },
+    "quarterly": {
+      "title": "Revisión trimestral",
+      "description": "Revisión de largo plazo sobre metas y rumbo."
+    },
+    "annual": {
+      "title": "Revisión anual",
+      "description": "Año en revisión e intenciones para el siguiente."
+    }
+  },
+  "status": {
+    "doneToday": "Hecho hoy",
+    "pendingToday": "Pendiente hoy",
+    "doneThisWeek": "Hecho esta semana",
+    "pendingThisWeek": "Pendiente esta semana",
+    "periodDone": "{{period}} hecho",
+    "periodPending": "{{period}} pendiente",
+    "current": "ACTUAL",
+    "pending": "PENDIENTE",
+    "scheduledAt": "Programado a las {{time}}"
+  },
+  "buttons": {
+    "start": "Empezar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "skip": "Saltar ritual",
+    "complete": "Completar",
+    "finish": "Finalizar"
+  },
+  "stepOf": "Paso {{current}} de {{total}}",
+  "optional": "Opcional…",
+  "scheduledLabel": "programada",
+  "dailyPlan": {
+    "title": "Plan diario",
+    "step1": "Paso 1 de 3 — Define tu prioridad",
+    "step2": "Paso 2 de 3 — Confirma las tareas de hoy ({{selected}}/{{total}})",
+    "step3": "Paso 3 de 3 — Planifica el día",
+    "highlightHint": "Lo único que, si lo haces, convierte hoy en una victoria.",
+    "highlightPlaceholder": "Hoy quiero…",
+    "noOpenTasks": "Aún no hay tareas abiertas hoy. Añade una arriba o captura con Cmd+K.",
+    "addTaskPlaceholder": "Añadir una tarea para hoy…",
+    "addTask": "Añadir",
+    "addTaskFailed": "No se pudo añadir la tarea",
+    "planHint": "El motor auto-programará las tareas seleccionadas dentro de tu horario, respetando eventos del calendario.",
+    "highlight": "Prioridad",
+    "none": "(ninguna)",
+    "tasksToSchedule": "Tareas por programar",
+    "planning": "Planificando…",
+    "planDay": "Planificar el día"
+  },
+  "dailyShutdown": {
+    "title": "Cierre diario",
+    "hint": "Cierra el día con limpieza. Reflexiona y luego pasa lo pendiente al siguiente día.",
+    "summarize": "Resumir mi día",
+    "allDone": "No quedan tareas abiertas para hoy. Cierre limpio.",
+    "rollPrompt_one": "Queda {{count}} tarea abierta hoy. ¿Pasarla a mañana?",
+    "rollPrompt_other": "Quedan {{count}} tareas abiertas hoy. ¿Pasarlas a mañana?",
+    "skipRollover": "Omitir traspaso",
+    "rolling": "Pasando…",
+    "rollAndFinish_one": "Pasar {{count}} y terminar",
+    "rollAndFinish_other": "Pasar {{count}} y terminar"
+  }
+}

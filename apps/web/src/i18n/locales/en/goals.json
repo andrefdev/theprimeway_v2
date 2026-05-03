@@ -113,5 +113,49 @@
   "failedToLoadSuggestions": "Failed to load suggestions",
   "goalTitlePlaceholder": "What do you want to achieve?",
   "addGoal": "Add Goal",
-  "noGoals": "No goals"
+  "noGoals": "No goals",
+  "thisWeek": "this week",
+  "weeklyGoalsHint": "Set 3–5 objectives that move bigger goals forward this week. Auto-created from the Weekly Plan ritual.",
+  "runWeeklyPlanRitual": "Run the Weekly Plan ritual",
+  "vision": {
+    "yourVision": "Your vision",
+    "edit": "Edit",
+    "editTitle": "Edit vision",
+    "defineTitle": "Define your vision",
+    "subtitle": "The 10-year horizon — who you become, what you stand for.",
+    "cancel": "Cancel",
+    "statementLabel": "10-year statement",
+    "statementPlaceholder": "By 2036 I am…",
+    "valuesLabel": "Core values (comma-separated, max 5)",
+    "valuesPlaceholder": "craft, integrity, learning",
+    "identityLabel": "Identity statements (one per line)",
+    "identityPlaceholder": "I am a person who…\nI am a person who…",
+    "saving": "Saving…",
+    "save": "Save vision"
+  },
+  "templates": {
+    "title": "Goal Templates",
+    "empty": "No templates available",
+    "use": "Use"
+  },
+  "templateCategories": {
+    "fitness": "Fitness",
+    "career": "Career",
+    "finance": "Finance",
+    "learning": "Learning",
+    "relationships": "Relationships",
+    "wellness": "Wellness"
+  },
+  "metrics": {
+    "quarterlyCount_one": "{{count}} quarterly goal",
+    "quarterlyCount_other": "{{count}} quarterly goals"
+  },
+  "toast": {
+    "updated": "Goal updated",
+    "updateFailed": "Failed to update goal",
+    "deleteConfirm": "Are you sure you want to delete this goal?",
+    "deleted": "Goal deleted",
+    "deleteFailed": "Failed to delete goal",
+    "notFound": "Goal not found"
+  }
 }

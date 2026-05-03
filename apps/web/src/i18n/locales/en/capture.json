@@ -1,0 +1,19 @@
+{
+  "placeholder": "e.g. \"30m write blog post #writing @tomorrow\"",
+  "pending": "(pending)",
+  "labels": {
+    "title": "Title",
+    "planned": "Planned",
+    "day": "Day",
+    "channel": "Channel"
+  },
+  "help": "Enter: capture · Shift+Enter: capture & schedule · Esc: close",
+  "buttons": {
+    "capture": "Capture",
+    "captureSchedule": "Capture & schedule",
+    "working": "Working…"
+  },
+  "toast": {
+    "failed": "Failed to capture"
+  }
+}

@@ -29,7 +29,8 @@ const KIND_TO_SLUG: Record<RitualKind, string> = {
 }
 
 function RitualsIndexPage() {
-  const { t } = useTranslation('common')
+  const { t } = useTranslation('rituals')
+  const { t: tCommon } = useTranslation('common')
   const today = useRitualsToday()
   const week = useRitualsWeek()
   const quarter = useRitualsQuarter()
@@ -39,38 +40,38 @@ function RitualsIndexPage() {
     {
       kind: 'DAILY_PLAN',
       slug: 'daily-plan',
-      title: 'Daily Plan',
-      description: 'Plan your day before you start.',
+      title: t('cards.dailyPlan.title', { defaultValue: 'Daily Plan' }),
+      description: t('cards.dailyPlan.description', { defaultValue: 'Plan your day before you start.' }),
     },
     {
       kind: 'DAILY_SHUTDOWN',
       slug: 'daily-shutdown',
-      title: 'Daily Shutdown',
-      description: 'Close out the day, capture wins and tomorrow.',
+      title: t('cards.dailyShutdown.title', { defaultValue: 'Daily Shutdown' }),
+      description: t('cards.dailyShutdown.description', { defaultValue: 'Close out the day, capture wins and tomorrow.' }),
     },
     {
       kind: 'WEEKLY_PLAN',
       slug: 'weekly-plan',
-      title: 'Weekly Plan',
-      description: 'Set objectives for the week ahead.',
+      title: t('cards.weeklyPlan.title', { defaultValue: 'Weekly Plan' }),
+      description: t('cards.weeklyPlan.description', { defaultValue: 'Set objectives for the week ahead.' }),
     },
     {
       kind: 'WEEKLY_REVIEW',
       slug: 'weekly-review',
-      title: 'Weekly Review',
-      description: 'Reflect on the week, learn, and reset.',
+      title: t('cards.weeklyReview.title', { defaultValue: 'Weekly Review' }),
+      description: t('cards.weeklyReview.description', { defaultValue: 'Reflect on the week, learn, and reset.' }),
     },
     {
       kind: 'QUARTERLY_REVIEW',
       slug: 'quarterly-review',
-      title: 'Quarterly Review',
-      description: 'Long-horizon check on goals and direction.',
+      title: t('cards.quarterly.title', { defaultValue: 'Quarterly Review' }),
+      description: t('cards.quarterly.description', { defaultValue: 'Long-horizon check on goals and direction.' }),
     },
     {
       kind: 'ANNUAL_REVIEW',
       slug: 'annual-review',
-      title: 'Annual Review',
-      description: 'Year in review and intentions for next.',
+      title: t('cards.annual.title', { defaultValue: 'Annual Review' }),
+      description: t('cards.annual.description', { defaultValue: 'Year in review and intentions for next.' }),
     },
   ]
 
@@ -78,32 +79,56 @@ function RitualsIndexPage() {
     if (kind === 'DAILY_PLAN') {
       const inst = today.data?.plan
       if (!inst) return null
-      return { label: inst.status === 'COMPLETED' ? 'Done today' : 'Pending today', tone: inst.status === 'COMPLETED' ? 'secondary' : 'default' }
+      return {
+        label: inst.status === 'COMPLETED' ? t('status.doneToday', { defaultValue: 'Done today' }) : t('status.pendingToday', { defaultValue: 'Pending today' }),
+        tone: inst.status === 'COMPLETED' ? 'secondary' : 'default',
+      }
     }
     if (kind === 'DAILY_SHUTDOWN') {
       const inst = today.data?.shutdown
       if (!inst) return null
-      return { label: inst.status === 'COMPLETED' ? 'Done today' : 'Pending today', tone: inst.status === 'COMPLETED' ? 'secondary' : 'default' }
+      return {
+        label: inst.status === 'COMPLETED' ? t('status.doneToday', { defaultValue: 'Done today' }) : t('status.pendingToday', { defaultValue: 'Pending today' }),
+        tone: inst.status === 'COMPLETED' ? 'secondary' : 'default',
+      }
     }
     if (kind === 'WEEKLY_PLAN') {
       const inst = week.data?.plan
       if (!inst) return null
-      return { label: inst.status === 'COMPLETED' ? 'Done this week' : 'Pending this week', tone: inst.status === 'COMPLETED' ? 'secondary' : 'default' }
+      return {
+        label: inst.status === 'COMPLETED' ? t('status.doneThisWeek', { defaultValue: 'Done this week' }) : t('status.pendingThisWeek', { defaultValue: 'Pending this week' }),
+        tone: inst.status === 'COMPLETED' ? 'secondary' : 'default',
+      }
     }
     if (kind === 'WEEKLY_REVIEW') {
       const inst = week.data?.review
       if (!inst) return null
-      return { label: inst.status === 'COMPLETED' ? 'Done this week' : 'Pending this week', tone: inst.status === 'COMPLETED' ? 'secondary' : 'default' }
+      return {
+        label: inst.status === 'COMPLETED' ? t('status.doneThisWeek', { defaultValue: 'Done this week' }) : t('status.pendingThisWeek', { defaultValue: 'Pending this week' }),
+        tone: inst.status === 'COMPLETED' ? 'secondary' : 'default',
+      }
     }
     if (kind === 'QUARTERLY_REVIEW') {
       const inst = quarter.data?.review
       if (!inst) return null
-      return { label: inst.status === 'COMPLETED' ? `${quarter.data?.periodKey} done` : `${quarter.data?.periodKey} pending`, tone: inst.status === 'COMPLETED' ? 'secondary' : 'default' }
+      return {
+        label:
+          inst.status === 'COMPLETED'
+            ? t('status.periodDone', { period: quarter.data?.periodKey, defaultValue: '{{period}} done' })
+            : t('status.periodPending', { period: quarter.data?.periodKey, defaultValue: '{{period}} pending' }),
+        tone: inst.status === 'COMPLETED' ? 'secondary' : 'default',
+      }
     }
     if (kind === 'ANNUAL_REVIEW') {
       const inst = year.data?.review
       if (!inst) return null
-      return { label: inst.status === 'COMPLETED' ? `${year.data?.periodKey} done` : `${year.data?.periodKey} pending`, tone: inst.status === 'COMPLETED' ? 'secondary' : 'default' }
+      return {
+        label:
+          inst.status === 'COMPLETED'
+            ? t('status.periodDone', { period: year.data?.periodKey, defaultValue: '{{period}} done' })
+            : t('status.periodPending', { period: year.data?.periodKey, defaultValue: '{{period}} pending' }),
+        tone: inst.status === 'COMPLETED' ? 'secondary' : 'default',
+      }
     }
     return null
   }
@@ -113,8 +138,8 @@ function RitualsIndexPage() {
       <RitualsNav />
       <SectionHeader
         sectionId="rituals"
-        title={t('navRituals')}
-        description="Recurring reflection and planning surfaces. Each ritual has its own page with history and AI summary."
+        title={tCommon('navRituals')}
+        description={t('overview.description', { defaultValue: 'Recurring reflection and planning surfaces. Each ritual has its own page with history and AI summary.' })}
       />
       <div className="mx-auto max-w-5xl px-6 pb-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

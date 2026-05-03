@@ -1,0 +1,58 @@
+{
+  "title": "Segundo Cerebro",
+  "capture": {
+    "heading": "Captura una idea",
+    "placeholder": "Una idea, una pregunta, un pensamiento… la IA la estructurará y la conectará con tus metas.",
+    "hint": "Cmd/Ctrl + Enter para enviar",
+    "submit": "Capturar",
+    "saving": "Guardando…",
+    "captured": "Idea capturada — la IA la está procesando…"
+  },
+  "feed": {
+    "searchPlaceholder": "Buscar ideas…",
+    "loading": "Cargando…",
+    "empty": "Aún no hay ideas. Captura la primera arriba.",
+    "noMatches": "Sin resultados.",
+    "pickPrompt": "Selecciona una idea para ver su estructura y conexiones."
+  },
+  "card": {
+    "processing": "Procesando tu idea…",
+    "untitled": "Sin título"
+  },
+  "detail": {
+    "summary": "Resumen",
+    "topics": "Temas",
+    "actionItems": "Acciones",
+    "connections": "Conexiones",
+    "createTask": "Crear tarea",
+    "created": "Creada",
+    "noConnections": "La IA procesó esto pero no encontró conexiones — está en tu feed como referencia.",
+    "processing": "Procesando tu idea…",
+    "processingFailed": "Error al procesar",
+    "retry": "Reintentar",
+    "retryAi": "Reintentar IA",
+    "pin": "Fijar",
+    "unpin": "Desfijar",
+    "delete": "Eliminar",
+    "deleteTitle": "¿Eliminar esta idea?",
+    "deleteDescription": "Esta acción no se puede deshacer.",
+    "cancel": "Cancelar",
+    "deleting": "Eliminando…"
+  },
+  "toast": {
+    "taskCreated": "Tarea creada",
+    "alreadyApplied": "Ya aplicada",
+    "createTaskFailed": "No se pudo crear la tarea",
+    "deleted": "Eliminada",
+    "deleteFailed": "No se pudo eliminar",
+    "reprocessing": "Reprocesando…",
+    "reprocessFailed": "No se pudo reprocesar",
+    "updateFailed": "No se pudo actualizar"
+  },
+  "type": {
+    "task": "Tarea",
+    "goal": "Meta",
+    "habit": "Hábito",
+    "note": "Nota"
+  }
+}

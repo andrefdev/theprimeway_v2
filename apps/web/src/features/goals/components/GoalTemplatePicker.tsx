@@ -24,7 +24,7 @@ interface GoalTemplatePickerProps {
 }
 
 export function GoalTemplatePicker({ open, onClose, onSelectTemplate }: GoalTemplatePickerProps) {
-  const { t } = useTranslation('common')
+  const { t } = useTranslation('goals')
   const [activeCategory, setActiveCategory] = useState<string>(CATEGORIES[0]!)
 
   const { data, isLoading } = useQuery({
@@ -38,7 +38,7 @@ export function GoalTemplatePicker({ open, onClose, onSelectTemplate }: GoalTemp
     <Dialog open={open} onOpenChange={(v) => { if (!v) onClose() }}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>{t('goalTemplates', { defaultValue: 'Goal Templates' })}</DialogTitle>
+          <DialogTitle>{t('templates.title', { defaultValue: 'Goal Templates' })}</DialogTitle>
         </DialogHeader>
 
         {/* Category tabs */}
@@ -54,7 +54,7 @@ export function GoalTemplatePicker({ open, onClose, onSelectTemplate }: GoalTemp
                   : 'bg-muted text-muted-foreground hover:text-foreground'
               }`}
             >
-              {CATEGORY_ICONS[cat]} {cat.charAt(0).toUpperCase() + cat.slice(1)}
+              {CATEGORY_ICONS[cat]} {t(`templateCategories.${cat}`, { defaultValue: cat.charAt(0).toUpperCase() + cat.slice(1) })}
             </button>
           ))}
         </div>
@@ -64,7 +64,7 @@ export function GoalTemplatePicker({ open, onClose, onSelectTemplate }: GoalTemp
           {isLoading && <div className="h-20 animate-pulse rounded bg-muted" />}
 
           {!isLoading && templates.length === 0 && (
-            <p className="text-xs text-muted-foreground italic">{t('noTemplates', { defaultValue: 'No templates available' })}</p>
+            <p className="text-xs text-muted-foreground italic">{t('templates.empty', { defaultValue: 'No templates available' })}</p>
           )}
 
           {templates.map((tmpl: any) => (
@@ -73,7 +73,7 @@ export function GoalTemplatePicker({ open, onClose, onSelectTemplate }: GoalTemp
                 <div className="flex items-center justify-between">
                   <h4 className="text-sm font-medium text-foreground">{tmpl.title}</h4>
                   <Button size="sm" variant="ghost" className="h-6 text-[10px]">
-                    {t('useTemplate', { defaultValue: 'Use' })}
+                    {t('templates.use', { defaultValue: 'Use' })}
                   </Button>
                 </div>
                 {tmpl.description && (

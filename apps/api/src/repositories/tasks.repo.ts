@@ -67,7 +67,9 @@ function attachLegacyWeekly<T extends { goalLinks?: any[] } | null>(task: T): an
         status: 'planned',
       }
     : null
-  return { ...task, weeklyGoalId: weekly?.goalId ?? null, weeklyGoal }
+  // Map DB column `estimatedDurationMinutes` → public `estimatedDuration` for client.
+  const estimatedDuration = (task as any).estimatedDurationMinutes ?? null
+  return { ...task, weeklyGoalId: weekly?.goalId ?? null, weeklyGoal, estimatedDuration }
 }
 
 function attachLegacyWeeklyMany<T extends { goalLinks?: any[] }>(tasks: T[]): any[] {

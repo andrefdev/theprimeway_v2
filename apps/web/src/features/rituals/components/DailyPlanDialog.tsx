@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/shared/components/ui/dialog'
 import { Button } from '@/shared/components/ui/button'
+import { Input } from '@/shared/components/ui/input'
+import { Plus } from 'lucide-react'
 import { toast } from 'sonner'
-import { tasksQueries } from '@/features/tasks/queries'
+import { tasksQueries, useCreateTask } from '@/features/tasks/queries'
 import { schedulingApi } from '@/features/scheduling/api'
 import { schedulingKeys } from '@/features/scheduling/queries'
 import { useAddReflection, useUpdateRitualInstance } from '../queries'
@@ -20,10 +23,13 @@ interface Props {
 type Step = 'highlight' | 'confirm' | 'plan' | 'done'
 
 export function DailyPlanDialog({ instance, open, onClose }: Props) {
+  const { t } = useTranslation('rituals')
   const [step, setStep] = useState<Step>('highlight')
   const [highlight, setHighlight] = useState('')
   const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(new Set())
   const [planning, setPlanning] = useState(false)
+  const [newTaskTitle, setNewTaskTitle] = useState('')
+  const createTask = useCreateTask()
 
   const now = new Date()
   const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
@@ -52,6 +58,23 @@ async function saveHighlightAndAdvance() {
       }
     }
     setStep('confirm')
+  }
+
+  async function quickAddTask() {
+    const title = newTaskTitle.trim()
+    if (!title || createTask.isPending) return
+    try {
+      const res = await createTask.mutateAsync({
+        title,
+        scheduledDate: today,
+        scheduledBucket: 'TODAY',
+      } as any)
+      const id = (res as any)?.data?.id
+      if (id) setSelectedTaskIds((prev) => new Set(prev).add(id))
+      setNewTaskTitle('')
+    } catch (err) {
+      toast.error((err as Error).message || t('dailyPlan.addTaskFailed', { defaultValue: 'Failed to add task' }))
+    }
   }
 
   function toggleTask(id: string) {
@@ -118,51 +141,75 @@ async function saveHighlightAndAdvance() {
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Daily Plan</DialogTitle>
+          <DialogTitle>{t('dailyPlan.title', { defaultValue: 'Daily Plan' })}</DialogTitle>
           <DialogDescription>
-            {step === 'highlight' && 'Step 1 of 3 — Set your highlight'}
-            {step === 'confirm' && `Step 2 of 3 — Confirm today's tasks (${selectedTaskIds.size}/${openTasks.length})`}
-            {step === 'plan' && 'Step 3 of 3 — Plan the day'}
+            {step === 'highlight' && t('dailyPlan.step1', { defaultValue: 'Step 1 of 3 — Set your highlight' })}
+            {step === 'confirm' && t('dailyPlan.step2', { selected: selectedTaskIds.size, total: openTasks.length, defaultValue: "Step 2 of 3 — Confirm today's tasks ({{selected}}/{{total}})" })}
+            {step === 'plan' && t('dailyPlan.step3', { defaultValue: 'Step 3 of 3 — Plan the day' })}
           </DialogDescription>
         </DialogHeader>
 
         {step === 'highlight' && (
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground">
-              The one thing that, if done, makes today a win.
+              {t('dailyPlan.highlightHint', { defaultValue: 'The one thing that, if done, makes today a win.' })}
             </p>
             <textarea
               value={highlight}
               onChange={(e) => setHighlight(e.target.value)}
               rows={3}
               autoFocus
-              placeholder="Today I want to…"
+              placeholder={t('dailyPlan.highlightPlaceholder', { defaultValue: 'Today I want to…' })}
               className="w-full rounded-md border border-border bg-background p-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             />
             <div className="flex items-center justify-between">
-              <Button variant="ghost" size="sm" onClick={skip}>Skip ritual</Button>
-              <Button onClick={saveHighlightAndAdvance}>Next</Button>
+              <Button variant="ghost" size="sm" onClick={skip}>{t('buttons.skip', { defaultValue: 'Skip ritual' })}</Button>
+              <Button onClick={saveHighlightAndAdvance}>{t('buttons.next', { defaultValue: 'Next' })}</Button>
             </div>
           </div>
         )}
 
         {step === 'confirm' && (
           <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Input
+                value={newTaskTitle}
+                onChange={(e) => setNewTaskTitle(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    quickAddTask()
+                  }
+                }}
+                placeholder={t('dailyPlan.addTaskPlaceholder', { defaultValue: 'Add a task for today…' })}
+                className="h-8 text-sm"
+              />
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={quickAddTask}
+                disabled={!newTaskTitle.trim() || createTask.isPending}
+                className="h-8 shrink-0"
+              >
+                <Plus className="h-3.5 w-3.5 mr-1" />
+                {t('dailyPlan.addTask', { defaultValue: 'Add' })}
+              </Button>
+            </div>
             {openTasks.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No open tasks for today. Capture something with Cmd+K first.</p>
+              <p className="text-sm text-muted-foreground">{t('dailyPlan.noOpenTasks', { defaultValue: 'No open tasks for today yet. Add one above or capture with Cmd+K.' })}</p>
             ) : (
-              <ul className="max-h-80 overflow-y-auto space-y-1 pr-1">
-                {openTasks.map((t) => (
-                  <li key={t.id}>
+              <ul className="max-h-72 overflow-y-auto space-y-1 pr-1">
+                {openTasks.map((task) => (
+                  <li key={task.id}>
                     <label className="flex items-center gap-3 rounded-md px-2 py-1.5 hover:bg-accent/30 cursor-pointer">
                       <input
                         type="checkbox"
-                        checked={selectedTaskIds.has(t.id)}
-                        onChange={() => toggleTask(t.id)}
+                        checked={selectedTaskIds.has(task.id)}
+                        onChange={() => toggleTask(task.id)}
                       />
-                      <span className="text-sm truncate flex-1">{t.title}</span>
-                      {t.scheduledStart ? (
-                        <span className="text-[10px] uppercase text-muted-foreground">scheduled</span>
+                      <span className="text-sm truncate flex-1">{task.title}</span>
+                      {task.scheduledStart ? (
+                        <span className="text-[10px] uppercase text-muted-foreground">{t('scheduledLabel', { defaultValue: 'scheduled' })}</span>
                       ) : null}
                     </label>
                   </li>
@@ -170,8 +217,8 @@ async function saveHighlightAndAdvance() {
               </ul>
             )}
             <div className="flex items-center justify-between">
-              <Button variant="ghost" size="sm" onClick={() => setStep('highlight')}>Back</Button>
-              <Button onClick={() => setStep('plan')} disabled={openTasks.length === 0}>Next</Button>
+              <Button variant="ghost" size="sm" onClick={() => setStep('highlight')}>{t('buttons.back', { defaultValue: 'Back' })}</Button>
+              <Button onClick={() => setStep('plan')}>{t('buttons.next', { defaultValue: 'Next' })}</Button>
             </div>
           </div>
         )}
@@ -179,21 +226,21 @@ async function saveHighlightAndAdvance() {
         {step === 'plan' && (
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground">
-              The engine will auto-schedule selected tasks into your working hours, respecting existing calendar events.
+              {t('dailyPlan.planHint', { defaultValue: 'The engine will auto-schedule selected tasks into your working hours, respecting existing calendar events.' })}
             </p>
             <div className="rounded-md bg-muted/30 p-3 text-xs">
-              <div>Highlight: <span className="font-medium">{highlight.trim() || '(none)'}</span></div>
+              <div>{t('dailyPlan.highlight', { defaultValue: 'Highlight' })}: <span className="font-medium">{highlight.trim() || t('dailyPlan.none', { defaultValue: '(none)' })}</span></div>
               <div>
-                Tasks to schedule:{' '}
+                {t('dailyPlan.tasksToSchedule', { defaultValue: 'Tasks to schedule' })}:{' '}
                 <span className="font-medium">
-                  {openTasks.filter((t) => selectedTaskIds.has(t.id) && !t.scheduledStart).length}
+                  {openTasks.filter((task) => selectedTaskIds.has(task.id) && !task.scheduledStart).length}
                 </span>
               </div>
             </div>
             <div className="flex items-center justify-between">
-              <Button variant="ghost" size="sm" onClick={() => setStep('confirm')} disabled={planning}>Back</Button>
+              <Button variant="ghost" size="sm" onClick={() => setStep('confirm')} disabled={planning}>{t('buttons.back', { defaultValue: 'Back' })}</Button>
               <Button onClick={planAndComplete} disabled={planning}>
-                {planning ? 'Planning…' : 'Plan the day'}
+                {planning ? t('dailyPlan.planning', { defaultValue: 'Planning…' }) : t('dailyPlan.planDay', { defaultValue: 'Plan the day' })}
               </Button>
             </div>
           </div>

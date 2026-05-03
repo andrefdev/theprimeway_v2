@@ -26,5 +26,6 @@
   "nothingScheduledDescription": "No tasks or events for this day.",
   "integrationTitle": "Google Calendar integration",
   "integrationDescription": "Connect your Google Calendar to see events here. Go to Settings to set up the connection.",
-  "comingSoon": "Calendar integration coming soon"
+  "comingSoon": "Calendar integration coming soon",
+  "addEvent": "Event"
 }

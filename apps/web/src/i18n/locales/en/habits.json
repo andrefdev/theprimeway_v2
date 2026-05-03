@@ -99,5 +99,10 @@
   "doneToday": "Done Today",
   "completionOverTime": "Completion Over Time",
   "topStreaks": "Top Streaks",
-  "days": "days"
+  "days": "days",
+  "horizonThreeYear": "3-year",
+  "horizonAnnual": "Annual",
+  "horizonQuarterly": "Quarterly",
+  "createDescription": "Create a new habit to track.",
+  "editDescription": "Update your habit details."
 }

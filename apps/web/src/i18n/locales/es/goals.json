@@ -113,5 +113,49 @@
   "failedToLoadSuggestions": "Error al cargar sugerencias",
   "goalTitlePlaceholder": "¿Qué quieres lograr?",
   "addGoal": "Agregar meta",
-  "noGoals": "Sin metas"
+  "noGoals": "Sin metas",
+  "thisWeek": "esta semana",
+  "weeklyGoalsHint": "Define 3–5 objetivos que muevan tus metas mayores esta semana. Se crean automáticamente desde el ritual de Plan Semanal.",
+  "runWeeklyPlanRitual": "Ejecutar el ritual Plan Semanal",
+  "vision": {
+    "yourVision": "Tu visión",
+    "edit": "Editar",
+    "editTitle": "Editar visión",
+    "defineTitle": "Define tu visión",
+    "subtitle": "El horizonte a 10 años — en quién te conviertes, qué representas.",
+    "cancel": "Cancelar",
+    "statementLabel": "Declaración a 10 años",
+    "statementPlaceholder": "Para 2036 soy…",
+    "valuesLabel": "Valores principales (separados por coma, máximo 5)",
+    "valuesPlaceholder": "oficio, integridad, aprendizaje",
+    "identityLabel": "Declaraciones de identidad (una por línea)",
+    "identityPlaceholder": "Soy una persona que…\nSoy una persona que…",
+    "saving": "Guardando…",
+    "save": "Guardar visión"
+  },
+  "templates": {
+    "title": "Plantillas de metas",
+    "empty": "No hay plantillas disponibles",
+    "use": "Usar"
+  },
+  "templateCategories": {
+    "fitness": "Ejercicio",
+    "career": "Carrera",
+    "finance": "Finanzas",
+    "learning": "Aprendizaje",
+    "relationships": "Relaciones",
+    "wellness": "Bienestar"
+  },
+  "metrics": {
+    "quarterlyCount_one": "{{count}} meta trimestral",
+    "quarterlyCount_other": "{{count}} metas trimestrales"
+  },
+  "toast": {
+    "updated": "Meta actualizada",
+    "updateFailed": "No se pudo actualizar la meta",
+    "deleteConfirm": "¿Seguro que quieres eliminar esta meta?",
+    "deleted": "Meta eliminada",
+    "deleteFailed": "No se pudo eliminar la meta",
+    "notFound": "Meta no encontrada"
+  }
 }

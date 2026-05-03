@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useTranslation } from 'react-i18next'
 import { ChevronDown } from 'lucide-react'
 import { cn } from '@/shared/lib/utils'
 import { Button } from '@/shared/components/ui/button'
@@ -33,6 +34,7 @@ export function DurationCombobox({
   placeholder = 'Select duration',
   className,
 }: DurationComboboxProps) {
+  const { t } = useTranslation('tasks')
   const [open, setOpen] = React.useState(false)
   const [query, setQuery] = React.useState('')
 
@@ -70,7 +72,7 @@ export function DurationCombobox({
           filter={() => 1}
         >
           <CommandInput
-            placeholder="Minutes…"
+            placeholder={t('composer.minutes', { defaultValue: 'Minutes…' })}
             value={query}
             onValueChange={setQuery}
             inputMode="numeric"

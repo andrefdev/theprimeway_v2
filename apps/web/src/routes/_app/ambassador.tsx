@@ -12,7 +12,7 @@ function AmbassadorPage() {
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-6xl px-4 py-6">
+      <div className="mx-auto max-w-6xl px-6 py-6">
         <Skeleton className="h-96 w-full" />
       </div>
     )

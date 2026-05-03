@@ -30,6 +30,7 @@ import {
   DndContext,
   PointerSensor,
   useDraggable,
+  useDroppable,
   useSensor,
   useSensors,
   type DragEndEvent,
@@ -182,26 +183,66 @@ export function TasksToday() {
   async function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event
     if (!over) return
-    const overData = (over.data.current ?? {}) as { start?: string }
-    if (!overData.start) return
     const taskId = String(active.id)
+    if (taskId === String(over.id)) return
     const task = openTasks.find((x) => x.id === taskId)
     if (!task) return
-    const start = new Date(overData.start)
-    const duration = task.estimatedDuration ?? 30
-    const end = new Date(start.getTime() + duration * 60_000)
-    try {
-      await updateTask.mutateAsync({
-        id: taskId,
-        data: {
-          scheduledStart: start.toISOString(),
-          scheduledEnd: end.toISOString(),
-          scheduledDate: dayKey,
-          isAllDay: false,
-        },
-      })
-    } catch {
-      toast.error(t('failedToUpdate'))
+
+    const overData = (over.data.current ?? {}) as { start?: string; type?: string; taskId?: string }
+
+    // Case 1: dropped on a calendar slot
+    if (overData.start) {
+      const start = new Date(overData.start)
+      const duration = task.estimatedDuration ?? 30
+      const end = new Date(start.getTime() + duration * 60_000)
+      try {
+        await updateTask.mutateAsync({
+          id: taskId,
+          data: {
+            scheduledStart: start.toISOString(),
+            scheduledEnd: end.toISOString(),
+            scheduledDate: dayKey,
+            isAllDay: false,
+          },
+        })
+      } catch {
+        toast.error(t('failedToUpdate'))
+      }
+      return
+    }
+
+    // Case 2: dropped on another task in the list — reschedule dragged right after
+    // the target. If target is unscheduled, just put dragged at start of working day.
+    if (overData.type === 'task' && overData.taskId) {
+      const target = openTasks.find((x) => x.id === overData.taskId)
+      if (!target) return
+      const duration = task.estimatedDuration ?? 30
+      let start: Date
+      if (target.scheduledEnd) {
+        start = new Date(target.scheduledEnd)
+      } else if (target.scheduledStart) {
+        const targetDur = target.estimatedDuration ?? 30
+        start = new Date(new Date(target.scheduledStart).getTime() + targetDur * 60_000)
+      } else {
+        const [h, m] = fmtHour(dayBounds.startHour).split(':').map(Number)
+        const base = new Date(day)
+        base.setHours(h ?? 9, m ?? 0, 0, 0)
+        start = base
+      }
+      const end = new Date(start.getTime() + duration * 60_000)
+      try {
+        await updateTask.mutateAsync({
+          id: taskId,
+          data: {
+            scheduledStart: start.toISOString(),
+            scheduledEnd: end.toISOString(),
+            scheduledDate: dayKey,
+            isAllDay: false,
+          },
+        })
+      } catch {
+        toast.error(t('failedToUpdate'))
+      }
     }
   }
 
@@ -371,7 +412,11 @@ function DraggableTask({
   onDelete: () => void
   onArchive: () => void
 }) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: task.id })
+  const { attributes, listeners, setNodeRef: setDragRef, transform, isDragging } = useDraggable({ id: task.id })
+  const { setNodeRef: setDropRef, isOver } = useDroppable({
+    id: `drop-${task.id}`,
+    data: { type: 'task', taskId: task.id },
+  })
   const style: React.CSSProperties = {
     transform: CSS.Translate.toString(transform),
     opacity: isDragging ? 0.5 : 1,
@@ -379,7 +424,7 @@ function DraggableTask({
   const handle = (
     <button
       type="button"
-      ref={setNodeRef}
+      ref={setDragRef}
       {...listeners}
       {...attributes}
       className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground"
@@ -389,7 +434,11 @@ function DraggableTask({
     </button>
   )
   return (
-    <div style={style}>
+    <div
+      ref={setDropRef}
+      style={style}
+      className={isOver ? 'rounded-md ring-2 ring-primary/60' : undefined}
+    >
       <TaskItem
         task={task}
         onToggle={onToggle}

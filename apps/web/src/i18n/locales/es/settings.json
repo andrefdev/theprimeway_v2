@@ -85,5 +85,43 @@
     "disconnect": "Desconectar",
     "disconnectConfirm": "¿Desconectar esta cuenta de Google?",
     "primary": "principal"
+  },
+  "tabPlan": "Plan",
+  "tabAmbassador": "Embajador",
+  "pushNotifications": "Notificaciones push",
+  "pushDescription": "Recibe alertas en este dispositivo incluso cuando la app esté cerrada",
+  "pushEnabled": "Notificaciones push activadas",
+  "pushDisabled": "Notificaciones push desactivadas",
+  "pushBlockedByBrowser": "Bloqueadas por el navegador — actívalas en la configuración del sitio",
+  "enable": "Activar",
+  "disable": "Desactivar",
+  "channels": {
+    "createDefaults": "Crear predeterminados",
+    "seeding": "Creando…",
+    "seeded": "Contextos y canales predeterminados creados",
+    "seedFailed": "Error al crear predeterminados",
+    "empty": {
+      "title": "Aún no hay contextos",
+      "description": "Los contextos agrupan canales relacionados. Empieza creando un contexto Trabajo y Personal."
+    }
+  },
+  "integrations": {
+    "apiKeys": {
+      "title": "Claves de API",
+      "description": "Úsalas para llamar a la API de Primeway desde scripts, Zapier u otras herramientas. Las claves se muestran solo una vez al crearlas — guárdalas en un lugar seguro.",
+      "name": "Nombre",
+      "create": "Crear clave",
+      "creating": "Creando…",
+      "loading": "Cargando…",
+      "empty": "Aún no hay claves."
+    },
+    "webhooks": {
+      "title": "Webhooks",
+      "description": "Recibe notificaciones POST cuando ocurran eventos.",
+      "endpoint": "URL del endpoint",
+      "events": "Eventos",
+      "add": "Agregar webhook",
+      "creating": "Creando…"
+    }
   }
 }

@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/shared/components/ui/button'
 import { X } from 'lucide-react'
 import { useFocusStore } from '../focus-store'
@@ -13,9 +14,20 @@ type Phase = 'preflight' | 'running' | 'paused'
 
 export function FocusMode() {
   const { open, taskId, close } = useFocusStore()
+  const qc = useQueryClient()
+  const wasOpen = useRef(false)
 
   const taskQuery = useFocusTask(taskId, open)
   const task = taskQuery.data ?? null
+
+  // When focus modal closes (e.g. "Exit (keep timer)") refresh the task list so the
+  // header badge picks up the still-running task without waiting for its 60s poll.
+  useEffect(() => {
+    if (wasOpen.current && !open) {
+      qc.invalidateQueries({ queryKey: ['tasks'] })
+    }
+    wasOpen.current = open
+  }, [open, qc])
 
   const [phase, setPhase] = useState<Phase>('preflight')
   const [acceptance, setAcceptance] = useState('')
