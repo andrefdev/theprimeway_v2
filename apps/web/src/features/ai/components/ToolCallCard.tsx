@@ -42,6 +42,8 @@ const LABELS: Record<string, { title: string; verb: string }> = {
   createGoal: { title: 'Create goal', verb: 'Create' },
   updateGoalProgress: { title: 'Update goal progress', verb: 'Update' },
   createTimeBlock: { title: 'Schedule time block', verb: 'Schedule' },
+  updateCalendarEvent: { title: 'Update calendar event', verb: 'Update' },
+  deleteCalendarEvent: { title: 'Delete calendar event', verb: 'Delete' },
   startPomodoro: { title: 'Start pomodoro', verb: 'Start' },
 }
 

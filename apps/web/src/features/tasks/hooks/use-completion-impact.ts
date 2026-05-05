@@ -30,7 +30,7 @@ export function useCompletionImpact() {
 
       if (impact.timeStats?.accuracy != null) {
         const acc = Math.round(impact.timeStats.accuracy * 100)
-        parts.push(t('timeAccuracy', { defaultValue: 'Time accuracy: {{pct}}%', pct: acc }))
+        parts.push(t('timeAccuracy', { defaultValue: 'Time accuracy: {{accuracy}}%', accuracy: acc }))
       }
 
       if (parts.length > 0) {

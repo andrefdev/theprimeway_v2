@@ -74,7 +74,7 @@ class CalendarRepository {
   async upsertCalendar(
     calendarAccountId: string,
     externalId: string,
-    updateData: { name: string; color: string | null | undefined },
+    updateData: { name: string; color: string | null | undefined; accessRole?: string | null },
     createData: {
       calendarAccountId: string
       externalId: string
@@ -82,6 +82,7 @@ class CalendarRepository {
       color: string | null
       isPrimary: boolean
       isSelectedForSync: boolean
+      accessRole?: string | null
     },
   ) {
     const existing = await prisma.calendar.findFirst({
@@ -90,7 +91,11 @@ class CalendarRepository {
     if (existing) {
       return prisma.calendar.update({
         where: { id: existing.id },
-        data: { name: updateData.name, color: updateData.color ?? null },
+        data: {
+          name: updateData.name,
+          color: updateData.color ?? null,
+          ...(updateData.accessRole !== undefined ? { accessRole: updateData.accessRole } : {}),
+        },
       })
     }
     return prisma.calendar.create({
@@ -101,6 +106,7 @@ class CalendarRepository {
         color: createData.color,
         isPrimary: createData.isPrimary,
         isSelectedForSync: createData.isSelectedForSync,
+        accessRole: createData.accessRole ?? null,
       },
     })
   }

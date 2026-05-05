@@ -15,6 +15,7 @@ import { generateObject } from 'ai'
 import { taskModel } from '../lib/ai-models'
 import { getAIContext } from '../lib/ai-context'
 import { buildBasePreamble } from '../lib/ai-prompts'
+import { localIsoWeekStartYmd } from '@repo/shared/utils'
 import { z } from 'zod'
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -124,6 +125,19 @@ class GoalsService {
     quarterlyGoalId?: string; weekStartDate?: string; status?: string;
     limit: number; offset: number
   }) {
+    // When the caller requests their CURRENT week (per their timezone), first
+    // roll any uncompleted goals from past weeks into this week. Idempotent.
+    if (opts.weekStartDate) {
+      const settings = await prisma.userSettings.findUnique({
+        where: { userId },
+        select: { timezone: true },
+      })
+      const tz = settings?.timezone ?? 'UTC'
+      const currentWeekStart = localIsoWeekStartYmd(new Date(), tz)
+      if (opts.weekStartDate === currentWeekStart) {
+        await goalsRepository.rolloverUncompletedWeeklyGoalsTo(userId, currentWeekStart)
+      }
+    }
     return goalsRepository.findManyWeeklyGoals(userId, opts)
   }
 

@@ -55,6 +55,20 @@ export function localYmd(date: Date, timeZone: string): string {
   return `${y}-${pad2(m)}-${pad2(d)}`
 }
 
+/**
+ * "YYYY-MM-DD" of Monday (ISO week start) for the user's local week
+ * containing `date`. Anchors on the user's local day so DST/timezone
+ * shifts can't pull the result into the previous or next week.
+ */
+export function localIsoWeekStartYmd(date: Date, timeZone: string): string {
+  const { y, m, d } = ymdInTz(date, timeZone)
+  const local = new Date(y, m - 1, d)
+  const dow = local.getDay() // 0=Sun..6=Sat
+  const diff = dow === 0 ? -6 : 1 - dow
+  local.setDate(local.getDate() + diff)
+  return `${local.getFullYear()}-${pad2(local.getMonth() + 1)}-${pad2(local.getDate())}`
+}
+
 /** 0=Sun..6=Sat for the given UTC instant in the user's timezone. */
 export function localDayOfWeek(date: Date, timeZone: string): number {
   const wk = new Intl.DateTimeFormat('en-US', { timeZone, weekday: 'short' }).format(date)

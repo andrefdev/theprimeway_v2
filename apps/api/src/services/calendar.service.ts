@@ -13,7 +13,58 @@ import {
 
 class CalendarService {
   async listAccounts(userId: string) {
-    return calendarRepo.findAccountsByUser(userId)
+    const accounts = await calendarRepo.findAccountsByUser(userId)
+
+    // Lazy backfill: if any Google calendar is missing accessRole, fetch it once
+    // from Google's calendarList. Old rows pre-date the column.
+    const needsBackfill = accounts.some(
+      (acc: any) =>
+        acc.provider === 'google' &&
+        (acc.calendars ?? []).some((c: any) => c.accessRole == null),
+    )
+    if (needsBackfill) {
+      await this.backfillAccessRoles(accounts).catch((err) =>
+        console.error('[CAL_BACKFILL] failed', err),
+      )
+      return calendarRepo.findAccountsByUser(userId)
+    }
+
+    return accounts
+  }
+
+  private async backfillAccessRoles(accounts: any[]) {
+    for (const account of accounts) {
+      if (account.provider !== 'google') continue
+      const missing = (account.calendars ?? []).filter((c: any) => c.accessRole == null)
+      if (!missing.length) continue
+
+      let accessToken: string | undefined = account.accessToken
+      if (account.expiresAt && new Date() >= new Date(account.expiresAt) && account.refreshToken) {
+        const refreshed = await this.refreshGoogleToken(account.refreshToken)
+        if (refreshed) {
+          accessToken = refreshed.access_token
+          await calendarRepo.updateAccount(account.id, {
+            accessToken: refreshed.access_token,
+            tokenExpiresAt: new Date(Date.now() + refreshed.expires_in * 1000),
+          })
+        }
+      }
+      if (!accessToken) continue
+
+      const res = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      })
+      if (!res.ok) continue
+      const data = (await res.json()) as { items?: Array<{ id: string; accessRole?: string }> }
+      const byId = new Map((data.items ?? []).map((i) => [i.id, i.accessRole]))
+
+      for (const cal of missing) {
+        const role = byId.get(cal.providerCalendarId)
+        if (role) {
+          await calendarRepo.updateCalendar(cal.id, { accessRole: role }).catch(() => {})
+        }
+      }
+    }
   }
 
   async deleteAccount(userId: string, id: string) {
@@ -195,7 +246,13 @@ class CalendarService {
         return { error: 'calendar_list_failed' as const, detail: errText }
       }
       const calendarList = (await calendarListRes.json()) as {
-        items?: Array<{ id: string; summary: string; primary?: boolean; backgroundColor?: string }>
+        items?: Array<{
+          id: string
+          summary: string
+          primary?: boolean
+          backgroundColor?: string
+          accessRole?: string
+        }>
       }
 
       const upsertedCalendars: Array<{ id: string; isSelectedForSync: boolean | null | undefined }> = []
@@ -204,7 +261,7 @@ class CalendarService {
           const upserted = await calendarRepo.upsertCalendar(
             account.id,
             cal.id,
-            { name: cal.summary, color: cal.backgroundColor },
+            { name: cal.summary, color: cal.backgroundColor, accessRole: cal.accessRole ?? null },
             {
               calendarAccountId: account.id,
               externalId: cal.id,
@@ -212,6 +269,7 @@ class CalendarService {
               color: cal.backgroundColor || null,
               isPrimary: cal.primary || false,
               isSelectedForSync: cal.primary || false,
+              accessRole: cal.accessRole ?? null,
             },
           )
           upsertedCalendars.push({ id: upserted.id, isSelectedForSync: upserted.isSelectedForSync })
@@ -574,6 +632,15 @@ class CalendarService {
       targetCalendarId = calAny.externalId || calAny.providerCalendarId
     }
 
+    // Reject writes to read-only calendars (holiday, contacts, weather, etc.)
+    const targetCal = account.calendars.find(
+      (c: any) => (c.providerCalendarId || c.externalId) === targetCalendarId,
+    )
+    const role = (targetCal as any)?.accessRole as string | null | undefined
+    if (role && role !== 'owner' && role !== 'writer') {
+      return { success: false, error: 'calendar_read_only' }
+    }
+
     // Create the event
     const startDateTime = `${input.date}T${input.startTime}:00`
     const endDateTime = `${input.date}T${input.endTime}:00`
@@ -616,6 +683,15 @@ class CalendarService {
       if (!res.ok) {
         const error = await res.text()
         console.error('[TIME_BLOCK] Failed to create event:', error)
+        // Google returns 403 on read-only calendars (holidays, contacts, etc.)
+        if (res.status === 403 || /forbidden|read[- ]?only/i.test(error)) {
+          if (targetCal && (!role || (role !== 'owner' && role !== 'writer'))) {
+            await calendarRepo
+              .updateCalendar((targetCal as any).id, { accessRole: 'reader' })
+              .catch(() => {})
+          }
+          return { success: false, error: 'calendar_read_only' }
+        }
         return { success: false, error: 'event_creation_failed' }
       }
 

@@ -23,6 +23,28 @@ export interface CreateHabitBlockArgs {
   description?: string
 }
 
+export interface UpdateCalendarEventArgs {
+  eventId: string
+  calendarId: string
+  eventTitle: string
+  title?: string
+  description?: string
+  location?: string
+  date?: string
+  startTime?: string
+  endTime?: string
+  timeZone?: string
+  addGoogleMeet?: boolean
+  removeGoogleMeet?: boolean
+  visibility?: 'default' | 'public' | 'private' | 'confidential'
+}
+
+export interface DeleteCalendarEventArgs {
+  eventId: string
+  calendarId: string
+  eventTitle: string
+}
+
 const NO_GOOGLE_RE = /no_google_account|no_calendar|No Google Calendar/i
 
 function noGoogleToast(t: ToolHandler['execute'] extends never ? never : Parameters<ToolHandler['execute']>[1]['t']) {
@@ -56,6 +78,47 @@ export const createTimeBlockHandler: ToolHandler<CreateTimeBlockArgs> = {
       queryClient.invalidateQueries({ queryKey: calendarQueries.all() })
       toast.success(t('timeBlockCreated', { ns: 'calendar', defaultValue: 'Time block scheduled' }))
       return { success: true, eventId: res.eventId }
+    } catch (e) {
+      const errMsg = extractErrMsg(e)
+      if (NO_GOOGLE_RE.test(errMsg)) {
+        noGoogleToast(t)
+        return { error: 'no_google_account' }
+      }
+      throw e
+    }
+  },
+}
+
+export const updateCalendarEventHandler: ToolHandler<UpdateCalendarEventArgs> = {
+  name: 'updateCalendarEvent',
+  execute: async (args, { queryClient, t }): Promise<ToolResult> => {
+    try {
+      const browserTz = args.timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone
+      const { eventId, calendarId, eventTitle: _eventTitle, timeZone: _tz, ...rest } = args
+      const body = { ...rest, timeZone: browserTz }
+      const event = await calendarApi.updateGoogleEvent(calendarId, eventId, body)
+      queryClient.invalidateQueries({ queryKey: calendarQueries.all() })
+      toast.success(t('eventUpdated', { ns: 'calendar', defaultValue: 'Event updated' }))
+      return { success: true, eventId: event.id }
+    } catch (e) {
+      const errMsg = extractErrMsg(e)
+      if (NO_GOOGLE_RE.test(errMsg)) {
+        noGoogleToast(t)
+        return { error: 'no_google_account' }
+      }
+      throw e
+    }
+  },
+}
+
+export const deleteCalendarEventHandler: ToolHandler<DeleteCalendarEventArgs> = {
+  name: 'deleteCalendarEvent',
+  execute: async (args, { queryClient, t }): Promise<ToolResult> => {
+    try {
+      await calendarApi.deleteGoogleEvent(args.calendarId, args.eventId)
+      queryClient.invalidateQueries({ queryKey: calendarQueries.all() })
+      toast.success(t('eventDeleted', { ns: 'calendar', defaultValue: 'Event deleted' }))
+      return { success: true }
     } catch (e) {
       const errMsg = extractErrMsg(e)
       if (NO_GOOGLE_RE.test(errMsg)) {

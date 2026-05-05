@@ -112,6 +112,11 @@ export function EventEditDialog({ open, onClose, item, defaultStart, defaultEnd 
     const opts: { id: string; name: string }[] = []
     for (const acc of accountsQuery.data ?? []) {
       for (const cal of acc.calendars ?? []) {
+        // Hide read-only calendars (holidays, contacts, weather, shared read-only).
+        // accessRole === null means we haven't synced it yet — keep it visible
+        // so existing connections aren't broken; the API will reject writes.
+        const role = (cal as any).accessRole as string | null | undefined
+        if (role && role !== 'owner' && role !== 'writer') continue
         opts.push({
           id: (cal as any).providerCalendarId ?? cal.id,
           name: cal.name + (cal.isPrimary ? ' (primary)' : ''),
@@ -267,6 +272,10 @@ export function EventEditDialog({ open, onClose, item, defaultStart, defaultEnd 
     } catch (e: any) {
       const data = e?.response?.data
       const zodIssue = data?.error?.issues?.[0]
+      if (data?.error === 'calendar_read_only') {
+        toast.error(data.message || 'This calendar is read-only. Pick a different one.')
+        return
+      }
       const errMsg =
         (zodIssue && `${zodIssue.path?.join('.') || 'field'}: ${zodIssue.message}`) ||
         (typeof data?.error === 'string' ? data.error : null) ||

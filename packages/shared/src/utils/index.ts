@@ -8,6 +8,7 @@ export {
   startOfLocalDayUtc,
   endOfLocalDayUtc,
   localYmd,
+  localIsoWeekStartYmd,
   localDayOfWeek,
   getDeviceTimeZone,
   listAvailableTimeZones,

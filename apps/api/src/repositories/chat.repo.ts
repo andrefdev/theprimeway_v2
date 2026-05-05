@@ -15,45 +15,6 @@ class ChatRepository {
     })
   }
 
-  async findOpenTasks(userId: string, limit: number) {
-    return prisma.task.findMany({
-      where: { userId, status: 'open' },
-      take: limit,
-      orderBy: { createdAt: 'desc' },
-    })
-  }
-
-
-  async findActiveHabits(userId: string) {
-    const tasks = await prisma.task.findMany({
-      where: { userId, kind: 'HABIT', archivedAt: null },
-    })
-    return tasks.map((t: any) => {
-      const m = (t.habitMeta ?? {}) as any
-      return {
-        id: t.id,
-        name: t.title,
-        description: t.description,
-        targetFrequency: typeof m.targetFrequency === 'number' ? m.targetFrequency : 1,
-        frequencyType: m.frequencyType ?? null,
-        isActive: true,
-      }
-    })
-  }
-
-  async findHabitLogsByDate(userId: string, gte: Date, lte: Date) {
-    return prisma.habitLog.findMany({
-      where: { userId, date: { gte, lte } },
-    })
-  }
-
-  async findActiveGoalsByUser(userId: string) {
-    return prisma.goal.findMany({
-      where: { userId, horizon: 'QUARTER', status: 'ACTIVE' },
-      orderBy: { createdAt: 'desc' },
-    })
-  }
-
   // ───────────────────────── Chat threads ─────────────────────────
 
   async createThread(userId: string) {

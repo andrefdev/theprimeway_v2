@@ -516,6 +516,15 @@ calendarRoutes.openapi(timeBlockRoute, (async (c: any) => {
     if (result.error === 'no_google_account' || result.error === 'no_calendar') {
       return c.json({ error: 'No Google Calendar connected' }, 404)
     }
+    if (result.error === 'calendar_read_only') {
+      return c.json(
+        {
+          error: 'calendar_read_only',
+          message: 'This calendar is read-only and cannot accept new events. Please pick a different calendar.',
+        },
+        400,
+      )
+    }
     return c.json({ error: result.error || 'Failed to create time block' }, 400)
   }
 

@@ -1,16 +1,18 @@
 import { chatRepo, type PersistedToolCall } from '../repositories/chat.repo'
+import { tasksRepository } from '../repositories/tasks.repo'
+import { habitsRepository } from '../repositories/habits.repo'
+import { goalsRepository } from '../repositories/goals.repo'
 import { prisma } from '../lib/prisma'
-import { generateObject, generateText, streamText, tool, stepCountIs, convertToModelMessages } from 'ai'
+import { generateObject, generateText, streamText, stepCountIs, convertToModelMessages } from 'ai'
 import type { UIMessage } from 'ai'
 import { chatModel, taskModel } from '../lib/ai-models'
 import { getAIContext } from '../lib/ai-context'
 import { buildBasePreamble } from '../lib/ai-prompts'
 import { z } from 'zod'
 import { calendarService } from './calendar.service'
-import { habitsService } from './habits.service'
-import { tasksRepository } from '../repositories/tasks.repo'
 import { endOfLocalDayUtc, startOfLocalDayUtc } from '@repo/shared/utils'
 import { chatTitleService } from './chat-title.service'
+import { buildStreamTools, buildServerTools } from '../lib/ai-tools'
 
 function extractUiMessageText(msg: UIMessage | { role: string; content?: string; parts?: any[] }): string {
   const anyMsg = msg as any
@@ -73,8 +75,8 @@ class ChatService {
   async buildSystemPrompt(userId: string) {
     const [ctx, openTasks, activeHabits] = await Promise.all([
       getAIContext(userId),
-      chatRepo.findOpenTasks(userId, 20),
-      chatRepo.findActiveHabits(userId),
+      tasksRepository.findOpenTasks(userId, 20),
+      habitsRepository.findActiveHabits(userId),
     ])
 
     const taskContext = openTasks
@@ -82,7 +84,7 @@ class ChatService {
       .join('\n')
 
     const habitContext = activeHabits
-      .map((h: any) => `- [${h.id}] "${h.name}" (frequency: ${h.frequencyType || 'daily'}, target: ${h.targetFrequency || 1})`)
+      .map((h) => `- [${h.id}] "${h.name}" (frequency: ${h.frequencyType || 'daily'}, target: ${h.targetFrequency || 1})`)
       .join('\n')
 
     return `${buildBasePreamble(ctx)}
@@ -99,7 +101,7 @@ ${habitContext || '(no active habits)'}
 Available tools span tasks, habits, goals, calendar, and pomodoro.
 
 Read tools (run automatically, no confirmation): listTasks, listHabits, listGoals, listCalendarEvents, findFreeSlots.
-Write tools (require user approval in UI): createTask, updateTask, deleteTask, completeTask, createHabit, updateHabit, logHabit, createGoal, updateGoalProgress, createTimeBlock, startPomodoro.
+Write tools (require user approval in UI): createTask, updateTask, deleteTask, completeTask, createHabit, updateHabit, logHabit, createGoal, updateGoalProgress, createTimeBlock, updateCalendarEvent, deleteCalendarEvent, startPomodoro.
 
 Workflow:
 1. If you need current data (list of habits, goals, events, free slots), call a read tool first — do NOT guess IDs.
@@ -143,281 +145,7 @@ Workflow:
       model: chatModel,
       system,
       messages: convertToModelMessages(body.messages),
-      tools: {
-        // Read-only — safe to execute without confirmation
-        listTasks: tool({
-          description: "List the user's open tasks",
-          inputSchema: z.object({
-            limit: z.number().optional().describe('Max number of tasks to return (default 10)'),
-          }),
-          execute: async ({ limit }) => {
-            const tasks = await chatRepo.findOpenTasks(userId, limit || 10)
-            return {
-              tasks: tasks.map((t) => ({
-                id: t.id,
-                title: t.title,
-                priority: t.priority,
-                dueDate: t.dueDate,
-                status: t.status,
-              })),
-            }
-          },
-        }),
-
-        // Client-side (no execute). The model proposes; the client shows a
-        // preview and either runs the mutation or rejects it.
-        createTask: tool({
-          description: 'Propose creating a new task. Requires user approval in the UI.',
-          inputSchema: z.object({
-            title: z.string().describe('Task title'),
-            description: z.string().optional(),
-            priority: z.enum(['low', 'medium', 'high', 'urgent']).optional(),
-            dueDate: z.string().optional().describe('YYYY-MM-DD'),
-            scheduledDate: z.string().optional().describe('YYYY-MM-DD'),
-          }),
-        }),
-
-        completeTask: tool({
-          description: 'Propose marking a task as completed. Requires user approval.',
-          inputSchema: z.object({
-            taskId: z.string(),
-            taskTitle: z.string().describe('Human-readable title to display in the confirmation UI'),
-          }),
-        }),
-
-        createHabit: tool({
-          description: 'Propose creating a new habit. Requires user approval.',
-          inputSchema: z.object({
-            name: z.string(),
-            description: z.string().optional(),
-            frequencyType: z.enum(['daily', 'weekly']).optional(),
-            targetFrequency: z.number().optional(),
-          }),
-        }),
-
-        logHabit: tool({
-          description: "Propose logging today's completion for a habit. Requires user approval.",
-          inputSchema: z.object({
-            habitId: z.string(),
-            habitName: z.string().describe('Human-readable name for the UI'),
-            notes: z.string().optional(),
-          }),
-        }),
-
-        // ── Read-only server-exec tools ─────────────────────────────────────
-        listHabits: tool({
-          description: "List the user's active habits",
-          inputSchema: z.object({
-            includeLogs: z.boolean().optional().describe('Include recent log history'),
-          }),
-          execute: async ({ includeLogs }) => {
-            const { data } = await habitsService.listHabits(userId, {
-              isActive: true,
-              includeLogs: includeLogs ?? false,
-              limit: 50,
-              offset: 0,
-            } as any)
-            return {
-              habits: data.map((h: any) => ({
-                id: h.id,
-                name: h.name,
-                frequencyType: h.frequencyType,
-                targetFrequency: h.targetFrequency,
-                category: h.category,
-              })),
-            }
-          },
-        }),
-
-        listGoals: tool({
-          description: "List the user's goals across all hierarchy levels (3-year, annual, quarterly)",
-          inputSchema: z.object({
-            limit: z.number().optional(),
-            level: z.enum(['three-year', 'annual', 'quarterly', 'all']).optional().describe('Hierarchy level'),
-          }),
-          execute: async ({ limit, level }) => {
-            const max = limit ?? 20
-            const lv = level ?? 'all'
-            const out: Array<{ id: string; title: string; level: string; progress?: number; parentId?: string }> = []
-
-            const horizonMap = { 'three-year': 'THREE_YEAR', annual: 'ONE_YEAR', quarterly: 'QUARTER' } as const
-            const wantHorizons = lv === 'all'
-              ? (['THREE_YEAR', 'ONE_YEAR', 'QUARTER'] as const)
-              : [horizonMap[lv]] as const
-            const goals = await prisma.goal.findMany({
-              where: { userId, horizon: { in: wantHorizons as any }, status: 'ACTIVE' },
-              take: max,
-              orderBy: { createdAt: 'desc' },
-            })
-            for (const g of goals) {
-              const levelLabel = g.horizon === 'THREE_YEAR' ? 'three-year' : g.horizon === 'ONE_YEAR' ? 'annual' : 'quarterly'
-              out.push({ id: g.id, title: g.title, level: levelLabel, parentId: g.parentGoalId ?? undefined })
-            }
-            return { goals: out.slice(0, max) }
-          },
-        }),
-
-        listCalendarEvents: tool({
-          description: 'List calendar events between two ISO timestamps',
-          inputSchema: z.object({
-            from: z.string().describe('Start ISO datetime'),
-            to: z.string().describe('End ISO datetime'),
-          }),
-          execute: async ({ from, to }) => {
-            try {
-              const events = await calendarService.getGoogleEvents(userId, from, to)
-              return {
-                events: (events as any[]).slice(0, 50).map((e) => ({
-                  title: e.summary ?? e.title,
-                  start: e.start?.dateTime ?? e.start?.date ?? e.start,
-                  end: e.end?.dateTime ?? e.end?.date ?? e.end,
-                  location: e.location,
-                })),
-              }
-            } catch (err: any) {
-              return { error: err?.message ?? 'Failed to fetch events', events: [] }
-            }
-          },
-        }),
-
-        findFreeSlots: tool({
-          description: 'Find free calendar slots on a given date that fit a minimum duration',
-          inputSchema: z.object({
-            date: z.string().describe('YYYY-MM-DD'),
-            durationMinutes: z.number().describe('Minimum slot length in minutes'),
-          }),
-          execute: async ({ date, durationMinutes }) => {
-            const res: any = await calendarService.getFreeSlots(userId, date, durationMinutes)
-            return res
-          },
-        }),
-
-        // ── Client-approval write tools (no execute) ────────────────────────
-        updateTask: tool({
-          description: 'Propose updating an existing task. Requires user approval.',
-          inputSchema: z.object({
-            taskId: z.string(),
-            taskTitle: z.string().describe('Current title for display'),
-            title: z.string().optional(),
-            description: z.string().optional(),
-            priority: z.enum(['low', 'medium', 'high', 'urgent']).optional(),
-            dueDate: z.string().optional(),
-            scheduledDate: z.string().optional(),
-          }),
-        }),
-
-        deleteTask: tool({
-          description: 'Propose deleting a task. Requires user approval.',
-          inputSchema: z.object({
-            taskId: z.string(),
-            taskTitle: z.string().describe('For display in the confirmation UI'),
-          }),
-        }),
-
-        updateHabit: tool({
-          description: 'Propose updating an existing habit. Requires user approval.',
-          inputSchema: z.object({
-            habitId: z.string(),
-            habitName: z.string().describe('Current name for display'),
-            name: z.string().optional(),
-            description: z.string().optional(),
-            targetFrequency: z.number().optional(),
-            frequencyType: z.enum(['daily', 'weekly']).optional(),
-            isActive: z.boolean().optional(),
-          }),
-        }),
-
-        createGoal: tool({
-          description: 'Propose creating a new goal at a hierarchy level (three-year, annual, or quarterly). Requires user approval.',
-          inputSchema: z.object({
-            level: z.enum(['three-year', 'annual', 'quarterly']).describe('Hierarchy level'),
-            title: z.string(),
-            description: z.string().optional(),
-            visionId: z.string().optional().describe('Required when level is three-year'),
-            area: z.enum(['finances', 'career', 'health', 'relationships', 'mindset', 'lifestyle']).optional().describe('Required when level is three-year'),
-            threeYearGoalId: z.string().optional().describe('Required when level is annual'),
-            targetDate: z.string().optional().describe('YYYY-MM-DD, used for annual'),
-            annualGoalId: z.string().optional().describe('Required when level is quarterly'),
-            year: z.number().optional().describe('Required when level is quarterly'),
-            quarter: z.number().min(1).max(4).optional().describe('Required when level is quarterly'),
-          }),
-        }),
-
-        updateGoalProgress: tool({
-          description: 'Propose updating a goal progress percentage. Applies to annual or quarterly goals. Requires user approval.',
-          inputSchema: z.object({
-            level: z.enum(['annual', 'quarterly']),
-            goalId: z.string(),
-            goalTitle: z.string().describe('For display'),
-            progress: z.number().min(0).max(100),
-          }),
-        }),
-
-        createTimeBlock: tool({
-          description:
-            'Propose creating a calendar time block in the user\'s connected Google Calendar. Requires user approval AND requires the user to have a Google Calendar connected (Settings → Integrations). If the user has not connected Google yet, ask them to connect before proposing this.',
-          inputSchema: z.object({
-            title: z.string(),
-            date: z.string().describe('YYYY-MM-DD'),
-            startTime: z.string().describe('HH:MM (24h)'),
-            endTime: z.string().describe('HH:MM (24h)'),
-            description: z.string().optional(),
-            timeZone: z.string().optional().describe('IANA timezone, e.g. America/Bogota. Defaults to user browser TZ.'),
-          }),
-        }),
-
-        startPomodoro: tool({
-          description: 'Propose starting a pomodoro focus session. Requires user approval.',
-          inputSchema: z.object({
-            durationMinutes: z.number().describe('Session length in minutes'),
-            taskId: z.string().optional().describe('Optional linked task'),
-            taskTitle: z.string().optional().describe('For display'),
-          }),
-        }),
-
-        createHabitBlock: tool({
-          description:
-            'Propose creating a recurring calendar block for an existing habit (puts the habit on the calendar at a fixed time). Requires Google Calendar connected. Requires user approval.',
-          inputSchema: z.object({
-            habitId: z.string(),
-            habitName: z.string().describe('For display'),
-            startTime: z.string().describe('HH:MM (24h)'),
-            endTime: z.string().describe('HH:MM (24h)'),
-            frequencyType: z.string().describe('daily | weekly | etc.'),
-            weekDays: z.array(z.string()).optional().describe('For weekly: MO, TU, WE, TH, FR, SA, SU'),
-            description: z.string().optional(),
-          }),
-        }),
-
-        autoScheduleTask: tool({
-          description:
-            'Propose auto-scheduling a single task into the next available free slot on a given day. Requires user approval.',
-          inputSchema: z.object({
-            taskId: z.string(),
-            taskTitle: z.string().describe('For display'),
-            day: z.string().describe('YYYY-MM-DD'),
-            preventSplit: z.boolean().optional(),
-          }),
-        }),
-
-        deleteHabit: tool({
-          description: 'Propose deleting a habit. Requires user approval.',
-          inputSchema: z.object({
-            habitId: z.string(),
-            habitName: z.string().describe('For display'),
-          }),
-        }),
-
-        deleteGoal: tool({
-          description:
-            'Propose deleting a goal. Requires user approval. Specify level: three_year, annual, quarterly, or weekly.',
-          inputSchema: z.object({
-            goalId: z.string(),
-            goalTitle: z.string().describe('For display'),
-            level: z.enum(['three_year', 'annual', 'quarterly', 'weekly']),
-          }),
-        }),
-      },
+      tools: buildStreamTools(userId),
       stopWhen: stepCountIs(5),
       onFinish: async ({ text, steps }) => {
         try {
@@ -461,8 +189,8 @@ Workflow:
   ) {
     const [ctx, openTasks, activeHabits] = await Promise.all([
       getAIContext(userId),
-      chatRepo.findOpenTasks(userId, 20),
-      chatRepo.findActiveHabits(userId),
+      tasksRepository.findOpenTasks(userId, 20),
+      habitsRepository.findActiveHabits(userId),
     ])
 
     const taskContext = openTasks
@@ -470,7 +198,7 @@ Workflow:
       .join('\n')
 
     const habitContext = activeHabits
-      .map((h: any) => `- [${h.id}] "${h.name}" (frequency: ${h.frequencyType || 'daily'}, target: ${h.targetFrequency || 1})`)
+      .map((h) => `- [${h.id}] "${h.name}" (frequency: ${h.frequencyType || 'daily'}, target: ${h.targetFrequency || 1})`)
       .join('\n')
 
     const systemPrompt = `${buildBasePreamble(ctx)}
@@ -495,126 +223,7 @@ Do NOT invent task or habit IDs — only reference IDs from the context above or
         role: m.role as 'user' | 'assistant',
         content: m.content,
       })),
-      tools: {
-        createTask: tool({
-          description: 'Create a new task for the user',
-          inputSchema: z.object({
-            title: z.string().describe('Task title'),
-            description: z.string().optional().describe('Task description'),
-            priority: z.enum(['low', 'medium', 'high', 'urgent']).optional().describe('Task priority'),
-            dueDate: z.string().optional().describe('Due date in YYYY-MM-DD format'),
-            scheduledDate: z.string().optional().describe('Scheduled date in YYYY-MM-DD format'),
-          }),
-          execute: async ({ title, description, priority, dueDate, scheduledDate }) => {
-            const task = await tasksRepository.create(userId, {
-              title,
-              description,
-              priority: priority || 'medium',
-              dueDate,
-              scheduledDate,
-            })
-            return { success: true, task: { id: task.id, title: task.title, status: task.status } }
-          },
-        }),
-
-        completeTask: tool({
-          description: 'Mark an existing task as completed',
-          inputSchema: z.object({
-            taskId: z.string().describe('The ID of the task to complete'),
-          }),
-          execute: async ({ taskId }) => {
-            const task = await tasksRepository.update(userId, taskId, { status: 'completed' })
-            if (!task) return { success: false, error: 'Task not found' }
-            return { success: true, task: { id: task.id, title: task.title, status: task.status } }
-          },
-        }),
-
-        listTasks: tool({
-          description: 'List the user\'s open tasks',
-          inputSchema: z.object({
-            limit: z.number().optional().describe('Max number of tasks to return (default 10)'),
-          }),
-          execute: async ({ limit }) => {
-            const tasks = await chatRepo.findOpenTasks(userId, limit || 10)
-            return {
-              tasks: tasks.map((t) => ({
-                id: t.id,
-                title: t.title,
-                priority: t.priority,
-                dueDate: t.dueDate,
-                status: t.status,
-              })),
-            }
-          },
-        }),
-
-        createHabit: tool({
-          description: 'Create a new habit for the user',
-          inputSchema: z.object({
-            name: z.string().describe('Habit name'),
-            description: z.string().optional().describe('Habit description'),
-            frequencyType: z.enum(['daily', 'weekly']).optional().describe('How often the habit should be done'),
-            targetFrequency: z.number().optional().describe('Target times per frequency period'),
-          }),
-          execute: async ({ name, description, frequencyType, targetFrequency }) => {
-            const habit = await prisma.task.create({
-              data: {
-                userId,
-                kind: 'HABIT',
-                title: name,
-                description,
-                tags: [],
-                habitMeta: {
-                  category: null,
-                  color: '#3B82F6',
-                  targetFrequency: targetFrequency || 1,
-                  frequencyType: frequencyType || 'daily',
-                  weekDays: [],
-                } as any,
-              },
-            })
-            return { success: true, habit: { id: habit.id, name: habit.title } }
-          },
-        }),
-
-        logHabit: tool({
-          description: 'Log a habit completion for today',
-          inputSchema: z.object({
-            habitId: z.string().describe('The ID of the habit to log'),
-            notes: z.string().optional().describe('Optional notes for the log entry'),
-          }),
-          execute: async ({ habitId, notes }) => {
-            // Verify the habit belongs to the user
-            const habit = await prisma.task.findFirst({
-              where: { id: habitId, userId, kind: 'HABIT' },
-            })
-            if (!habit) return { success: false, error: 'Habit not found' }
-
-            const settings = await prisma.userSettings.findUnique({
-              where: { userId },
-              select: { timezone: true },
-            })
-            const tz = settings?.timezone ?? 'UTC'
-            const today = startOfLocalDayUtc(new Date(), tz)
-
-            const log = await prisma.habitLog.upsert({
-              where: { taskId_date: { taskId: habitId, date: today } },
-              create: {
-                taskId: habitId,
-                userId,
-                date: today,
-                completedCount: 1,
-                notes,
-              },
-              update: {
-                completedCount: { increment: 1 },
-                notes,
-              },
-            })
-            return { success: true, log: { id: log.id, habitName: habit.title, completedCount: log.completedCount } }
-          },
-        }),
-      },
+      tools: buildServerTools(userId),
       stopWhen: stepCountIs(5),
     })
 
@@ -641,9 +250,9 @@ Do NOT invent task or habit IDs — only reference IDs from the context above or
 
     const [ctx, quarterlyGoals, habits, openTasks, workingHours] = await Promise.all([
       getAIContext(userId),
-      chatRepo.findActiveGoalsByUser(userId),
-      chatRepo.findActiveHabits(userId),
-      chatRepo.findOpenTasks(userId, 100),
+      goalsRepository.findActiveQuarterlyGoals(userId),
+      habitsRepository.findActiveHabits(userId),
+      tasksRepository.findOpenTasks(userId, 100),
       prisma.workingHours.findMany({ where: { userId, channelId: null }, orderBy: { dayOfWeek: 'asc' } }),
     ])
 
@@ -666,7 +275,7 @@ Do NOT invent task or habit IDs — only reference IDs from the context above or
       .join('\n')
 
     const habitContext = habits
-      .map((h: any) => `- ${h.name} (frequency: ${h.targetFrequency || h.frequencyType || 'daily'})`)
+      .map((h) => `- ${h.name} (frequency: ${h.targetFrequency || h.frequencyType || 'daily'})`)
       .join('\n')
 
     const goalContext = quarterlyGoals

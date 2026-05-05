@@ -408,6 +408,31 @@ class GoalsRepo {
     return { data, count }
   }
 
+  /**
+   * Roll uncompleted weekly goals from any past week into `weekStartDate`.
+   * Only `planned` and `in_progress` goals are moved; `completed`/`canceled`
+   * stay in their original week for history. Idempotent — safe to call on
+   * every "current week" fetch.
+   */
+  async rolloverUncompletedWeeklyGoalsTo(userId: string, weekStartDate: string): Promise<number> {
+    const target = new Date(weekStartDate)
+    const candidates = await prisma.goal.findMany({
+      where: { userId, horizon: 'WEEK', startsOn: { lt: target } },
+      select: { id: true, description: true },
+    })
+    const movable = candidates.filter((g: { description: string | null }) => {
+      const { status } = decodeWStatus(g.description)
+      return status === 'planned' || status === 'in_progress'
+    })
+    if (movable.length === 0) return 0
+    const periodKey = isoWeekKey(target)
+    await prisma.goal.updateMany({
+      where: { id: { in: movable.map((g: { id: string }) => g.id) } },
+      data: { startsOn: target, periodKey },
+    })
+    return movable.length
+  }
+
   async createWeeklyGoal(userId: string, data: { quarterlyGoalId?: string; weekStartDate: string; title: string; status: string; description?: string }) {
     const weekStart = new Date(data.weekStartDate)
     const g = await prisma.goal.create({
@@ -577,6 +602,13 @@ class GoalsRepo {
         threeYearGoals: threeYearsWithChildren,
       },
     ]
+  }
+
+  async findActiveQuarterlyGoals(userId: string) {
+    return prisma.goal.findMany({
+      where: { userId, horizon: 'QUARTER', status: 'ACTIVE' },
+      orderBy: { createdAt: 'desc' },
+    })
   }
 }
 

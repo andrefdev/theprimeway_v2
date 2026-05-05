@@ -616,6 +616,7 @@ model Calendar {
   color              String?
   isPrimary          Boolean?  @default(false)
   isSelectedForSync  Boolean?  @default(false)
+  accessRole         String?   @map("access_role")
   createdAt          DateTime? @default(now()) @map("created_at")
   updatedAt          DateTime? @updatedAt @map("updated_at")
 

@@ -662,6 +662,7 @@ const analyzeHabitRoute = createRoute({
       description: 'Habit analysis with insights',
     },
     404: { content: { 'application/json': { schema: errorResponse } }, description: 'Habit not found' },
+    500: { content: { 'application/json': { schema: errorResponse } }, description: 'Server error' },
   },
 })
 
@@ -711,6 +712,7 @@ const optimalReminderTimeRoute = createRoute({
       description: 'Optimal reminder time',
     },
     404: { content: { 'application/json': { schema: errorResponse } }, description: 'Habit not found' },
+    500: { content: { 'application/json': { schema: errorResponse } }, description: 'Server error' },
   },
 })
 
@@ -755,6 +757,7 @@ const suggestGoalsRoute = createRoute({
                 quarterlyGoals: z.array(z.object({ id: z.string(), title: z.string(), type: z.string() })),
                 annualGoals: z.array(z.object({ id: z.string(), title: z.string(), type: z.string() })),
               }),
+              reasoning: z.string().optional(),
             }),
           }),
         },
@@ -762,6 +765,7 @@ const suggestGoalsRoute = createRoute({
       description: 'Goal suggestions for habit',
     },
     404: { content: { 'application/json': { schema: errorResponse } }, description: 'Habit not found' },
+    500: { content: { 'application/json': { schema: errorResponse } }, description: 'Server error' },
   },
 })
 
@@ -790,7 +794,7 @@ const scheduleReminderRoute = createRoute({
   summary: 'Schedule a reminder for this habit',
   security: [{ Bearer: [] }],
   request: {
-    param: z.object({ id: z.string() }),
+    params: z.object({ id: z.string() }),
     body: {
       content: {
         'application/json': {
@@ -819,6 +823,7 @@ const scheduleReminderRoute = createRoute({
       description: 'Reminder scheduled successfully',
     },
     404: { content: { 'application/json': { schema: errorResponse } }, description: 'Habit not found' },
+    500: { content: { 'application/json': { schema: errorResponse } }, description: 'Server error' },
   },
 })
 
@@ -834,7 +839,7 @@ habitRoutes.openapi(scheduleReminderRoute, async (c) => {
 
     // Update or create notification preferences
     const { prisma } = await import('../lib/prisma')
-    const notifPrefs = await prisma.notificationPreferences.upsert({
+    await prisma.notificationPreferences.upsert({
       where: { userId },
       update: { habitReminderTime: time },
       create: { userId, habitReminderTime: time },

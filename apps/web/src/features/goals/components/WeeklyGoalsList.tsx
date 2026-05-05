@@ -12,22 +12,13 @@ import { Badge } from '@/shared/components/ui/badge'
 import { Checkbox } from '@/shared/components/ui/checkbox'
 import { SkeletonList } from '@/shared/components/ui/skeleton-list'
 import { EmptyState } from '@/shared/components/ui/empty-state'
-import { ChevronLeft, ChevronRight, Plus, Trash2 } from 'lucide-react'
-import { localYmd } from '@repo/shared/utils'
+import { ChevronLeft, ChevronRight, Pencil, Plus, Trash2 } from 'lucide-react'
+import { localIsoWeekStartYmd } from '@repo/shared/utils'
 import { useUserTimezone } from '@/features/settings/hooks/use-user-timezone'
 
-function startOfISOWeekInTz(d: Date, tz: string): Date {
-  const todayKey = localYmd(d, tz)
-  const [y, m, day] = todayKey.split('-').map(Number)
-  const local = new Date(y!, m! - 1, day!)
-  const dow = local.getDay()
-  const diff = dow === 0 ? -6 : 1 - dow
-  local.setDate(local.getDate() + diff)
-  return local
-}
-
-function ymd(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+function ymdToDate(s: string): Date {
+  const [y, m, d] = s.split('-').map(Number)
+  return new Date(y!, m! - 1, d!)
 }
 
 function formatRange(start: Date, locale: string): string {
@@ -40,8 +31,8 @@ function formatRange(start: Date, locale: string): string {
 export function WeeklyGoalsList() {
   const { t, i18n } = useTranslation('goals')
   const tz = useUserTimezone()
-  const [weekStart, setWeekStart] = useState<Date>(() => startOfISOWeekInTz(new Date(), tz))
-  const weekStartDate = ymd(weekStart)
+  const [weekStartDate, setWeekStartDate] = useState<string>(() => localIsoWeekStartYmd(new Date(), tz))
+  const weekStart = useMemo(() => ymdToDate(weekStartDate), [weekStartDate])
 
   const { data, isLoading } = useQuery(goalsQueries.weeklyGoals({ weekStartDate }))
   const goals = (Array.isArray(data) ? data : []) as WeeklyGoal[]
@@ -51,15 +42,17 @@ export function WeeklyGoalsList() {
   const remove = useDeleteWeeklyGoal()
 
   const [newTitle, setNewTitle] = useState('')
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editTitle, setEditTitle] = useState('')
 
   const isCurrentWeek = useMemo(() => {
-    return ymd(startOfISOWeekInTz(new Date(), tz)) === weekStartDate
+    return localIsoWeekStartYmd(new Date(), tz) === weekStartDate
   }, [weekStartDate, tz])
 
   function shiftWeek(deltaDays: number) {
-    const d = new Date(weekStart)
+    const d = ymdToDate(weekStartDate)
     d.setDate(d.getDate() + deltaDays)
-    setWeekStart(startOfISOWeekInTz(d, tz))
+    setWeekStartDate(localIsoWeekStartYmd(d, tz))
   }
 
   async function handleCreate() {
@@ -89,6 +82,30 @@ export function WeeklyGoalsList() {
       await remove.mutateAsync(id)
     } catch {
       toast.error(t('failedToDelete', { ns: 'common', defaultValue: 'Failed to delete' }))
+    }
+  }
+
+  function startEdit(goal: WeeklyGoal) {
+    setEditingId(goal.id)
+    setEditTitle(goal.title)
+  }
+
+  function cancelEdit() {
+    setEditingId(null)
+    setEditTitle('')
+  }
+
+  async function commitEdit(goal: WeeklyGoal) {
+    const title = editTitle.trim()
+    if (!title || title === goal.title) {
+      cancelEdit()
+      return
+    }
+    try {
+      await update.mutateAsync({ id: goal.id, data: { title } })
+      cancelEdit()
+    } catch {
+      toast.error(t('failedToUpdate', { ns: 'common', defaultValue: 'Failed to update' }))
     }
   }
 
@@ -141,26 +158,63 @@ export function WeeklyGoalsList() {
           <ul className="space-y-2">
             {goals.map((goal) => {
               const completed = goal.status === 'completed'
+              const isEditing = editingId === goal.id
               return (
                 <li key={goal.id} className="flex items-center gap-3 rounded-md border border-border/50 bg-card/40 px-3 py-2">
                   <Checkbox
                     checked={completed}
                     onCheckedChange={() => handleToggle(goal)}
+                    disabled={isEditing}
                   />
-                  <span className={`flex-1 text-sm ${completed ? 'text-muted-foreground line-through' : ''}`}>
-                    {goal.title}
-                  </span>
-                  {goal.status && goal.status !== 'planned' && goal.status !== 'completed' && (
+                  {isEditing ? (
+                    <Input
+                      autoFocus
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          commitEdit(goal)
+                        } else if (e.key === 'Escape') {
+                          e.preventDefault()
+                          cancelEdit()
+                        }
+                      }}
+                      onBlur={() => commitEdit(goal)}
+                      className="h-7 flex-1 text-sm"
+                    />
+                  ) : (
+                    <span
+                      className={`flex-1 text-sm ${completed ? 'text-muted-foreground line-through' : ''}`}
+                      onDoubleClick={() => startEdit(goal)}
+                    >
+                      {goal.title}
+                    </span>
+                  )}
+                  {!isEditing && goal.status && goal.status !== 'planned' && goal.status !== 'completed' && (
                     <Badge variant="outline" className="text-[10px]">{goal.status}</Badge>
                   )}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                    onClick={() => handleDelete(goal.id)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
+                  {!isEditing && (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                        onClick={() => startEdit(goal)}
+                        aria-label={t('edit', { ns: 'common', defaultValue: 'Edit' })}
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                        onClick={() => handleDelete(goal.id)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </>
+                  )}
                 </li>
               )
             })}

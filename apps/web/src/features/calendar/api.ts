@@ -8,6 +8,7 @@ export interface Calendar {
   color?: string | null
   isPrimary?: boolean | null
   isSelectedForSync?: boolean | null
+  accessRole?: string | null
 }
 
 export interface CalendarAccount {

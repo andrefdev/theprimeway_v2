@@ -205,7 +205,7 @@ class CronService {
           if (!days.includes(currentDayIndex)) continue
         }
 
-        const log = habitLogs.find((l) => l.habitId === habit.id)
+        const log = habitLogs.find((l) => l.taskId === habit.id)
         const completed = log?.completedCount || 0
         const target = habit.targetFrequency || 1
 
@@ -274,7 +274,7 @@ class CronService {
       where: {
         goals: { some: { horizon: 'QUARTER', status: 'ACTIVE' } },
       },
-      select: { id: true, email: true, name: true, locale: true },
+      select: { id: true, email: true, name: true, settings: { select: { locale: true } } },
     })
 
     const results: Array<{ userId: string; status: string; error?: string }> = []
@@ -290,7 +290,7 @@ class CronService {
 
         results.push({ userId: user.id, status: 'generated' })
 
-        const lang = (user.locale || 'en').startsWith('es') ? 'es' : 'en'
+        const lang = (user.settings?.locale || 'en').startsWith('es') ? 'es' : 'en'
         const title =
           lang === 'es' ? `Tu revisión del Q${quarter} está lista` : `Your Q${quarter} review is ready`
         const body =
@@ -334,10 +334,10 @@ class CronService {
       where: {
         OR: [
           { tasks: { some: { updatedAt: { gte: recentCutoff } } } },
-          { habits: { some: { isActive: true } } },
+          { tasks: { some: { kind: 'HABIT', archivedAt: null } } },
         ],
       },
-      select: { id: true, name: true, locale: true },
+      select: { id: true, name: true, settings: { select: { locale: true } } },
     })
 
     // Calculate the week start (Monday) for snapshots
@@ -354,7 +354,7 @@ class CronService {
 
         void plan
 
-        const lang = (user.locale || 'en').startsWith('es') ? 'es' : 'en'
+        const lang = (user.settings?.locale || 'en').startsWith('es') ? 'es' : 'en'
         const title = lang === 'es' ? 'Tu plan semanal está listo' : 'Your weekly plan is ready'
         const body =
           lang === 'es'
@@ -393,7 +393,7 @@ class CronService {
 
     // Fetch all users
     const users = await prisma.user.findMany({
-      select: { id: true, locale: true },
+      select: { id: true, settings: { select: { locale: true } } },
     })
 
     let nudged = 0
@@ -401,7 +401,7 @@ class CronService {
     let alreadySet = 0
 
     for (const user of users) {
-      const lang = (user.locale || 'en').startsWith('es') ? 'es' : 'en'
+      const lang = (user.settings?.locale || 'en').startsWith('es') ? 'es' : 'en'
 
       // Check for quarterly goals in the current quarter
       const quarterlyGoals = await prisma.goal.findMany({

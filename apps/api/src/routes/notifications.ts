@@ -170,6 +170,15 @@ notificationRoutes.openapi(aggregatedRoute, async (c) => {
 // ---------------------------------------------------------------------------
 // GET /smart-reminders
 // ---------------------------------------------------------------------------
+const smartReminderSchema = z.object({
+  habitId: z.string(),
+  habitName: z.string(),
+  urgency: z.enum(['high', 'medium', 'low']),
+  message: z.string(),
+  streakAtRisk: z.boolean(),
+  calendarBusy: z.boolean(),
+})
+
 const smartRemindersRoute = createRoute({
   method: 'get',
   path: '/smart-reminders',
@@ -177,7 +186,14 @@ const smartRemindersRoute = createRoute({
   summary: 'Get smart habit reminders based on streaks and calendar density',
   security: [{ Bearer: [] }],
   responses: {
-    200: { content: { 'application/json': { schema: z.object({ data: z.array(z.any()) }) } }, description: 'Smart reminders' },
+    200: {
+      content: {
+        'application/json': {
+          schema: z.object({ data: z.array(smartReminderSchema) }),
+        },
+      },
+      description: 'Smart reminders',
+    },
   },
 })
 

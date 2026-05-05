@@ -550,7 +550,21 @@ class HabitsService {
   // ---------------------------------------------------------------------------
 
   /** Analyze habit patterns and provide AI insights */
-  async analyzeHabit(userId: string, habitId: string) {
+  async analyzeHabit(userId: string, habitId: string): Promise<{
+    habit: { id: string; name: string }
+    metrics: {
+      completionRate: number
+      currentStreak: number
+      longestStreak: number
+      totalCompletions: number
+      daysTracked: number
+    }
+    patterns: {
+      bestDaysOfWeek: number[]
+      consistencyLevel: 'excellent' | 'good' | 'fair' | 'poor'
+    }
+    insights: string[]
+  } | null> {
     const habit = await habitsRepository.findById(userId, habitId)
     if (!habit) return null
 
@@ -649,9 +663,23 @@ class HabitsService {
   }
 
   /** Suggest goals that would benefit from this habit */
-  async suggestGoalsForHabit(userId: string, habitId: string) {
+  async suggestGoalsForHabit(userId: string, habitId: string): Promise<{
+    linkedGoal: { id: string; title: string } | null
+    suggestions: {
+      weeklyGoals: { id: string; title: string; type: string }[]
+      quarterlyGoals: { id: string; title: string; type: string }[]
+      annualGoals: { id: string; title: string; type: string }[]
+    }
+    reasoning?: string
+  } | null> {
     const habit = await habitsRepository.findById(userId, habitId)
     if (!habit) return null
+
+    const emptySuggestions = {
+      weeklyGoals: [] as { id: string; title: string; type: string }[],
+      quarterlyGoals: [] as { id: string; title: string; type: string }[],
+      annualGoals: [] as { id: string; title: string; type: string }[],
+    }
 
     // If habit already has a goal, return that
     if (habit.goalId) {
@@ -660,7 +688,7 @@ class HabitsService {
         select: { id: true, title: true },
       })
       if (linkedGoal) {
-        return { linkedGoal, suggestions: [] }
+        return { linkedGoal, suggestions: emptySuggestions }
       }
     }
 

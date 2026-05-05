@@ -410,6 +410,14 @@ class TasksRepository {
     })
   }
 
+  async findOpenTasks(userId: string, limit: number) {
+    return prisma.task.findMany({
+      where: { userId, status: 'open' },
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+    })
+  }
+
   async getTaskCounts(userId: string) {
     const [total, open, completed, archived] = await Promise.all([
       prisma.task.count({ where: { userId } }),

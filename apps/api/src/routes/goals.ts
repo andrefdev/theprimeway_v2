@@ -878,6 +878,7 @@ const listSnapshotsRoute = createRoute({
 })
 
 goalsRoutes.openapi(listSnapshotsRoute, (async (c: any) => {
+  const userId = c.get('user').userId
   const q = c.req.valid('query')
 
   try {
@@ -944,6 +945,7 @@ const listFocusTaskLinksRoute = createRoute({
 })
 
 goalsRoutes.openapi(listFocusTaskLinksRoute, (async (c: any) => {
+  const userId = c.get('user').userId
   const q = c.req.valid('query')
 
   try {
@@ -1036,6 +1038,7 @@ const listFocusHabitLinksRoute = createRoute({
 })
 
 goalsRoutes.openapi(listFocusHabitLinksRoute, (async (c: any) => {
+  const userId = c.get('user').userId
   const q = c.req.valid('query')
 
   try {

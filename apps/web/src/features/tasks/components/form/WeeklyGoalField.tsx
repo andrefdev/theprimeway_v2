@@ -6,6 +6,8 @@ import type { CreateTaskInput } from '@repo/shared/validators'
 import { Label } from '@/shared/components/ui/label'
 import { Combobox, type ComboboxOption } from '@/shared/components/ui/combobox'
 import { goalsQueries } from '@/features/goals/queries'
+import { localIsoWeekStartYmd } from '@repo/shared/utils'
+import { useUserTimezone } from '@/features/settings/hooks/use-user-timezone'
 
 interface Props {
   form: UseFormReturn<CreateTaskInput>
@@ -14,7 +16,9 @@ interface Props {
 
 export function WeeklyGoalField({ form, showLabel = true }: Props) {
   const { t } = useTranslation('tasks')
-  const { data: goals = [] } = useQuery({ ...goalsQueries.weeklyGoals() })
+  const tz = useUserTimezone()
+  const weekStartDate = useMemo(() => localIsoWeekStartYmd(new Date(), tz), [tz])
+  const { data: goals = [] } = useQuery({ ...goalsQueries.weeklyGoals({ weekStartDate }) })
 
   const options: ComboboxOption[] = useMemo(
     () =>

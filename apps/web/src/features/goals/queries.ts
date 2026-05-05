@@ -42,6 +42,30 @@ async function optimisticListRemove<T extends { id: string }>(
   return snaps
 }
 
+// Variants for queries whose queryFn returns a plain array (e.g. weekly goals
+// — see goalsQueries.weeklyGoals which unwraps `{data}` to `[]`). Using the
+// list-shape helpers above on these queries crashes with `.map of undefined`.
+async function optimisticArrayPatch<T extends { id: string }>(
+  qc: QueryClient,
+  matchKey: QueryKey,
+  id: string,
+  patch: Partial<T>,
+): Promise<Snapshot<T[]>> {
+  const snaps = await snapshotQueries<T[]>(qc, matchKey)
+  patchQueries<T[]>(qc, matchKey, (cur) => (Array.isArray(cur) ? listOps.patch(cur, id, patch) : cur))
+  return snaps
+}
+
+async function optimisticArrayRemove<T extends { id: string }>(
+  qc: QueryClient,
+  matchKey: QueryKey,
+  id: string,
+): Promise<Snapshot<T[]>> {
+  const snaps = await snapshotQueries<T[]>(qc, matchKey)
+  patchQueries<T[]>(qc, matchKey, (cur) => (Array.isArray(cur) ? listOps.remove(cur, id) : cur))
+  return snaps
+}
+
 export const goalsQueries = {
   all: () => ['goals'] as const,
 
@@ -315,7 +339,7 @@ export function useUpdateWeeklyGoal() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Parameters<typeof goalsApi.updateWeeklyGoal>[1] }) =>
       goalsApi.updateWeeklyGoal(id, data),
-    onMutate: ({ id, data }) => optimisticListPatch(qc, weeklyKey(), id, data as any).then((snaps) => ({ snaps })),
+    onMutate: ({ id, data }) => optimisticArrayPatch(qc, weeklyKey(), id, data as any).then((snaps) => ({ snaps })),
     onSuccess: (_res, vars) => maybePlayGoalCompleteSound(vars.data),
     onError: (_e, _v, ctx) => ctx?.snaps && rollbackQueries(qc, ctx.snaps),
     onSettled: () => qc.invalidateQueries({ queryKey: goalsQueries.all() }),
@@ -326,7 +350,7 @@ export function useDeleteWeeklyGoal() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => goalsApi.deleteWeeklyGoal(id),
-    onMutate: (id) => optimisticListRemove(qc, weeklyKey(), id).then((snaps) => ({ snaps })),
+    onMutate: (id) => optimisticArrayRemove(qc, weeklyKey(), id).then((snaps) => ({ snaps })),
     onError: (_e, _v, ctx) => ctx?.snaps && rollbackQueries(qc, ctx.snaps),
     onSettled: () => qc.invalidateQueries({ queryKey: goalsQueries.all() }),
   })

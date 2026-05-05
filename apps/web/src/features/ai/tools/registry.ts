@@ -16,7 +16,12 @@ import {
   updateGoalProgressHandler,
   deleteGoalHandler,
 } from './handlers/goals'
-import { createTimeBlockHandler, createHabitBlockHandler } from './handlers/calendar'
+import {
+  createTimeBlockHandler,
+  createHabitBlockHandler,
+  updateCalendarEventHandler,
+  deleteCalendarEventHandler,
+} from './handlers/calendar'
 import { startPomodoroHandler } from './handlers/pomodoro'
 import { autoScheduleTaskHandler } from './handlers/scheduling'
 
@@ -34,6 +39,8 @@ export const toolRegistry: Record<string, ToolHandler<never>> = {
   deleteGoal: deleteGoalHandler as ToolHandler<never>,
   createTimeBlock: createTimeBlockHandler as ToolHandler<never>,
   createHabitBlock: createHabitBlockHandler as ToolHandler<never>,
+  updateCalendarEvent: updateCalendarEventHandler as ToolHandler<never>,
+  deleteCalendarEvent: deleteCalendarEventHandler as ToolHandler<never>,
   startPomodoro: startPomodoroHandler as ToolHandler<never>,
   autoScheduleTask: autoScheduleTaskHandler as ToolHandler<never>,
 }
