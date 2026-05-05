@@ -63,7 +63,10 @@ jobs:
 
     services:
       postgres:
-        image: postgres:17-alpine
+        # pgvector image (not vanilla postgres) — the brain concept-graph
+        # migration enables the `vector` extension, which postgres:17-alpine
+        # does not ship. Same tag we use locally via docker-compose.
+        image: pgvector/pgvector:pg17
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
