@@ -10,6 +10,8 @@ export const AUTH = {
   RESEND_OTP: '/api/auth/resend-otp',
   FORGOT_PASSWORD: '/api/auth/forgot-password',
   RESET_PASSWORD: '/api/auth/reset-password',
+  REQUEST_ACCOUNT_DELETION: '/api/auth/request-account-deletion',
+  CONFIRM_ACCOUNT_DELETION: '/api/auth/confirm-account-deletion',
 } as const;
 
 // Tasks

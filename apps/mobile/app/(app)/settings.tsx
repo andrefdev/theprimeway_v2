@@ -1,11 +1,10 @@
-import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
-import { View, ScrollView, Pressable, Alert, TextInput, Modal, Switch } from 'react-native';
+import { useState, useMemo, useCallback, useEffect } from 'react';
+import { View, ScrollView, Pressable, TextInput, Modal, Switch } from 'react-native';
 import { Text } from '@/shared/components/ui/text';
 import { Icon } from '@/shared/components/ui/icon';
 import { Card, CardContent } from '@/shared/components/ui/card';
 import { Header } from '@/shared/components/layout/Header';
 import { useSettingsStore } from '@/shared/stores/settingsStore';
-import { useAuthStore } from '@/shared/stores/authStore';
 import { setLocale } from '@/i18n';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import {
@@ -243,10 +242,8 @@ function TimezonePickerModal({
 
 export default function SettingsScreen() {
   const { t } = useTranslation('features.settings');
-  const { t: tCommon } = useTranslation('common');
   const { t: tSub } = useTranslation('features.subscription');
   const settings = useSettingsStore();
-  const logout = useAuthStore((s) => s.logout);
   const { toggleColorScheme, colorScheme } = useColorScheme();
   const [timezonePickerOpen, setTimezonePickerOpen] = useState(false);
   const { mutate: updateSettings } = useUpdateUserSettings();
@@ -265,17 +262,7 @@ export default function SettingsScreen() {
   };
 
   const handleDeleteAccount = () => {
-    Alert.alert(t('deleteAccount.title'), t('deleteAccount.warning'), [
-      { text: tCommon('actions.cancel'), style: 'cancel' },
-      {
-        text: tCommon('actions.delete'),
-        style: 'destructive',
-        onPress: async () => {
-          await logout();
-          router.replace('/(auth)/login');
-        },
-      },
-    ]);
+    router.push('/(app)/delete-account');
   };
 
   return (

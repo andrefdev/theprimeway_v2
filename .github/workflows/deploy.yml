@@ -29,23 +29,32 @@ jobs:
       - uses: dorny/paths-filter@v3
         id: filter
         with:
+          # NOTE: dorny/paths-filter on push events compares against the
+          # previous commit on the branch — NOT against main. So a commit that
+          # only touches deploy.yml would otherwise skip all validation jobs.
+          # We include `.github/workflows/deploy.yml` in every bucket so any
+          # CI change re-runs the affected validations.
           filters: |
             api:
               - 'apps/api/**'
               - 'packages/shared/**'
               - 'packages/config-ts/**'
+              - '.github/workflows/deploy.yml'
             web:
               - 'apps/web/**'
               - 'packages/shared/**'
               - 'packages/ui/**'
               - 'nginx/spa.conf'
+              - '.github/workflows/deploy.yml'
             admin:
               - 'apps/admin/**'
               - 'packages/shared/**'
               - 'packages/ui/**'
               - 'nginx/spa.conf'
+              - '.github/workflows/deploy.yml'
             docs:
               - 'apps/docs/**'
+              - '.github/workflows/deploy.yml'
             infra:
               - 'docker-compose.prod.yml'
               - 'nginx/**'

@@ -1,15 +1,10 @@
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
+import { useMemo } from 'react'
 import type { UseFormReturn } from 'react-hook-form'
 import type { CreateTaskInput } from '@repo/shared/validators'
 import { Label } from '@/shared/components/ui/label'
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from '@/shared/components/ui/select'
+import { Combobox, type ComboboxOption } from '@/shared/components/ui/combobox'
 import { goalsQueries } from '@/features/goals/queries'
 
 interface Props {
@@ -21,26 +16,29 @@ export function WeeklyGoalField({ form, showLabel = true }: Props) {
   const { t } = useTranslation('tasks')
   const { data: goals = [] } = useQuery({ ...goalsQueries.weeklyGoals() })
 
+  const options: ComboboxOption[] = useMemo(
+    () =>
+      Array.isArray(goals)
+        ? (goals as any[]).map((g) => ({ value: g.id, label: g.title }))
+        : [],
+    [goals],
+  )
+
+  const value = form.watch('weeklyGoalId')
+
   return (
     <div className="space-y-1.5">
       {showLabel && <Label>{t('weeklyGoal')}</Label>}
-      <Select
-        value={form.watch('weeklyGoalId') ?? 'none'}
-        onValueChange={(v) => form.setValue('weeklyGoalId', v !== 'none' ? v : undefined)}
-      >
-        <SelectTrigger className="w-full">
-          <SelectValue placeholder={t('selectWeeklyGoal')} />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="none">{t('none')}</SelectItem>
-          {Array.isArray(goals) &&
-            (goals as any[]).map((goal) => (
-              <SelectItem key={goal.id} value={goal.id}>
-                {goal.title}
-              </SelectItem>
-            ))}
-        </SelectContent>
-      </Select>
+      <Combobox
+        options={options}
+        value={value}
+        onChange={(v) => form.setValue('weeklyGoalId', v)}
+        placeholder={t('selectWeeklyGoal')}
+        searchPlaceholder={t('composer.searchGoal', { defaultValue: 'Search goal…' })}
+        emptyMessage={t('common:noResults', { defaultValue: 'No results' })}
+        clearable
+        clearLabel={t('none')}
+      />
     </div>
   )
 }

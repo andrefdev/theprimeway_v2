@@ -32,6 +32,7 @@ export default function AppLayout() {
         <Stack.Screen name="habits-analytics" />
         <Stack.Screen name="brain/index" />
         <Stack.Screen name="brain/[id]" />
+        <Stack.Screen name="delete-account" />
         </Stack>
         <CelebrationOverlay />
       </View>

@@ -46,15 +46,17 @@ export function HabitDetailPanel({ habit }: HabitDetailPanelProps) {
   }
 
   return (
-    <div className="flex h-full flex-col gap-4 overflow-y-auto p-6">
-      {/* Header */}
-      <div className="pr-8">
+    <div className="flex h-full flex-col">
+      {/* Sticky Header */}
+      <div className="shrink-0 border-b bg-popover px-6 py-4 pr-12">
         <h2 className="text-lg font-semibold">{habit.name}</h2>
         {habit.description && (
           <p className="text-sm text-muted-foreground mt-0.5">{habit.description}</p>
         )}
       </div>
 
+      {/* Scrollable Content */}
+      <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-4">
       {/* Basic Info */}
       <Card>
         <CardHeader className="pb-3">
@@ -267,6 +269,7 @@ export function HabitDetailPanel({ habit }: HabitDetailPanelProps) {
           </CardContent>
         </Card>
       ) : null}
+      </div>
     </div>
   )
 }
