@@ -47,12 +47,14 @@ export function SmartSlotPicker({ taskId, taskTitle, date, onScheduled }: SmartS
       if (m) return `${m[1]}:${m[2]}`
       return /^\d{2}:\d{2}$/.test(value) ? value : value.slice(0, 5)
     }
+    const startTime = toHHMM(startRaw)
+    const endTime = toHHMM(endRaw)
     try {
       await calendarApi.createTimeBlock({
         title: taskTitle,
         date: targetDate,
-        startTime: toHHMM(startRaw),
-        endTime: toHHMM(endRaw),
+        startTime,
+        endTime,
       })
       toast.success(t('save', { defaultValue: 'Scheduled!' }))
       onScheduled?.(startTime, endTime)

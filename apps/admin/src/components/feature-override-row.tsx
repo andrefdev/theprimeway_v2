@@ -16,6 +16,7 @@ interface FeatureOverrideRowProps {
 const FEATURE_NAMES: Record<FeatureKey, string> = {
   AI_ASSISTANT: 'AI Assistant',
   BRAIN_MODULE: 'Second Brain',
+  BRAIN_GRAPH: 'Brain Concept Graph',
   ADVANCED_ANALYTICS: 'Advanced Analytics',
   CUSTOM_THEME_CREATION: 'Custom Theme Creation',
   CUSTOM_THEMES: 'Custom Themes',

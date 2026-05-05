@@ -1398,7 +1398,7 @@ model BrainCluster {
 
   label             String
   color             String                       @default("#6366f1")
-  centroidEmbedding Unsupported("vector(1536)")?
+  centroidEmbedding Unsupported("vector(1536)")? @map("centroid_embedding")
   conceptCount      Int                          @default(0) @map("concept_count")
   computedAt        DateTime                     @default(now()) @map("computed_at")
 

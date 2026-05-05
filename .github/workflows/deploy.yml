@@ -91,6 +91,11 @@ jobs:
 
       - name: Verify schema matches migrations
         working-directory: apps/api
+        # DATABASE_URL is required by prisma.config.ts at module load (env() is
+        # eager). migrate diff itself does not use it — the shadow DB is given
+        # explicitly via --shadow-database-url — but the config must load first.
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/shadow
         run: |
           pnpm exec prisma migrate diff \
             --from-migrations ./prisma/migrations \
