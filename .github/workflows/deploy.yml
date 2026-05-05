@@ -91,16 +91,18 @@ jobs:
 
       - name: Verify schema matches migrations
         working-directory: apps/api
-        # DATABASE_URL is required by prisma.config.ts at module load (env() is
-        # eager). migrate diff itself does not use it — the shadow DB is given
-        # explicitly via --shadow-database-url — but the config must load first.
+        # Prisma 7 changes: `--to-schema-datamodel` → `--to-schema`, and
+        # `--shadow-database-url` was removed in favor of reading
+        # `datasource.shadowDatabaseUrl` from prisma.config.ts (which we wire
+        # to SHADOW_DATABASE_URL). DATABASE_URL is also required because the
+        # config eagerly resolves env('DATABASE_URL') at module load.
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/shadow
+          SHADOW_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/shadow
         run: |
           pnpm exec prisma migrate diff \
             --from-migrations ./prisma/migrations \
-            --to-schema-datamodel ./prisma/schema.prisma \
-            --shadow-database-url "postgresql://postgres:postgres@localhost:5432/shadow" \
+            --to-schema ./prisma/schema.prisma \
             --exit-code || {
               echo "::error::schema.prisma diverges from prisma/migrations/. Run 'pnpm --filter @repo/api db:migrate:new <name>' locally and commit the new migration."
               exit 1

@@ -83,7 +83,9 @@ CREATE TABLE "brain_concept_edges" (
     CONSTRAINT "brain_concept_edges_pkey" PRIMARY KEY ("id")
 );
 
-CREATE UNIQUE INDEX "brain_concept_edges_source_target_relation_key"
+-- Index names follow Prisma's auto-generated convention so `prisma migrate
+-- diff` reports zero divergence between this migration and schema.prisma.
+CREATE UNIQUE INDEX "brain_concept_edges_source_concept_id_target_concept_id_rel_key"
     ON "brain_concept_edges"("source_concept_id", "target_concept_id", "relation_type");
 CREATE INDEX "brain_concept_edges_user_id_last_reinforced_at_idx"
     ON "brain_concept_edges"("user_id", "last_reinforced_at");
@@ -117,7 +119,7 @@ CREATE TABLE "brain_concept_occurrences" (
     CONSTRAINT "brain_concept_occurrences_pkey" PRIMARY KEY ("id")
 );
 
-CREATE UNIQUE INDEX "brain_concept_occurrences_concept_entry_key"
+CREATE UNIQUE INDEX "brain_concept_occurrences_concept_id_entry_id_key"
     ON "brain_concept_occurrences"("concept_id", "entry_id");
 CREATE INDEX "brain_concept_occurrences_entry_id_idx"
     ON "brain_concept_occurrences"("entry_id");
@@ -131,13 +133,9 @@ ALTER TABLE "brain_concept_occurrences"
     FOREIGN KEY ("entry_id") REFERENCES "brain_entries"("id")
     ON DELETE CASCADE ON UPDATE CASCADE;
 
--- 6. HNSW indexes for cosine similarity searches over embeddings.
---    Build now while tables are empty (cheap). m=16, ef_construction=200
---    is the standard sweet spot for 1536-dim text embeddings.
-CREATE INDEX "brain_concepts_embedding_hnsw_idx"
-    ON "brain_concepts" USING hnsw ("embedding" vector_cosine_ops)
-    WITH (m = 16, ef_construction = 200);
-
-CREATE INDEX "brain_clusters_centroid_hnsw_idx"
-    ON "brain_clusters" USING hnsw ("centroid_embedding" vector_cosine_ops)
-    WITH (m = 16, ef_construction = 200);
+-- 6. HNSW indexes for cosine similarity searches are NOT created here.
+--    Reason: Prisma cannot represent HNSW indexes in schema.prisma, so leaving
+--    them in the migration would make `prisma migrate diff` report permanent
+--    divergence (it would emit DROP INDEX every time, and CI fails on diff).
+--    They are created idempotently by ensureVectorIndexes() at API boot
+--    (see apps/api/src/lib/vector-indexes.ts) using CREATE INDEX IF NOT EXISTS.
