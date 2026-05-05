@@ -13,6 +13,7 @@ const BILLING_OPTIONS = [
 const BOOLEAN_FIELDS: Array<{ key: keyof PlanInput; label: string; description?: string }> = [
   { key: 'hasAiAssistant', label: 'AI Assistant' },
   { key: 'hasBrainModule', label: 'Second Brain' },
+  { key: 'hasBrainGraph', label: 'Brain Concept Graph' },
   { key: 'hasAdvancedAnalytics', label: 'Advanced Analytics' },
   { key: 'hasCustomThemeCreation', label: 'Custom Theme Creation' },
   { key: 'hasExportData', label: 'Export Data' },
@@ -44,6 +45,7 @@ function initialState(plan?: Plan): FormState {
       maxBrainEntries: 20,
       hasAiAssistant: false,
       hasBrainModule: false,
+      hasBrainGraph: false,
       hasAdvancedAnalytics: false,
       hasCustomThemeCreation: false,
       hasExportData: false,

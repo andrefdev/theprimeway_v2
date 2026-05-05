@@ -28,6 +28,7 @@ export interface Plan {
   maxBrainEntries: number | null
   hasAiAssistant: boolean | null
   hasBrainModule: boolean | null
+  hasBrainGraph: boolean | null
   hasAdvancedAnalytics: boolean | null
   hasCustomThemeCreation: boolean | null
   hasExportData: boolean | null

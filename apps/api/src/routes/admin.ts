@@ -259,6 +259,7 @@ const planBodySchema = z.object({
   maxBrainEntries: z.number().int().nullable().optional(),
   hasAiAssistant: z.boolean().optional(),
   hasBrainModule: z.boolean().optional(),
+  hasBrainGraph: z.boolean().optional(),
   hasAdvancedAnalytics: z.boolean().optional(),
   hasCustomThemeCreation: z.boolean().optional(),
   hasExportData: z.boolean().optional(),

@@ -19,6 +19,7 @@ const adminSelect = {
   maxBrainEntries: true,
   hasAiAssistant: true,
   hasBrainModule: true,
+  hasBrainGraph: true,
   hasAdvancedAnalytics: true,
   hasCustomThemeCreation: true,
   hasExportData: true,

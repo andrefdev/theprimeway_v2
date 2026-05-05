@@ -37,9 +37,9 @@ function AiPage() {
       feature={FEATURES.AI_ASSISTANT}
       fallback={<UpgradePrompt featureKey={FEATURES.AI_ASSISTANT} />}
     >
-      <div className="relative flex h-full min-h-0 overflow-hidden">
+      <div className="relative flex h-full min-h-0 gap-3 overflow-hidden bg-muted/40 p-3">
         {sidebarCollapsed ? (
-          <div className="flex w-12 shrink-0 flex-col items-center gap-2 border-r bg-muted/20 py-3">
+          <div className="flex w-12 shrink-0 flex-col items-center gap-2 rounded-2xl border bg-card py-3 shadow-sm">
             <Button
               variant="ghost"
               size="icon"
@@ -62,8 +62,8 @@ function AiPage() {
             </Button>
           </div>
         ) : (
-          <aside className="hidden h-full w-72 shrink-0 flex-col border-r bg-muted/20 md:flex">
-            <div className="flex h-12 shrink-0 items-center justify-between border-b px-3">
+          <aside className="hidden h-full w-72 shrink-0 flex-col overflow-hidden rounded-2xl border bg-card shadow-sm md:flex">
+            <div className="flex h-12 shrink-0 items-center justify-between px-3">
               <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 {t('conversations')}
               </span>
@@ -97,9 +97,8 @@ function AiPage() {
           </aside>
         )}
 
-        <section className="flex h-full min-h-0 min-w-0 flex-1 flex-col">
+        <section className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border bg-card shadow-sm">
           <ChatThreadView
-            key={activeThreadId ?? 'new'}
             threadId={activeThreadId}
             onThreadCreated={(id) => setActiveThreadId(id)}
           />

@@ -4,9 +4,8 @@ import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport, type UIMessage } from 'ai'
 import { useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { SquareIcon } from 'lucide-react'
+import { SquareIcon, Loader2 } from 'lucide-react'
 import { Button } from '@/shared/components/ui/button'
-import { ScrollArea } from '@/shared/components/ui/scroll-area'
 import { useAuthStore } from '@/shared/stores/auth.store'
 import { ChatInput } from './ChatInput'
 import { Markdown } from './Markdown'
@@ -40,15 +39,44 @@ export function ChatThreadView({
   threadId: string | undefined
   onThreadCreated: (id: string) => void
 }) {
+  const { data: thread, isLoading } = useQuery(aiQueries.thread(threadId))
+
+  // Gate the chat session mount on data availability so useChat receives the
+  // correct initialMessages on its FIRST render. Without this gate, useChat
+  // would mount with empty messages while the query was still loading and
+  // never pick up the data afterwards.
+  if (threadId && (isLoading || !thread)) {
+    return (
+      <div className="flex flex-1 items-center justify-center text-muted-foreground">
+        <Loader2 className="size-5 animate-spin" />
+      </div>
+    )
+  }
+
+  const initialMessages = thread ? persistedToUIMessages(thread.messages) : undefined
+
+  return (
+    <ChatSession
+      key={threadId ?? 'new'}
+      threadId={threadId}
+      initialMessages={initialMessages}
+      onThreadCreated={onThreadCreated}
+    />
+  )
+}
+
+function ChatSession({
+  threadId,
+  initialMessages,
+  onThreadCreated,
+}: {
+  threadId: string | undefined
+  initialMessages: UIMessage[] | undefined
+  onThreadCreated: (id: string) => void
+}) {
   const { t, i18n } = useTranslation('ai')
   const scrollRef = useRef<HTMLDivElement>(null)
   const { execute, busyToolCallId } = useExecuteTool()
-
-  const { data: thread, isLoading: threadLoading } = useQuery(aiQueries.thread(threadId))
-  const initialMessages = useMemo(
-    () => (thread ? persistedToUIMessages(thread.messages) : undefined),
-    [thread],
-  )
 
   const threadIdRef = useRef(threadId)
   useEffect(() => {
@@ -121,9 +149,9 @@ export function ChatThreadView({
 
   return (
     <>
-      <ScrollArea className="flex-1 px-4" ref={scrollRef}>
+      <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4">
         <div className="mx-auto w-full max-w-3xl space-y-4 py-4">
-          {!threadLoading && messages.length === 0 && (
+          {messages.length === 0 && (
             <div className="py-8 text-center">
               <p className="mb-4 text-sm text-muted-foreground">{t('emptyState')}</p>
               <div className="flex flex-wrap justify-center gap-2">
@@ -153,9 +181,9 @@ export function ChatThreadView({
 
           {isLoading && messages[messages.length - 1]?.role === 'user' && <TypingIndicator />}
         </div>
-      </ScrollArea>
+      </div>
 
-      <div className="border-t px-4 py-3">
+      <div className="shrink-0 px-4 py-3">
         <div className="mx-auto flex w-full max-w-3xl items-end gap-2">
           <div className="flex-1">
             <ChatInput onSend={(v) => sendMessage({ text: v })} disabled={isLoading} />
