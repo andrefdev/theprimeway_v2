@@ -1,8 +1,14 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Plus, History } from 'lucide-react'
+import { Plus, History, MoreVertical } from 'lucide-react'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/shared/components/ui/sheet'
 import { Button } from '@/shared/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/shared/components/ui/dropdown-menu'
 import { FenrirLauncher } from './FenrirLauncher'
 import { FenrirGlyph } from '@/shared/assets/FenrirGlyph'
 import { ChatHistoryList } from './ChatHistoryList'
@@ -42,35 +48,35 @@ export function ChatPanel() {
             </div>
             {t('title')}
           </SheetTitle>
-          <div className="flex gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setView(view === 'history' ? 'chat' : 'history')}
-              aria-label={t('history')}
-              title={t('history')}
-              className="h-8 w-8"
-            >
-              <History className="size-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleNewChat}
-              aria-label={t('newChat')}
-              title={t('newChat')}
-              className="h-8 w-8"
-            >
-              <Plus className="size-4" />
-            </Button>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={t('actions')}
+                title={t('actions')}
+                className="mr-7 h-8 w-8"
+              >
+                <MoreVertical className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleNewChat}>
+                <Plus className="mr-2 size-4" /> {t('newChat')}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setView(view === 'history' ? 'chat' : 'history')}
+              >
+                <History className="mr-2 size-4" /> {t('history')}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </SheetHeader>
 
         {view === 'history' ? (
           <ChatHistoryList activeThreadId={activeThreadId} onSelect={handleSelectThread} />
         ) : (
           <ChatThreadView
-            key={activeThreadId ?? 'new'}
             threadId={activeThreadId}
             onThreadCreated={setActiveThreadId}
           />

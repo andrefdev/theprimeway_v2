@@ -3,7 +3,13 @@ import { authMiddleware } from '../middleware/auth'
 import { subtasksService } from '../services/subtasks.service'
 
 export const subtasksRoutes = new OpenAPIHono()
-subtasksRoutes.use('*', authMiddleware)
+// NOTE: this sub-app is mounted at `/api` (not `/api/subtasks`) because it
+// owns two distinct path families (`/tasks/:taskId/subtasks` and `/subtasks/:id`).
+// Using `.use('*', ...)` here would attach auth to every `/api/*` request and
+// break unrelated sub-apps (e.g. `/api/referral/validate/:code` returned 401).
+// Scope the middleware to the actual paths instead.
+subtasksRoutes.use('/tasks/:taskId/subtasks', authMiddleware)
+subtasksRoutes.use('/subtasks/:id', authMiddleware)
 
 // GET /api/tasks/:taskId/subtasks
 subtasksRoutes.get('/tasks/:taskId/subtasks', async (c) => {

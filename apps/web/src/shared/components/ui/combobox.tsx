@@ -127,7 +127,7 @@ export function Combobox<TValue extends string = string>({
       >
         <Command>
           <CommandInput placeholder={searchPlaceholder} />
-          <CommandList>
+          <CommandList className="max-h-[300px] overflow-y-auto overscroll-contain [scrollbar-width:thin]! [&::-webkit-scrollbar]:!block [&::-webkit-scrollbar]:!w-1.5 [&::-webkit-scrollbar-thumb]:!rounded-full [&::-webkit-scrollbar-thumb]:!bg-border">
             <CommandEmpty>{emptyMessage}</CommandEmpty>
             <CommandGroup>
               {options.map((opt) => (
