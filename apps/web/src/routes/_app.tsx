@@ -1,5 +1,5 @@
 import { Suspense } from 'react'
-import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
+import { createFileRoute, Outlet, redirect, useRouterState } from '@tanstack/react-router'
 import { useAuthStore } from '@/shared/stores/auth.store'
 import { SidebarProvider, SidebarInset } from '@/shared/components/ui/sidebar'
 import { TooltipProvider } from '@/shared/components/ui/tooltip'
@@ -31,6 +31,8 @@ function AppLayout() {
   useSyncSocket()
   useUndoShortcut()
   const [captureOpen, closeCapture] = useCaptureShortcut()
+  const pathname = useRouterState({ select: (s) => s.location.pathname })
+  const onAiPage = pathname.startsWith('/ai')
   return (
     <TooltipProvider>
       <SidebarProvider className="h-dvh! min-h-0!">
@@ -46,7 +48,7 @@ function AppLayout() {
           </main>
           <MobileBottomNav />
         </SidebarInset>
-        <ChatPanel />
+        {!onAiPage && <ChatPanel />}
         <CaptureDialog open={captureOpen} onClose={closeCapture} />
         <FocusMode />
       </SidebarProvider>

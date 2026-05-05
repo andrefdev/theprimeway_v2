@@ -26,5 +26,14 @@
   "untitled": "Untitled conversation",
   "today": "Today",
   "yesterday": "Yesterday",
-  "daysAgo": "{{count}} days ago"
+  "daysAgo": "{{count}} days ago",
+  "conversations": "Conversations",
+  "lastWeek": "Last 7 days",
+  "older": "Older",
+  "collapseHistory": "Collapse history",
+  "expandHistory": "Expand history",
+  "details": "Details",
+  "hideDetails": "Hide details",
+  "toolFailed": "This action couldn't be completed",
+  "toolRejectedReason": "Cancelled by you"
 }

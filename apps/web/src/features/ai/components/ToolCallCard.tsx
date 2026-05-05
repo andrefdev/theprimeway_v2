@@ -1,7 +1,16 @@
 import { useState } from 'react'
-import { CheckIcon, XIcon } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import {
+  CheckIcon,
+  XIcon,
+  ChevronDown,
+  ChevronRight,
+  Loader2,
+  CircleCheck,
+  CircleX,
+  CircleAlert,
+} from 'lucide-react'
 import { Button } from '@/shared/components/ui/button'
-import { Badge } from '@/shared/components/ui/badge'
 import { Card } from '@/shared/components/ui/card'
 import { cn } from '@/shared/lib/utils'
 
@@ -17,11 +26,11 @@ interface ToolCallCardProps {
 
 const LABELS: Record<string, { title: string; verb: string }> = {
   // reads
-  listTasks: { title: 'List tasks', verb: '' },
-  listHabits: { title: 'List habits', verb: '' },
-  listGoals: { title: 'List goals', verb: '' },
-  listCalendarEvents: { title: 'List calendar events', verb: '' },
-  findFreeSlots: { title: 'Find free slots', verb: '' },
+  listTasks: { title: 'Looked up tasks', verb: '' },
+  listHabits: { title: 'Looked up habits', verb: '' },
+  listGoals: { title: 'Looked up goals', verb: '' },
+  listCalendarEvents: { title: 'Checked calendar', verb: '' },
+  findFreeSlots: { title: 'Searched free slots', verb: '' },
   // writes
   createTask: { title: 'Create task', verb: 'Create' },
   updateTask: { title: 'Update task', verb: 'Update' },
@@ -44,6 +53,18 @@ const READ_ONLY_TOOLS = new Set([
   'findFreeSlots',
 ])
 
+function extractErrorMessage(result: unknown): string | null {
+  if (!result || typeof result !== 'object') return null
+  const r = result as Record<string, unknown>
+  if (typeof r.error === 'string') return r.error
+  if (r.error && typeof r.error === 'object') {
+    const e = r.error as Record<string, unknown>
+    if (typeof e.message === 'string') return e.message
+  }
+  if (typeof r.message === 'string' && r.success === false) return r.message
+  return null
+}
+
 export function ToolCallCard({
   toolName,
   args,
@@ -53,18 +74,29 @@ export function ToolCallCard({
   onReject,
   isBusy,
 }: ToolCallCardProps) {
+  const { t } = useTranslation('ai')
   const [error, setError] = useState<string | null>(null)
   const label = LABELS[toolName] ?? { title: toolName, verb: 'Run' }
 
   const isClientTool = !READ_ONLY_TOOLS.has(toolName)
   const isResolved = state === 'result'
-  const resultStatus = isResolved
-    ? ((result as any)?.rejected
-        ? 'rejected'
-        : (result as any)?.error
-          ? 'error'
-          : 'success')
+  const isPending = state === 'call' || state === 'partial-call'
+  const needsConfirmation = isClientTool && isPending
+
+  const resultStatus: 'success' | 'rejected' | 'error' | null = isResolved
+    ? (result as any)?.rejected
+      ? 'rejected'
+      : (result as any)?.error || (result as any)?.success === false
+        ? 'error'
+        : 'success'
     : null
+
+  const errorReason = resultStatus === 'error' ? extractErrorMessage(result) : null
+
+  // Read-only resolved tools: collapse by default. Pending or error tools: expand by default.
+  const [expanded, setExpanded] = useState(needsConfirmation || resultStatus === 'error')
+  const hasArgs = Object.keys(args).length > 0
+  const isCollapsible = !needsConfirmation && hasArgs
 
   async function handleAccept() {
     setError(null)
@@ -78,49 +110,67 @@ export function ToolCallCard({
   return (
     <Card
       className={cn(
-        'rounded-xl px-4 py-3 text-sm',
-        resultStatus === 'success' && 'ring-emerald-500/30',
-        resultStatus === 'rejected' && 'ring-muted',
-        resultStatus === 'error' && 'ring-destructive/50',
+        'rounded-xl border bg-muted/30 px-3 py-2 text-sm shadow-none',
+        resultStatus === 'success' && 'border-emerald-500/30 bg-emerald-500/5',
+        resultStatus === 'rejected' && 'border-muted bg-muted/30',
+        resultStatus === 'error' && 'border-destructive/40 bg-destructive/5',
       )}
     >
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className="font-mono text-[10px]">
-            {toolName}
-          </Badge>
-          <span className="text-sm font-medium text-foreground">{label.title}</span>
-        </div>
-        {isResolved && (
+      <button
+        type="button"
+        onClick={() => isCollapsible && setExpanded((v) => !v)}
+        className={cn(
+          'flex w-full items-center gap-2 text-left',
+          isCollapsible && 'cursor-pointer',
+        )}
+        disabled={!isCollapsible}
+        aria-expanded={expanded}
+      >
+        <StatusIcon status={resultStatus} pending={isPending} />
+        <span className="flex-1 truncate text-xs font-medium text-foreground">
+          {label.title}
+        </span>
+        {resultStatus && (
           <span
             className={cn(
-              'text-xs font-medium',
-              resultStatus === 'success' && 'text-emerald-500',
+              'text-[10px] font-medium uppercase tracking-wide',
+              resultStatus === 'success' && 'text-emerald-600 dark:text-emerald-400',
               resultStatus === 'rejected' && 'text-muted-foreground',
               resultStatus === 'error' && 'text-destructive',
             )}
           >
             {resultStatus === 'success' && 'Applied'}
-            {resultStatus === 'rejected' && 'Rejected'}
+            {resultStatus === 'rejected' && 'Cancelled'}
             {resultStatus === 'error' && 'Failed'}
           </span>
         )}
-      </div>
+        {isCollapsible && (
+          <span className="text-muted-foreground">
+            {expanded ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}
+          </span>
+        )}
+      </button>
 
-      {Object.keys(args).length > 0 && (
-        <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+      {expanded && hasArgs && (
+        <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 border-t pt-2 text-[11px]">
           {Object.entries(args).map(([k, v]) => (
             <div key={k} className="contents">
               <dt className="text-muted-foreground">{k}</dt>
-              <dd className="text-foreground break-words">{formatValue(v)}</dd>
+              <dd className="break-words text-foreground/90">{formatValue(v)}</dd>
             </div>
           ))}
         </dl>
       )}
 
+      {resultStatus === 'error' && (
+        <p className="mt-2 text-xs text-destructive">
+          {errorReason ?? t('toolFailed')}
+        </p>
+      )}
+
       {error && <p className="mt-2 text-xs text-destructive">{error}</p>}
 
-      {isClientTool && !isResolved && (
+      {needsConfirmation && (
         <div className="mt-3 flex gap-2">
           <Button size="sm" onClick={handleAccept} disabled={isBusy}>
             <CheckIcon className="size-3.5" /> {label.verb}
@@ -132,6 +182,20 @@ export function ToolCallCard({
       )}
     </Card>
   )
+}
+
+function StatusIcon({
+  status,
+  pending,
+}: {
+  status: 'success' | 'rejected' | 'error' | null
+  pending: boolean
+}) {
+  if (pending) return <Loader2 className="size-3.5 shrink-0 animate-spin text-muted-foreground" />
+  if (status === 'success') return <CircleCheck className="size-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+  if (status === 'rejected') return <CircleX className="size-3.5 shrink-0 text-muted-foreground" />
+  if (status === 'error') return <CircleAlert className="size-3.5 shrink-0 text-destructive" />
+  return null
 }
 
 function formatValue(v: unknown): string {

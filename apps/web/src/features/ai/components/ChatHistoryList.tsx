@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import { MoreVertical, Pencil, Trash2, Trash } from 'lucide-react'
@@ -29,6 +29,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/shared/components/ui/dropdown-menu'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/ui/tooltip'
 import {
   aiQueries,
   useDeleteAllThreadsMutation,
@@ -37,6 +38,22 @@ import {
 } from '../queries'
 import type { ChatThreadSummary } from '../api'
 
+type Bucket = 'today' | 'yesterday' | 'lastWeek' | 'older'
+
+function bucketFor(iso: string | null): Bucket {
+  if (!iso) return 'older'
+  const d = new Date(iso)
+  const startOfDay = (date: Date) =>
+    new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime()
+  const diffDays = Math.round((startOfDay(new Date()) - startOfDay(d)) / 86_400_000)
+  if (diffDays <= 0) return 'today'
+  if (diffDays === 1) return 'yesterday'
+  if (diffDays < 7) return 'lastWeek'
+  return 'older'
+}
+
+const BUCKET_ORDER: Bucket[] = ['today', 'yesterday', 'lastWeek', 'older']
+
 export function ChatHistoryList({
   activeThreadId,
   onSelect,
@@ -44,24 +61,26 @@ export function ChatHistoryList({
   activeThreadId: string | undefined
   onSelect: (id: string) => void
 }) {
-  const { t, i18n } = useTranslation('ai')
+  const { t } = useTranslation('ai')
   const { data: threads, isLoading } = useQuery(aiQueries.threads())
   const renameM = useRenameThreadMutation()
   const deleteM = useDeleteThreadMutation()
   const deleteAllM = useDeleteAllThreadsMutation()
   const [renaming, setRenaming] = useState<{ id: string; title: string } | null>(null)
+  const [pendingDelete, setPendingDelete] = useState<ChatThreadSummary | null>(null)
 
-  function relativeDate(iso: string | null) {
-    if (!iso) return ''
-    const d = new Date(iso)
-    const startOfDay = (date: Date) =>
-      new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime()
-    const diffDays = Math.round((startOfDay(new Date()) - startOfDay(d)) / (24 * 60 * 60 * 1000))
-    if (diffDays <= 0) return t('today')
-    if (diffDays === 1) return t('yesterday')
-    if (diffDays < 7) return t('daysAgo', { count: diffDays })
-    return d.toLocaleDateString(i18n.language)
-  }
+  const grouped = useMemo(() => {
+    const groups: Record<Bucket, ChatThreadSummary[]> = {
+      today: [],
+      yesterday: [],
+      lastWeek: [],
+      older: [],
+    }
+    for (const th of threads ?? []) {
+      groups[bucketFor(th.lastMessageAt ?? th.createdAt)].push(th)
+    }
+    return groups
+  }, [threads])
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -75,24 +94,34 @@ export function ChatHistoryList({
               {t('historyEmpty')}
             </div>
           )}
-          <ul className="space-y-1">
-            {threads?.map((th) => (
-              <ThreadRow
-                key={th.id}
-                thread={th}
-                isActive={th.id === activeThreadId}
-                relativeDate={relativeDate(th.lastMessageAt ?? th.createdAt)}
-                onClick={() => onSelect(th.id)}
-                onRenameStart={() => setRenaming({ id: th.id, title: th.title ?? '' })}
-                onDelete={() => deleteM.mutate(th.id)}
-              />
-            ))}
-          </ul>
+          {BUCKET_ORDER.map((bucket) => {
+            const items = grouped[bucket]
+            if (items.length === 0) return null
+            return (
+              <div key={bucket} className="mb-3">
+                <h3 className="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  {t(bucket)}
+                </h3>
+                <ul className="space-y-0.5">
+                  {items.map((th) => (
+                    <ThreadRow
+                      key={th.id}
+                      thread={th}
+                      isActive={th.id === activeThreadId}
+                      onClick={() => onSelect(th.id)}
+                      onRenameStart={() => setRenaming({ id: th.id, title: th.title ?? '' })}
+                      onDeleteStart={() => setPendingDelete(th)}
+                    />
+                  ))}
+                </ul>
+              </div>
+            )
+          })}
         </div>
       </ScrollArea>
 
       {threads && threads.length > 0 && (
-        <div className="border-t px-3 py-2">
+        <div className="px-3 py-2">
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button
@@ -127,6 +156,29 @@ export function ChatHistoryList({
           setRenaming(null)
         }}
       />
+
+      <AlertDialog
+        open={!!pendingDelete}
+        onOpenChange={(o) => !o && setPendingDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{pendingDelete?.title ?? t('untitled')}</AlertDialogTitle>
+            <AlertDialogDescription>{t('deleteConfirm')}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('back')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (pendingDelete) deleteM.mutate(pendingDelete.id)
+                setPendingDelete(null)
+              }}
+            >
+              {t('delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
@@ -134,51 +186,54 @@ export function ChatHistoryList({
 function ThreadRow({
   thread,
   isActive,
-  relativeDate,
   onClick,
   onRenameStart,
-  onDelete,
+  onDeleteStart,
 }: {
   thread: ChatThreadSummary
   isActive: boolean
-  relativeDate: string
   onClick: () => void
   onRenameStart: () => void
-  onDelete: () => void
+  onDeleteStart: () => void
 }) {
   const { t } = useTranslation('ai')
+  const title = thread.title ?? t('untitled')
   return (
     <li
-      className={`group relative flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-muted ${
+      className={`group relative flex items-center gap-1 rounded-lg px-2 py-1.5 hover:bg-muted ${
         isActive ? 'bg-muted' : ''
       }`}
     >
-      <button
-        type="button"
-        onClick={onClick}
-        className="flex flex-1 flex-col items-start text-left"
-      >
-        <span className="line-clamp-1 text-sm font-medium">
-          {thread.title ?? t('untitled')}
-        </span>
-        <span className="text-xs text-muted-foreground">{relativeDate}</span>
-      </button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            onClick={onClick}
+            className="flex flex-1 items-center text-left"
+          >
+            <span className="line-clamp-1 text-sm">{title}</span>
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="right" sideOffset={8} className="max-w-[280px] break-words">
+          {title}
+        </TooltipContent>
+      </Tooltip>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100"
+            className="h-6 w-6 opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100"
             aria-label={t('actions', { defaultValue: 'Actions' })}
           >
-            <MoreVertical className="size-4" />
+            <MoreVertical className="size-3.5" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={onRenameStart}>
             <Pencil className="mr-2 size-3.5" /> {t('rename')}
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={onDelete} className="text-destructive">
+          <DropdownMenuItem onClick={onDeleteStart} className="text-destructive">
             <Trash2 className="mr-2 size-3.5" /> {t('delete')}
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -231,4 +286,3 @@ function RenameDialog({
     </Dialog>
   )
 }
-

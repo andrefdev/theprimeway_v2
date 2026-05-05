@@ -26,5 +26,14 @@
   "untitled": "Conversación sin título",
   "today": "Hoy",
   "yesterday": "Ayer",
-  "daysAgo": "Hace {{count}} días"
+  "daysAgo": "Hace {{count}} días",
+  "conversations": "Conversaciones",
+  "lastWeek": "Últimos 7 días",
+  "older": "Anteriores",
+  "collapseHistory": "Ocultar historial",
+  "expandHistory": "Mostrar historial",
+  "details": "Ver detalles",
+  "hideDetails": "Ocultar detalles",
+  "toolFailed": "No se pudo completar esta acción",
+  "toolRejectedReason": "Cancelado por ti"
 }
