@@ -23,7 +23,6 @@ import { Route as AppPomodoroRouteImport } from './routes/_app/pomodoro'
 import { Route as AppOnboardingRouteImport } from './routes/_app/onboarding'
 import { Route as AppNotificationsRouteImport } from './routes/_app/notifications'
 import { Route as AppDashboardRouteImport } from './routes/_app/dashboard'
-import { Route as AppBrainRouteImport } from './routes/_app/brain'
 import { Route as AppApiDocsRouteImport } from './routes/_app/api-docs'
 import { Route as AppAmbassadorRouteImport } from './routes/_app/ambassador'
 import { Route as AppAiRouteImport } from './routes/_app/ai'
@@ -33,6 +32,7 @@ import { Route as AppRitualsIndexRouteImport } from './routes/_app/rituals/index
 import { Route as AppHabitsIndexRouteImport } from './routes/_app/habits/index'
 import { Route as AppGoalsIndexRouteImport } from './routes/_app/goals/index'
 import { Route as AppCalendarIndexRouteImport } from './routes/_app/calendar/index'
+import { Route as AppBrainIndexRouteImport } from './routes/_app/brain/index'
 import { Route as AppTasksWeeklyRouteImport } from './routes/_app/tasks/weekly'
 import { Route as AppTasksTodayRouteImport } from './routes/_app/tasks/today'
 import { Route as AppTasksStatsRouteImport } from './routes/_app/tasks/stats'
@@ -46,6 +46,7 @@ import { Route as AppGoalsWeeklyRouteImport } from './routes/_app/goals/weekly'
 import { Route as AppGoalsTreeRouteImport } from './routes/_app/goals/tree'
 import { Route as AppGoalsMineRouteImport } from './routes/_app/goals/mine'
 import { Route as AppGoalsMetricsRouteImport } from './routes/_app/goals/metrics'
+import { Route as AppBrainGraphRouteImport } from './routes/_app/brain/graph'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/_auth',
@@ -115,11 +116,6 @@ const AppDashboardRoute = AppDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AppRoute,
 } as any)
-const AppBrainRoute = AppBrainRouteImport.update({
-  id: '/brain',
-  path: '/brain',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppApiDocsRoute = AppApiDocsRouteImport.update({
   id: '/api-docs',
   path: '/api-docs',
@@ -163,6 +159,11 @@ const AppGoalsIndexRoute = AppGoalsIndexRouteImport.update({
 const AppCalendarIndexRoute = AppCalendarIndexRouteImport.update({
   id: '/calendar/',
   path: '/calendar/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppBrainIndexRoute = AppBrainIndexRouteImport.update({
+  id: '/brain/',
+  path: '/brain/',
   getParentRoute: () => AppRoute,
 } as any)
 const AppTasksWeeklyRoute = AppTasksWeeklyRouteImport.update({
@@ -230,6 +231,11 @@ const AppGoalsMetricsRoute = AppGoalsMetricsRouteImport.update({
   path: '/goals/metrics',
   getParentRoute: () => AppRoute,
 } as any)
+const AppBrainGraphRoute = AppBrainGraphRouteImport.update({
+  id: '/brain/graph',
+  path: '/brain/graph',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -237,7 +243,6 @@ export interface FileRoutesByFullPath {
   '/ai': typeof AppAiRoute
   '/ambassador': typeof AppAmbassadorRoute
   '/api-docs': typeof AppApiDocsRoute
-  '/brain': typeof AppBrainRoute
   '/dashboard': typeof AppDashboardRoute
   '/notifications': typeof AppNotificationsRoute
   '/onboarding': typeof AppOnboardingRoute
@@ -249,6 +254,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof AuthLoginRoute
   '/register': typeof AuthRegisterRoute
   '/reset-password': typeof AuthResetPasswordRoute
+  '/brain/graph': typeof AppBrainGraphRoute
   '/goals/metrics': typeof AppGoalsMetricsRoute
   '/goals/mine': typeof AppGoalsMineRoute
   '/goals/tree': typeof AppGoalsTreeRoute
@@ -262,6 +268,7 @@ export interface FileRoutesByFullPath {
   '/tasks/stats': typeof AppTasksStatsRoute
   '/tasks/today': typeof AppTasksTodayRoute
   '/tasks/weekly': typeof AppTasksWeeklyRoute
+  '/brain/': typeof AppBrainIndexRoute
   '/calendar/': typeof AppCalendarIndexRoute
   '/goals/': typeof AppGoalsIndexRoute
   '/habits/': typeof AppHabitsIndexRoute
@@ -274,7 +281,6 @@ export interface FileRoutesByTo {
   '/ai': typeof AppAiRoute
   '/ambassador': typeof AppAmbassadorRoute
   '/api-docs': typeof AppApiDocsRoute
-  '/brain': typeof AppBrainRoute
   '/dashboard': typeof AppDashboardRoute
   '/notifications': typeof AppNotificationsRoute
   '/onboarding': typeof AppOnboardingRoute
@@ -286,6 +292,7 @@ export interface FileRoutesByTo {
   '/login': typeof AuthLoginRoute
   '/register': typeof AuthRegisterRoute
   '/reset-password': typeof AuthResetPasswordRoute
+  '/brain/graph': typeof AppBrainGraphRoute
   '/goals/metrics': typeof AppGoalsMetricsRoute
   '/goals/mine': typeof AppGoalsMineRoute
   '/goals/tree': typeof AppGoalsTreeRoute
@@ -299,6 +306,7 @@ export interface FileRoutesByTo {
   '/tasks/stats': typeof AppTasksStatsRoute
   '/tasks/today': typeof AppTasksTodayRoute
   '/tasks/weekly': typeof AppTasksWeeklyRoute
+  '/brain': typeof AppBrainIndexRoute
   '/calendar': typeof AppCalendarIndexRoute
   '/goals': typeof AppGoalsIndexRoute
   '/habits': typeof AppHabitsIndexRoute
@@ -314,7 +322,6 @@ export interface FileRoutesById {
   '/_app/ai': typeof AppAiRoute
   '/_app/ambassador': typeof AppAmbassadorRoute
   '/_app/api-docs': typeof AppApiDocsRoute
-  '/_app/brain': typeof AppBrainRoute
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/notifications': typeof AppNotificationsRoute
   '/_app/onboarding': typeof AppOnboardingRoute
@@ -326,6 +333,7 @@ export interface FileRoutesById {
   '/_auth/login': typeof AuthLoginRoute
   '/_auth/register': typeof AuthRegisterRoute
   '/_auth/reset-password': typeof AuthResetPasswordRoute
+  '/_app/brain/graph': typeof AppBrainGraphRoute
   '/_app/goals/metrics': typeof AppGoalsMetricsRoute
   '/_app/goals/mine': typeof AppGoalsMineRoute
   '/_app/goals/tree': typeof AppGoalsTreeRoute
@@ -339,6 +347,7 @@ export interface FileRoutesById {
   '/_app/tasks/stats': typeof AppTasksStatsRoute
   '/_app/tasks/today': typeof AppTasksTodayRoute
   '/_app/tasks/weekly': typeof AppTasksWeeklyRoute
+  '/_app/brain/': typeof AppBrainIndexRoute
   '/_app/calendar/': typeof AppCalendarIndexRoute
   '/_app/goals/': typeof AppGoalsIndexRoute
   '/_app/habits/': typeof AppHabitsIndexRoute
@@ -353,7 +362,6 @@ export interface FileRouteTypes {
     | '/ai'
     | '/ambassador'
     | '/api-docs'
-    | '/brain'
     | '/dashboard'
     | '/notifications'
     | '/onboarding'
@@ -365,6 +373,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/reset-password'
+    | '/brain/graph'
     | '/goals/metrics'
     | '/goals/mine'
     | '/goals/tree'
@@ -378,6 +387,7 @@ export interface FileRouteTypes {
     | '/tasks/stats'
     | '/tasks/today'
     | '/tasks/weekly'
+    | '/brain/'
     | '/calendar/'
     | '/goals/'
     | '/habits/'
@@ -390,7 +400,6 @@ export interface FileRouteTypes {
     | '/ai'
     | '/ambassador'
     | '/api-docs'
-    | '/brain'
     | '/dashboard'
     | '/notifications'
     | '/onboarding'
@@ -402,6 +411,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/reset-password'
+    | '/brain/graph'
     | '/goals/metrics'
     | '/goals/mine'
     | '/goals/tree'
@@ -415,6 +425,7 @@ export interface FileRouteTypes {
     | '/tasks/stats'
     | '/tasks/today'
     | '/tasks/weekly'
+    | '/brain'
     | '/calendar'
     | '/goals'
     | '/habits'
@@ -429,7 +440,6 @@ export interface FileRouteTypes {
     | '/_app/ai'
     | '/_app/ambassador'
     | '/_app/api-docs'
-    | '/_app/brain'
     | '/_app/dashboard'
     | '/_app/notifications'
     | '/_app/onboarding'
@@ -441,6 +451,7 @@ export interface FileRouteTypes {
     | '/_auth/login'
     | '/_auth/register'
     | '/_auth/reset-password'
+    | '/_app/brain/graph'
     | '/_app/goals/metrics'
     | '/_app/goals/mine'
     | '/_app/goals/tree'
@@ -454,6 +465,7 @@ export interface FileRouteTypes {
     | '/_app/tasks/stats'
     | '/_app/tasks/today'
     | '/_app/tasks/weekly'
+    | '/_app/brain/'
     | '/_app/calendar/'
     | '/_app/goals/'
     | '/_app/habits/'
@@ -567,13 +579,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/brain': {
-      id: '/_app/brain'
-      path: '/brain'
-      fullPath: '/brain'
-      preLoaderRoute: typeof AppBrainRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/api-docs': {
       id: '/_app/api-docs'
       path: '/api-docs'
@@ -635,6 +640,13 @@ declare module '@tanstack/react-router' {
       path: '/calendar'
       fullPath: '/calendar/'
       preLoaderRoute: typeof AppCalendarIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/brain/': {
+      id: '/_app/brain/'
+      path: '/brain'
+      fullPath: '/brain/'
+      preLoaderRoute: typeof AppBrainIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/tasks/weekly': {
@@ -728,6 +740,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppGoalsMetricsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/brain/graph': {
+      id: '/_app/brain/graph'
+      path: '/brain/graph'
+      fullPath: '/brain/graph'
+      preLoaderRoute: typeof AppBrainGraphRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
@@ -736,7 +755,6 @@ interface AppRouteChildren {
   AppAiRoute: typeof AppAiRoute
   AppAmbassadorRoute: typeof AppAmbassadorRoute
   AppApiDocsRoute: typeof AppApiDocsRoute
-  AppBrainRoute: typeof AppBrainRoute
   AppDashboardRoute: typeof AppDashboardRoute
   AppNotificationsRoute: typeof AppNotificationsRoute
   AppOnboardingRoute: typeof AppOnboardingRoute
@@ -744,6 +762,7 @@ interface AppRouteChildren {
   AppProfileRoute: typeof AppProfileRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppSubscriptionRoute: typeof AppSubscriptionRoute
+  AppBrainGraphRoute: typeof AppBrainGraphRoute
   AppGoalsMetricsRoute: typeof AppGoalsMetricsRoute
   AppGoalsMineRoute: typeof AppGoalsMineRoute
   AppGoalsTreeRoute: typeof AppGoalsTreeRoute
@@ -757,6 +776,7 @@ interface AppRouteChildren {
   AppTasksStatsRoute: typeof AppTasksStatsRoute
   AppTasksTodayRoute: typeof AppTasksTodayRoute
   AppTasksWeeklyRoute: typeof AppTasksWeeklyRoute
+  AppBrainIndexRoute: typeof AppBrainIndexRoute
   AppCalendarIndexRoute: typeof AppCalendarIndexRoute
   AppGoalsIndexRoute: typeof AppGoalsIndexRoute
   AppHabitsIndexRoute: typeof AppHabitsIndexRoute
@@ -769,7 +789,6 @@ const AppRouteChildren: AppRouteChildren = {
   AppAiRoute: AppAiRoute,
   AppAmbassadorRoute: AppAmbassadorRoute,
   AppApiDocsRoute: AppApiDocsRoute,
-  AppBrainRoute: AppBrainRoute,
   AppDashboardRoute: AppDashboardRoute,
   AppNotificationsRoute: AppNotificationsRoute,
   AppOnboardingRoute: AppOnboardingRoute,
@@ -777,6 +796,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppProfileRoute: AppProfileRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppSubscriptionRoute: AppSubscriptionRoute,
+  AppBrainGraphRoute: AppBrainGraphRoute,
   AppGoalsMetricsRoute: AppGoalsMetricsRoute,
   AppGoalsMineRoute: AppGoalsMineRoute,
   AppGoalsTreeRoute: AppGoalsTreeRoute,
@@ -790,6 +810,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppTasksStatsRoute: AppTasksStatsRoute,
   AppTasksTodayRoute: AppTasksTodayRoute,
   AppTasksWeeklyRoute: AppTasksWeeklyRoute,
+  AppBrainIndexRoute: AppBrainIndexRoute,
   AppCalendarIndexRoute: AppCalendarIndexRoute,
   AppGoalsIndexRoute: AppGoalsIndexRoute,
   AppHabitsIndexRoute: AppHabitsIndexRoute,

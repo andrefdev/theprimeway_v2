@@ -472,6 +472,11 @@ model Notification {
   readAt      DateTime? @map("read_at")
   dismissedAt DateTime? @map("dismissed_at")
 
+  // Push throttle: set when a push for this notification was sent. The inbox
+  // sync uses it to throttle to one push per entityId per local day, so a
+  // user that polls the inbox every minute does not get spammed.
+  lastPushSentAt DateTime? @map("last_push_sent_at")
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 

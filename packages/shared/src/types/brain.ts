@@ -55,6 +55,8 @@ export interface BrainConceptNode {
   /** ISO timestamp — drives recency-decay visuals in the 3D view. */
   lastMentionedAt: string
   clusterId: string | null
+  /** Highest-salience verbatim quote across all occurrences. Powers the dual-coding hover card. */
+  firstQuote: string | null
 }
 
 export interface BrainConceptEdgeDto {

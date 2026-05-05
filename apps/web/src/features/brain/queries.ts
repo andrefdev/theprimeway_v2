@@ -9,6 +9,7 @@ export const brainKeys = {
   feeds: () => ['brain', 'feed'] as const,
   feed: (params: { status?: string; search?: string } = {}) => [...brainKeys.feeds(), params] as const,
   entry: (id: string) => ['brain', 'entry', id] as const,
+  graph: () => ['brain', 'graph'] as const,
 }
 
 function tempBrainId() {
@@ -25,6 +26,15 @@ export function useBrainFeed(params: { status?: string; search?: string } = {}) 
       const data = q.state.data as BrainEntry[] | undefined
       return data?.some((e) => ACTIVE_STATUSES.has(e.status)) ? 3000 : false
     },
+  })
+}
+
+export function useBrainGraph(opts: { enabled?: boolean } = {}) {
+  return useQuery({
+    queryKey: brainKeys.graph(),
+    queryFn: () => brainApi.getGraph(),
+    staleTime: 5 * 60_000,
+    enabled: opts.enabled ?? true,
   })
 }
 

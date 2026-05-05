@@ -124,6 +124,7 @@ function toConceptDto(c: {
   centralityScore: number
   lastMentionedAt: Date
   clusterId: string | null
+  firstQuote?: string | null
 }): BrainConceptNode {
   return {
     id: c.id,
@@ -133,6 +134,7 @@ function toConceptDto(c: {
     centralityScore: c.centralityScore,
     lastMentionedAt: c.lastMentionedAt.toISOString(),
     clusterId: c.clusterId,
+    firstQuote: c.firstQuote ?? null,
   }
 }
 

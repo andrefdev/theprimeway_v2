@@ -254,6 +254,7 @@ class BrainGraphRepository {
       centralityScore: number
       lastMentionedAt: Date
       clusterId: string | null
+      firstQuote: string | null
     }>
     edges: Array<{
       id: string
@@ -289,6 +290,24 @@ class BrainGraphRepository {
       },
     })
 
+    // Highest-salience quote per concept for dual-coding hover. One raw query
+    // with DISTINCT ON keeps this cheap regardless of concept count — Prisma
+    // doesn't expose DISTINCT ON, so we drop into $queryRaw.
+    const quoteRows = concepts.length
+      ? await prisma.$queryRaw<Array<{ concept_id: string; quote: string | null }>>`
+          SELECT DISTINCT ON (concept_id) concept_id, quote
+          FROM brain_concept_occurrences
+          WHERE concept_id = ANY(${concepts.map((c) => c.id)}::text[])
+            AND quote IS NOT NULL
+          ORDER BY concept_id, salience DESC, created_at DESC
+        `
+      : []
+    const quoteByConcept = new Map(quoteRows.map((r) => [r.concept_id, r.quote]))
+    const conceptsWithQuote = concepts.map((c) => ({
+      ...c,
+      firstQuote: quoteByConcept.get(c.id) ?? null,
+    }))
+
     const edges = await prisma.brainConceptEdge.findMany({
       where: {
         userId,
@@ -319,7 +338,7 @@ class BrainGraphRepository {
       },
     })
 
-    return { concepts, edges, clusters }
+    return { concepts: conceptsWithQuote, edges, clusters }
   }
 
   /**

@@ -9,11 +9,12 @@ import { useBrainFeed } from '@/features/brain/queries'
 import { BrainCaptureCard } from '@/features/brain/components/BrainCaptureCard'
 import { BrainEntryCard } from '@/features/brain/components/BrainEntryCard'
 import { BrainEntryDetail } from '@/features/brain/components/BrainEntryDetail'
+import { BrainViewToggle } from '@/features/brain/graph/BrainViewToggle'
 import { FeatureGate } from '@/features/feature-flags/FeatureGate'
 import { UpgradePrompt } from '@/features/subscriptions/components/UpgradePrompt'
 import { FEATURES } from '@repo/shared/constants'
 
-export const Route = createFileRoute('/_app/brain')({
+export const Route = createFileRoute('/_app/brain/')({
   component: BrainPage,
 })
 
@@ -38,6 +39,7 @@ function BrainPageContent() {
     <div>
       <SectionHeader sectionId="brain" title={t('title')} />
       <div className="mx-auto max-w-6xl px-6 pb-10 space-y-4">
+        <BrainViewToggle />
         <BrainCaptureCard />
 
         <div className="grid gap-4 md:grid-cols-[minmax(280px,360px)_1fr]">

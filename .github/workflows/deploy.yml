@@ -293,6 +293,7 @@ jobs:
           AUTH_APPLE_SECRET: ${{ secrets.AUTH_APPLE_SECRET }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           SMTP_HOST: ${{ secrets.SMTP_HOST }}
           SMTP_PORT: ${{ secrets.SMTP_PORT }}
           SMTP_USER: ${{ secrets.SMTP_USER }}
@@ -329,6 +330,7 @@ jobs:
           printf "AUTH_APPLE_SECRET='%s'\n" "$AUTH_APPLE_SECRET" >> .env
           printf "ANTHROPIC_API_KEY='%s'\n" "$ANTHROPIC_API_KEY" >> .env
           printf "DEEPSEEK_API_KEY='%s'\n" "$DEEPSEEK_API_KEY" >> .env
+          printf "OPENAI_API_KEY='%s'\n" "$OPENAI_API_KEY" >> .env
           printf "SMTP_HOST='%s'\n" "$SMTP_HOST" >> .env
           printf "SMTP_PORT='%s'\n" "$SMTP_PORT" >> .env
           printf "SMTP_USER='%s'\n" "$SMTP_USER" >> .env

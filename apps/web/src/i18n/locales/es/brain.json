@@ -54,5 +54,19 @@
     "goal": "Meta",
     "habit": "Hábito",
     "note": "Nota"
+  },
+  "graph": {
+    "tabLabel": "Cerebro",
+    "listTabLabel": "Lista",
+    "loading": "Construyendo tu grafo de conceptos…",
+    "error": "No se pudo cargar el grafo. Intenta refrescar.",
+    "empty": {
+      "title": "Aún no hay conceptos",
+      "description": "Captura unas cuantas ideas y los conceptos que la IA extraiga aparecerán aquí como un grafo 3D."
+    },
+    "hover": {
+      "mentions_one": "{{count}} mención",
+      "mentions_other": "{{count}} menciones"
+    }
   }
 }

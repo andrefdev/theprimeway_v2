@@ -3,6 +3,7 @@ import { gamificationService } from './gamification.service'
 import { calendarService } from './calendar.service'
 import { sendExpoPush, isPushEnabled as isExpoEnabled, isValidExpoPushToken } from '../lib/expo-push'
 import { sendFcm, isFcmEnabled } from '../lib/firebase'
+import { startOfLocalDayUtc } from '@repo/shared/utils'
 
 function isPushEnabled() {
   return isExpoEnabled() || isFcmEnabled()
@@ -286,7 +287,11 @@ class NotificationsService {
     }
 
     const keepEntityIds = upserts.map((u) => u.entityId)
+    const userTz = await notificationsRepo.findUserTimezone(userId)
+    const now = new Date()
+    const localDayStart = startOfLocalDayUtc(now, userTz)
     const pushTargets: Array<{
+      notificationId: string
       title: string
       message: string
       href: string | null
@@ -296,16 +301,22 @@ class NotificationsService {
 
     for (const u of upserts) {
       const result = await notificationsRepo.upsertNotification({ userId, ...u })
-      // Push only when row is new, or was previously dismissed and has reappeared.
-      if (result.isNew || result.wasDismissed) {
-        pushTargets.push({
-          title: u.title,
-          message: u.message,
-          href: u.href ?? null,
-          urgency: u.urgency ?? null,
-          type: u.type,
-        })
-      }
+      // Throttle to one push per (userId, entityId) per local day. The cron
+      // path uses lastHabitReminderAt for the same reason; this guards the
+      // inbox-sync path against a polling client (web bell every 60s) that
+      // would otherwise re-push every cycle for a still-pending habit.
+      const alreadyPushedToday =
+        result.lastPushSentAt !== null && result.lastPushSentAt >= localDayStart
+      if (alreadyPushedToday) continue
+
+      pushTargets.push({
+        notificationId: result.notification.id,
+        title: u.title,
+        message: u.message,
+        href: u.href ?? null,
+        urgency: u.urgency ?? null,
+        type: u.type,
+      })
     }
 
     // Auto-dismiss stale derived notifications (source entity no longer applies).
@@ -316,7 +327,14 @@ class NotificationsService {
 
     // Fire-and-forget push for fresh notifications.
     if (pushTargets.length > 0 && isPushEnabled()) {
-      // Fan out sequentially but without awaiting the outer caller.
+      // Mark pushed synchronously *before* the async send so a re-entrant sync
+      // (e.g. two inbox polls landing in the same second) cannot both pass the
+      // throttle and double-push.
+      await Promise.all(
+        pushTargets.map((p) =>
+          notificationsRepo.markNotificationPushed(p.notificationId, now),
+        ),
+      )
       void Promise.all(
         pushTargets.map((p) =>
           this.sendPushToUser(userId, {

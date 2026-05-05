@@ -75,6 +75,14 @@ class NotificationsRepository {
     return tasks.map((t) => ({ id: t.id, name: t.title, logs: t.habitLogs }))
   }
 
+  async findUserTimezone(userId: string): Promise<string> {
+    const settings = await prisma.userSettings.findUnique({
+      where: { userId },
+      select: { timezone: true },
+    })
+    return settings?.timezone || 'UTC'
+  }
+
   async findActiveDevices(whereClause: Record<string, unknown>) {
     return prisma.userDevice.findMany({
       where: whereClause,
@@ -103,7 +111,7 @@ class NotificationsRepository {
           entityId: entityKey,
         },
       },
-      select: { id: true, dismissedAt: true },
+      select: { id: true, dismissedAt: true, lastPushSentAt: true },
     })
     const wasDismissed = !!existing?.dismissedAt
     const notification = await prisma.notification.upsert({
@@ -132,7 +140,19 @@ class NotificationsRepository {
         data: (data.data as import('@prisma/client').Prisma.InputJsonValue) ?? undefined,
       },
     })
-    return { notification, isNew: !existing, wasDismissed }
+    return {
+      notification,
+      isNew: !existing,
+      wasDismissed,
+      lastPushSentAt: existing?.lastPushSentAt ?? null,
+    }
+  }
+
+  async markNotificationPushed(notificationId: string, when: Date) {
+    return prisma.notification.update({
+      where: { id: notificationId },
+      data: { lastPushSentAt: when },
+    })
   }
 
   async findActiveDeviceTokensForUser(userId: string) {

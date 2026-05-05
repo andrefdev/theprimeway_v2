@@ -54,5 +54,19 @@
     "goal": "Goal",
     "habit": "Habit",
     "note": "Note"
+  },
+  "graph": {
+    "tabLabel": "Brain",
+    "listTabLabel": "List",
+    "loading": "Building your concept graph…",
+    "error": "Couldn't load the graph. Try refreshing.",
+    "empty": {
+      "title": "No concepts yet",
+      "description": "Capture a few thoughts and your AI-extracted concepts will appear here as a 3D graph."
+    },
+    "hover": {
+      "mentions_one": "{{count}} mention",
+      "mentions_other": "{{count}} mentions"
+    }
   }
 }

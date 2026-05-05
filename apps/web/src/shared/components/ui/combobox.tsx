@@ -86,6 +86,19 @@ export function Combobox<TValue extends string = string>({
 }: ComboboxProps<TValue>) {
   const [open, setOpen] = React.useState(false)
   const selected = options.find((o) => o.value === value)
+  const listRef = React.useRef<HTMLDivElement | null>(null)
+
+  // Radix Dialog uses react-remove-scroll which blocks wheel events outside the
+  // dialog content. Our Popover renders in a separate portal, so wheel scroll
+  // is swallowed. Manually translate wheel deltas into scrollTop on the list.
+  const handleWheel = React.useCallback((e: React.WheelEvent<HTMLDivElement>) => {
+    const el = listRef.current
+    if (!el) return
+    const canScroll = el.scrollHeight > el.clientHeight
+    if (!canScroll) return
+    e.stopPropagation()
+    el.scrollTop += e.deltaY
+  }, [])
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -127,7 +140,11 @@ export function Combobox<TValue extends string = string>({
       >
         <Command>
           <CommandInput placeholder={searchPlaceholder} />
-          <CommandList className="max-h-[300px] overflow-y-auto overscroll-contain [scrollbar-width:thin]! [&::-webkit-scrollbar]:!block [&::-webkit-scrollbar]:!w-1.5 [&::-webkit-scrollbar-thumb]:!rounded-full [&::-webkit-scrollbar-thumb]:!bg-border">
+          <CommandList
+            ref={listRef}
+            onWheel={handleWheel}
+            className="max-h-[300px] overflow-y-auto overscroll-contain [scrollbar-width:thin]! [&::-webkit-scrollbar]:!block [&::-webkit-scrollbar]:!w-1.5 [&::-webkit-scrollbar-thumb]:!rounded-full [&::-webkit-scrollbar-thumb]:!bg-border"
+          >
             <CommandEmpty>{emptyMessage}</CommandEmpty>
             <CommandGroup>
               {options.map((opt) => (

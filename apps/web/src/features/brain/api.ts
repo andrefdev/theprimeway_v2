@@ -1,5 +1,5 @@
 import { api } from '@/shared/lib/api-client'
-import type { BrainEntry } from '@repo/shared/types'
+import type { BrainEntry, BrainGraphResponse } from '@repo/shared/types'
 
 export interface BrainCreateResponse {
   data: BrainEntry
@@ -26,4 +26,6 @@ export const brainApi = {
     api
       .post<{ data: { task: { id: string; title: string } } }>(`/brain/entries/${entryId}/action-items/${index}/apply`)
       .then((r) => r.data.data),
+
+  getGraph: () => api.get<{ data: BrainGraphResponse }>('/brain/graph').then((r) => r.data.data),
 }
