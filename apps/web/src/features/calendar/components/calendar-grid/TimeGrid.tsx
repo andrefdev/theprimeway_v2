@@ -308,10 +308,10 @@ export function TimeGrid({
                     }}
                     className="absolute rounded-md border-l-[3px] px-1.5 py-0.5 overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
                     style={{
-                      top,
-                      height,
-                      left: `calc(${leftPct}% + 2px)`,
-                      width: `calc(${widthPct}% - 4px)`,
+                      top: top + 1,
+                      height: height - 2,
+                      left: `calc(${leftPct}% + 3px)`,
+                      width: `calc(${widthPct}% - 6px)`,
                       backgroundColor: withAlpha(hex),
                       borderLeftColor: hex,
                     }}
@@ -323,7 +323,7 @@ export function TimeGrid({
                       )}
                       <span
                         className={cn(
-                          'text-[11px] font-medium leading-tight line-clamp-2',
+                          'text-[11px] font-medium leading-tight truncate',
                           item.status === 'completed'
                             ? 'line-through text-muted-foreground'
                             : 'text-foreground',
@@ -332,7 +332,7 @@ export function TimeGrid({
                         {item.title}
                       </span>
                     </div>
-                    {height >= 36 && (
+                    {height >= HOUR_HEIGHT && (
                       <span className="text-[9px] text-muted-foreground">
                         {format(item.start, 'h:mm')}
                       </span>
@@ -433,6 +433,7 @@ function AllDayChip({
   return (
     <button
       type="button"
+      data-event
       onClick={(e) => {
         e.stopPropagation()
         onItemClick(item, e.currentTarget)

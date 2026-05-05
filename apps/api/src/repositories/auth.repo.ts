@@ -80,6 +80,13 @@ class AuthRepository {
     })
   }
 
+  async findUserAuthInfo(userId: string) {
+    return prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, email: true, passwordHash: true },
+    })
+  }
+
   async createUserWithSettings(data: CreateUserData) {
     return prisma.$transaction(async (tx) => {
       const user = await tx.user.create({
@@ -128,6 +135,27 @@ class AuthRepository {
       where: { id: accountId },
       data: { access_token: accessToken, id_token: idToken },
     })
+  }
+
+  async syncUserFromOAuth(
+    userId: string,
+    info: { name?: string; image?: string },
+    options: { fillMissingNameOnly: boolean },
+  ) {
+    const data: { name?: string; image?: string } = {}
+    if (info.image) data.image = info.image
+    if (info.name) {
+      if (options.fillMissingNameOnly) {
+        const current = await prisma.user.findUnique({ where: { id: userId }, select: { name: true } })
+        if (!current?.name) data.name = info.name
+      } else {
+        data.name = info.name
+      }
+    }
+    if (Object.keys(data).length === 0) {
+      return prisma.user.findUnique({ where: { id: userId }, select: userSelectPublic })
+    }
+    return prisma.user.update({ where: { id: userId }, data, select: userSelectPublic })
   }
 
   async linkOAuthAccount(userId: string, account: OAuthAccountData) {

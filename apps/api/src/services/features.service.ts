@@ -59,6 +59,7 @@ function planDefaults(plan: Record<string, unknown> | null | undefined): Resolve
     // Module-specific gates
     [FEATURES.AI_ASSISTANT]: bool('hasAiAssistant', false),
     [FEATURES.BRAIN_MODULE]: bool('hasBrainModule', false),
+    [FEATURES.BRAIN_GRAPH]: bool('hasBrainGraph', false),
     // Transversal features
     [FEATURES.ADVANCED_ANALYTICS]: bool('hasAdvancedAnalytics', false),
     [FEATURES.CUSTOM_THEME_CREATION]: bool('hasCustomThemeCreation', false),

@@ -3,6 +3,7 @@ import { authMiddleware } from '../middleware/auth'
 import { requireFeature } from '../middleware/feature-gate'
 import { FEATURES } from '@repo/shared/constants'
 import { brainService } from '../services/brain.service'
+import { brainGraphService, BrainGraphFeatureError } from '../services/brain-graph.service'
 
 export const brainRoutes = new OpenAPIHono()
 
@@ -73,6 +74,54 @@ brainRoutes.post('/entries/:id/reprocess', async (c) => {
   if (!result.ok) return c.json({ error: 'Not found' }, 404)
   return c.json({ data: result.entry })
 })
+
+// ─── Concept graph (Phase 2) ─────────────────────────────────────────────
+// Both endpoints additionally gate on FEATURES.BRAIN_GRAPH (paid plans).
+// We check inside the handler so a clean 403 surfaces instead of a 500.
+
+const graphRoutes = new OpenAPIHono()
+graphRoutes.use('*', requireFeature(FEATURES.BRAIN_GRAPH))
+
+// GET /api/brain/graph?since=<iso>
+graphRoutes.get('/graph', async (c) => {
+  const userId = (c as any).get('user').userId
+  const sinceRaw = c.req.query('since')
+  const since = sinceRaw ? new Date(sinceRaw) : undefined
+  if (since && isNaN(since.getTime())) {
+    return c.json({ error: 'Invalid since cursor' }, 400)
+  }
+  try {
+    const data = await brainGraphService.getGraph(userId, since)
+    return c.json({ data })
+  } catch (err) {
+    if (err instanceof BrainGraphFeatureError) {
+      return c.json({ error: err.code }, 403)
+    }
+    throw err
+  }
+})
+
+// GET /api/brain/concepts/:id/ego?depth=2
+graphRoutes.get('/concepts/:id/ego', async (c) => {
+  const userId = (c as any).get('user').userId
+  const conceptId = c.req.param('id')
+  const depthRaw = c.req.query('depth')
+  const depth = depthRaw ? Number(depthRaw) : 2
+  if (!Number.isInteger(depth) || depth < 1 || depth > 3) {
+    return c.json({ error: 'depth must be 1, 2, or 3' }, 400)
+  }
+  try {
+    const data = await brainGraphService.getEgoNetwork(userId, conceptId, depth)
+    return c.json({ data })
+  } catch (err) {
+    if (err instanceof BrainGraphFeatureError) {
+      return c.json({ error: err.code }, 403)
+    }
+    throw err
+  }
+})
+
+brainRoutes.route('/', graphRoutes)
 
 // POST /api/brain/entries/:entryId/action-items/:index/apply
 brainRoutes.post('/entries/:entryId/action-items/:index/apply', async (c) => {

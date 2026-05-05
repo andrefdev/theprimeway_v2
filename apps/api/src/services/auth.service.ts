@@ -9,11 +9,21 @@
  * - NO Prisma queries, NO HTTP concerns
  */
 import { authRepository } from '../repositories/auth.repo'
+import { userRepository } from '../repositories/user.repo'
 import { signAccessToken, signRefreshToken } from '../middleware/auth'
 import bcrypt from 'bcryptjs'
 import * as jose from 'jose'
 import { otpService } from './otp.service'
 import { emailService } from './email.service'
+import { channelsService } from './channels.service'
+
+async function seedUserDefaults(userId: string) {
+  try {
+    await channelsService.seedDefaults(userId)
+  } catch (e) {
+    console.error('[auth] failed to seed default channels for', userId, e)
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Types
@@ -149,7 +159,8 @@ class AuthService {
     }
 
     const passwordHash = await bcrypt.hash(password, SALT_ROUNDS)
-    await authRepository.createUserWithSettings({ name, email: normalizedEmail, passwordHash })
+    const newUser = await authRepository.createUserWithSettings({ name, email: normalizedEmail, passwordHash })
+    await seedUserDefaults(newUser.id)
     await this.sendRegisterOtp(normalizedEmail)
 
     return { requiresVerification: true, email: normalizedEmail }
@@ -232,6 +243,55 @@ class AuthService {
     return { ok: true }
   }
 
+  async requestAccountDeletion(
+    userId: string,
+    confirmEmail: string,
+    password: string | undefined,
+    reason: string | undefined,
+  ): Promise<{ error: string } | { ok: true; hasPassword: boolean }> {
+    const user = await authRepository.findUserAuthInfo(userId)
+    if (!user?.email) return { error: 'User not found' }
+
+    if (user.email.toLowerCase() !== confirmEmail.toLowerCase().trim()) {
+      return { error: 'Email does not match your account' }
+    }
+
+    if (user.passwordHash) {
+      if (!password) return { error: 'Password required' }
+      const valid = await bcrypt.compare(password, user.passwordHash)
+      if (!valid) return { error: 'Invalid password' }
+    }
+
+    if (reason) {
+      console.log(`[ACCOUNT_DELETION_REASON] userId=${userId} reason=${reason.slice(0, 200)}`)
+    }
+
+    const issued = await otpService.issue(user.email, 'delete')
+    if ('error' in issued) return issued
+
+    try {
+      await emailService.sendDeleteAccountOtp(user.email, issued.code)
+    } catch (e) {
+      console.error('[auth] failed to send delete-account OTP', e)
+      return { error: 'Failed to send confirmation email' }
+    }
+
+    return { ok: true, hasPassword: !!user.passwordHash }
+  }
+
+  async confirmAccountDeletion(userId: string, code: string): Promise<{ error: string } | { ok: true }> {
+    const user = await authRepository.findUserByIdMinimal(userId)
+    if (!user?.email) return { error: 'User not found' }
+
+    const result = await otpService.verify(user.email, 'delete', code)
+    if ('error' in result) return result
+
+    await otpService.consume(result.id)
+    await userRepository.deleteUser(userId)
+
+    return { ok: true }
+  }
+
   async refreshToken(refreshTokenStr: string): Promise<{ error: string } | AuthTokens> {
     try {
       const { payload } = await jose.jwtVerify(refreshTokenStr, JWT_SECRET(), {
@@ -306,15 +366,26 @@ class AuthService {
 
     if (existingAccount) {
       await authRepository.updateOAuthTokens(existingAccount.id, accessToken, idToken)
-      user = existingAccount.user
+      const synced = await authRepository.syncUserFromOAuth(
+        existingAccount.user.id,
+        { name: userInfo.name, image: userInfo.image },
+        { fillMissingNameOnly: true },
+      )
+      user = synced ?? existingAccount.user
     } else {
       const existingUser = await authRepository.findUserByEmail(userInfo.email)
 
       if (existingUser) {
         await authRepository.linkOAuthAccount(existingUser.id, accountData)
-        user = existingUser
+        const synced = await authRepository.syncUserFromOAuth(
+          existingUser.id,
+          { name: userInfo.name, image: userInfo.image },
+          { fillMissingNameOnly: true },
+        )
+        user = synced ?? existingUser
       } else {
         user = await authRepository.createOAuthUserWithSettings(userInfo, accountData)
+        await seedUserDefaults(user.id)
       }
     }
 

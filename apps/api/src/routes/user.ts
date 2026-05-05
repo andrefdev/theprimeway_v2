@@ -260,32 +260,10 @@ userRoutes.openapi(completeOnboardingRoute, (async (c: any) => {
 }) as any)
 
 
-// ---------------------------------------------------------------------------
-// DELETE /delete — Delete user account (cascading)
-// ---------------------------------------------------------------------------
-const deleteUserRoute = createRoute({
-  method: 'delete',
-  path: '/delete',
-  tags: ['User'],
-  summary: 'Delete user account and all associated data',
-  security: [{ Bearer: [] }],
-  responses: {
-    200: { content: { 'application/json': { schema: z.object({ success: z.boolean() }) } }, description: 'User deleted' },
-    500: { content: { 'application/json': { schema: errorResponse } }, description: 'Internal error' },
-  },
-})
-
-userRoutes.openapi(deleteUserRoute, async (c) => {
-  const { userId } = c.get('user')
-
-  try {
-    await userService.deleteUser(userId)
-    return c.json({ success: true }, 200)
-  } catch (error) {
-    console.error('[USER_DELETE]', error)
-    return c.json({ error: 'Internal Error' }, 500)
-  }
-})
+// Note: Account deletion is handled through the two-step OTP-confirmed flow at:
+//   POST /auth/request-account-deletion  → issues a confirmation code via email
+//   POST /auth/confirm-account-deletion  → verifies the code and deletes the user
+// The unsafe direct DELETE endpoint was removed in favor of that flow.
 
 // ---------------------------------------------------------------------------
 // GET /section-customizations — List all section customizations

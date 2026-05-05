@@ -202,8 +202,15 @@ export function useTaskForm({
           data.isAllDay = false
         }
         if (isEdit && task) {
-          await updateTask.mutateAsync({ id: task.id, data })
+          // Fire-and-forget: optimistic cache patch already runs in onMutate,
+          // so close the modal immediately instead of waiting for the round-trip.
+          updateTask.mutate(
+            { id: task.id, data },
+            { onError: () => toast.error(t('failedToUpdate')) },
+          )
           toast.success(t('taskUpdated'))
+          onSaved?.()
+          return
         } else if (enableRepeat && repeat.enabled) {
           if (repeat.pattern === 'WEEKLY' && repeat.daysOfWeek.length === 0) {
             toast.error(t('selectAtLeastOneDay'))

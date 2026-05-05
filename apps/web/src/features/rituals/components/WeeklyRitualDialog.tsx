@@ -186,7 +186,7 @@ export function WeeklyPlanDialog({ instance, open, onClose }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Weekly Plan</DialogTitle>
           <DialogDescription>

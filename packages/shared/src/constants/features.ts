@@ -6,6 +6,7 @@ export const FEATURES = {
   // Module-specific gates (free users don't have access)
   AI_ASSISTANT: 'AI_ASSISTANT',
   BRAIN_MODULE: 'BRAIN_MODULE',
+  BRAIN_GRAPH: 'BRAIN_GRAPH',
 
   // Transversal features (applies to multiple modules)
   ADVANCED_ANALYTICS: 'ADVANCED_ANALYTICS',

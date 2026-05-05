@@ -45,6 +45,8 @@
   "habitCreated": "Habit created",
   "habitUpdated": "Habit updated",
   "habitDeleted": "Habit deleted",
+  "deleteConfirmTitle": "Delete habit",
+  "deleteConfirmDescription": "Are you sure you want to delete \"{{name}}\"? All of its logs will be removed and this cannot be undone.",
   "habitArchived": "Habit archived",
   "habitRestored": "Habit restored",
   "archivedHabits": "{{count}} archived habits",

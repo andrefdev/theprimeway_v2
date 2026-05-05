@@ -71,7 +71,11 @@ export function DateTimeRangeField({ form }: Props) {
               <ChevronDownIcon size={16} />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+          <PopoverContent
+            className="w-auto p-0 max-h-[var(--radix-popover-content-available-height)] overflow-y-auto"
+            align="start"
+            collisionPadding={12}
+          >
             <Calendar
               mode="single"
               selected={dateObj}

@@ -68,4 +68,12 @@ export const authApi = {
 
   resetPassword: (email: string, code: string, password: string) =>
     api.post<{ ok: true }>('/auth/reset-password', { email, code, password }).then((r) => r.data),
+
+  requestAccountDeletion: (data: { confirmEmail: string; password?: string; reason?: string }) =>
+    api
+      .post<{ ok: true; hasPassword: boolean }>('/auth/request-account-deletion', data)
+      .then((r) => r.data),
+
+  confirmAccountDeletion: (code: string) =>
+    api.post<{ ok: true }>('/auth/confirm-account-deletion', { code }).then((r) => r.data),
 }

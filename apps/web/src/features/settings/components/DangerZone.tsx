@@ -1,20 +1,18 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Card, CardContent } from '@/shared/components/ui/card'
 import { Button } from '@/shared/components/ui/button'
-import { toast } from 'sonner'
 import { useAuthStore } from '@/shared/stores/auth.store'
+import { DeleteAccountDialog } from './DeleteAccountDialog'
 
 export function DangerZone() {
   const { t } = useTranslation('settings')
   const logout = useAuthStore((s) => s.logout)
+  const [deleteOpen, setDeleteOpen] = useState(false)
 
   function handleLogout() {
     logout()
     window.location.href = '/login'
-  }
-
-  function handleDeleteAccount() {
-    toast.info(t('accountDeleteInfo'))
   }
 
   return (
@@ -27,10 +25,12 @@ export function DangerZone() {
           <Button variant="outline" onClick={handleLogout}>
             {t('logout')}
           </Button>
-          <Button variant="destructive" onClick={handleDeleteAccount}>
+          <Button variant="destructive" onClick={() => setDeleteOpen(true)}>
             {t('deleteAccount')}
           </Button>
         </div>
+
+        <DeleteAccountDialog open={deleteOpen} onOpenChange={setDeleteOpen} />
       </CardContent>
     </Card>
   )

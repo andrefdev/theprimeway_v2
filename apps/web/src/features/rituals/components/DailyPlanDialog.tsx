@@ -139,7 +139,7 @@ async function saveHighlightAndAdvance() {
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{t('dailyPlan.title', { defaultValue: 'Daily Plan' })}</DialogTitle>
           <DialogDescription>
@@ -207,7 +207,7 @@ async function saveHighlightAndAdvance() {
                         checked={selectedTaskIds.has(task.id)}
                         onChange={() => toggleTask(task.id)}
                       />
-                      <span className="text-sm truncate flex-1">{task.title}</span>
+                      <span className="text-sm break-words flex-1">{task.title}</span>
                       {task.scheduledStart ? (
                         <span className="text-[10px] uppercase text-muted-foreground">{t('scheduledLabel', { defaultValue: 'scheduled' })}</span>
                       ) : null}

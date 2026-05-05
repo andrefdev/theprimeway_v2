@@ -21,6 +21,16 @@ import { SectionHeader } from '@/shared/components/SectionHeader'
 import { SkeletonList } from '@/shared/components/ui/skeleton-list'
 import { EmptyState } from '@/shared/components/ui/empty-state'
 import { Button } from '@/shared/components/ui/button'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/shared/components/ui/alert-dialog'
 import { Card, CardContent } from '@/shared/components/ui/card'
 import { Sheet, SheetContent } from '@/shared/components/ui/sheet'
 import { PlusIcon } from '@/shared/components/Icons'
@@ -45,6 +55,7 @@ function HabitsListPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null)
   const [selectedHabit, setSelectedHabit] = useState<Habit | null>(null)
+  const [habitToDelete, setHabitToDelete] = useState<Habit | null>(null)
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
   const [showArchived, setShowArchived] = useState(false)
@@ -110,10 +121,12 @@ function HabitsListPage() {
     }
   }
 
-  async function handleDelete(habit: Habit) {
+  async function confirmDelete() {
+    if (!habitToDelete) return
     try {
-      await deleteHabit.mutateAsync(habit.id)
+      await deleteHabit.mutateAsync(habitToDelete.id)
       toast.success(t('habitDeleted'))
+      setHabitToDelete(null)
     } catch {
       toast.error(t('failedToDelete'))
     }
@@ -151,7 +164,7 @@ function HabitsListPage() {
                     today={today}
                     onToggle={() => handleToggle(habit)}
                     onEdit={() => openEdit(habit)}
-                    onDelete={() => handleDelete(habit)}
+                    onDelete={() => setHabitToDelete(habit)}
                     onArchive={() => handleArchive(habit)}
                     onView={() => setSelectedHabit(habit)}
                   />
@@ -208,6 +221,32 @@ function HabitsListPage() {
         onClose={() => setDialogOpen(false)}
         habit={editingHabit}
       />
+
+      <AlertDialog
+        open={!!habitToDelete}
+        onOpenChange={(open) => { if (!open) setHabitToDelete(null) }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('deleteConfirmTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('deleteConfirmDescription', { name: habitToDelete?.name ?? '' })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteHabit.isPending}>
+              {t('cancel', { ns: 'common' })}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={(e) => { e.preventDefault(); confirmDelete() }}
+              disabled={deleteHabit.isPending}
+            >
+              {t('delete', { ns: 'common' })}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

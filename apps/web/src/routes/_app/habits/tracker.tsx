@@ -20,6 +20,16 @@ import { SkeletonList } from '@/shared/components/ui/skeleton-list'
 import { EmptyState } from '@/shared/components/ui/empty-state'
 import { Progress } from '@/shared/components/ui/progress'
 import { Button } from '@/shared/components/ui/button'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/shared/components/ui/alert-dialog'
 import { PlusIcon } from '@/shared/components/Icons'
 import { useLocale } from '@/i18n/useLocale'
 import type { Habit } from '@repo/shared/types'
@@ -39,6 +49,7 @@ function HabitsTrackerPage() {
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null)
+  const [habitToDelete, setHabitToDelete] = useState<Habit | null>(null)
 
   const habits = habitsQuery.data?.data ?? []
   const totalHabits = habits.length
@@ -90,10 +101,12 @@ function HabitsTrackerPage() {
     }
   }
 
-  async function handleDelete(habit: Habit) {
+  async function confirmDelete() {
+    if (!habitToDelete) return
     try {
-      await deleteHabit.mutateAsync(habit.id)
+      await deleteHabit.mutateAsync(habitToDelete.id)
       toast.success(t('habitDeleted'))
+      setHabitToDelete(null)
     } catch {
       toast.error(t('failedToDelete'))
     }
@@ -133,7 +146,7 @@ function HabitsTrackerPage() {
               onToggle={(h, date) => handleToggle(h, date)}
               onEdit={openEdit}
               onArchive={handleArchive}
-              onDelete={handleDelete}
+              onDelete={(habit) => setHabitToDelete(habit)}
             />
           ) : (
             <EmptyState title={t('noHabitsYet')} description={t('noHabitsDescription')} />
@@ -146,6 +159,32 @@ function HabitsTrackerPage() {
         onClose={() => setDialogOpen(false)}
         habit={editingHabit}
       />
+
+      <AlertDialog
+        open={!!habitToDelete}
+        onOpenChange={(open) => { if (!open) setHabitToDelete(null) }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('deleteConfirmTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('deleteConfirmDescription', { name: habitToDelete?.name ?? '' })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteHabit.isPending}>
+              {t('cancel', { ns: 'common' })}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={(e) => { e.preventDefault(); confirmDelete() }}
+              disabled={deleteHabit.isPending}
+            >
+              {t('delete', { ns: 'common' })}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

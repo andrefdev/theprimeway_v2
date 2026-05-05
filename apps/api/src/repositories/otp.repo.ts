@@ -3,7 +3,7 @@
  */
 import { prisma } from '../lib/prisma'
 
-export type OtpPurpose = 'register' | 'reset'
+export type OtpPurpose = 'register' | 'reset' | 'delete'
 
 class OtpRepository {
   async invalidateExisting(email: string, purpose: OtpPurpose) {

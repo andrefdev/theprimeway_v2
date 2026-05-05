@@ -85,7 +85,6 @@ export const USER = {
   CURRENCY_SETTINGS: '/api/user/currency-settings',
   WORK_PREFERENCES: '/api/user/work-preferences',
   ONBOARDING: '/api/user/onboarding',
-  DELETE: '/api/user/delete',
 } as const;
 
 // Notifications

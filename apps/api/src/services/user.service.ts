@@ -71,8 +71,6 @@ class UserService {
     return userRepository.upsertProfile(userId, input as Record<string, unknown>)
   }
 
-  // ── Delete User ────────────────────────────────────────────────────────
-
   // ── Onboarding ─────────────────────────────────────────────────────────
 
   async completeOnboarding(
@@ -86,11 +84,6 @@ class UserService {
     await channelsService.seedDefaults(userId)
     const whCount = await workingHoursService.seedDefaults(userId)
     return { settings, seeded: { workingHours: whCount } }
-  }
-
-  async deleteUser(userId: string): Promise<void> {
-    console.log(`[USER_DELETE] Deleting user ${userId} and cascading entities...`)
-    await userRepository.deleteUser(userId)
   }
 
   // ── Section customizations ─────────────────────────────────────────────

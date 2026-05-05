@@ -84,3 +84,25 @@ export function useLogout() {
     },
   })
 }
+
+export function useRequestAccountDeletion() {
+  return useMutation({
+    mutationFn: (data: { confirmEmail: string; password?: string; reason?: string }) =>
+      authApi.requestAccountDeletion(data),
+  })
+}
+
+export function useConfirmAccountDeletion() {
+  const logout = useAuthStore((s) => s.logout)
+  const clearFeatures = useFeaturesStore((s) => s.clearFeatures)
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (code: string) => authApi.confirmAccountDeletion(code),
+    onSuccess: () => {
+      logout()
+      clearFeatures()
+      queryClient.clear()
+    },
+  })
+}

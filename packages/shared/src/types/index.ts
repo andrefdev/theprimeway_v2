@@ -38,4 +38,11 @@ export type {
   BrainCrossLinkTarget,
   BrainCrossLinkType,
   BrainActionItem,
+  BrainConceptKind,
+  BrainConceptNode,
+  BrainEdgeRelationType,
+  BrainConceptEdgeDto,
+  BrainClusterDto,
+  BrainGraphResponse,
+  BrainEgoNetworkResponse,
 } from './brain'

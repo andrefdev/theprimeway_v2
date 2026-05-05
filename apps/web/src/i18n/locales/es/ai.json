@@ -9,5 +9,22 @@
   "noResponse": "No se recibió respuesta",
   "aiDisabled": "La IA está desactivada. Activa el uso compartido de datos en Configuración.",
   "rateLimited": "Demasiadas solicitudes. Espera un momento.",
-  "failedToSend": "Error al enviar mensaje"
+  "failedToSend": "Error al enviar mensaje",
+  "newChat": "Nueva conversación",
+  "history": "Historial",
+  "back": "Cancelar",
+  "delete": "Eliminar",
+  "rename": "Renombrar",
+  "actions": "Acciones",
+  "stop": "Detener",
+  "deleteConfirm": "Esta conversación se eliminará permanentemente.",
+  "clearAll": "Borrar todo el historial",
+  "clearAllConfirmTitle": "¿Borrar todas las conversaciones?",
+  "clearAllConfirm": "Todo el historial de chat guardado se eliminará permanentemente. Esta acción no se puede deshacer.",
+  "noHistory": "Aún no tienes conversaciones guardadas",
+  "historyEmpty": "Aún no tienes conversaciones guardadas",
+  "untitled": "Conversación sin título",
+  "today": "Hoy",
+  "yesterday": "Ayer",
+  "daysAgo": "Hace {{count}} días"
 }

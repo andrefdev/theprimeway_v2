@@ -45,6 +45,8 @@
   "habitCreated": "Hábito creado",
   "habitUpdated": "Hábito actualizado",
   "habitDeleted": "Hábito eliminado",
+  "deleteConfirmTitle": "Eliminar hábito",
+  "deleteConfirmDescription": "¿Seguro que quieres eliminar \"{{name}}\"? Se borrarán todos sus registros y no se puede deshacer.",
   "habitArchived": "Hábito archivado",
   "habitRestored": "Hábito restaurado",
   "archivedHabits": "{{count}} hábitos archivados",

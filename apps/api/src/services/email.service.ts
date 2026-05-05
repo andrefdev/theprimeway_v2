@@ -99,6 +99,25 @@ function otpResetTemplate(code: string) {
   }
 }
 
+function otpDeleteAccountTemplate(code: string) {
+  const html = baseLayout(
+    'Confirma la eliminación de tu cuenta',
+    `<h1 style="font-size:22px;color:#b91c1c;margin:0 0 8px 0;">Confirma la eliminación de tu cuenta</h1>
+     <p style="color:#374151;line-height:1.5;margin:0 0 8px 0;">Recibimos una solicitud para eliminar permanentemente tu cuenta en ${BRAND}. Esta acción es <strong>irreversible</strong>: perderás todos tus datos, hábitos, tareas, calendarios e historial.</p>
+     <p style="color:#374151;line-height:1.5;margin:0 0 8px 0;">Si fuiste tú, ingresa este código en la app para confirmar. Expira en 10 minutos.</p>
+     ${otpBlock(code)}
+     <div style="margin:16px 0;padding:16px;background:#fef2f2;border-left:4px solid #dc2626;border-radius:8px;">
+       <div style="color:#7f1d1d;line-height:1.5;font-size:13px;"><strong>¿No fuiste tú?</strong> Ignora este correo y considera cambiar tu contraseña. Tu cuenta y datos siguen intactos hasta que se confirme con este código.</div>
+     </div>
+     <p style="color:#6b7280;font-size:13px;">Si tienes dudas o quieres pausar tu cuenta en lugar de borrarla, responde a este correo y te ayudamos.</p>`,
+  )
+  return {
+    subject: `Confirma la eliminación de tu cuenta de ${BRAND}`,
+    html,
+    text: `Recibimos una solicitud para eliminar tu cuenta en ${BRAND}. Tu código es: ${code}. Expira en 10 minutos. Si no fuiste tú, ignora este mensaje.`,
+  }
+}
+
 function welcomeTemplate(name: string | null) {
   const greet = name ? `¡Hola, ${name}!` : '¡Bienvenido!'
   const html = baseLayout(
@@ -231,6 +250,11 @@ export const emailService = {
 
   async sendResetOtp(to: string, code: string) {
     const tpl = otpResetTemplate(code)
+    await send(to, tpl.subject, tpl.html, tpl.text)
+  },
+
+  async sendDeleteAccountOtp(to: string, code: string) {
+    const tpl = otpDeleteAccountTemplate(code)
     await send(to, tpl.subject, tpl.html, tpl.text)
   },
 

@@ -463,6 +463,59 @@ class CronService {
 
     return { quarter, year, nudged, skipped, alreadySet }
   }
+
+  // ---------------------------------------------------------------------------
+  // Brain concept-graph re-clustering (Phase 2)
+  //
+  // For every user that has at least one concept, ask shouldRecluster() — true
+  // if 7+ days since last run OR 20+ new concepts since then — and run the
+  // clustering pipeline. We process users sequentially; clustering is O(n²) on
+  // the per-user concept set so a global parallel fanout would risk DB
+  // contention without much wallclock win at our current scale. Per-user errors
+  // are logged but never abort the batch.
+  // ---------------------------------------------------------------------------
+  async processBrainClusterRefresh() {
+    const { brainGraphService } = await import('./brain-graph.service')
+
+    const users = await prisma.brainConcept.findMany({
+      where: { mergedIntoId: null },
+      distinct: ['userId'],
+      select: { userId: true },
+    })
+
+    let processed = 0
+    let skipped = 0
+    let failed = 0
+    let totalClusters = 0
+
+    for (const { userId } of users) {
+      try {
+        const overdue = await brainGraphService.shouldRecluster(userId)
+        if (!overdue) {
+          skipped++
+          continue
+        }
+        const result = await brainGraphService.runClustering(userId)
+        if (result.skipped) {
+          skipped++
+          continue
+        }
+        processed++
+        totalClusters += result.clustersCreated
+      } catch (err) {
+        failed++
+        console.error('[CRON_BRAIN_CLUSTER]', userId, err)
+      }
+    }
+
+    return {
+      candidates: users.length,
+      processed,
+      skipped,
+      failed,
+      clustersCreated: totalClusters,
+    }
+  }
 }
 
 export const cronService = new CronService()

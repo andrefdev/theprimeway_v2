@@ -109,6 +109,10 @@ export function TaskQuickView({
         collisionPadding={16}
         className="w-80 max-w-[calc(100vw-32px)] space-y-2"
         onOpenAutoFocus={(e) => e.preventDefault()}
+        onPointerDownOutside={(e) => {
+          const target = e.target as HTMLElement | null
+          if (target?.closest('[data-event]')) e.preventDefault()
+        }}
       >
         <div className="flex items-start gap-2 min-w-0">
           <span className={`mt-1.5 size-2.5 rounded-full shrink-0 ${PRIORITY_DOT[task.priority] ?? 'bg-muted'}`} />

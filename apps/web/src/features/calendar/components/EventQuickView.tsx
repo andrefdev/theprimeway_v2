@@ -85,6 +85,10 @@ export function EventQuickView({ item, anchorEl, open, onClose, onEdit, onDelete
         collisionPadding={16}
         className="w-80 max-w-[calc(100vw-32px)]"
         onOpenAutoFocus={(e) => e.preventDefault()}
+        onPointerDownOutside={(e) => {
+          const target = e.target as HTMLElement | null
+          if (target?.closest('[data-event]')) e.preventDefault()
+        }}
       >
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-start gap-2 min-w-0">

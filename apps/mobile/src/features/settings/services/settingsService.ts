@@ -39,8 +39,4 @@ export const settingsService = {
     );
     return data;
   },
-
-  deleteAccount: async () => {
-    await apiClient.delete(USER.DELETE);
-  },
 };

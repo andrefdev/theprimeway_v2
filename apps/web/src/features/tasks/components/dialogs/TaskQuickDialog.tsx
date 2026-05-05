@@ -10,6 +10,7 @@ import {
 import { Button } from '@/shared/components/ui/button'
 import { useTaskForm } from '../../hooks/use-task-form'
 import { TitleField, DurationField, DateBucketField } from '../form'
+import { InlineChannelPicker, InlineWeeklyGoalPicker } from '../form/pickers'
 
 interface Props {
   open: boolean
@@ -62,10 +63,21 @@ export function TaskQuickDialog({
               <DateBucketField form={tf.form} />
             </div>
 
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <InlineChannelPicker
+                value={tf.form.watch('channelId') ?? undefined}
+                onChange={(v) => tf.form.setValue('channelId', v)}
+              />
+              <InlineWeeklyGoalPicker
+                value={tf.form.watch('weeklyGoalId') ?? undefined}
+                onChange={(v) => tf.form.setValue('weeklyGoalId', v)}
+              />
+            </div>
+
             <p className="text-xs text-muted-foreground">
               {t('quickHint', {
                 defaultValue:
-                  'More options (subtasks, exact time, repeat, channel, weekly goal) are available after creating the task.',
+                  'More options (subtasks, exact time, repeat) are available after creating the task.',
               })}
             </p>
           </div>

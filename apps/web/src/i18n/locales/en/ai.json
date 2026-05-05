@@ -9,5 +9,22 @@
   "noResponse": "No response received",
   "aiDisabled": "AI is disabled. Enable AI Data Sharing in Settings.",
   "rateLimited": "Too many requests. Please wait a moment.",
-  "failedToSend": "Failed to send message"
+  "failedToSend": "Failed to send message",
+  "newChat": "New conversation",
+  "history": "History",
+  "back": "Back",
+  "delete": "Delete",
+  "rename": "Rename",
+  "actions": "Actions",
+  "stop": "Stop",
+  "deleteConfirm": "This conversation will be permanently removed.",
+  "clearAll": "Clear all history",
+  "clearAllConfirmTitle": "Clear all conversations?",
+  "clearAllConfirm": "All saved chat history will be permanently removed. This action cannot be undone.",
+  "noHistory": "No saved conversations yet",
+  "historyEmpty": "No saved conversations yet",
+  "untitled": "Untitled conversation",
+  "today": "Today",
+  "yesterday": "Yesterday",
+  "daysAgo": "{{count}} days ago"
 }

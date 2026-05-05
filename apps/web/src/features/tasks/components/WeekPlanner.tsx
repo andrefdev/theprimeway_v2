@@ -122,7 +122,7 @@ export function WeekPlanner({
       onDragCancel={() => setActiveTask(null)}
     >
       <div className="overflow-x-auto">
-        <div className="grid gap-4 min-h-[calc(100vh-200px)]" style={{ gridTemplateColumns: 'repeat(7, 320px)' }}>
+        <div className="grid gap-4 h-[calc(100vh-200px)]" style={{ gridTemplateColumns: 'repeat(7, 320px)' }}>
           {days.map((day) => {
           const dateKey = format(day, 'yyyy-MM-dd')
           const dayTasks = tasksByDay.get(dateKey) ?? []
@@ -200,7 +200,7 @@ function DayColumn({
   return (
     <div
       ref={setNodeRef}
-      className={`flex flex-col min-w-0 rounded-xl border-2 p-4 backdrop-blur-xs transition-colors ${
+      className={`flex flex-col min-w-0 min-h-0 h-full rounded-xl border-2 p-4 backdrop-blur-xs transition-colors ${
         isOver
           ? 'border-primary bg-primary/20'
           : today
@@ -236,7 +236,7 @@ function DayColumn({
       </div>
 
       {/* Tasks */}
-      <ScrollArea className="flex-1 pr-3 mb-3">
+      <ScrollArea className="flex-1 min-h-0 pr-3 mb-3">
         <SortableContext items={tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
           <div className="space-y-2.5">
             {tasks.map((task) => (

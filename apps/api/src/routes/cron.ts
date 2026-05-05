@@ -125,6 +125,17 @@ cronRoutes.post('/quarterly-nudge', async (c) => {
   }
 })
 
+// POST /brain-cluster — re-cluster concept graphs for users overdue for refresh
+cronRoutes.post('/brain-cluster', async (c) => {
+  try {
+    const result = await cronService.processBrainClusterRefresh()
+    return c.json({ data: result }, 200)
+  } catch (err: any) {
+    console.error('[CRON_BRAIN_CLUSTER]', err)
+    return c.json({ error: err.message || 'Failed' }, 500)
+  }
+})
+
 // POST /monthly-commissions — accrue ambassador commissions for the period
 import { commissionService } from '../services/commission.service'
 cronRoutes.post('/monthly-commissions', async (c) => {

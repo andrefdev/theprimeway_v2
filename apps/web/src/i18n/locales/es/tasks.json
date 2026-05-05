@@ -145,7 +145,7 @@
   "rolloverPrefix": "Tareas que se han trasladado al menos:",
   "rolloverSuffix": "días consecutivos",
   "archiveCleared": "Archivo vaciado",
-  "quickHint": "Más opciones (subtareas, hora exacta, repetición, canal, objetivo semanal) están disponibles después de crear la tarea.",
+  "quickHint": "Más opciones (subtareas, hora exacta, repetición) están disponibles después de crear la tarea.",
   "weekly": {
     "addTask": "Agregar tarea",
     "noTasksToday": "Sin tareas hoy",

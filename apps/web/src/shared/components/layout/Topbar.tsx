@@ -21,6 +21,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/shared/components/ui/dropdown-menu'
+import { Avatar, AvatarFallback, AvatarImage } from '@/shared/components/ui/avatar'
 import { PanelLeftOpen, LogOut, Settings, User, Sparkles } from 'lucide-react'
 import { useAmbassadorMe } from '@/features/ambassador/queries'
 import { NotificationBell } from '@/features/notifications/components/NotificationBell'
@@ -168,9 +169,18 @@ export function Header() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-8 gap-2 px-2">
-                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/15 text-[10px] font-semibold text-primary">
-                  {user.name?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || '?'}
-                </div>
+                <Avatar size="sm" className="size-6">
+                  {user.image && (
+                    <AvatarImage
+                      src={user.image}
+                      alt={user.name || user.email || 'User'}
+                      referrerPolicy="no-referrer"
+                    />
+                  )}
+                  <AvatarFallback className="bg-primary/15 text-[10px] font-semibold text-primary">
+                    {user.name?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || '?'}
+                  </AvatarFallback>
+                </Avatar>
                 {!isMobile && (
                   <span className="max-w-[120px] truncate text-sm">
                     {user.name || user.email}

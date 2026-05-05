@@ -261,6 +261,21 @@ Produce structured output:
         })
         .catch((err) => console.error('[BRAIN_XP]', err))
       gamificationEvents.emit('brain.entry.created', { userId, meta: { entryId } })
+
+      // Concept graph extraction — Phase 5. Fire-and-forget. Internally gated
+      // by FEATURES.BRAIN_GRAPH; free-tier users are skipped silently. A
+      // failure here must NEVER fail the entry — the entry is already complete.
+      import('./concept-extraction.service')
+        .then(({ conceptExtractionService }) =>
+          conceptExtractionService.extractAndStoreConcepts(userId, {
+            entryId,
+            rawTranscript: entry.rawTranscript,
+            title: out.title,
+            summary: out.summary,
+            topics: out.topics,
+          }),
+        )
+        .catch((err) => console.error('[BRAIN_CONCEPTS]', entryId, err))
     } catch (err) {
       console.error('[BRAIN_PIPELINE_FAIL]', entryId, err)
       await brainRepo

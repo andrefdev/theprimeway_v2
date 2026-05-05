@@ -27,6 +27,16 @@ export const resendOtpSchema = z.object({
   purpose: z.enum(['register', 'reset']),
 })
 
+export const requestAccountDeletionSchema = z.object({
+  password: z.string().optional(),
+  reason: z.string().max(500).optional(),
+  confirmEmail: z.string().email(),
+})
+
+export const confirmAccountDeletionSchema = z.object({
+  code: z.string().length(6),
+})
+
 export const forgotPasswordSchema = z.object({
   email: z.string().email(),
 })
@@ -44,3 +54,5 @@ export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>
 export type ResendOtpInput = z.infer<typeof resendOtpSchema>
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>
+export type RequestAccountDeletionInput = z.infer<typeof requestAccountDeletionSchema>
+export type ConfirmAccountDeletionInput = z.infer<typeof confirmAccountDeletionSchema>

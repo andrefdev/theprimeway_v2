@@ -145,7 +145,7 @@
   "rolloverPrefix": "Tasks which have rolled over at least:",
   "rolloverSuffix": "consecutive days",
   "archiveCleared": "Archive cleared",
-  "quickHint": "More options (subtasks, exact time, repeat, channel, weekly goal) are available after creating the task.",
+  "quickHint": "More options (subtasks, exact time, repeat) are available after creating the task.",
   "weekly": {
     "addTask": "Add task",
     "noTasksToday": "No tasks today",

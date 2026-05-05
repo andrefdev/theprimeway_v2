@@ -51,6 +51,56 @@ jobs:
               - 'nginx/**'
               - '.github/workflows/deploy.yml'
 
+  # ─── Validate Prisma Schema/Migrations Sync ─────────────────────────────────
+  # Catches the case where schema.prisma was edited but no matching migration
+  # was generated and committed (the API would build with a Prisma Client that
+  # references columns the database doesn't have, exploding at runtime).
+  validate-prisma:
+    name: Validate Prisma
+    needs: changes
+    if: needs.changes.outputs.api == 'true'
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: shadow
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install API dependencies
+        run: pnpm install --frozen-lockfile --filter @repo/api...
+
+      - name: Verify schema matches migrations
+        working-directory: apps/api
+        run: |
+          pnpm exec prisma migrate diff \
+            --from-migrations ./prisma/migrations \
+            --to-schema-datamodel ./prisma/schema.prisma \
+            --shadow-database-url "postgresql://postgres:postgres@localhost:5432/shadow" \
+            --exit-code || {
+              echo "::error::schema.prisma diverges from prisma/migrations/. Run 'pnpm --filter @repo/api db:migrate:new <name>' locally and commit the new migration."
+              exit 1
+            }
+
   # ─── Build & Push API Docker Image ──────────────────────────────────────────
   build-api:
     name: Build API
@@ -191,7 +241,7 @@ jobs:
   # ─── Deploy to Server via Docker Compose ────────────────────────────────────
   deploy:
     name: Deploy
-    needs: [changes, build-api, build-web, build-admin, validate-docs]
+    needs: [changes, validate-prisma, build-api, build-web, build-admin, validate-docs]
     # Run if: always() means run regardless of job statuses
     # !cancelled() means don't run if cancelled
     # !contains(needs.*.result, 'failure') means don't run if any job failed

@@ -9,6 +9,8 @@ export {
   resendOtpSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
+  requestAccountDeletionSchema,
+  confirmAccountDeletionSchema,
 } from './auth'
 export type {
   LoginInput,
@@ -18,6 +20,8 @@ export type {
   ResendOtpInput,
   ForgotPasswordInput,
   ResetPasswordInput,
+  RequestAccountDeletionInput,
+  ConfirmAccountDeletionInput,
 } from './auth'
 
 export { createTaskSchema, updateTaskSchema, taskBucketSchema, TASK_BUCKETS } from './task'
@@ -29,8 +33,8 @@ export type { CreateHabitInput, UpdateHabitInput, UpsertHabitLogInput } from './
 export { updateCalendarSchema, googleCallbackSchema, syncCalendarSchema } from './calendar'
 export type { UpdateCalendarInput, GoogleCallbackInput, SyncCalendarInput } from './calendar'
 
-export { chatMessageSchema } from './chat'
-export type { ChatMessageInput } from './chat'
+export { chatMessageSchema, threadRenameSchema } from './chat'
+export type { ChatMessageInput, ThreadRenameInput } from './chat'
 
 export {
   updateGamificationSettingsSchema,

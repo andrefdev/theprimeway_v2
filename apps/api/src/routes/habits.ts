@@ -633,6 +633,9 @@ const analyzeHabitRoute = createRoute({
   tags: ['Habits - AI'],
   summary: 'Analyze habit patterns and get AI insights',
   security: [{ Bearer: [] }],
+  request: {
+    params: z.object({ id: z.string() }),
+  },
   responses: {
     200: {
       content: {
@@ -688,6 +691,9 @@ const optimalReminderTimeRoute = createRoute({
   tags: ['Habits - AI'],
   summary: 'Get optimal reminder time for habit',
   security: [{ Bearer: [] }],
+  request: {
+    params: z.object({ id: z.string() }),
+  },
   responses: {
     200: {
       content: {
@@ -732,6 +738,9 @@ const suggestGoalsRoute = createRoute({
   tags: ['Habits - AI'],
   summary: 'Get goal suggestions for this habit',
   security: [{ Bearer: [] }],
+  request: {
+    params: z.object({ id: z.string() }),
+  },
   responses: {
     200: {
       content: {

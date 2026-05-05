@@ -248,16 +248,16 @@ export function EventEditDialog({ open, onClose, item, defaultStart, defaultEnd 
           return
         }
         await create.mutateAsync({
-          title,
+          title: title.trim(),
           date,
           startTime,
           endTime,
-          description: description || undefined,
-          location: location || undefined,
+          description: description.trim() || undefined,
+          location: location.trim() || undefined,
           color: colorId,
           timeZone: browserTz,
-          attendees: attendeeList,
-          reminders: buildReminders(),
+          attendees: attendeeList.length > 0 ? attendeeList : undefined,
+          reminders: reminder !== 'default' ? buildReminders() : undefined,
           addGoogleMeet: hasMeet || undefined,
           calendarId,
         })
@@ -265,7 +265,13 @@ export function EventEditDialog({ open, onClose, item, defaultStart, defaultEnd 
       }
       onClose()
     } catch (e: any) {
-      const errMsg = e?.response?.data?.error ?? e?.message ?? 'Failed to save event'
+      const data = e?.response?.data
+      const zodIssue = data?.error?.issues?.[0]
+      const errMsg =
+        (zodIssue && `${zodIssue.path?.join('.') || 'field'}: ${zodIssue.message}`) ||
+        (typeof data?.error === 'string' ? data.error : null) ||
+        e?.message ||
+        'Failed to save event'
       toast.error(errMsg)
     }
   }
@@ -396,7 +402,11 @@ export function EventEditDialog({ open, onClose, item, defaultStart, defaultEnd 
                       <ChevronDownIcon size={12} />
                     </button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+                  <PopoverContent
+                    className="w-auto p-0 max-h-[var(--radix-popover-content-available-height)] overflow-y-auto"
+                    align="start"
+                    collisionPadding={12}
+                  >
                     <Calendar
                       mode="single"
                       selected={dateObj}

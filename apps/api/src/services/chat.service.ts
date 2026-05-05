@@ -1,4 +1,4 @@
-import { chatRepo } from '../repositories/chat.repo'
+import { chatRepo, type PersistedToolCall } from '../repositories/chat.repo'
 import { prisma } from '../lib/prisma'
 import { generateObject, generateText, streamText, tool, stepCountIs, convertToModelMessages } from 'ai'
 import type { UIMessage } from 'ai'
@@ -10,6 +10,19 @@ import { calendarService } from './calendar.service'
 import { habitsService } from './habits.service'
 import { tasksRepository } from '../repositories/tasks.repo'
 import { endOfLocalDayUtc, startOfLocalDayUtc } from '@repo/shared/utils'
+import { chatTitleService } from './chat-title.service'
+
+function extractUiMessageText(msg: UIMessage | { role: string; content?: string; parts?: any[] }): string {
+  const anyMsg = msg as any
+  if (typeof anyMsg.content === 'string' && anyMsg.content.length > 0) {
+    return anyMsg.content
+  }
+  const parts: Array<{ type: string; text?: string }> = anyMsg.parts ?? []
+  return parts
+    .filter((p) => p.type === 'text' && typeof p.text === 'string')
+    .map((p) => p.text!)
+    .join('\n')
+}
 
 // ---------------------------------------------------------------------------
 // Rate limiter (simple in-memory)
@@ -102,11 +115,31 @@ Workflow:
    */
   async chatStream(
     userId: string,
-    body: { messages: UIMessage[] },
+    body: { messages: UIMessage[]; threadId?: string },
   ) {
     const system = await this.buildSystemPrompt(userId)
 
-    return streamText({
+    let thread = body.threadId
+      ? await chatRepo.findThreadById(userId, body.threadId)
+      : null
+    if (!thread) thread = await chatRepo.createThread(userId)
+    const threadId = thread.id
+    const wasTitled = !!thread.title
+
+    const lastMsg = body.messages[body.messages.length - 1]
+    if (lastMsg && lastMsg.role === 'user') {
+      const text = extractUiMessageText(lastMsg)
+      if (text) {
+        try {
+          await chatRepo.appendMessage(threadId, { role: 'user', content: text })
+          await chatRepo.touchThread(threadId)
+        } catch (err) {
+          console.error('[chat] failed to persist user message', err)
+        }
+      }
+    }
+
+    const stream = streamText({
       model: chatModel,
       system,
       messages: convertToModelMessages(body.messages),
@@ -386,7 +419,40 @@ Workflow:
         }),
       },
       stopWhen: stepCountIs(5),
+      onFinish: async ({ text, steps }) => {
+        try {
+          const toolCalls: PersistedToolCall[] = []
+          for (const step of (steps ?? []) as any[]) {
+            const calls = (step.toolCalls ?? []) as any[]
+            const results = (step.toolResults ?? []) as any[]
+            for (const call of calls) {
+              const matching = results.find((r: any) => r.toolCallId === call.toolCallId)
+              const args = call.input ?? call.args
+              const resultValue = matching ? (matching.output ?? matching.result) : undefined
+              toolCalls.push({
+                toolCallId: call.toolCallId,
+                toolName: call.toolName,
+                args,
+                result: resultValue,
+              })
+            }
+          }
+          await chatRepo.appendMessage(threadId, {
+            role: 'assistant',
+            content: text ?? '',
+            toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
+          })
+          await chatRepo.touchThread(threadId)
+          if (!wasTitled) {
+            chatTitleService.generate(userId, threadId).catch(() => {})
+          }
+        } catch (err) {
+          console.error('[chat] onFinish persistence failed', err)
+        }
+      },
     })
+
+    return { stream, threadId }
   }
 
   async chat(

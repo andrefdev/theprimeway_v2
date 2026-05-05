@@ -1171,7 +1171,8 @@ GET/PUT /api/user/settings
 GET/PUT /api/user/currency-settings
 GET/PUT /api/user/work-preferences
 GET/PUT /api/notifications/preferences
-DELETE  /api/user/delete
+POST    /api/auth/request-account-deletion
+POST    /api/auth/confirm-account-deletion
 ```
 
 ---

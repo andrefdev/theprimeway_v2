@@ -16,6 +16,8 @@ import {
   resendOtpSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
+  requestAccountDeletionSchema,
+  confirmAccountDeletionSchema,
 } from '@repo/shared/validators'
 import { authMiddleware } from '../middleware/auth'
 import { authService } from '../services/auth.service'
@@ -274,6 +276,62 @@ authRoutes.openapi(meRoute, (async (c: any) => {
 
   if (!user) return c.json({ error: 'User not found' }, 401)
   return c.json({ user }, 200)
+}) as any)
+
+// ---------------------------------------------------------------------------
+// POST /request-account-deletion (auth required)
+// ---------------------------------------------------------------------------
+const requestAccountDeletionRoute = createRoute({
+  method: 'post',
+  path: '/request-account-deletion',
+  tags: ['Auth'],
+  summary: 'Request account deletion — sends a confirmation OTP to the user email',
+  security: [{ Bearer: [] }],
+  request: { body: { content: { 'application/json': { schema: requestAccountDeletionSchema } } } },
+  responses: {
+    200: { content: { 'application/json': { schema: z.object({ ok: z.literal(true), hasPassword: z.boolean() }) } }, description: 'Confirmation email sent' },
+    400: { content: { 'application/json': { schema: errorResponse } }, description: 'Invalid request' },
+    401: { content: { 'application/json': { schema: errorResponse } }, description: 'Unauthorized' },
+    429: { content: { 'application/json': { schema: errorResponse } }, description: 'Too many requests' },
+  },
+})
+
+authRoutes.use('/request-account-deletion', authMiddleware)
+authRoutes.openapi(requestAccountDeletionRoute, (async (c: any) => {
+  const { userId } = c.get('user')
+  const { confirmEmail, password, reason } = c.req.valid('json')
+  const result = await authService.requestAccountDeletion(userId, confirmEmail, password, reason)
+  if ('error' in result) {
+    const status = result.error.includes('Too many') ? 429 : 400
+    return c.json({ error: result.error }, status)
+  }
+  return c.json(result, 200)
+}) as any)
+
+// ---------------------------------------------------------------------------
+// POST /confirm-account-deletion (auth required)
+// ---------------------------------------------------------------------------
+const confirmAccountDeletionRoute = createRoute({
+  method: 'post',
+  path: '/confirm-account-deletion',
+  tags: ['Auth'],
+  summary: 'Confirm account deletion with OTP — permanently deletes the user',
+  security: [{ Bearer: [] }],
+  request: { body: { content: { 'application/json': { schema: confirmAccountDeletionSchema } } } },
+  responses: {
+    200: { content: { 'application/json': { schema: okResponse } }, description: 'Account deleted' },
+    400: { content: { 'application/json': { schema: errorResponse } }, description: 'Invalid or expired code' },
+    401: { content: { 'application/json': { schema: errorResponse } }, description: 'Unauthorized' },
+  },
+})
+
+authRoutes.use('/confirm-account-deletion', authMiddleware)
+authRoutes.openapi(confirmAccountDeletionRoute, (async (c: any) => {
+  const { userId } = c.get('user')
+  const { code } = c.req.valid('json')
+  const result = await authService.confirmAccountDeletion(userId, code)
+  if ('error' in result) return c.json({ error: result.error }, 400)
+  return c.json(result, 200)
 }) as any)
 
 // ---------------------------------------------------------------------------

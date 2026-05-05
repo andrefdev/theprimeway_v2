@@ -8,10 +8,11 @@
  * - NO Prisma queries, NO business logic
  */
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi'
-import { chatMessageSchema } from '@repo/shared/validators'
+import { chatMessageSchema, threadRenameSchema } from '@repo/shared/validators'
 import { authMiddleware } from '../middleware/auth'
 import { requireFeature } from '../middleware/feature-gate'
 import { chatService } from '../services/chat.service'
+import { chatRepo } from '../repositories/chat.repo'
 import type { AppEnv } from '../types/env'
 import { FEATURES } from '@repo/shared/constants'
 
@@ -75,11 +76,86 @@ chatRoutes.post('/stream', async (c) => {
   }
 
   const body = await c.req.json()
-  const result = await chatService.chatStream(userId, {
+  const { stream, threadId } = await chatService.chatStream(userId, {
     messages: body.messages,
+    threadId: typeof body.threadId === 'string' ? body.threadId : undefined,
   })
 
-  return result.toUIMessageStreamResponse()
+  const response = stream.toUIMessageStreamResponse()
+  response.headers.set('X-Thread-Id', threadId)
+  return response
+})
+
+// ---------------------------------------------------------------------------
+// GET /threads — list user's chat threads
+// ---------------------------------------------------------------------------
+chatRoutes.get('/threads', async (c) => {
+  const userId = c.get('user').userId
+  const threads = await chatRepo.findThreads(userId)
+  return c.json({ threads })
+})
+
+// ---------------------------------------------------------------------------
+// GET /threads/:id — fetch one thread + its messages
+// ---------------------------------------------------------------------------
+chatRoutes.get('/threads/:id', async (c) => {
+  const userId = c.get('user').userId
+  const id = c.req.param('id')
+  const thread = await chatRepo.findThreadWithMessages(userId, id)
+  if (!thread) {
+    return c.json({ error: 'Thread not found' }, 404)
+  }
+  return c.json({
+    thread: {
+      id: thread.id,
+      title: thread.title,
+      lastMessageAt: thread.lastMessageAt,
+      createdAt: thread.createdAt,
+    },
+    messages: thread.messages.map((m: any) => ({
+      id: m.id,
+      role: m.role,
+      content: m.content,
+      toolCalls: m.toolCalls ?? null,
+      createdAt: m.createdAt,
+    })),
+  })
+})
+
+// ---------------------------------------------------------------------------
+// PATCH /threads/:id — rename
+// ---------------------------------------------------------------------------
+chatRoutes.patch('/threads/:id', async (c) => {
+  const userId = c.get('user').userId
+  const id = c.req.param('id')
+  const body = await c.req.json()
+  const parsed = threadRenameSchema.safeParse(body)
+  if (!parsed.success) {
+    return c.json({ error: 'Invalid title' }, 400)
+  }
+  const ok = await chatRepo.renameThread(userId, id, parsed.data.title)
+  if (!ok) return c.json({ error: 'Thread not found' }, 404)
+  return c.json({ ok: true })
+})
+
+// ---------------------------------------------------------------------------
+// DELETE /threads — delete all
+// ---------------------------------------------------------------------------
+chatRoutes.delete('/threads', async (c) => {
+  const userId = c.get('user').userId
+  const count = await chatRepo.deleteAllThreads(userId)
+  return c.json({ ok: true, deleted: count })
+})
+
+// ---------------------------------------------------------------------------
+// DELETE /threads/:id — delete one
+// ---------------------------------------------------------------------------
+chatRoutes.delete('/threads/:id', async (c) => {
+  const userId = c.get('user').userId
+  const id = c.req.param('id')
+  const ok = await chatRepo.deleteThread(userId, id)
+  if (!ok) return c.json({ error: 'Thread not found' }, 404)
+  return c.json({ ok: true })
 })
 
 // ---------------------------------------------------------------------------

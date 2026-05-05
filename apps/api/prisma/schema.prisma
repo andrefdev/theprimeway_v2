@@ -24,6 +24,7 @@ model SubscriptionPlan {
   maxBrainEntries          Int?      @default(20) @map("max_brain_entries")
   hasAiAssistant           Boolean?  @default(false) @map("has_ai_assistant")
   hasBrainModule           Boolean?  @default(false) @map("has_brain_module")
+  hasBrainGraph            Boolean?  @default(false) @map("has_brain_graph")
   hasAdvancedAnalytics     Boolean?  @default(false) @map("has_advanced_analytics")
   hasCustomThemeCreation   Boolean?  @default(false) @map("has_custom_theme_creation")
   hasExportData            Boolean?  @default(false) @map("has_export_data")
@@ -376,6 +377,9 @@ model User {
   // Second Brain (Phase 4 MVP — text only)
   brainEntries    BrainEntry[]
   brainCrossLinks BrainCrossLink[]
+  brainConcepts   BrainConcept[]
+  brainConceptEdges BrainConceptEdge[]
+  brainClusters   BrainCluster[]
 
   // Ambassador / Referral program
   referredByAmbassadorId String?   @map("referred_by_ambassador_id")
@@ -569,11 +573,12 @@ model ChatMessage {
   content   String
   model     String?
   toolName  String?   @map("tool_name")
+  toolCalls Json?     @map("tool_calls")
   createdAt DateTime? @default(now()) @map("created_at")
 
   thread ChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
 
-  @@index([threadId])
+  @@index([threadId, createdAt])
   @@map("chat_messages")
 }
 
@@ -1273,7 +1278,8 @@ model BrainEntry {
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
 
-  crossLinks BrainCrossLink[]
+  crossLinks  BrainCrossLink[]
+  occurrences BrainConceptOccurrence[]
 
   @@index([userId])
   @@index([userId, status])
@@ -1301,6 +1307,105 @@ model BrainCrossLink {
   @@index([entryId])
   @@index([targetType, targetId])
   @@map("brain_cross_links")
+}
+
+// ─── Second Brain — Concept Graph (Phase 5) ──────────────────────────────────
+// Concepts are the atomic recurring units extracted from brain entries.
+// Embeddings (pgvector) drive semantic dedupe; edges encode co-occurrence with
+// Hebbian-weighted reinforcement; clusters group concepts into themes.
+
+model BrainConcept {
+  id     String @id @default(uuid())
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name           String
+  normalizedName String @map("normalized_name") // lowercase + NFKC + trim — used for unique constraint
+  kind           String @default("idea") // person | place | project | idea | emotion | decision | tool
+
+  embedding Unsupported("vector(1536)")?
+
+  clusterId String?       @map("cluster_id")
+  cluster   BrainCluster? @relation(fields: [clusterId], references: [id], onDelete: SetNull)
+
+  centralityScore Float    @default(0) @map("centrality_score")
+  mentionCount    Int      @default(0) @map("mention_count")
+  lastMentionedAt DateTime @default(now()) @map("last_mentioned_at")
+
+  // Soft-merge: when user merges duplicates we keep the row but redirect.
+  mergedIntoId String? @map("merged_into_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  occurrences BrainConceptOccurrence[]
+  edgesOut    BrainConceptEdge[]       @relation("EdgesOut")
+  edgesIn     BrainConceptEdge[]       @relation("EdgesIn")
+
+  @@unique([userId, normalizedName])
+  @@index([userId, lastMentionedAt])
+  @@index([userId, clusterId])
+  @@map("brain_concepts")
+}
+
+model BrainConceptEdge {
+  id              String @id @default(uuid())
+  userId          String @map("user_id")
+  user            User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sourceConceptId String @map("source_concept_id")
+  targetConceptId String @map("target_concept_id")
+
+  source BrainConcept @relation("EdgesOut", fields: [sourceConceptId], references: [id], onDelete: Cascade)
+  target BrainConcept @relation("EdgesIn", fields: [targetConceptId], references: [id], onDelete: Cascade)
+
+  // co_mentioned (default) | causes | caused_by | supports | contradicts | part_of | contains | precedes | related_to
+  relationType     String   @default("co_mentioned") @map("relation_type")
+  weight           Float    @default(1)
+  mentionCount     Int      @default(1) @map("mention_count")
+  lastReinforcedAt DateTime @default(now()) @map("last_reinforced_at")
+  llmConfidence    Float?   @map("llm_confidence")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([sourceConceptId, targetConceptId, relationType])
+  @@index([userId, lastReinforcedAt])
+  @@index([sourceConceptId])
+  @@index([targetConceptId])
+  @@map("brain_concept_edges")
+}
+
+model BrainConceptOccurrence {
+  id        String       @id @default(uuid())
+  conceptId String       @map("concept_id")
+  concept   BrainConcept @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+  entryId   String       @map("entry_id")
+  entry     BrainEntry   @relation(fields: [entryId], references: [id], onDelete: Cascade)
+
+  salience Float   @default(0.5)
+  quote    String? @db.Text // verbatim snippet for dual-coding hover
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([conceptId, entryId])
+  @@index([entryId])
+  @@map("brain_concept_occurrences")
+}
+
+model BrainCluster {
+  id     String @id @default(uuid())
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  label             String
+  color             String                       @default("#6366f1")
+  centroidEmbedding Unsupported("vector(1536)")?
+  conceptCount      Int                          @default(0) @map("concept_count")
+  computedAt        DateTime                     @default(now()) @map("computed_at")
+
+  concepts BrainConcept[]
+
+  @@index([userId])
+  @@map("brain_clusters")
 }
 
 // ─── Ambassador / Referral Program ───────────────────────────────────────────

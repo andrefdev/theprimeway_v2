@@ -89,7 +89,7 @@ export function DailyShutdownDialog({ instance, open, onClose }: Props) {
             {remaining.length > 0 && (
               <ul className="max-h-48 overflow-y-auto space-y-1 pr-1 rounded-md border border-border/40 bg-muted/10 p-2">
                 {remaining.map((t) => (
-                  <li key={t.id} className="truncate text-sm px-2 py-1">
+                  <li key={t.id} className="text-sm px-2 py-1 break-words">
                     {t.title}
                   </li>
                 ))}

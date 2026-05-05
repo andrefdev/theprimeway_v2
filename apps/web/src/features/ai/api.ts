@@ -20,6 +20,33 @@ export interface WeeklyPlan {
   rationale: string
 }
 
+export interface ChatThreadSummary {
+  id: string
+  title: string | null
+  lastMessageAt: string | null
+  createdAt: string | null
+}
+
+export interface PersistedToolCall {
+  toolCallId: string
+  toolName: string
+  args: unknown
+  result?: unknown
+}
+
+export interface PersistedChatMessage {
+  id: string
+  role: 'user' | 'assistant'
+  content: string
+  toolCalls: PersistedToolCall[] | null
+  createdAt: string | null
+}
+
+export interface ChatThreadWithMessages {
+  thread: ChatThreadSummary
+  messages: PersistedChatMessage[]
+}
+
 export const aiApi = {
   sendMessage: (messages: ChatMessagePayload[], locale?: string) =>
     api.post<ChatResponse>('/chat', { messages, locale }).then((r) => r.data),
@@ -31,4 +58,19 @@ export const aiApi = {
         const body = r.data as { data: WeeklyPlan } | WeeklyPlan
         return 'data' in body ? body.data : body
       }),
+
+  listThreads: () =>
+    api.get<{ threads: ChatThreadSummary[] }>('/chat/threads').then((r) => r.data.threads),
+
+  getThread: (id: string) =>
+    api.get<ChatThreadWithMessages>(`/chat/threads/${id}`).then((r) => r.data),
+
+  renameThread: (id: string, title: string) =>
+    api.patch<{ ok: boolean }>(`/chat/threads/${id}`, { title }).then((r) => r.data),
+
+  deleteThread: (id: string) =>
+    api.delete<{ ok: boolean }>(`/chat/threads/${id}`).then((r) => r.data),
+
+  deleteAllThreads: () =>
+    api.delete<{ ok: boolean; deleted: number }>('/chat/threads').then((r) => r.data),
 }

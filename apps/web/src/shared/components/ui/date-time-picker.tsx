@@ -81,7 +81,11 @@ export function DateTimePicker({
           {value ? formatInTz(value, tz, 'PPP · HH:mm') : <span>{placeholder}</span>}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
+      <PopoverContent
+        className="w-auto p-0 max-h-[var(--radix-popover-content-available-height)] overflow-y-auto"
+        align="start"
+        collisionPadding={12}
+      >
         <Calendar mode="single" selected={value} onSelect={handleDateSelect} initialFocus />
         <div className="flex items-center gap-2 border-t p-3">
           <Select value={String(hour)} onValueChange={(v) => handleHour(Number(v))}>

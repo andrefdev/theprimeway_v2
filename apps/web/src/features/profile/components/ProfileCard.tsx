@@ -8,6 +8,7 @@ import { useState } from 'react'
 import { useUpdateProfile } from '../queries'
 import { useAuthStore } from '@/shared/stores/auth.store'
 import { useLocale } from '@/i18n/useLocale'
+import { Avatar, AvatarFallback, AvatarImage } from '@/shared/components/ui/avatar'
 import { format } from 'date-fns'
 
 export function ProfileCard() {
@@ -47,9 +48,18 @@ export function ProfileCard() {
     <Card>
       <CardContent className="p-6">
         <div className="flex items-center gap-4 mb-6">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-2xl font-bold text-primary-foreground">
-            {initials}
-          </div>
+          <Avatar size="lg" className="size-16">
+            {user?.image && (
+              <AvatarImage
+                src={user.image}
+                alt={user.name || user.email || 'User'}
+                referrerPolicy="no-referrer"
+              />
+            )}
+            <AvatarFallback className="bg-primary text-2xl font-bold text-primary-foreground">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
           <div>
             <p className="text-lg font-semibold text-foreground">{user?.name || 'User'}</p>
             <p className="text-sm text-muted-foreground">{user?.email}</p>

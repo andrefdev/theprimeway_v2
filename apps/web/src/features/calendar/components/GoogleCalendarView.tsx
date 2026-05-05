@@ -190,9 +190,19 @@ export function GoogleCalendarView() {
             }}
             onItemClick={(item, anchor) => {
               if (item.type === 'task' && item.task) {
-                setTaskQuickView({ task: item.task, anchor })
+                if (taskQuickView?.task.id === item.task.id) {
+                  setTaskQuickView(null)
+                } else {
+                  setEventQuickView(null)
+                  setTaskQuickView({ task: item.task, anchor })
+                }
               } else if (item.type === 'event') {
-                setEventQuickView({ item, anchor })
+                if (eventQuickView?.item.id === item.id) {
+                  setEventQuickView(null)
+                } else {
+                  setTaskQuickView(null)
+                  setEventQuickView({ item, anchor })
+                }
               }
             }}
           />
