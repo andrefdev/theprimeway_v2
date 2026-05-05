@@ -14,7 +14,7 @@ const ctxCreate = z.object({
   position: z.number().int().default(0),
 })
 const chCreate = z.object({
-  contextId: z.string().uuid(),
+  contextId: z.string().min(1),
   name: z.string().min(1).max(100),
   color: z.string().max(20).default('#3B82F6'),
   isDefault: z.boolean().default(false),

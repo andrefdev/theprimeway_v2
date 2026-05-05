@@ -74,20 +74,16 @@ class ChannelsRepository {
 
   // ── Seed ─────────────────────────────────────────────
   async seedDefaults(userId: string) {
-    const work = await prisma.context.upsert({
-      where: { id: `seed-work-${userId}` },
-      update: {},
-      create: { id: `seed-work-${userId}`, userId, name: 'Work', color: '#3B82F6', isPersonal: false, position: 0 },
+    const existing = await prisma.context.count({ where: { userId } })
+    if (existing > 0) return
+    const work = await prisma.context.create({
+      data: { userId, name: 'Work', color: '#3B82F6', isPersonal: false, position: 0 },
     })
-    await prisma.context.upsert({
-      where: { id: `seed-personal-${userId}` },
-      update: {},
-      create: { id: `seed-personal-${userId}`, userId, name: 'Personal', color: '#10B981', isPersonal: true, position: 1 },
+    await prisma.context.create({
+      data: { userId, name: 'Personal', color: '#10B981', isPersonal: true, position: 1 },
     })
-    await prisma.channel.upsert({
-      where: { id: `seed-general-${userId}` },
-      update: {},
-      create: { id: `seed-general-${userId}`, userId, contextId: work.id, name: 'General', color: '#3B82F6', isDefault: true },
+    await prisma.channel.create({
+      data: { userId, contextId: work.id, name: 'General', color: '#3B82F6', isDefault: true },
     })
   }
 }

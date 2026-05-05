@@ -1,9 +1,13 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Brain } from 'lucide-react'
+import { useQueryClient } from '@tanstack/react-query'
+import { Brain, RefreshCw, X } from 'lucide-react'
 import { Card, CardContent } from '@/shared/components/ui/card'
 import { Skeleton } from '@/shared/components/ui/skeleton'
-import { useBrainGraph } from '@/features/brain/queries'
+import { Button } from '@/shared/components/ui/button'
+import { useBrainGraph, brainKeys } from '@/features/brain/queries'
+import { GraphSearchBar } from './GraphSearchBar'
+import { cn } from '@/shared/lib/utils'
 
 // Lazy split: keeps three.js + react-force-graph-3d (~250KB gzipped) out of
 // the main brain bundle. Only paid users who navigate to /brain/graph pull it.
@@ -13,13 +17,15 @@ const BrainGraph3D = lazy(() =>
 
 export function BrainGraphContainer() {
   const { t } = useTranslation('brain')
-  const { data, isLoading, error } = useBrainGraph()
+  const qc = useQueryClient()
+  const { data, isLoading, error, isFetching } = useBrainGraph()
+  const [focusedId, setFocusedId] = useState<string | null>(null)
 
   if (isLoading) {
     return (
       <Card>
         <CardContent>
-          <Skeleton className="h-[500px] w-full" />
+          <Skeleton className="h-[600px] w-full" />
         </CardContent>
       </Card>
     )
@@ -51,9 +57,42 @@ export function BrainGraphContainer() {
 
   return (
     <Card className="overflow-hidden">
+      <div className="flex items-center justify-between gap-3 border-b px-4 py-2">
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          <span>
+            {t('graph.stats.concepts', { count: data.concepts.length })}
+            <span className="px-1.5">·</span>
+            {t('graph.stats.clusters', { count: data.clusters.length })}
+          </span>
+          {focusedId && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 gap-1 px-2 text-xs"
+              onClick={() => setFocusedId(null)}
+            >
+              <X className="h-3 w-3" />
+              {t('graph.resetFocus')}
+            </Button>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <GraphSearchBar concepts={data.concepts} onSelect={(id) => setFocusedId(id)} />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            title={t('graph.refresh')}
+            onClick={() => qc.invalidateQueries({ queryKey: brainKeys.graph() })}
+            disabled={isFetching}
+          >
+            <RefreshCw className={cn('h-4 w-4', isFetching && 'animate-spin')} />
+          </Button>
+        </div>
+      </div>
       <CardContent className="p-0">
         <Suspense fallback={<Skeleton className="h-[600px] w-full" />}>
-          <BrainGraph3D data={data} />
+          <BrainGraph3D data={data} focusedId={focusedId} onFocus={setFocusedId} />
         </Suspense>
       </CardContent>
     </Card>

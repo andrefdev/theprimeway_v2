@@ -67,6 +67,18 @@
     "hover": {
       "mentions_one": "{{count}} mention",
       "mentions_other": "{{count}} mentions"
-    }
+    },
+    "search": {
+      "placeholder": "Search a concept…",
+      "noResults": "No matches"
+    },
+    "refresh": "Refresh graph",
+    "stats": {
+      "concepts_one": "{{count}} concept",
+      "concepts_other": "{{count}} concepts",
+      "clusters_one": "{{count}} cluster",
+      "clusters_other": "{{count}} clusters"
+    },
+    "resetFocus": "Reset focus"
   }
 }

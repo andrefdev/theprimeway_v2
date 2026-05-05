@@ -30,7 +30,6 @@ function SettingsPage() {
   const [saving] = useState(false)
   const [activeTab, setActiveTab] = useState('general')
   const customThemeCreationFeature = useFeature(FEATURES.CUSTOM_THEME_CREATION)
-  const exportDataFeature = useFeature(FEATURES.EXPORT_DATA)
   const connectGoogle = useConnectGoogleCalendar()
   const handledOAuthRef = useRef(false)
 
@@ -138,7 +137,7 @@ function SettingsPage() {
 
         <TabsContent value="account" className="space-y-6 pt-4">
           <ChangePasswordForm />
-          {exportDataFeature.enabled && <DangerZone />}
+          <DangerZone />
         </TabsContent>
       </Tabs>
     </div>
