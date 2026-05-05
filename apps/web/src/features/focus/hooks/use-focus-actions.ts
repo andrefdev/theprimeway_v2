@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { tasksApi } from '@/features/tasks/api'
 import { useStartTimer, useStopTimer, useUpdateTask } from '@/features/tasks/queries'
 import { schedulingApi } from '@/features/scheduling/api'
 import { schedulingKeys } from '@/features/scheduling/queries'
@@ -38,46 +37,43 @@ export function useFocusActions({
   const replace = useFocusStore((s) => s.replace)
   const [isLoadingNext, setIsLoadingNext] = useState(false)
 
-  async function start() {
+  function start() {
     if (!taskId) return
-    try {
-      const patch: Record<string, unknown> = {}
-      if ((task?.acceptanceCriteria ?? '') !== acceptance) {
-        patch.acceptanceCriteria = acceptance || null
-      }
-      const taskDur = task?.estimatedDuration ?? null
-      if (durationMinutes && durationMinutes !== taskDur) {
-        patch.estimatedDuration = durationMinutes
-      }
-      if (Object.keys(patch).length > 0) {
-        await updateTask.mutateAsync({ id: taskId, data: patch })
-      }
-      await startTimer.mutateAsync(taskId)
-      schedulingApi.timerStart({ taskId }).catch(() => undefined)
-      onStarted()
-    } catch (err) {
-      toast.error((err as Error).message || 'Could not start')
+    const patch: Record<string, unknown> = {}
+    if ((task?.acceptanceCriteria ?? '') !== acceptance) {
+      patch.acceptanceCriteria = acceptance || null
     }
+    const taskDur = task?.estimatedDuration ?? null
+    if (durationMinutes && durationMinutes !== taskDur) {
+      patch.estimatedDuration = durationMinutes
+    }
+    if (Object.keys(patch).length > 0) {
+      updateTask.mutate(
+        { id: taskId, data: patch },
+        { onError: (err) => toast.error((err as Error).message || 'Could not save changes') },
+      )
+    }
+    startTimer.mutate(taskId, {
+      onError: (err) => toast.error((err as Error).message || 'Could not start'),
+    })
+    schedulingApi.timerStart({ taskId }).catch(() => undefined)
+    onStarted()
   }
 
-  async function pause() {
+  function pause() {
     if (!taskId) return
-    try {
-      await stopTimer.mutateAsync(taskId)
-      onPaused()
-    } catch (err) {
-      toast.error((err as Error).message || 'Pause failed')
-    }
+    stopTimer.mutate(taskId, {
+      onError: (err) => toast.error((err as Error).message || 'Pause failed'),
+    })
+    onPaused()
   }
 
-  async function resume() {
+  function resume() {
     if (!taskId) return
-    try {
-      await startTimer.mutateAsync(taskId)
-      onResumed()
-    } catch (err) {
-      toast.error((err as Error).message || 'Resume failed')
-    }
+    startTimer.mutate(taskId, {
+      onError: (err) => toast.error((err as Error).message || 'Resume failed'),
+    })
+    onResumed()
   }
 
   async function goToNextTask(justCompletedId: string) {
@@ -102,19 +98,19 @@ export function useFocusActions({
   async function complete(over: boolean) {
     if (!taskId) return
     const completingId = taskId
-    try {
-      if (task?.actualStart && !task?.actualEnd) {
-        await stopTimer.mutateAsync(completingId)
-      }
-      await tasksApi.update(completingId, { status: 'completed' })
-      schedulingApi.completeEarly({ taskId: completingId }).catch(() => undefined)
-      qc.invalidateQueries({ queryKey: ['tasks'] })
-      qc.invalidateQueries({ queryKey: schedulingKeys.sessions })
-      toast.success(over ? 'Completed (overtime)' : 'Task completed')
-      await goToNextTask(completingId)
-    } catch (err) {
-      toast.error((err as Error).message || 'Complete failed')
+    if (task?.actualStart && !task?.actualEnd) {
+      stopTimer.mutate(completingId, {
+        onError: (err) => toast.error((err as Error).message || 'Could not stop timer'),
+      })
     }
+    updateTask.mutate(
+      { id: completingId, data: { status: 'completed' } },
+      { onError: (err) => toast.error((err as Error).message || 'Complete failed') },
+    )
+    schedulingApi.completeEarly({ taskId: completingId }).catch(() => undefined)
+    qc.invalidateQueries({ queryKey: schedulingKeys.sessions })
+    toast.success(over ? 'Completed (overtime)' : 'Task completed')
+    await goToNextTask(completingId)
   }
 
   const isCompleting =

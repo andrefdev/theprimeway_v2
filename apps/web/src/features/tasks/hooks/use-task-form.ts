@@ -234,8 +234,14 @@ export function useTaskForm({
           const payload = autoSchedule && !data.scheduledStart && !data.isAllDay
             ? { ...data, autoSchedule: true }
             : data
-          await createTask.mutateAsync(payload as typeof data)
+          // Fire-and-forget: optimistic patch already runs in onMutate, so we
+          // can close the modal immediately instead of waiting for the round-trip.
+          createTask.mutate(payload as typeof data, {
+            onError: () => toast.error(t('failedToCreate')),
+          })
           toast.success(t('taskCreated'))
+          onSaved?.()
+          return
         }
         onSaved?.()
       } catch {

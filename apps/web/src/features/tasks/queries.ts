@@ -3,7 +3,7 @@ import { tasksApi } from './api'
 import { CACHE_TIMES } from '@repo/shared/constants'
 import type { Task } from '@repo/shared/types'
 import type { CreateTaskInput, UpdateTaskInput } from '@repo/shared/validators'
-import { listOps, patchQueries, rollbackQueries, snapshotQueries } from '@/shared/lib/optimistic'
+import { listOps, patchQueries, rollbackQueries } from '@/shared/lib/optimistic'
 import { playSound } from '@/shared/lib/sound'
 
 interface TasksListResponse {
@@ -177,13 +177,39 @@ function removeFromGrouped(qc: QueryClient, taskId: string) {
   }))
 }
 
+function patchTaskEverywhere(
+  qc: QueryClient,
+  taskId: string,
+  updater: (t: Task) => Partial<Task>,
+) {
+  patchQueries<TasksListResponse>(qc, tasksQueries.lists(), (cur) => ({
+    ...cur,
+    data: cur.data.map((t) => (t.id === taskId ? { ...t, ...updater(t) } : t)),
+  }))
+  patchQueries<GroupedTasksResponse>(qc, groupedKey, (cur) => ({
+    groups: cur.groups.map((g) => ({
+      ...g,
+      tasks: g.tasks.map((t) => (t.id === taskId ? { ...t, ...updater(t) } : t)),
+    })),
+    archive: cur.archive.map((t) => (t.id === taskId ? { ...t, ...updater(t) } : t)),
+  }))
+  const focusKey = ['tasks', 'focus', taskId] as const
+  const focusSnap = qc.getQueryData<Task>(focusKey)
+  if (focusSnap) {
+    qc.setQueryData<Task>(focusKey, { ...focusSnap, ...updater(focusSnap) })
+  }
+}
+
 export function useCreateTask() {
   const qc = useQueryClient()
 
   return useMutation({
     mutationFn: (data: CreateTaskInput) => tasksApi.create(data),
-    onMutate: async (data) => {
-      const snaps = await snapshotQueries<TasksListResponse>(qc, tasksQueries.lists())
+    onMutate: (data) => {
+      // Fire-and-forget cancel — don't block optimistic patch on it.
+      qc.cancelQueries({ queryKey: tasksQueries.lists() })
+      qc.cancelQueries({ queryKey: groupedKey })
+
       const now = new Date().toISOString()
       const optimistic: Task = {
         id: tempTaskId(),
@@ -208,15 +234,37 @@ export function useCreateTask() {
         createdAt: now,
         updatedAt: now,
       }
-      patchQueries<TasksListResponse>(qc, tasksQueries.lists(), (cur) => ({
+
+      const snaps = patchQueries<TasksListResponse>(qc, tasksQueries.lists(), (cur) => ({
         ...cur,
         data: [...cur.data, optimistic],
         count: cur.count + 1,
       }))
-      return { snaps }
+
+      const groupedSnaps = qc.getQueriesData<GroupedTasksResponse>({ queryKey: groupedKey })
+      patchQueries<GroupedTasksResponse>(qc, groupedKey, (cur) => {
+        const dateKey = optimistic.scheduledDate
+          ? new Date(optimistic.scheduledDate).toISOString().split('T')[0]!
+          : 'no-date'
+        const idx = cur.groups.findIndex((g) => g.date_key === dateKey)
+        if (idx === -1) {
+          return {
+            groups: sortGroups([...cur.groups, { date_key: dateKey, tasks: [optimistic] }]),
+            archive: cur.archive,
+          }
+        }
+        return {
+          groups: cur.groups.map((g, i) =>
+            i === idx ? { ...g, tasks: [...g.tasks, optimistic] } : g,
+          ),
+          archive: cur.archive,
+        }
+      })
+      return { snaps, groupedSnaps }
     },
     onError: (_e, _v, ctx) => {
       if (ctx?.snaps) rollbackQueries(qc, ctx.snaps)
+      if (ctx?.groupedSnaps) rollbackQueries(qc, ctx.groupedSnaps)
     },
     onSettled: () => qc.invalidateQueries({ queryKey: tasksQueries.all() }),
   })
@@ -304,23 +352,72 @@ export function useScheduleTask() {
 }
 
 export function useStartTimer() {
-  const queryClient = useQueryClient()
+  const qc = useQueryClient()
   return useMutation({
     mutationFn: (taskId: string) => tasksApi.startTimer(taskId),
-    onSuccess: () => {
-      playSound('pomodoroStart')
-      queryClient.invalidateQueries({ queryKey: tasksQueries.all() })
+    onMutate: (taskId) => {
+      qc.cancelQueries({ queryKey: tasksQueries.lists() })
+      qc.cancelQueries({ queryKey: groupedKey })
+
+      const listSnaps = qc.getQueriesData<TasksListResponse>({ queryKey: tasksQueries.lists() })
+      const groupedSnaps = qc.getQueriesData<GroupedTasksResponse>({ queryKey: groupedKey })
+      const focusKey = ['tasks', 'focus', taskId] as const
+      const focusSnap = qc.getQueryData<Task>(focusKey)
+
+      const now = new Date().toISOString()
+      patchTaskEverywhere(qc, taskId, () => ({
+        actualStart: now,
+        actualEnd: null,
+        status: 'open',
+      }))
+
+      return { listSnaps, groupedSnaps, focusKey, focusSnap }
     },
+    onSuccess: () => playSound('pomodoroStart'),
+    onError: (_e, _v, ctx) => {
+      if (ctx?.listSnaps) rollbackQueries(qc, ctx.listSnaps)
+      if (ctx?.groupedSnaps) rollbackQueries(qc, ctx.groupedSnaps)
+      if (ctx?.focusSnap) qc.setQueryData(ctx.focusKey, ctx.focusSnap)
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: tasksQueries.all() }),
   })
 }
 
 export function useStopTimer() {
-  const queryClient = useQueryClient()
+  const qc = useQueryClient()
   return useMutation({
     mutationFn: (taskId: string) => tasksApi.stopTimer(taskId),
-    onSuccess: () => {
-      playSound('pomodoroEnd')
-      queryClient.invalidateQueries({ queryKey: tasksQueries.all() })
+    onMutate: (taskId) => {
+      qc.cancelQueries({ queryKey: tasksQueries.lists() })
+      qc.cancelQueries({ queryKey: groupedKey })
+
+      const listSnaps = qc.getQueriesData<TasksListResponse>({ queryKey: tasksQueries.lists() })
+      const groupedSnaps = qc.getQueriesData<GroupedTasksResponse>({ queryKey: groupedKey })
+      const focusKey = ['tasks', 'focus', taskId] as const
+      const focusSnap = qc.getQueryData<Task>(focusKey)
+
+      const nowIso = new Date().toISOString()
+      patchTaskEverywhere(qc, taskId, (t) => {
+        if (!t.actualStart) return { actualEnd: nowIso }
+        const prior = t.actualDurationSeconds ?? 0
+        const elapsed = Math.max(
+          0,
+          Math.round((Date.now() - new Date(t.actualStart).getTime()) / 1000),
+        )
+        return {
+          actualEnd: nowIso,
+          actualDurationSeconds: prior + elapsed,
+        }
+      })
+
+      return { listSnaps, groupedSnaps, focusKey, focusSnap }
     },
+    onSuccess: () => playSound('pomodoroEnd'),
+    onError: (_e, _v, ctx) => {
+      if (ctx?.listSnaps) rollbackQueries(qc, ctx.listSnaps)
+      if (ctx?.groupedSnaps) rollbackQueries(qc, ctx.groupedSnaps)
+      if (ctx?.focusSnap) qc.setQueryData(ctx.focusKey, ctx.focusSnap)
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: tasksQueries.all() }),
   })
 }
