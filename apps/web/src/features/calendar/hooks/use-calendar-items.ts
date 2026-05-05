@@ -35,6 +35,10 @@ export interface CalendarItem {
   colorId?: string
   organizer?: { email?: string; displayName?: string }
   visibility?: string
+  /** Google calendar access role: 'owner' | 'writer' | 'reader' | 'freeBusyReader'. */
+  calendarAccessRole?: string | null
+  /** True when this event lives on a read-only calendar (e.g. holidays). */
+  isReadOnly?: boolean
 }
 
 /**
@@ -113,6 +117,11 @@ export function useCalendarItems(dateRange: { from: string; to: string }) {
       const isAllDay: boolean = ev.isAllDay ?? Boolean(ev.start?.date && !ev.start?.dateTime)
       const color: string = ev.color ?? ev.calendarColor ?? 'purple'
 
+      const accessRole = (ev as any).calendarAccessRole as string | null | undefined
+      const isReadOnly = Boolean(
+        accessRole && accessRole !== 'owner' && accessRole !== 'writer',
+      )
+
       result.push({
         id: `event-${id}`,
         title,
@@ -138,6 +147,8 @@ export function useCalendarItems(dateRange: { from: string; to: string }) {
         colorId: ev.colorId,
         organizer: ev.organizer,
         visibility: ev.visibility,
+        calendarAccessRole: accessRole ?? null,
+        isReadOnly,
       })
     }
 

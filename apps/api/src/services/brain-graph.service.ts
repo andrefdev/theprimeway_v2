@@ -16,7 +16,7 @@
  * The graph view is gated behind FEATURES.BRAIN_GRAPH (paid plans). Free-tier
  * users get a 403 from the route layer; this service double-checks defensively.
  */
-import { brainGraphRepo } from '../repositories/brain-graph.repo'
+import { brainGraphRepo, ConceptMergeError } from '../repositories/brain-graph.repo'
 import { agglomerativeCluster } from '../lib/clustering'
 import { featuresService } from './features.service'
 import { conceptExtractionService } from './concept-extraction.service'
@@ -91,6 +91,19 @@ class BrainGraphService {
   }
 
   /**
+   * Manual merge from the UI: user picks two concepts that the auto-dedupe
+   * missed and folds source INTO target. Source becomes a tombstone.
+   */
+  async mergeConcepts(
+    userId: string,
+    sourceId: string,
+    targetId: string,
+  ): Promise<{ mergedConceptId: string; targetConceptId: string }> {
+    await this.assertFeature(userId)
+    return brainGraphRepo.mergeConcepts(userId, sourceId, targetId)
+  }
+
+  /**
    * Wrapper used by the cron — returns true if the user is overdue. Mirrors
    * concept-extraction.service.shouldRecluster so the cron only needs one
    * import.
@@ -113,6 +126,8 @@ export class BrainGraphFeatureError extends Error {
     super('Brain graph feature is not enabled for this user')
   }
 }
+
+export { ConceptMergeError }
 
 // ─── DTO mappers ─────────────────────────────────────────────────────────
 

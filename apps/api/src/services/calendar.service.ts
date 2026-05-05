@@ -329,9 +329,12 @@ class CalendarService {
               allEvents.push(
                 ...data.items.map((event: any) => ({
                   ...event,
-                  calendarId: cal.id,
+                  // Use the provider id so DELETE/PATCH endpoints can resolve it.
+                  calendarId: externalId,
+                  internalCalendarId: cal.id,
                   calendarName: cal.name,
                   calendarColor: cal.color,
+                  calendarAccessRole: (cal as any).accessRole ?? null,
                 })),
               )
             }

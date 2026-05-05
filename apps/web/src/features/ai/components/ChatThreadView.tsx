@@ -1,8 +1,8 @@
-import { useMemo, useRef, useEffect, useCallback } from 'react'
+import { useMemo, useRef, useEffect, useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport, type UIMessage } from 'ai'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { SquareIcon, Loader2 } from 'lucide-react'
 import { Button } from '@/shared/components/ui/button'
@@ -32,6 +32,10 @@ export function persistedToUIMessages(msgs: PersistedChatMessage[]): UIMessage[]
   })
 }
 
+function freshSessionKey() {
+  return `s-${Math.random().toString(36).slice(2)}-${Date.now().toString(36)}`
+}
+
 export function ChatThreadView({
   threadId,
   onThreadCreated,
@@ -39,13 +43,37 @@ export function ChatThreadView({
   threadId: string | undefined
   onThreadCreated: (id: string) => void
 }) {
-  const { data: thread, isLoading } = useQuery(aiQueries.thread(threadId))
+  const queryClient = useQueryClient()
+  // sessionKey is the React key for ChatSession AND useChat's internal id. It
+  // must stay stable while a session is alive so that streaming is not aborted
+  // mid-flight when a brand-new threadId arrives via X-Thread-Id.
+  const [sessionKey, setSessionKey] = useState<string>(() => threadId ?? freshSessionKey())
+  // Tracks the threadId we created during the current session. When the prop
+  // threadId matches it, we don't refetch and we don't remount.
+  const ownedThreadIdRef = useRef<string | null>(null)
+  const lastThreadIdRef = useRef<string | undefined>(threadId)
+
+  if (threadId !== lastThreadIdRef.current) {
+    lastThreadIdRef.current = threadId
+    if (threadId !== ownedThreadIdRef.current) {
+      // External change (user clicked another thread or "new chat"). Force a
+      // fresh session — the previous in-memory chat state is no longer valid.
+      ownedThreadIdRef.current = null
+      setSessionKey(threadId ?? freshSessionKey())
+    }
+  }
+
+  const isOwnedLocalSession = !!threadId && threadId === ownedThreadIdRef.current
+
+  const { data: thread, isLoading } = useQuery({
+    ...aiQueries.thread(threadId),
+    enabled: !!threadId && !isOwnedLocalSession,
+  })
 
   // Gate the chat session mount on data availability so useChat receives the
-  // correct initialMessages on its FIRST render. Without this gate, useChat
-  // would mount with empty messages while the query was still loading and
-  // never pick up the data afterwards.
-  if (threadId && (isLoading || !thread)) {
+  // correct initialMessages on its FIRST render. Skip this gate when the
+  // thread was just born locally — its messages already live in useChat state.
+  if (threadId && !isOwnedLocalSession && (isLoading || !thread)) {
     return (
       <div className="flex flex-1 items-center justify-center text-muted-foreground">
         <Loader2 className="size-5 animate-spin" />
@@ -55,27 +83,38 @@ export function ChatThreadView({
 
   const initialMessages = thread ? persistedToUIMessages(thread.messages) : undefined
 
+  function handleThreadCreated(id: string) {
+    ownedThreadIdRef.current = id
+    // Show the brand-new thread in the sidebar immediately.
+    queryClient.invalidateQueries({ queryKey: [...aiQueries.all(), 'threads'] })
+    onThreadCreated(id)
+  }
+
   return (
     <ChatSession
-      key={threadId ?? 'new'}
+      key={sessionKey}
+      sessionId={sessionKey}
       threadId={threadId}
       initialMessages={initialMessages}
-      onThreadCreated={onThreadCreated}
+      onThreadCreated={handleThreadCreated}
     />
   )
 }
 
 function ChatSession({
+  sessionId,
   threadId,
   initialMessages,
   onThreadCreated,
 }: {
+  sessionId: string
   threadId: string | undefined
   initialMessages: UIMessage[] | undefined
   onThreadCreated: (id: string) => void
 }) {
   const { t, i18n } = useTranslation('ai')
   const scrollRef = useRef<HTMLDivElement>(null)
+  const queryClient = useQueryClient()
   const { execute, busyToolCallId } = useExecuteTool()
 
   const threadIdRef = useRef(threadId)
@@ -115,7 +154,7 @@ function ChatSession({
   const { messages, sendMessage, status, addToolResult, stop } = useChat({
     transport,
     messages: initialMessages,
-    id: threadId ?? 'new',
+    id: sessionId,
     onError: (err) => {
       const errStatus = (err as { status?: number })?.status
       if (errStatus === 403) toast.error(t('aiDisabled'))
@@ -123,6 +162,22 @@ function ChatSession({
       else toast.error(t('failedToSend'))
     },
   })
+
+  // Refresh the sidebar threads list once the stream finishes so the title
+  // generated server-side (fire-and-forget after onFinish) shows up. The small
+  // delay gives the title model time to respond before we refetch.
+  const prevStatusRef = useRef(status)
+  useEffect(() => {
+    const prev = prevStatusRef.current
+    prevStatusRef.current = status
+    const wasActive = prev === 'streaming' || prev === 'submitted'
+    if (wasActive && status === 'ready' && threadIdRef.current) {
+      const timer = setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['ai', 'threads'] })
+      }, 1500)
+      return () => clearTimeout(timer)
+    }
+  }, [status, queryClient])
 
   useEffect(() => {
     if (scrollRef.current) {

@@ -28,4 +28,12 @@ export const brainApi = {
       .then((r) => r.data.data),
 
   getGraph: () => api.get<{ data: BrainGraphResponse }>('/brain/graph').then((r) => r.data.data),
+
+  mergeConcepts: (sourceId: string, targetId: string) =>
+    api
+      .post<{ data: { mergedConceptId: string; targetConceptId: string } }>(
+        '/brain/concepts/merge',
+        { sourceId, targetId },
+      )
+      .then((r) => r.data.data),
 }

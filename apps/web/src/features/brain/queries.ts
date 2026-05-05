@@ -74,6 +74,15 @@ export function useCreateBrainEntry() {
   })
 }
 
+export function useMergeConcepts() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ sourceId, targetId }: { sourceId: string; targetId: string }) =>
+      brainApi.mergeConcepts(sourceId, targetId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: brainKeys.graph() }),
+  })
+}
+
 export function useReprocessBrainEntry() {
   const qc = useQueryClient()
   return useMutation({

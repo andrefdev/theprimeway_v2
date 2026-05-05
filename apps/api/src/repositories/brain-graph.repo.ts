@@ -541,6 +541,111 @@ class BrainGraphRepository {
     })
   }
 
+  // ─── Manual merge (user override of auto-dedupe) ───────────────────────
+
+  /**
+   * Merge `sourceId` INTO `targetId`. Source becomes a tombstone (mergedIntoId
+   * = target). All occurrences and edges are reassigned to target with conflict
+   * resolution. Atomic — wrapped in a single transaction.
+   *
+   * Throws on: not-found, cross-user, either side already merged, source==target.
+   */
+  async mergeConcepts(
+    userId: string,
+    sourceId: string,
+    targetId: string,
+  ): Promise<{ mergedConceptId: string; targetConceptId: string }> {
+    if (sourceId === targetId) {
+      throw new ConceptMergeError('SAME_ID', 'sourceId and targetId must differ')
+    }
+
+    return prisma.$transaction(async (tx) => {
+      // 1. Validate ownership and merge state.
+      const concepts = await tx.brainConcept.findMany({
+        where: { id: { in: [sourceId, targetId] }, userId },
+        select: { id: true, mergedIntoId: true },
+      })
+      if (concepts.length !== 2) {
+        throw new ConceptMergeError('NOT_FOUND', 'one or both concepts not found for this user')
+      }
+      if (concepts.some((c) => c.mergedIntoId !== null)) {
+        throw new ConceptMergeError('ALREADY_MERGED', 'one or both concepts are already merged')
+      }
+
+      // 2. Move occurrences. Conflicts on (concept_id, entry_id) keep the
+      //    higher salience and prefer existing quote (target wins ties).
+      await tx.$executeRaw`
+        INSERT INTO brain_concept_occurrences (id, concept_id, entry_id, salience, quote, created_at)
+        SELECT gen_random_uuid()::text, ${targetId}, entry_id, salience, quote, created_at
+        FROM brain_concept_occurrences
+        WHERE concept_id = ${sourceId}
+        ON CONFLICT (concept_id, entry_id) DO UPDATE
+          SET salience = GREATEST(brain_concept_occurrences.salience, EXCLUDED.salience),
+              quote = COALESCE(brain_concept_occurrences.quote, EXCLUDED.quote)
+      `
+      await tx.$executeRaw`
+        DELETE FROM brain_concept_occurrences WHERE concept_id = ${sourceId}
+      `
+
+      // 3. Move edges. Each direction handled separately — the unique index
+      //    is (source_concept_id, target_concept_id, relation_type) so a swap
+      //    can collide with an existing target-side edge.
+      await tx.$executeRaw`
+        INSERT INTO brain_concept_edges (
+          id, user_id, source_concept_id, target_concept_id,
+          relation_type, weight, mention_count, last_reinforced_at, created_at, llm_confidence
+        )
+        SELECT gen_random_uuid()::text, user_id, ${targetId}, target_concept_id,
+               relation_type, weight, mention_count, last_reinforced_at, created_at, llm_confidence
+        FROM brain_concept_edges
+        WHERE source_concept_id = ${sourceId} AND target_concept_id <> ${targetId}
+        ON CONFLICT (source_concept_id, target_concept_id, relation_type) DO UPDATE
+          SET mention_count = brain_concept_edges.mention_count + EXCLUDED.mention_count,
+              weight = brain_concept_edges.weight + EXCLUDED.weight,
+              last_reinforced_at = GREATEST(brain_concept_edges.last_reinforced_at, EXCLUDED.last_reinforced_at)
+      `
+      await tx.$executeRaw`
+        INSERT INTO brain_concept_edges (
+          id, user_id, source_concept_id, target_concept_id,
+          relation_type, weight, mention_count, last_reinforced_at, created_at, llm_confidence
+        )
+        SELECT gen_random_uuid()::text, user_id, source_concept_id, ${targetId},
+               relation_type, weight, mention_count, last_reinforced_at, created_at, llm_confidence
+        FROM brain_concept_edges
+        WHERE target_concept_id = ${sourceId} AND source_concept_id <> ${targetId}
+        ON CONFLICT (source_concept_id, target_concept_id, relation_type) DO UPDATE
+          SET mention_count = brain_concept_edges.mention_count + EXCLUDED.mention_count,
+              weight = brain_concept_edges.weight + EXCLUDED.weight,
+              last_reinforced_at = GREATEST(brain_concept_edges.last_reinforced_at, EXCLUDED.last_reinforced_at)
+      `
+      // Drop self-loops created by the merge (target↔target) and the originals.
+      await tx.$executeRaw`
+        DELETE FROM brain_concept_edges
+        WHERE source_concept_id = ${sourceId}
+           OR target_concept_id = ${sourceId}
+           OR source_concept_id = target_concept_id
+      `
+
+      // 4. Bump target stats from source's metadata before tombstoning.
+      await tx.$executeRaw`
+        UPDATE brain_concepts
+        SET mention_count = brain_concepts.mention_count + s.mention_count,
+            last_mentioned_at = GREATEST(brain_concepts.last_mentioned_at, s.last_mentioned_at),
+            updated_at = CURRENT_TIMESTAMP
+        FROM (SELECT mention_count, last_mentioned_at FROM brain_concepts WHERE id = ${sourceId}) s
+        WHERE brain_concepts.id = ${targetId}
+      `
+
+      // 5. Tombstone source. mergedIntoId points to target; reads filter this out.
+      await tx.brainConcept.update({
+        where: { id: sourceId },
+        data: { mergedIntoId: targetId, updatedAt: new Date() },
+      })
+
+      return { mergedConceptId: sourceId, targetConceptId: targetId }
+    })
+  }
+
   // ─── Stats for clustering trigger ──────────────────────────────────────
 
   async newConceptsSince(userId: string, since: Date): Promise<number> {
@@ -561,3 +666,12 @@ class BrainGraphRepository {
 }
 
 export const brainGraphRepo = new BrainGraphRepository()
+
+export type ConceptMergeErrorCode = 'SAME_ID' | 'NOT_FOUND' | 'ALREADY_MERGED'
+
+export class ConceptMergeError extends Error {
+  constructor(public readonly code: ConceptMergeErrorCode, message: string) {
+    super(message)
+    this.name = 'ConceptMergeError'
+  }
+}

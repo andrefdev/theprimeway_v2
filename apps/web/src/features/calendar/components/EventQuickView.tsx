@@ -167,14 +167,20 @@ export function EventQuickView({ item, anchorEl, open, onClose, onEdit, onDelete
         </div>
 
         <div className="flex items-center justify-end gap-1 pt-1 border-t">
-          <Button variant="ghost" size="sm" className="gap-1" onClick={onDelete}>
-            <Trash2 size={14} />
-            Delete
-          </Button>
-          <Button variant="default" size="sm" className="gap-1" onClick={onEdit}>
-            <Pencil size={14} />
-            Edit
-          </Button>
+          {item.isReadOnly ? (
+            <span className="text-xs text-muted-foreground italic">Read-only</span>
+          ) : (
+            <>
+              <Button variant="ghost" size="sm" className="gap-1" onClick={onDelete}>
+                <Trash2 size={14} />
+                Delete
+              </Button>
+              <Button variant="default" size="sm" className="gap-1" onClick={onEdit}>
+                <Pencil size={14} />
+                Edit
+              </Button>
+            </>
+          )}
         </div>
       </PopoverContent>
     </Popover>

@@ -79,6 +79,20 @@
       "clusters_one": "{{count}} cluster",
       "clusters_other": "{{count}} clusters"
     },
-    "resetFocus": "Quitar foco"
+    "resetFocus": "Quitar foco",
+    "focusPanel": {
+      "merge": "Fusionar con…",
+      "close": "Cerrar"
+    },
+    "merge": {
+      "title": "Fusionar conceptos",
+      "subtitle": "Elige qué concepto debe absorber a «{{source}}».",
+      "searchPlaceholder": "Buscar concepto destino…",
+      "warning": "«{{source}}» será absorbido por «{{target}}». Sus menciones y conexiones se moverán al destino. Esta acción no se puede deshacer.",
+      "confirm": "Fusionar",
+      "cancel": "Cancelar",
+      "success": "Conceptos fusionados",
+      "error": "Error al fusionar"
+    }
   }
 }

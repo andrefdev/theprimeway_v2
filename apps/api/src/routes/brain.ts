@@ -3,7 +3,7 @@ import { authMiddleware } from '../middleware/auth'
 import { requireFeature } from '../middleware/feature-gate'
 import { FEATURES } from '@repo/shared/constants'
 import { brainService } from '../services/brain.service'
-import { brainGraphService, BrainGraphFeatureError } from '../services/brain-graph.service'
+import { brainGraphService, BrainGraphFeatureError, ConceptMergeError } from '../services/brain-graph.service'
 
 export const brainRoutes = new OpenAPIHono()
 
@@ -96,6 +96,30 @@ graphRoutes.get('/graph', async (c) => {
   } catch (err) {
     if (err instanceof BrainGraphFeatureError) {
       return c.json({ error: err.code }, 403)
+    }
+    throw err
+  }
+})
+
+// POST /api/brain/concepts/merge — merge sourceId INTO targetId.
+graphRoutes.post('/concepts/merge', async (c) => {
+  const userId = (c as any).get('user').userId
+  const body = await c.req.json().catch(() => ({}))
+  const sourceId = typeof body.sourceId === 'string' ? body.sourceId : null
+  const targetId = typeof body.targetId === 'string' ? body.targetId : null
+  if (!sourceId || !targetId) {
+    return c.json({ error: 'sourceId and targetId are required' }, 400)
+  }
+  try {
+    const data = await brainGraphService.mergeConcepts(userId, sourceId, targetId)
+    return c.json({ data })
+  } catch (err) {
+    if (err instanceof BrainGraphFeatureError) {
+      return c.json({ error: err.code }, 403)
+    }
+    if (err instanceof ConceptMergeError) {
+      const status = err.code === 'NOT_FOUND' ? 404 : 400
+      return c.json({ error: err.code }, status)
     }
     throw err
   }

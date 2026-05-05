@@ -98,6 +98,7 @@ const VISIBILITY_LABEL: Record<string, string> = {
 
 export function EventEditDialog({ open, onClose, item, defaultStart, defaultEnd }: Props) {
   const isEdit = Boolean(item?.googleEventId && item?.googleCalendarId)
+  const isReadOnly = Boolean(item?.isReadOnly)
   const browserTz = useMemo(
     () => Intl.DateTimeFormat().resolvedOptions().timeZone,
     [],
@@ -562,7 +563,7 @@ export function EventEditDialog({ open, onClose, item, defaultStart, defaultEnd 
 
         {/* Footer */}
         <div className="flex items-center justify-between gap-2 border-t px-6 py-3 bg-muted/40">
-          {isEdit ? (
+          {isEdit && !isReadOnly ? (
             <Button
               variant="ghost"
               size="sm"
@@ -577,17 +578,22 @@ export function EventEditDialog({ open, onClose, item, defaultStart, defaultEnd 
             <span />
           )}
           <div className="flex items-center gap-2">
+            {isReadOnly && (
+              <span className="text-xs text-muted-foreground mr-1">Read-only calendar</span>
+            )}
             <Button variant="outline" size="sm" onClick={onClose} className="h-8">
-              Cancel
+              {isReadOnly ? 'Close' : 'Cancel'}
             </Button>
-            <Button
-              size="sm"
-              onClick={handleSubmit}
-              disabled={update.isPending || create.isPending}
-              className="h-8"
-            >
-              {isEdit ? 'Save' : attendees.length > 0 ? 'Send invites' : 'Create'}
-            </Button>
+            {!isReadOnly && (
+              <Button
+                size="sm"
+                onClick={handleSubmit}
+                disabled={update.isPending || create.isPending}
+                className="h-8"
+              >
+                {isEdit ? 'Save' : attendees.length > 0 ? 'Send invites' : 'Create'}
+              </Button>
+            )}
           </div>
         </div>
 

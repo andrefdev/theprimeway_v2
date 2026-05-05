@@ -7,6 +7,7 @@ import { Skeleton } from '@/shared/components/ui/skeleton'
 import { Button } from '@/shared/components/ui/button'
 import { useBrainGraph, brainKeys } from '@/features/brain/queries'
 import { GraphSearchBar } from './GraphSearchBar'
+import { FocusedConceptPanel } from './FocusedConceptPanel'
 import { cn } from '@/shared/lib/utils'
 
 // Lazy split: keeps three.js + react-force-graph-3d (~250KB gzipped) out of
@@ -90,10 +91,22 @@ export function BrainGraphContainer() {
           </Button>
         </div>
       </div>
-      <CardContent className="p-0">
+      <CardContent className="relative p-0">
         <Suspense fallback={<Skeleton className="h-[600px] w-full" />}>
           <BrainGraph3D data={data} focusedId={focusedId} onFocus={setFocusedId} />
         </Suspense>
+        {focusedId && (() => {
+          const focused = data.concepts.find((c) => c.id === focusedId)
+          if (!focused) return null
+          return (
+            <FocusedConceptPanel
+              concept={focused}
+              concepts={data.concepts}
+              onClose={() => setFocusedId(null)}
+              onMerged={(targetId) => setFocusedId(targetId)}
+            />
+          )
+        })()}
       </CardContent>
     </Card>
   )

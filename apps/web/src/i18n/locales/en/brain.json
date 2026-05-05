@@ -79,6 +79,20 @@
       "clusters_one": "{{count}} cluster",
       "clusters_other": "{{count}} clusters"
     },
-    "resetFocus": "Reset focus"
+    "resetFocus": "Reset focus",
+    "focusPanel": {
+      "merge": "Merge into…",
+      "close": "Close"
+    },
+    "merge": {
+      "title": "Merge concepts",
+      "subtitle": "Pick which concept should absorb \"{{source}}\".",
+      "searchPlaceholder": "Search target concept…",
+      "warning": "\"{{source}}\" will be folded into \"{{target}}\". Its mentions and connections move to the target. This cannot be undone.",
+      "confirm": "Merge",
+      "cancel": "Cancel",
+      "success": "Concepts merged",
+      "error": "Merge failed"
+    }
   }
 }

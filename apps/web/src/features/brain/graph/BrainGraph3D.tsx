@@ -13,7 +13,28 @@ interface BrainGraph3DProps {
   onFocus: (id: string | null) => void
 }
 
-const FALLBACK_COLOR = 'oklch(0.708 0 0)' // muted-foreground equivalent
+const FALLBACK_COLOR = 'rgb(180,180,180)' // muted-foreground equivalent (RGB so we can lerp)
+const DECAY_TARGET: [number, number, number] = [180, 180, 180]
+const DECAY_HALF_LIFE_DAYS = 30
+const DECAY_MAX_FACTOR = 0.75
+
+function hexToRgb(hex: string): [number, number, number] | null {
+  const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex.trim())
+  if (!m) return null
+  return [parseInt(m[1]!, 16), parseInt(m[2]!, 16), parseInt(m[3]!, 16)]
+}
+
+/** Mix base color toward muted gray based on age. Older concepts fade; cap at 75%. */
+function decayedColor(baseHex: string | undefined, lastMentionedAt: string, now: number): string {
+  const base = baseHex ? hexToRgb(baseHex) : DECAY_TARGET
+  if (!base) return FALLBACK_COLOR
+  const daysSince = Math.max(0, (now - new Date(lastMentionedAt).getTime()) / 86_400_000)
+  const factor = Math.min(DECAY_MAX_FACTOR, 1 - Math.exp(-daysSince / DECAY_HALF_LIFE_DAYS))
+  const r = Math.round(base[0] * (1 - factor) + DECAY_TARGET[0] * factor)
+  const g = Math.round(base[1] * (1 - factor) + DECAY_TARGET[1] * factor)
+  const b = Math.round(base[2] * (1 - factor) + DECAY_TARGET[2] * factor)
+  return `rgb(${r},${g},${b})`
+}
 
 interface NodeDatum extends BrainConceptNode {
   /** force-graph mutates these — keep them on the node so layout persists. */
@@ -58,6 +79,18 @@ export function BrainGraph3D({ data, focusedId, onFocus }: BrainGraph3DProps) {
     for (const c of data.clusters) m.set(c.id, c.color)
     return m
   }, [data.clusters])
+
+  // Pre-compute decayed color per concept. Snapshots Date.now() at memo time —
+  // a refresh re-runs this. Avoids per-frame lerp inside force-graph's render.
+  const colorById = useMemo(() => {
+    const now = Date.now()
+    const m = new Map<string, string>()
+    for (const c of data.concepts) {
+      const baseHex = c.clusterId ? colorByCluster.get(c.clusterId) : undefined
+      m.set(c.id, decayedColor(baseHex, c.lastMentionedAt, now))
+    }
+    return m
+  }, [data.concepts, colorByCluster])
 
   const graphData = useMemo(() => {
     const nodes: NodeDatum[] = data.concepts.map((c) => ({ ...c }))
@@ -129,9 +162,7 @@ export function BrainGraph3D({ data, focusedId, onFocus }: BrainGraph3DProps) {
         nodeId="id"
         nodeLabel={(n: NodeDatum) => n.name}
         nodeVal={(n: NodeDatum) => Math.log(Math.max(1, n.mentionCount) + 1) * 4}
-        nodeColor={(n: NodeDatum) =>
-          (n.clusterId && colorByCluster.get(n.clusterId)) || FALLBACK_COLOR
-        }
+        nodeColor={(n: NodeDatum) => colorById.get(n.id) ?? FALLBACK_COLOR}
         nodeOpacity={0.9}
         nodeVisibility={(n: NodeDatum) => (neighborIds ? neighborIds.has(n.id) : true)}
         linkVisibility={(l: LinkDatum) => {
