@@ -80,7 +80,7 @@ export function AmbassadorTab() {
   }
 
   // APPROVED
-  const link = `${window.location.origin}/?ref=${data.referralCode}`
+  const link = `${window.location.origin}/login?ref=${data.referralCode}`
   function copy(value: string) {
     navigator.clipboard.writeText(value)
     toast.success(t('copied', { defaultValue: 'Copiado al portapapeles' }))

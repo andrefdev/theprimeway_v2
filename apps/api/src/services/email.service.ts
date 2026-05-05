@@ -10,7 +10,8 @@ import nodemailer, { type Transporter } from 'nodemailer'
 import { LOGO_PNG } from '../assets/logo'
 
 const BRAND = 'The Prime Way'
-const APP_URL = process.env.APP_URL || 'https://theprimeway.app'
+const APP_URL = process.env.APP_URL || 'https://app.theprimeway.app'
+const LANDING_URL = process.env.LANDING_URL || 'https://theprimeway.app'
 const LOGO_CID = 'theprimeway-logo'
 
 let transporter: Transporter | null = null
@@ -32,6 +33,9 @@ function getTransporter(): Transporter {
     port,
     secure: port === 465,
     auth: { user, pass },
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 15_000,
   })
 
   return transporter
@@ -47,14 +51,14 @@ function baseLayout(title: string, bodyHtml: string): string {
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border:1px solid #e5e7eb;border-radius:16px;overflow:hidden;">
         <tr><td style="padding:32px 32px 16px 32px;">
           <div style="margin-bottom:24px;">
-            <a href="${APP_URL}" style="text-decoration:none;">
+            <a href="${LANDING_URL}" style="text-decoration:none;">
               <img src="cid:${LOGO_CID}" alt="${BRAND}" height="40" style="display:block;height:40px;width:auto;border:0;outline:none;text-decoration:none;" />
             </a>
           </div>
           ${bodyHtml}
         </td></tr>
         <tr><td style="padding:16px 32px 32px 32px;border-top:1px solid #e5e7eb;color:#6b7280;font-size:12px;">
-          Enviado por ${BRAND} — <a href="${APP_URL}" style="color:#4f46e5;">${APP_URL}</a>
+          Enviado por ${BRAND} — <a href="${LANDING_URL}" style="color:#4f46e5;">${LANDING_URL}</a>
         </td></tr>
       </table>
     </td></tr>
@@ -156,7 +160,7 @@ async function send(to: string, subject: string, html: string, text: string) {
 
 function ambassadorApprovedTemplate(name: string | null, code: string, tierName: string, commissionPct: number) {
   const greet = name ? `¡Felicitaciones, ${name}!` : '¡Felicitaciones!'
-  const link = `${APP_URL}/?ref=${code}`
+  const link = `${APP_URL}/login?ref=${code}`
   const html = baseLayout(
     `Bienvenido al Programa de Embajadores de ${BRAND}`,
     `<h1 style="font-size:22px;color:#1a1a1f;margin:0 0 8px 0;">${greet}</h1>

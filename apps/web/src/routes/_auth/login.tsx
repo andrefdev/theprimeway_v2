@@ -9,23 +9,39 @@ import {
   type RegisterInput,
 } from '@repo/shared/validators'
 import { useLogin, useRegister, useVerifyEmail, useResendOtp } from '@/features/auth/queries'
+import { useRedeemReferralCode, useValidateReferralCode } from '@/features/ambassador/queries'
 import { OAuthButtons } from '@/features/auth/components/OAuthButtons'
 import { OtpForm } from '@/features/auth/components/OtpForm'
 import { isVerificationPending } from '@/features/auth/api'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/components/ui/tabs'
 import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
 import { Label } from '@/shared/components/ui/label'
-import { EyeIcon, EyeOffIcon, Loader2Icon } from 'lucide-react'
+import { EyeIcon, EyeOffIcon, Loader2Icon, CheckCircle2 } from 'lucide-react'
 import logoSvg from '@/shared/assets/logo_full_text.png'
+import { z } from 'zod'
+
+const REF_STORAGE_KEY = 'theprimeway.referralCode'
 
 export const Route = createFileRoute('/_auth/login')({
+  validateSearch: z.object({ ref: z.string().optional() }).parse,
   component: AuthPage,
 })
 
 function AuthPage() {
   const { t } = useTranslation('auth')
+  const search = Route.useSearch()
+
+  // If a ref code arrives via URL, persist it across the verify step
+  useEffect(() => {
+    if (search.ref && typeof search.ref === 'string') {
+      try {
+        sessionStorage.setItem(REF_STORAGE_KEY, search.ref.trim())
+      } catch {}
+    }
+  }, [search.ref])
 
   return (
     <div className="space-y-8">
@@ -42,8 +58,8 @@ function AuthPage() {
         <p className="mt-1 text-sm text-muted-foreground">{t('loginSubtitle')}</p>
       </div>
 
-      {/* Tabs */}
-      <Tabs defaultValue="login" className="w-full">
+      {/* Tabs — default to register if a ref code is present */}
+      <Tabs defaultValue={search.ref ? 'register' : 'login'} className="w-full">
         <TabsList className="mb-6 grid w-full grid-cols-2">
           <TabsTrigger value="login" className="text-xs font-medium">
             {t('loginTitle')}
@@ -57,7 +73,7 @@ function AuthPage() {
           <LoginForm />
         </TabsContent>
         <TabsContent value="register" className="mt-0">
-          <RegisterForm />
+          <RegisterForm initialReferralCode={search.ref ?? ''} />
         </TabsContent>
       </Tabs>
     </div>
@@ -200,13 +216,18 @@ function LoginForm() {
   )
 }
 
-function RegisterForm() {
+function RegisterForm({ initialReferralCode }: { initialReferralCode: string }) {
   const { t } = useTranslation('auth')
   const navigate = useNavigate()
   const register = useRegister()
   const [error, setError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
   const [pendingEmail, setPendingEmail] = useState<string | null>(null)
+  const [referralCode, setReferralCode] = useState<string>(initialReferralCode)
+
+  const trimmedCode = referralCode.trim()
+  const validate = useValidateReferralCode(trimmedCode, trimmedCode.length >= 3)
+  const ambassadorName = validate.data?.valid ? validate.data.data?.ambassadorName : null
 
   const form = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
@@ -216,6 +237,11 @@ function RegisterForm() {
   async function onSubmit(data: RegisterInput) {
     setError(null)
     try {
+      if (trimmedCode) {
+        try {
+          sessionStorage.setItem(REF_STORAGE_KEY, trimmedCode)
+        } catch {}
+      }
       const result = await register.mutateAsync(data)
       setPendingEmail(result.email)
     } catch (err: any) {
@@ -335,6 +361,33 @@ function RegisterForm() {
           )}
         </div>
 
+        <div className="space-y-1.5">
+          <Label htmlFor="register-ref" className="text-xs font-medium text-muted-foreground">
+            {t('referralCodeLabel', { defaultValue: 'Código de referido (opcional)' })}
+          </Label>
+          <Input
+            id="register-ref"
+            type="text"
+            autoComplete="off"
+            placeholder={t('referralCodePlaceholder', { defaultValue: 'p. ej. juan-ab12' })}
+            className="h-10"
+            value={referralCode}
+            onChange={(e) => setReferralCode(e.target.value)}
+          />
+          {trimmedCode.length >= 3 && validate.isFetched && (
+            ambassadorName ? (
+              <p className="text-[11px] text-emerald-600 flex items-center gap-1">
+                <CheckCircle2 className="size-3" />
+                {t('referralCodeValid', { defaultValue: 'Te invitó {{name}}', name: ambassadorName })}
+              </p>
+            ) : (
+              <p className="text-[11px] text-muted-foreground">
+                {t('referralCodeInvalid', { defaultValue: 'Código no encontrado (puedes continuar sin él).' })}
+              </p>
+            )
+          )}
+        </div>
+
         <Button type="submit" className="w-full h-10" disabled={register.isPending}>
           {register.isPending && <Loader2Icon className="mr-2 size-4 animate-spin" />}
           {t('createAccount')}
@@ -356,12 +409,33 @@ function VerifyEmailStep({
   const { t } = useTranslation('auth')
   const verify = useVerifyEmail()
   const resend = useResendOtp()
+  const redeem = useRedeemReferralCode()
   const [error, setError] = useState<string | null>(null)
 
   async function handleVerify(code: string) {
     setError(null)
     try {
       await verify.mutateAsync({ email, code })
+      // After verification the user has a session — redeem any stored ref code
+      let storedRef: string | null = null
+      try {
+        storedRef = sessionStorage.getItem(REF_STORAGE_KEY)
+      } catch {}
+      if (storedRef) {
+        try {
+          const result = await redeem.mutateAsync(storedRef)
+          toast.success(
+            t('referralRedeemed', { defaultValue: '¡Código aplicado! Te invitó {{name}}', name: result.ambassadorName }),
+          )
+        } catch (e: any) {
+          // Non-fatal: still continue to app
+          console.warn('redeem failed', e?.response?.data?.error || e)
+        } finally {
+          try {
+            sessionStorage.removeItem(REF_STORAGE_KEY)
+          } catch {}
+        }
+      }
       onVerified()
     } catch (err: any) {
       setError(err.response?.data?.error || t('invalidCode'))

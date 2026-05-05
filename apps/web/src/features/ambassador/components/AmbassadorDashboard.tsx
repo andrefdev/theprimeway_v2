@@ -33,7 +33,7 @@ export function AmbassadorDashboard() {
   }
 
   const d = dash.data
-  const link = `${window.location.origin}/?ref=${d.referralCode}`
+  const link = `${window.location.origin}/login?ref=${d.referralCode}`
   const tierProgress = d.nextTier
     ? Math.min(100, (d.totals.activeReferrals / d.nextTier.minActiveReferrals) * 100)
     : 100
@@ -60,7 +60,7 @@ export function AmbassadorDashboard() {
       </div>
 
       {/* Tier hero */}
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden py-0 gap-0">
         <div
           className="p-6 text-white"
           style={{

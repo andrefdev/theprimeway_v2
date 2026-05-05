@@ -47,8 +47,15 @@ interface ComboboxProps<TValue extends string = string> {
   disabled?: boolean
   id?: string
   name?: string
-  /** Optional custom renderer for the selected value in the trigger. */
+  /** Optional custom renderer for the selected value in the default trigger. */
   renderValue?: (option: ComboboxOption<TValue>) => React.ReactNode
+  /**
+   * Optional custom trigger. When provided, replaces the default outline button.
+   * Receives the currently selected option (or undefined). The element passed
+   * is wrapped with `PopoverTrigger asChild`, so it should accept a ref and
+   * forward standard button props.
+   */
+  trigger?: (selected: ComboboxOption<TValue> | undefined) => React.ReactElement
 }
 
 /**
@@ -75,6 +82,7 @@ export function Combobox<TValue extends string = string>({
   id,
   name,
   renderValue,
+  trigger,
 }: ComboboxProps<TValue>) {
   const [open, setOpen] = React.useState(false)
   const selected = options.find((o) => o.value === value)
@@ -82,29 +90,33 @@ export function Combobox<TValue extends string = string>({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button
-          id={id}
-          name={name}
-          type="button"
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          disabled={disabled}
-          className={cn(
-            'w-full justify-between font-normal',
-            !selected && 'text-muted-foreground',
-            className,
-          )}
-        >
-          <span className="min-w-0 flex-1 truncate text-left">
-            {selected
-              ? renderValue
-                ? renderValue(selected)
-                : selected.label
-              : placeholder}
-          </span>
-          <ChevronDownIcon className="ml-2 size-4 shrink-0 opacity-50" />
-        </Button>
+        {trigger ? (
+          trigger(selected)
+        ) : (
+          <Button
+            id={id}
+            name={name}
+            type="button"
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            disabled={disabled}
+            className={cn(
+              'w-full justify-between font-normal',
+              !selected && 'text-muted-foreground',
+              className,
+            )}
+          >
+            <span className="min-w-0 flex-1 truncate text-left">
+              {selected
+                ? renderValue
+                  ? renderValue(selected)
+                  : selected.label
+                : placeholder}
+            </span>
+            <ChevronDownIcon className="ml-2 size-4 shrink-0 opacity-50" />
+          </Button>
+        )}
       </PopoverTrigger>
       <PopoverContent
         className={cn(

@@ -1,10 +1,11 @@
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
+import { useMemo } from 'react'
 import type { UseFormReturn } from 'react-hook-form'
 import type { CreateTaskInput } from '@repo/shared/validators'
-import { Hash, Check } from 'lucide-react'
+import { Hash } from 'lucide-react'
 import { Button } from '@/shared/components/ui/button'
-import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover'
+import { Combobox, type ComboboxOption } from '@/shared/components/ui/combobox'
 import { channelsApi } from '@/features/capture/channels-api'
 
 interface Props {
@@ -19,18 +20,44 @@ export function ChannelField({ form, variant = 'icon' }: Props) {
     queryKey: ['channels', 'list'],
     queryFn: channelsApi.list,
   })
-  const channelId = form.watch('channelId')
-  const selected = channels.find((c: any) => c.id === channelId)
+  const channelId = form.watch('channelId') ?? undefined
+
+  const options: ComboboxOption[] = useMemo(
+    () =>
+      Array.isArray(channels)
+        ? (channels as any[]).map((c) => ({
+            value: c.id,
+            label: `#${c.name}`,
+            keywords: [c.name],
+            icon: c.color ? (
+              <span
+                className="inline-block size-2 rounded-full"
+                style={{ backgroundColor: c.color }}
+              />
+            ) : undefined,
+          }))
+        : [],
+    [channels],
+  )
 
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        {variant === 'icon' ? (
+    <Combobox
+      options={options}
+      value={channelId}
+      onChange={(v) => form.setValue('channelId', v ?? null)}
+      searchPlaceholder={t('composer.searchChannel', { defaultValue: 'Search channel…' })}
+      emptyMessage={t('noChannels', { defaultValue: 'No channels' })}
+      clearable
+      clearLabel={t('none')}
+      contentClassName="w-56"
+      align={variant === 'icon' ? 'end' : 'start'}
+      trigger={(selected) =>
+        variant === 'icon' ? (
           <Button
             type="button"
             variant="outline"
             size="icon"
-            title={selected ? `#${selected.name}` : t('selectChannel', { defaultValue: 'Channel' })}
+            title={selected ? selected.label : t('selectChannel', { defaultValue: 'Channel' })}
             className={selected ? 'text-primary' : 'text-muted-foreground'}
           >
             <Hash className="h-4 w-4" />
@@ -43,36 +70,10 @@ export function ChannelField({ form, variant = 'icon' }: Props) {
             className="gap-1.5 h-8 text-xs text-muted-foreground hover:text-foreground"
           >
             <span className="font-mono">#</span>
-            {selected?.name ?? t('composer.channel', { defaultValue: 'channel' })}
+            {selected?.label?.replace(/^#/, '') ?? t('composer.channel', { defaultValue: 'channel' })}
           </Button>
-        )}
-      </PopoverTrigger>
-      <PopoverContent align="end" className="w-56 p-1">
-        <button
-          type="button"
-          onClick={() => form.setValue('channelId', null)}
-          className="flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
-        >
-          <span className="text-muted-foreground">{t('none')}</span>
-          {!channelId && <Check className="h-3.5 w-3.5" />}
-        </button>
-        {channels.map((c: any) => (
-          <button
-            key={c.id}
-            type="button"
-            onClick={() => form.setValue('channelId', c.id)}
-            className="flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
-          >
-            <span>#{c.name}</span>
-            {channelId === c.id && <Check className="h-3.5 w-3.5" />}
-          </button>
-        ))}
-        {channels.length === 0 && (
-          <p className="px-2 py-1.5 text-xs text-muted-foreground">
-            {t('noChannels', { defaultValue: 'No channels' })}
-          </p>
-        )}
-      </PopoverContent>
-    </Popover>
+        )
+      }
+    />
   )
 }

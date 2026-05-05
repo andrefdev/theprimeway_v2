@@ -128,22 +128,22 @@ class AmbassadorService {
       include: { tier: true, user: true },
     })
 
-    // Notification + email
-    await notificationsRepo.upsertNotification({
-      userId: ambassador.userId,
-      type: 'ambassador_approved',
-      entityId: ambassador.id,
-      title: '¡Eres embajador! 🎉',
-      message: `Tu código: ${code}. Empieza a compartir.`,
-      href: '/ambassador',
-      urgency: 'high',
-    })
+    notificationsRepo
+      .upsertNotification({
+        userId: ambassador.userId,
+        type: 'ambassador_approved',
+        entityId: ambassador.id,
+        title: '¡Eres embajador! 🎉',
+        message: `Tu código: ${code}. Empieza a compartir.`,
+        href: '/ambassador',
+        urgency: 'high',
+      })
+      .catch((e) => console.error('notification approved failed', e))
+
     if (updated.user.email) {
-      try {
-        await emailService.sendAmbassadorApproved(updated.user.email, updated.user.name, code, bronze?.name ?? 'Bronze', Number(bronze?.commissionPct ?? 20))
-      } catch (e) {
-        console.error('email approved failed', e)
-      }
+      emailService
+        .sendAmbassadorApproved(updated.user.email, updated.user.name, code, bronze?.name ?? 'Bronze', Number(bronze?.commissionPct ?? 20))
+        .catch((e) => console.error('email approved failed', e))
     }
     return updated
   }
@@ -160,21 +160,22 @@ class AmbassadorService {
         reviewedBy: adminId,
       },
     })
-    await notificationsRepo.upsertNotification({
-      userId: ambassador.userId,
-      type: 'ambassador_rejected',
-      entityId: ambassador.id,
-      title: 'Solicitud no aprobada',
-      message: 'Tu solicitud de embajador fue revisada. Revisa tu correo para detalles.',
-      href: '/settings?tab=ambassador',
-      urgency: 'medium',
-    })
+    notificationsRepo
+      .upsertNotification({
+        userId: ambassador.userId,
+        type: 'ambassador_rejected',
+        entityId: ambassador.id,
+        title: 'Solicitud no aprobada',
+        message: 'Tu solicitud de embajador fue revisada. Revisa tu correo para detalles.',
+        href: '/settings?tab=ambassador',
+        urgency: 'medium',
+      })
+      .catch((e) => console.error('notification rejected failed', e))
+
     if (ambassador.user.email) {
-      try {
-        await emailService.sendAmbassadorRejected(ambassador.user.email, ambassador.user.name, reason)
-      } catch (e) {
-        console.error('email rejected failed', e)
-      }
+      emailService
+        .sendAmbassadorRejected(ambassador.user.email, ambassador.user.name, reason)
+        .catch((e) => console.error('email rejected failed', e))
     }
     return updated
   }
@@ -187,21 +188,22 @@ class AmbassadorService {
 
     const updated = await prisma.ambassador.update({ where: { id: ambassadorId }, data: { tierId }, include: { tier: true } })
     if (ambassador.tier && ambassador.tier.order < tier.order) {
-      await notificationsRepo.upsertNotification({
-        userId: ambassador.userId,
-        type: 'ambassador_tier_up',
-        entityId: ambassador.id,
-        title: `¡Subiste a ${tier.name}! 🚀`,
-        message: `Comisión: ${tier.commissionPct}%. Nuevos perks desbloqueados.`,
-        href: '/ambassador',
-        urgency: 'high',
-      })
+      notificationsRepo
+        .upsertNotification({
+          userId: ambassador.userId,
+          type: 'ambassador_tier_up',
+          entityId: ambassador.id,
+          title: `¡Subiste a ${tier.name}! 🚀`,
+          message: `Comisión: ${tier.commissionPct}%. Nuevos perks desbloqueados.`,
+          href: '/ambassador',
+          urgency: 'high',
+        })
+        .catch((e) => console.error('notification tier-up failed', e))
+
       if (ambassador.user.email) {
-        try {
-          await emailService.sendAmbassadorTierUp(ambassador.user.email, ambassador.user.name, tier.name, Number(tier.commissionPct), tier.perks)
-        } catch (e) {
-          console.error(e)
-        }
+        emailService
+          .sendAmbassadorTierUp(ambassador.user.email, ambassador.user.name, tier.name, Number(tier.commissionPct), tier.perks)
+          .catch((e) => console.error('email tier-up failed', e))
       }
     }
     return updated
@@ -282,7 +284,7 @@ class AmbassadorService {
     return {
       status: ambassador.status,
       referralCode: ambassador.referralCode,
-      referralLink: `${process.env.APP_URL || 'https://theprimeway.app'}/?ref=${ambassador.referralCode}`,
+      referralLink: `${process.env.APP_URL || 'https://app.theprimeway.app'}/login?ref=${ambassador.referralCode}`,
       tier: ambassador.tier,
       nextTier,
       effectiveCommissionPct: Number(ambassador.customCommissionPct ?? ambassador.tier?.commissionPct ?? 20),
@@ -387,22 +389,23 @@ class AmbassadorService {
       const isUpgrade = !ambassador.tier || eligibleTier.order > ambassador.tier.order
       await prisma.ambassador.update({ where: { id: ambassadorId }, data: { tierId: eligibleTier.id } })
       if (isUpgrade) {
-        await notificationsRepo.upsertNotification({
-          userId: ambassador.userId,
-          type: 'ambassador_tier_up',
-          entityId: ambassador.id,
-          title: `¡Subiste a ${eligibleTier.name}! 🚀`,
-          message: `Comisión: ${eligibleTier.commissionPct}%. Nuevos perks desbloqueados.`,
-          href: '/ambassador',
-          urgency: 'high',
-        })
+        notificationsRepo
+          .upsertNotification({
+            userId: ambassador.userId,
+            type: 'ambassador_tier_up',
+            entityId: ambassador.id,
+            title: `¡Subiste a ${eligibleTier.name}! 🚀`,
+            message: `Comisión: ${eligibleTier.commissionPct}%. Nuevos perks desbloqueados.`,
+            href: '/ambassador',
+            urgency: 'high',
+          })
+          .catch((e) => console.error('notification auto tier-up failed', e))
+
         const user = await prisma.user.findUnique({ where: { id: ambassador.userId }, select: { email: true, name: true } })
         if (user?.email) {
-          try {
-            await emailService.sendAmbassadorTierUp(user.email, user.name, eligibleTier.name, Number(eligibleTier.commissionPct), eligibleTier.perks)
-          } catch (e) {
-            console.error(e)
-          }
+          emailService
+            .sendAmbassadorTierUp(user.email, user.name, eligibleTier.name, Number(eligibleTier.commissionPct), eligibleTier.perks)
+            .catch((e) => console.error('email auto tier-up failed', e))
         }
       }
     }
@@ -447,20 +450,21 @@ class AmbassadorService {
 
     const ambassador = await prisma.ambassador.findUnique({ where: { id: ambassadorId }, include: { user: { select: { email: true, name: true } } } })
     if (ambassador?.user.email) {
-      await notificationsRepo.upsertNotification({
-        userId: ambassador.userId,
-        type: 'ambassador_payout_sent',
-        entityId: payout.id,
-        title: '💰 Pago enviado',
-        message: `Te enviamos $${(input.amountCents / 100).toFixed(2)} vía ${input.method}.`,
-        href: '/ambassador',
-        urgency: 'medium',
-      })
-      try {
-        await emailService.sendAmbassadorPayout(ambassador.user.email, ambassador.user.name, input.amountCents, input.method, input.externalRef ?? null)
-      } catch (e) {
-        console.error(e)
-      }
+      notificationsRepo
+        .upsertNotification({
+          userId: ambassador.userId,
+          type: 'ambassador_payout_sent',
+          entityId: payout.id,
+          title: '💰 Pago enviado',
+          message: `Te enviamos $${(input.amountCents / 100).toFixed(2)} vía ${input.method}.`,
+          href: '/ambassador',
+          urgency: 'medium',
+        })
+        .catch((e) => console.error('notification payout failed', e))
+
+      emailService
+        .sendAmbassadorPayout(ambassador.user.email, ambassador.user.name, input.amountCents, input.method, input.externalRef ?? null)
+        .catch((e) => console.error('email payout failed', e))
     }
     return payout
   }
