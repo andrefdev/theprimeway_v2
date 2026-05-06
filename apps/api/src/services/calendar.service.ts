@@ -10,6 +10,7 @@ import {
   ymdToLocalDayUtc,
 } from '@repo/shared/utils'
 import { collectBusyBlocks, computeGaps, getDayWindow } from './scheduling/gap-finder'
+import { syncService } from './sync.service'
 
 class CalendarService {
   async listAccounts(userId: string) {
@@ -439,6 +440,12 @@ class CalendarService {
       }
     }
 
+    // Notify connected frontend tabs after sync completes
+    syncService.publish(userId, {
+      type: 'calendar.event.updated',
+      payload: {},
+    })
+
     return {
       success: errors.length === 0,
       count: calendarsSynced,
@@ -632,7 +639,9 @@ class CalendarService {
 
     // Reject writes to read-only calendars (holiday, contacts, weather, etc.)
     const targetCal = account.calendars.find(
-      (c: any) => (c.providerCalendarId || c.externalId) === targetCalendarId,
+      (c: any) =>
+        c.providerCalendarId === targetCalendarId ||
+        c.externalId === targetCalendarId,
     )
     const role = (targetCal as any)?.accessRole as string | null | undefined
     if (role && role !== 'owner' && role !== 'writer') {
@@ -1560,6 +1569,11 @@ RULES:
           data: { syncToken: body.nextSyncToken },
         })
       }
+      // Notify connected frontend tabs so they refetch the calendar without polling
+      syncService.publish(channel.calendar.account.userId, {
+        type: 'calendar.event.updated',
+        payload: {},
+      })
       return { ok: true }
     } catch (err) {
       console.error('[CAL_WATCH] notification error', err)
