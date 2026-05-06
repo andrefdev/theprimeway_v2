@@ -1092,6 +1092,7 @@ model CalendarEvent {
   isBusy     Boolean  @default(true) @map("is_busy")
   isDeclined Boolean  @default(false) @map("is_declined")
   isAllDay   Boolean  @default(false) @map("is_all_day")
+  colorId    String?  @map("color_id")
   syncedAt   DateTime @default(now()) @map("synced_at")
 
   @@unique([calendarId, externalId])

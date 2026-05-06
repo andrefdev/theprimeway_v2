@@ -1620,6 +1620,7 @@ RULES:
         isBusy,
         isDeclined,
         isAllDay,
+        colorId: evt.colorId ?? null,
         syncedAt: new Date(),
       },
       create: {
@@ -1631,6 +1632,7 @@ RULES:
         isBusy,
         isDeclined,
         isAllDay,
+        colorId: evt.colorId ?? null,
       },
     })
   }
@@ -1695,6 +1697,7 @@ RULES:
       end: { dateTime: e.end.toISOString() },
       isAllDay: e.isAllDay,
       isBusy: e.isBusy,
+      colorId: e.colorId ?? null,
       calendarId: e.calendar?.providerCalendarId ?? null,
       internalCalendarId: e.calendar?.id ?? e.calendarId,
       calendarName: e.calendar?.name ?? null,
