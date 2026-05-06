@@ -1,8 +1,8 @@
 import axios from 'axios';
 import type { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import * as SecureStore from 'expo-secure-store';
-import { useAuthStore } from '@shared/stores/authStore';
 import { AUTH } from '@shared/api/endpoints';
+import { getAuthToken, logoutAuthSession, setAuthTokens } from './authSession';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL;
 const REFRESH_TOKEN_KEY = 'refresh_token';
@@ -15,7 +15,7 @@ export const apiClient = axios.create({
 });
 
 apiClient.interceptors.request.use((config) => {
-  const token = useAuthStore.getState().token;
+  const token = getAuthToken();
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
@@ -82,14 +82,14 @@ apiClient.interceptors.response.use(
       const newRefresh = data.refreshToken ?? refreshToken;
       await SecureStore.setItemAsync(TOKEN_KEY, newToken);
       if (newRefresh) await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, newRefresh);
-      useAuthStore.getState().setTokens(newToken, newRefresh);
+      setAuthTokens(newToken, newRefresh);
 
       processQueue(null, newToken);
       originalRequest.headers.Authorization = `Bearer ${newToken}`;
       return apiClient(originalRequest);
     } catch (refreshError) {
       processQueue(refreshError, null);
-      await useAuthStore.getState().logout();
+      await logoutAuthSession();
       return Promise.reject(refreshError);
     } finally {
       isRefreshing = false;

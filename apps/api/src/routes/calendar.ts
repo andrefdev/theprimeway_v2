@@ -395,7 +395,15 @@ calendarRoutes.openapi(googleEventsRoute, (async (c: any) => {
 
   if (!timeMin || !timeMax) return c.json({ error: 'Missing timeMin or timeMax' }, 400)
 
-  const allEvents = await calendarService.getGoogleEvents(userId, timeMin, timeMax)
+  // Source of truth for "external events" is the local CalendarEvent cache,
+  // kept fresh by Google webhooks + the `syncCalendars` job. Falling back to
+  // a live fetch on every UI render created the inconsistency the planner saw
+  // (UI sees event X, scheduler doesn't).
+  const allEvents = await calendarService.listCachedEventsForUi(
+    userId,
+    new Date(timeMin),
+    new Date(timeMax),
+  )
   return c.json({ data: allEvents }, 200)
 }) as any)
 

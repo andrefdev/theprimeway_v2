@@ -9,6 +9,11 @@
 const fs = require('fs');
 const path = require('path');
 
+const nodeModulesRoots = [
+  path.join(__dirname, '..', 'node_modules'),
+  path.join(__dirname, '..', '..', '..', 'node_modules'),
+];
+
 const patches = [
   {
     file: '@react-navigation/core/lib/module/NavigationStateContext.js',
@@ -55,8 +60,11 @@ const patches = [
 let patchedCount = 0;
 
 for (const { file, replacements } of patches) {
-  const filePath = path.join(__dirname, '..', 'node_modules', file);
-  if (!fs.existsSync(filePath)) continue;
+  const filePath = nodeModulesRoots
+    .map((root) => path.join(root, file))
+    .find((candidate) => fs.existsSync(candidate));
+
+  if (!filePath) continue;
 
   let content = fs.readFileSync(filePath, 'utf8');
   let changed = false;

@@ -98,7 +98,7 @@ export function buildSuggestions(ctx: BuildContext): Suggestion[] {
       title: `${overdue.length} overdue task${overdue.length > 1 ? 's' : ''}`,
       message: `"${overdue[0]!.title}" and ${overdue.length - 1 > 0 ? `${overdue.length - 1} other${overdue.length - 1 > 1 ? 's' : ''}` : 'more'} need attention.`,
       actionLabel: 'Review',
-      action: { kind: 'navigate', href: '/(app)/(tabs)/tasks/all' },
+      action: { kind: 'navigate', href: '/(app)/(tabs)/manual' },
       urgency: 'high',
     });
   }
@@ -116,8 +116,8 @@ export function buildSuggestions(ctx: BuildContext): Suggestion[] {
         type: 'habits_pending',
         title: `${pendingCount} habits still pending`,
         message: `It's ${hour}:00 — knock a few out before the day ends.`,
-        actionLabel: 'Open habits',
-        action: { kind: 'navigate', href: '/(app)/(tabs)/habits' },
+        actionLabel: 'Open manual mode',
+        action: { kind: 'navigate', href: '/(app)/(tabs)/manual' },
         urgency: 'medium',
       });
     }
@@ -131,7 +131,7 @@ export function buildSuggestions(ctx: BuildContext): Suggestion[] {
       title: 'Your day is unplanned',
       message: 'A quick 2-minute plan now beats an hour of drift later.',
       actionLabel: 'Plan now',
-      action: { kind: 'navigate', href: '/(app)/(tabs)/tasks/today' },
+      action: { kind: 'navigate', href: '/(app)/(tabs)/manual' },
       urgency: 'medium',
     });
   }
@@ -158,7 +158,7 @@ export function buildSuggestions(ctx: BuildContext): Suggestion[] {
       title: `${openTasks.length} open tasks, no priorities set`,
       message: 'Pick 1–2 to mark high priority so focus is obvious.',
       actionLabel: 'Review',
-      action: { kind: 'navigate', href: '/(app)/(tabs)/tasks/all' },
+      action: { kind: 'navigate', href: '/(app)/(tabs)/manual' },
       urgency: 'low',
     });
   }

@@ -45,7 +45,7 @@ export function ThreeYearGoalCard({ threeYearGoal, className }: ThreeYearGoalCar
       : 0;
 
   const handlePress = () => {
-    router.push(`/(app)/(tabs)/goals/three-year/${threeYearGoal.id}` as any);
+    router.push('/(app)/(tabs)' as any);
   };
 
   return (

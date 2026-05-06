@@ -61,7 +61,7 @@ export function VoiceInputButton({
         style={{ width: size, height: size }}
         className={cn(
           'items-center justify-center rounded-full',
-          isListening ? 'bg-destructive' : error ? 'bg-muted' : 'bg-card border border-border'
+          isListening ? 'bg-destructive' : error ? 'bg-muted' : 'bg-card border border-border/70'
         )}
       >
         {isListening && (

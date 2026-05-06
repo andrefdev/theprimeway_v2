@@ -24,10 +24,10 @@ export function ChatMessage({ message }: { message: ChatMessageData }) {
     >
       <View
         className={cn(
-          'rounded-2xl px-4 py-3',
+          'rounded-3xl px-4 py-3',
           isUser
-            ? 'rounded-tr-md bg-primary'
-            : 'rounded-tl-md border border-border bg-card'
+            ? 'rounded-br-lg bg-primary'
+            : 'rounded-bl-lg border border-border/70 bg-card'
         )}
       >
         {!isUser && (

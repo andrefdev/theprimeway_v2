@@ -266,7 +266,13 @@ export function useCreateTask() {
       if (ctx?.snaps) rollbackQueries(qc, ctx.snaps)
       if (ctx?.groupedSnaps) rollbackQueries(qc, ctx.groupedSnaps)
     },
-    onSettled: () => qc.invalidateQueries({ queryKey: tasksQueries.all() }),
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: tasksQueries.all() })
+      // Tasks may carry scheduledStart/End that the calendar grid renders or
+      // a WorkingSession the scheduler tracks; refresh both surfaces.
+      qc.invalidateQueries({ queryKey: ['calendar'] })
+      qc.invalidateQueries({ queryKey: ['working-sessions'] })
+    },
   })
 }
 
@@ -307,7 +313,13 @@ export function useUpdateTask() {
       if (ctx?.groupedSnaps) rollbackQueries(qc, ctx.groupedSnaps)
       if (ctx?.focusSnap) qc.setQueryData(ctx.focusKey, ctx.focusSnap)
     },
-    onSettled: () => qc.invalidateQueries({ queryKey: tasksQueries.all() }),
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: tasksQueries.all() })
+      // Tasks may carry scheduledStart/End that the calendar grid renders or
+      // a WorkingSession the scheduler tracks; refresh both surfaces.
+      qc.invalidateQueries({ queryKey: ['calendar'] })
+      qc.invalidateQueries({ queryKey: ['working-sessions'] })
+    },
   })
 }
 
@@ -333,7 +345,13 @@ export function useDeleteTask() {
       if (ctx?.snaps) rollbackQueries(qc, ctx.snaps)
       if (ctx?.groupedSnaps) rollbackQueries(qc, ctx.groupedSnaps)
     },
-    onSettled: () => qc.invalidateQueries({ queryKey: tasksQueries.all() }),
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: tasksQueries.all() })
+      // Tasks may carry scheduledStart/End that the calendar grid renders or
+      // a WorkingSession the scheduler tracks; refresh both surfaces.
+      qc.invalidateQueries({ queryKey: ['calendar'] })
+      qc.invalidateQueries({ queryKey: ['working-sessions'] })
+    },
   })
 }
 
@@ -379,7 +397,13 @@ export function useStartTimer() {
       if (ctx?.groupedSnaps) rollbackQueries(qc, ctx.groupedSnaps)
       if (ctx?.focusSnap) qc.setQueryData(ctx.focusKey, ctx.focusSnap)
     },
-    onSettled: () => qc.invalidateQueries({ queryKey: tasksQueries.all() }),
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: tasksQueries.all() })
+      // Tasks may carry scheduledStart/End that the calendar grid renders or
+      // a WorkingSession the scheduler tracks; refresh both surfaces.
+      qc.invalidateQueries({ queryKey: ['calendar'] })
+      qc.invalidateQueries({ queryKey: ['working-sessions'] })
+    },
   })
 }
 
@@ -418,6 +442,12 @@ export function useStopTimer() {
       if (ctx?.groupedSnaps) rollbackQueries(qc, ctx.groupedSnaps)
       if (ctx?.focusSnap) qc.setQueryData(ctx.focusKey, ctx.focusSnap)
     },
-    onSettled: () => qc.invalidateQueries({ queryKey: tasksQueries.all() }),
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: tasksQueries.all() })
+      // Tasks may carry scheduledStart/End that the calendar grid renders or
+      // a WorkingSession the scheduler tracks; refresh both surfaces.
+      qc.invalidateQueries({ queryKey: ['calendar'] })
+      qc.invalidateQueries({ queryKey: ['working-sessions'] })
+    },
   })
 }

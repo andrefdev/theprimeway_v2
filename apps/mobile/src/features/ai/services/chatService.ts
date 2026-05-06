@@ -1,0 +1,169 @@
+import { apiClient } from '@shared/api/client';
+import { AI } from '@shared/api/endpoints';
+import { useAuthStore } from '@shared/stores/authStore';
+import type { ChatMessageData } from '../components/ChatMessage';
+import type { ToolCall } from '../components/ToolCallCard';
+
+export interface ChatPayloadMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+type StreamChunk =
+  | { type: 'text-delta'; delta?: string }
+  | { type: 'tool-input-available'; toolCallId: string; toolName: string; input?: Record<string, unknown> }
+  | { type: 'tool-output-available'; toolCallId: string; output?: unknown }
+  | { type: 'error'; error?: string }
+  | { type: string };
+
+function isTextDelta(chunk: StreamChunk): chunk is Extract<StreamChunk, { type: 'text-delta' }> {
+  return chunk.type === 'text-delta';
+}
+
+function isToolInput(
+  chunk: StreamChunk
+): chunk is Extract<StreamChunk, { type: 'tool-input-available' }> {
+  return chunk.type === 'tool-input-available' && 'toolCallId' in chunk && 'toolName' in chunk;
+}
+
+function isToolOutput(
+  chunk: StreamChunk
+): chunk is Extract<StreamChunk, { type: 'tool-output-available' }> {
+  return chunk.type === 'tool-output-available' && 'toolCallId' in chunk;
+}
+
+function isStreamError(chunk: StreamChunk): chunk is Extract<StreamChunk, { type: 'error' }> {
+  return chunk.type === 'error';
+}
+
+interface StreamHandlers {
+  signal: AbortSignal;
+  messages: ChatMessageData[];
+  onDelta: (delta: string) => void;
+  onToolCalls: (toolCalls: ToolCall[]) => void;
+}
+
+export class ChatRequestError extends Error {
+  constructor(
+    message: string,
+    public readonly status?: number
+  ) {
+    super(message);
+    this.name = 'ChatRequestError';
+  }
+}
+
+function apiUrl(path: string) {
+  const base = process.env.EXPO_PUBLIC_API_URL;
+  if (!base) throw new ChatRequestError('EXPO_PUBLIC_API_URL is not configured');
+  return `${base.replace(/\/$/, '')}${path}`;
+}
+
+function toUiMessages(messages: ChatMessageData[]) {
+  return messages.map((message) => ({
+    id: message.id,
+    role: message.role,
+    parts: [{ type: 'text' as const, text: message.content }],
+  }));
+}
+
+function toPayloadMessages(messages: ChatPayloadMessage[]) {
+  return messages.map((message) => ({
+    role: message.role,
+    content: message.content,
+  }));
+}
+
+async function readError(response: Response) {
+  try {
+    const body = await response.json();
+    return body?.error ?? body?.message ?? `HTTP ${response.status}`;
+  } catch {
+    return `HTTP ${response.status}`;
+  }
+}
+
+export const chatService = {
+  async stream({ signal, messages, onDelta, onToolCalls }: StreamHandlers) {
+    const token = useAuthStore.getState().token;
+    const response = await fetch(apiUrl(`${AI.CHAT}/stream`), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'text/event-stream',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ messages: toUiMessages(messages) }),
+      signal,
+    });
+
+    if (!response.ok) {
+      throw new ChatRequestError(await readError(response), response.status);
+    }
+
+    const reader = response.body?.getReader();
+    if (!reader) throw new ChatRequestError('Streaming is unavailable on this device');
+
+    const decoder = new TextDecoder();
+    const toolCallsById = new Map<string, ToolCall>();
+    let buffer = '';
+    let receivedText = false;
+
+    const flushToolCalls = () => onToolCalls(Array.from(toolCallsById.values()));
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() ?? '';
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed.startsWith('data:')) continue;
+        const raw = trimmed.slice(5).trim();
+        if (!raw || raw === '[DONE]') continue;
+
+        let chunk: StreamChunk;
+        try {
+          chunk = JSON.parse(raw) as StreamChunk;
+        } catch {
+          continue;
+        }
+
+        if (isTextDelta(chunk)) {
+          const delta = chunk.delta ?? '';
+          if (delta) {
+            receivedText = true;
+            onDelta(delta);
+          }
+        } else if (isToolInput(chunk)) {
+          toolCallsById.set(chunk.toolCallId, {
+            toolName: chunk.toolName,
+            args: chunk.input ?? {},
+          });
+          flushToolCalls();
+        } else if (isToolOutput(chunk)) {
+          const existing = toolCallsById.get(chunk.toolCallId);
+          if (existing) {
+            toolCallsById.set(chunk.toolCallId, { ...existing, result: chunk.output });
+            flushToolCalls();
+          }
+        } else if (isStreamError(chunk)) {
+          throw new ChatRequestError(chunk.error ?? 'Stream error');
+        }
+      }
+    }
+
+    return { receivedText };
+  },
+
+  async send(messages: ChatPayloadMessage[]) {
+    const { data } = await apiClient.post<{ response: string; toolResults?: unknown[] }>(
+      AI.CHAT,
+      { messages: toPayloadMessages(messages) }
+    );
+    return data;
+  },
+};

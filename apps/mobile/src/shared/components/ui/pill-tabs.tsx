@@ -29,10 +29,10 @@ export function PillTabs({ tabs, activeKey, onTabPress, className }: PillTabsPro
             key={tab.key}
             onPress={() => onTabPress(tab.key)}
             className={cn(
-              'rounded-full px-4 py-2',
+              'rounded-2xl px-4 py-2.5',
               isActive
-                ? 'bg-primary'
-                : 'bg-muted active:bg-muted/80'
+                ? 'bg-primary shadow-sm shadow-primary/20'
+                : 'bg-card border border-border/70 active:bg-muted'
             )}
           >
             <Text

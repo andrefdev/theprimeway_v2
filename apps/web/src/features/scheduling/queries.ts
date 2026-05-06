@@ -1,5 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { schedulingApi, type AutoScheduleInput, type DeconflictInput, type EarlyCompleteInput, type TimerStartInput } from './api'
+import {
+  schedulingApi,
+  type AutoScheduleInput,
+  type DeconflictInput,
+  type EarlyCompleteInput,
+  type MoveSessionInput,
+  type TimerStartInput,
+} from './api'
 import { workingSessionsApi, type WorkingSession } from './working-sessions-api'
 import { calendarEventsApi } from './calendar-events-api'
 import { listOps, patchQueries, rollbackQueries, snapshotQueries } from '@/shared/lib/optimistic'
@@ -117,6 +124,20 @@ export function useAutoSchedule() {
       qc.invalidateQueries({ queryKey: ['tasks'] })
       qc.invalidateQueries({ queryKey: schedulingKeys.sessions })
       qc.invalidateQueries({ queryKey: schedulingKeys.commands })
+      qc.invalidateQueries({ queryKey: ['calendar'] })
+    },
+  })
+}
+
+export function useMoveSession() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (input: MoveSessionInput) => schedulingApi.moveSession(input),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['tasks'] })
+      qc.invalidateQueries({ queryKey: schedulingKeys.sessions })
+      qc.invalidateQueries({ queryKey: schedulingKeys.commands })
+      qc.invalidateQueries({ queryKey: ['calendar'] })
     },
   })
 }

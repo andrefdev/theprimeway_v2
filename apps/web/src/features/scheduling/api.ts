@@ -19,6 +19,21 @@ export interface AutoScheduleInput {
   preventSplit?: boolean
 }
 
+export interface MoveSessionInput {
+  /** Provide sessionId to move an existing session, or taskId to create a new one. */
+  sessionId?: string
+  taskId?: string
+  start: string
+  end: string
+  /** Run deconflict cascade against overlapping sessions. Default false (UI moves are local). */
+  deconflict?: boolean
+}
+
+export interface MoveSessionResult {
+  session: { id: string; start: string; end: string; taskId: string | null }
+  commandId: string
+}
+
 export interface DeconflictInput {
   sessionId: string
 }
@@ -47,6 +62,9 @@ export interface CommandRow {
 export const schedulingApi = {
   autoSchedule: (input: AutoScheduleInput) =>
     api.post<{ data: SchedulingResult }>('/scheduling/auto-schedule', input).then((r) => r.data.data),
+
+  moveSession: (input: MoveSessionInput) =>
+    api.post<{ data: MoveSessionResult }>('/scheduling/sessions/move', input).then((r) => r.data.data),
 
   deconflict: (input: DeconflictInput) =>
     api

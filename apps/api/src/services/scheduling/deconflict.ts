@@ -36,8 +36,9 @@ export async function deconflict(anchorSessionId: string): Promise<DeconflictRes
     return { commandId: cmd.id, movedCount: 0, orphanedCount: 0 }
   }
 
-  const day = dt.startOfDay(anchor.start)
-  const dayEnd = dt.endOfDay(anchor.start)
+  const tz = settings?.timezone ?? 'UTC'
+  const day = dt.startOfDay(anchor.start, tz)
+  const dayEnd = dt.endOfDay(anchor.start, tz)
 
   const conflicting = await prisma.workingSession.findMany({
     where: {

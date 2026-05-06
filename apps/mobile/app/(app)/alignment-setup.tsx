@@ -184,7 +184,7 @@ export default function AlignmentSetupScreen() {
   };
 
   const handleGoToGoals = () => {
-    router.replace('/(app)/(tabs)/goals');
+    router.replace('/(app)/(tabs)');
   };
 
   if (isComplete) {

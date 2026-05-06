@@ -18,6 +18,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import type { HabitWithLogs } from '../types';
+import { useTranslation } from '@/shared/hooks/useTranslation';
 
 interface HabitCardProps {
   habit: HabitWithLogs;
@@ -102,6 +103,7 @@ export function HabitCard({
   onPress,
   className,
 }: HabitCardProps) {
+  const { t } = useTranslation('features.habits');
   const today = new Date().toISOString().split('T')[0];
   const todayLog = habit.logs?.find((log) => log.date?.split('T')[0] === today);
   const completedToday = todayLog?.completedCount ?? 0;
@@ -196,7 +198,7 @@ export function HabitCard({
       {/* Progress counter if target > 1 */}
       {target > 1 && (
         <View className="flex-row items-center justify-between pt-2 border-t border-border/50">
-          <Text className="text-xs text-muted-foreground">Daily target</Text>
+          <Text className="text-xs text-muted-foreground">{t('dailyTarget')}</Text>
           <Text className="text-sm font-semibold" style={{ color: habit.color || '#6454FD' }}>
             {completedToday}/{target}
           </Text>

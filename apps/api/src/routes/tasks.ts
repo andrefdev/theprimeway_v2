@@ -53,6 +53,8 @@ const createTaskSchema = z.object({
   isRecurring: z.boolean().optional(),
   recurrenceRule: z.string().optional(),
   recurrenceEndDate: z.string().optional(),
+  /** Auto-fit into the first free gap on scheduledDate when no explicit times are provided. */
+  autoSchedule: z.boolean().optional(),
 })
 
 const updateTaskSchema = createTaskSchema.partial().extend({

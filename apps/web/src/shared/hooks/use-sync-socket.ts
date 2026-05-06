@@ -71,6 +71,7 @@ export function useSyncSocket() {
         case 'task.deleted':
           queryClient.invalidateQueries({ queryKey: ['tasks'] })
           queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+          queryClient.invalidateQueries({ queryKey: ['calendar'] })
           break
         case 'habit.logged':
           queryClient.invalidateQueries({ queryKey: ['habits'] })
@@ -82,6 +83,12 @@ export function useSyncSocket() {
           break
         case 'calendar.event.updated':
           queryClient.invalidateQueries({ queryKey: ['calendar'] })
+          break
+        case 'session.created':
+        case 'session.updated':
+        case 'session.deleted':
+          queryClient.invalidateQueries({ queryKey: ['working-sessions'] })
+          queryClient.invalidateQueries({ queryKey: ['tasks'] })
           break
       }
     }

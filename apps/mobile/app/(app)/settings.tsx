@@ -138,6 +138,7 @@ function TimezonePickerModal({
   onSelect: (tz: string) => void;
   onClose: () => void;
 }) {
+  const { t } = useTranslation('features.settings');
   const [search, setSearch] = useState('');
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -190,7 +191,7 @@ function TimezonePickerModal({
       >
         {/* Header */}
         <View className="flex-row items-center justify-between border-b border-border px-4 py-3">
-          <Text className="text-lg font-semibold text-foreground">Select Timezone</Text>
+          <Text className="text-lg font-semibold text-foreground">{t('timezone.select')}</Text>
           <Pressable
             className="h-8 w-8 items-center justify-center rounded-full bg-muted active:bg-border"
             onPress={onClose}
@@ -205,7 +206,7 @@ function TimezonePickerModal({
             <Icon as={Search} size={16} className="text-muted-foreground" />
             <TextInput
               className="flex-1 text-sm text-foreground"
-              placeholder="Search timezone..."
+              placeholder={t('timezone.search')}
               placeholderTextColor={isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)'}
               value={search}
               onChangeText={setSearch}
@@ -229,7 +230,7 @@ function TimezonePickerModal({
           ItemSeparatorComponent={() => <View className="mx-4 h-px bg-border/50" />}
           ListEmptyComponent={
             <View className="items-center py-12">
-              <Text className="text-sm text-muted-foreground">No timezones found</Text>
+              <Text className="text-sm text-muted-foreground">{t('timezone.empty')}</Text>
             </View>
           }
         />
@@ -332,7 +333,7 @@ export default function SettingsScreen() {
 
         {/* Security */}
         <Animated.View entering={FadeInDown.delay(75).duration(300)}>
-          <SectionTitle title="Security" />
+          <SectionTitle title={t('security.title')} />
           <Card>
             <CardContent className="gap-0 p-0">
               <BiometricToggleRow />
@@ -370,7 +371,7 @@ export default function SettingsScreen() {
 
         {/* Version */}
         <View className="mt-8 items-center">
-          <Text className="text-2xs text-muted-foreground">The Prime Way v2.0.0</Text>
+          <Text className="text-2xs text-muted-foreground">{t('version', { version: '2.0.0' })}</Text>
         </View>
       </ScrollView>
 
@@ -400,6 +401,7 @@ function Divider() {
 }
 
 function MaxNotificationsRow() {
+  const { t } = useTranslation('features.settings');
   const [max, setMax] = useState(5);
 
   useEffect(() => {
@@ -417,8 +419,8 @@ function MaxNotificationsRow() {
       <View className="flex-1 flex-row items-center gap-3">
         <Icon as={Bell} size={18} className="text-muted-foreground" />
         <View className="flex-1">
-          <Text className="text-sm font-medium text-foreground">Max per day</Text>
-          <Text className="text-xs text-muted-foreground">Low-priority cap, high-priority always shown</Text>
+          <Text className="text-sm font-medium text-foreground">{t('notifications.maxPerDay')}</Text>
+          <Text className="text-xs text-muted-foreground">{t('notifications.maxPerDayDescription')}</Text>
         </View>
       </View>
       <View className="flex-row items-center gap-2">
@@ -441,6 +443,7 @@ function MaxNotificationsRow() {
 }
 
 function FocusModeRow() {
+  const { t } = useTranslation('features.settings');
   const enabled = useUiStore((s) => s.focusModeSilence);
   const setEnabled = useUiStore((s) => s.setFocusModeSilence);
   return (
@@ -448,8 +451,8 @@ function FocusModeRow() {
       <View className="flex-row items-center gap-3">
         <Icon as={Timer} size={18} className="text-muted-foreground" />
         <View>
-          <Text className="text-sm font-medium text-foreground">Silence during focus</Text>
-          <Text className="text-xs text-muted-foreground">Mute notifications in focus sessions</Text>
+          <Text className="text-sm font-medium text-foreground">{t('notifications.focusSilence')}</Text>
+          <Text className="text-xs text-muted-foreground">{t('notifications.focusSilenceDescription')}</Text>
         </View>
       </View>
       <Switch value={enabled} onValueChange={setEnabled} />
@@ -458,6 +461,7 @@ function FocusModeRow() {
 }
 
 function MorningBriefingRow() {
+  const { t } = useTranslation('features.settings');
   const [enabled, setEnabled] = useState(false);
   const [hour, setHour] = useState(7);
   const [minute, setMinute] = useState(0);
@@ -486,8 +490,8 @@ function MorningBriefingRow() {
       <View className="flex-row items-center gap-3">
         <Icon as={Bell} size={18} className="text-muted-foreground" />
         <View>
-          <Text className="text-sm font-medium text-foreground">Morning briefing</Text>
-          <Text className="text-xs text-muted-foreground">Daily at {timeLabel}</Text>
+          <Text className="text-sm font-medium text-foreground">{t('notifications.morningBriefing')}</Text>
+          <Text className="text-xs text-muted-foreground">{t('notifications.dailyAt', { time: timeLabel })}</Text>
         </View>
       </View>
       <Switch value={enabled} onValueChange={handleToggle} />
@@ -496,6 +500,7 @@ function MorningBriefingRow() {
 }
 
 function BiometricToggleRow() {
+  const { t } = useTranslation('features.settings');
   const enabled = useBiometricStore((s) => s.enabled);
   const setEnabled = useBiometricStore((s) => s.setEnabled);
   const [supported, setSupported] = useState(false);
@@ -506,7 +511,7 @@ function BiometricToggleRow() {
 
   const handleToggle = async (value: boolean) => {
     if (value) {
-      const ok = await authenticateBiometric('Enable biometric unlock');
+      const ok = await authenticateBiometric(t('security.enableBiometric'));
       if (!ok) return;
     }
     await setEnabled(value);
@@ -516,7 +521,7 @@ function BiometricToggleRow() {
     <View className="flex-row items-center justify-between px-4 py-3.5">
       <View className="flex-row items-center gap-3">
         <Icon as={Fingerprint} size={18} className="text-muted-foreground" />
-        <Text className="text-sm font-medium text-foreground">Biometric unlock</Text>
+        <Text className="text-sm font-medium text-foreground">{t('security.biometricUnlock')}</Text>
       </View>
       <Switch
         value={enabled}

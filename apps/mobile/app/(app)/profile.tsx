@@ -85,7 +85,7 @@ export default function ProfileScreen() {
           >
             <Icon as={Zap} size={18} className="text-xp" />
             <Text className="mt-1 text-lg font-bold text-foreground">{totalXp}</Text>
-            <Text className="text-2xs text-muted-foreground">Total XP</Text>
+            <Text className="text-2xs text-muted-foreground">{t('totalXp')}</Text>
           </Pressable>
           <Pressable
             className="flex-1 items-center rounded-xl border border-border bg-card py-3 active:opacity-70"
@@ -101,7 +101,7 @@ export default function ProfileScreen() {
           >
             <Icon as={Flame} size={18} className="text-streak-fire" />
             <Text className="mt-1 text-lg font-bold text-foreground">{currentStreak}d</Text>
-            <Text className="text-2xs text-muted-foreground">Streak</Text>
+            <Text className="text-2xs text-muted-foreground">{t('streak')}</Text>
           </Pressable>
         </Animated.View>
 
@@ -129,7 +129,7 @@ export default function ProfileScreen() {
         {/* Edit Form */}
         <Animated.View entering={FadeInDown.delay(100).duration(300)} className="mt-6">
           <Text className="mb-2 text-xs font-semibold uppercase text-muted-foreground">
-            Personal Information
+            {t('personalInfo')}
           </Text>
           <Card>
             <CardContent className="gap-4">
@@ -143,7 +143,7 @@ export default function ProfileScreen() {
               </View>
 
               <View className="gap-1.5">
-                <Text className="text-xs font-medium text-muted-foreground">Email</Text>
+                <Text className="text-xs font-medium text-muted-foreground">{t('email')}</Text>
                 <View className="h-10 justify-center rounded-lg border border-border bg-muted px-3">
                   <Text className="text-sm text-muted-foreground">{user?.email}</Text>
                 </View>

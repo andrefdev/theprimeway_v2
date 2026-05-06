@@ -16,7 +16,7 @@ interface VisionCardProps {
 export function VisionCard({ vision, className }: VisionCardProps) {
   const { t } = useTranslation('features.goals');
   const handleEdit = () => {
-    router.push('/(app)/(tabs)/goals/vision');
+    router.push('/(app)/(tabs)' as any);
   };
 
   return (

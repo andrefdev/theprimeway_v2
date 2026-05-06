@@ -189,7 +189,7 @@ export function GoogleCalendarView() {
               setSlotDialog({ start, end })
             }}
             onItemClick={(item, anchor) => {
-              if (item.type === 'task' && item.task) {
+              if ((item.type === 'task' || item.type === 'session') && item.task) {
                 if (taskQuickView?.task.id === item.task.id) {
                   setTaskQuickView(null)
                 } else {

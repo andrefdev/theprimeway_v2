@@ -30,8 +30,9 @@ export async function onTaskCompletedEarly(taskId: string, completedAt: Date = n
   const settings = await prisma.userSettings.findUnique({ where: { userId } })
   if (settings && !settings.autoRescheduleOnEarlyCompletion) return null
 
-  const day = dt.startOfDay(completedAt)
-  const dayEnd = dt.endOfDay(completedAt)
+  const tz = settings?.timezone ?? 'UTC'
+  const day = dt.startOfDay(completedAt, tz)
+  const dayEnd = dt.endOfDay(completedAt, tz)
 
   // Active session: starts <= completedAt < end, for this task, today
   const active = await prisma.workingSession.findFirst({

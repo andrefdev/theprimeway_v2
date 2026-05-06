@@ -177,6 +177,8 @@
       "calendarConnectedDescription": "Tu Google Calendar se ha vinculado correctamente.",
       "logoutSuccess": "Sesion cerrada correctamente",
       "logoutError": "Error al cerrar sesion",
+      "totalXp": "XP total",
+      "streak": "Racha",
       "title": "Perfil",
       "update": "Actualizar Perfil",
       "personalInfo": "Informacion Personal",
@@ -240,6 +242,8 @@
     "calendar": "Calendario",
     "home": "Inicio",
     "aiChat": "Fenrir AI",
+    "progress": "Progreso",
+    "manual": "Manual",
     "premium": "Premium",
     "subscription": "Suscripcion",
     "notifications": "Notificaciones",
@@ -351,6 +355,40 @@
           "joinMeeting": "Unirse",
           "meetingCode": "Codigo de reunion"
         }
+      }
+    },
+    "progress": {
+      "todayState": "Estado de hoy",
+      "summary": "{{completedTasks}}/{{totalTasks}} tareas, {{completedHabits}}/{{totalHabits}} habitos y {{dailyXp}} XP.",
+      "level": "Nivel",
+      "tasks": "Tareas",
+      "habits": "Habitos",
+      "dailyXp": "XP diario",
+      "streak": "Racha",
+      "aiCtaTitle": "Pidele una lectura a la IA",
+      "aiCtaDescription": "Convierte este progreso en el siguiente paso concreto."
+    },
+    "manual": {
+      "eyebrow": "Control rapido",
+      "title": "Manual",
+      "tabs": {
+        "tasks": "Tareas",
+        "habits": "Habitos"
+      },
+      "tasks": {
+        "placeholder": "Escribe una tarea...",
+        "completed": "Completadas",
+        "open": "Abiertas",
+        "emptyTitle": "Nada para hoy",
+        "emptyDescription": "Crea una tarea rapida y seguimos."
+      },
+      "habits": {
+        "newEyebrow": "Nuevo seguimiento",
+        "create": "Crear habito",
+        "doneToday": "Hechos hoy",
+        "active": "Activos",
+        "emptyTitle": "Sin habitos activos",
+        "emptyDescription": "Crea uno pequeno y medible."
       }
     },
     "goals": {
@@ -658,6 +696,7 @@
         "edit": "Editar Habito",
         "delete": "Eliminar Habito"
       },
+      "dailyTarget": "Meta diaria",
       "completionRate": "Tasa de Finalizacion",
       "longestStreaks": "Rachas mas largas",
       "streakRanking": "Ranking de Rachas",
@@ -702,6 +741,21 @@
         "completed": "Bien hecho!",
         "uncompleted": "Habito desmarcado",
         "futureNotAllowed": "No puedes marcar habitos en el futuro"
+      },
+      "errors": {
+        "title": "Error",
+        "create": "No se pudo crear el habito",
+        "update": "No se pudo actualizar el habito"
+      },
+      "goalLink": {
+        "title": "Vincular a objetivo de tres anos",
+        "placeholder": "Vincular un objetivo (opcional)"
+      },
+      "stack": {
+        "after": "Despues de este habito, hacer...",
+        "placeholder": "Encadenar un habito (opcional)",
+        "empty": "No hay otros habitos para encadenar",
+        "fallback": "Habito encadenado"
       },
       "deleteTitle": "Eliminar habito?",
       "deleteConfirmation": "Estas seguro de que quieres eliminar este habito? Esta accion no se puede deshacer."
@@ -1279,11 +1333,31 @@
         "saved": "Guardado",
         "proposalConfirmed": "Propuesta confirmada y guardada exitosamente.",
         "proposalCancelled": "Propuesta cancelada",
-        "proposalRejectedSystem": "El usuario rechazo la propuesta. Pregunta si desea modificar algo."
+          "proposalRejectedSystem": "El usuario rechazo la propuesta. Pregunta si desea modificar algo.",
+          "ready": "Listo."
+        },
+        "comingSoon": "Chat IA disponible pronto! Conecta tu backend para habilitar esta funcion.",
+        "primeAI": "Fenrir AI",
+        "askAnything": "Pregunta lo que sea...",
+        "errors": {
+          "aiDisabled": "La IA no esta habilitada para esta cuenta o plan.",
+          "rateLimited": "Llegaste al limite de mensajes por ahora. Intenta de nuevo en un minuto.",
+          "connection": "No pude conectarme con la IA."
+        },
+        "companion": {
+        "eyebrow": "ThePrimeWay IA",
+        "fallbackName": "vamos",
+        "greeting": "Hola, {{name}}",
+        "heroTitle": "Que quieres avanzar ahora?",
+        "heroDescription": "Habla o escribe. Puedo revisar progreso, ordenar tareas, crear habitos y convertir ruido en siguiente accion.",
+        "suggestions": {
+          "firstAction": "Que deberia hacer primero hoy?",
+          "progressRead": "Dame una lectura de mi progreso",
+          "alignTasks": "Ayudame a alinear mis tareas con mis objetivos"
+        },
+        "progressLinkTitle": "Ver progreso",
+        "progressLinkDescription": "Cambia al modo de metricas."
       },
-      "comingSoon": "Chat IA disponible pronto! Conecta tu backend para habilitar esta funcion.",
-      "primeAI": "Fenrir AI",
-      "askAnything": "Pregunta lo que sea...",
       "suggestions": {
         "vision": "Quiero crear mi vision personal",
         "finances": "Ayudame a organizar mis finanzas",
@@ -1446,7 +1520,10 @@
       "timezone": {
         "title": "Zona Horaria",
         "description": "Configura tu zona horaria local",
-        "label": "Zona Horaria"
+        "label": "Zona Horaria",
+        "select": "Seleccionar zona horaria",
+        "search": "Buscar zona horaria...",
+        "empty": "No se encontraron zonas horarias"
       },
       "calendars": {
         "title": "Calendarios",
@@ -1463,6 +1540,12 @@
         "enableTitle": "Activar Notificaciones",
         "enableDescription": "Activa las notificaciones para mantenerte al dia.",
         "enableButton": "Activar",
+        "maxPerDay": "Maximo por dia",
+        "maxPerDayDescription": "Limite para prioridad baja; la prioridad alta siempre se muestra",
+        "focusSilence": "Silenciar durante foco",
+        "focusSilenceDescription": "Silencia notificaciones en sesiones de foco",
+        "morningBriefing": "Resumen matutino",
+        "dailyAt": "Diario a las {{time}}",
         "permissionDenied": "Permiso denegado. Por favor activa las notificaciones en la configuracion del dispositivo.",
         "notSupported": "Notificaciones no soportadas en este dispositivo.",
         "types": {
@@ -1488,6 +1571,12 @@
           }
         }
       },
+      "security": {
+        "title": "Seguridad",
+        "enableBiometric": "Activar desbloqueo biometrico",
+        "biometricUnlock": "Desbloqueo biometrico"
+      },
+      "version": "The Prime Way v{{version}}",
       "dangerZone": {
         "title": "Zona de Peligro",
         "description": "Acciones irreversibles como eliminar cuenta"

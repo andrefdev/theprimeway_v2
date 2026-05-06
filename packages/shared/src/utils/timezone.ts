@@ -43,6 +43,21 @@ export function startOfLocalDayUtc(date: Date, timeZone: string): Date {
   return localTimeToUtc(date, '00:00', timeZone)
 }
 
+const YMD_RE = /^(\d{4})-(\d{2})-(\d{2})/
+
+/**
+ * Resolve a "YYYY-MM-DD" string to the UTC instant of midnight (00:00) on
+ * that day in the user's timezone. Use this when the caller knows the date
+ * as a calendar date (e.g. from a request body) and needs an anchor `Date`
+ * that lives unambiguously inside the user's local day — independent of
+ * UTC-vs-local arithmetic pitfalls. Throws on malformed input.
+ */
+export function ymdToLocalDayUtc(ymd: string, timeZone: string): Date {
+  const m = YMD_RE.exec(ymd)
+  if (!m) throw new Error(`Invalid YMD: ${ymd}`)
+  return fromZonedTime(`${m[1]}-${m[2]}-${m[3]}T00:00:00`, timeZone)
+}
+
 /** UTC instant corresponding to 23:59:59.999 local time on the given day. */
 export function endOfLocalDayUtc(date: Date, timeZone: string): Date {
   const start = localTimeToUtc(date, '00:00', timeZone)

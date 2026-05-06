@@ -177,6 +177,8 @@
       "calendarConnectedDescription": "Your Google Calendar has been successfully linked.",
       "logoutSuccess": "Successfully signed out",
       "logoutError": "Error signing out",
+      "totalXp": "Total XP",
+      "streak": "Streak",
       "title": "Profile",
       "update": "Update Profile",
       "personalInfo": "Personal Information",
@@ -240,6 +242,8 @@
     "calendar": "Calendar",
     "home": "Home",
     "aiChat": "Fenrir AI",
+    "progress": "Progress",
+    "manual": "Manual",
     "premium": "Premium",
     "subscription": "Subscription",
     "notifications": "Notifications",
@@ -351,6 +355,40 @@
           "joinMeeting": "Join",
           "meetingCode": "Meeting code"
         }
+      }
+    },
+    "progress": {
+      "todayState": "Today's state",
+      "summary": "{{completedTasks}}/{{totalTasks}} tasks, {{completedHabits}}/{{totalHabits}} habits and {{dailyXp}} XP.",
+      "level": "Level",
+      "tasks": "Tasks",
+      "habits": "Habits",
+      "dailyXp": "Daily XP",
+      "streak": "Streak",
+      "aiCtaTitle": "Ask AI for a read",
+      "aiCtaDescription": "Turn this progress into the next concrete step."
+    },
+    "manual": {
+      "eyebrow": "Quick control",
+      "title": "Manual",
+      "tabs": {
+        "tasks": "Tasks",
+        "habits": "Habits"
+      },
+      "tasks": {
+        "placeholder": "Write a task...",
+        "completed": "Completed",
+        "open": "Open",
+        "emptyTitle": "Nothing for today",
+        "emptyDescription": "Create a quick task and keep moving."
+      },
+      "habits": {
+        "newEyebrow": "New tracking",
+        "create": "Create habit",
+        "doneToday": "Done today",
+        "active": "Active",
+        "emptyTitle": "No active habits",
+        "emptyDescription": "Create one small, measurable habit."
       }
     },
     "goals": {
@@ -658,6 +696,7 @@
         "edit": "Edit Habit",
         "delete": "Delete Habit"
       },
+      "dailyTarget": "Daily target",
       "completionRate": "Completion Rate",
       "longestStreaks": "Longest Streaks",
       "streakRanking": "Streak Ranking",
@@ -722,6 +761,21 @@
         "completed": "Well done!",
         "uncompleted": "Habit unchecked",
         "futureNotAllowed": "You cannot mark future habits"
+      },
+      "errors": {
+        "title": "Error",
+        "create": "Could not create habit",
+        "update": "Could not update habit"
+      },
+      "goalLink": {
+        "title": "Link to three-year goal",
+        "placeholder": "Link a goal (optional)"
+      },
+      "stack": {
+        "after": "After this habit, do...",
+        "placeholder": "Stack a habit (optional)",
+        "empty": "No other habits to stack",
+        "fallback": "Stacked habit"
       },
       "deleteTitle": "Delete habit?",
       "deleteConfirmation": "Are you sure you want to delete this habit? This action cannot be undone."
@@ -1299,11 +1353,31 @@
         "saved": "Saved",
         "proposalConfirmed": "Proposal confirmed and saved successfully.",
         "proposalCancelled": "Proposal cancelled",
-        "proposalRejectedSystem": "User rejected the proposal. Ask if they want to modify something."
+          "proposalRejectedSystem": "User rejected the proposal. Ask if they want to modify something.",
+          "ready": "Ready."
+        },
+        "comingSoon": "AI chat coming soon! Connect your backend to enable this feature.",
+        "primeAI": "Fenrir AI",
+        "askAnything": "Ask anything...",
+        "errors": {
+          "aiDisabled": "AI is not enabled for this account or plan.",
+          "rateLimited": "You reached the message limit for now. Try again in a minute.",
+          "connection": "I could not connect to the AI."
+        },
+        "companion": {
+        "eyebrow": "ThePrimeWay AI",
+        "fallbackName": "let's go",
+        "greeting": "Hi, {{name}}",
+        "heroTitle": "What do you want to move forward now?",
+        "heroDescription": "Speak or write. I can review progress, sort tasks, create habits, and turn noise into the next action.",
+        "suggestions": {
+          "firstAction": "What should I do first today?",
+          "progressRead": "Give me a read on my progress",
+          "alignTasks": "Help me align my tasks with my goals"
+        },
+        "progressLinkTitle": "View progress",
+        "progressLinkDescription": "Switch to metrics mode."
       },
-      "comingSoon": "AI chat coming soon! Connect your backend to enable this feature.",
-      "primeAI": "Fenrir AI",
-      "askAnything": "Ask anything...",
       "suggestions": {
         "vision": "I want to create my personal vision",
         "finances": "Help me organize my finances",
@@ -1466,7 +1540,10 @@
       "timezone": {
         "title": "Timezone",
         "description": "Set your local timezone",
-        "label": "Timezone"
+        "label": "Timezone",
+        "select": "Select timezone",
+        "search": "Search timezone...",
+        "empty": "No timezones found"
       },
       "calendars": {
         "title": "Calendars",
@@ -1483,6 +1560,12 @@
         "enableTitle": "Enable Notifications",
         "enableDescription": "Enable notifications to stay updated.",
         "enableButton": "Enable",
+        "maxPerDay": "Max per day",
+        "maxPerDayDescription": "Low-priority cap, high-priority always shown",
+        "focusSilence": "Silence during focus",
+        "focusSilenceDescription": "Mute notifications in focus sessions",
+        "morningBriefing": "Morning briefing",
+        "dailyAt": "Daily at {{time}}",
         "permissionDenied": "Permission denied. Please enable in device settings.",
         "notSupported": "Notifications not supported on this device.",
         "types": {
@@ -1508,6 +1591,12 @@
           }
         }
       },
+      "security": {
+        "title": "Security",
+        "enableBiometric": "Enable biometric unlock",
+        "biometricUnlock": "Biometric unlock"
+      },
+      "version": "The Prime Way v{{version}}",
       "dangerZone": {
         "title": "Danger Zone",
         "description": "Irreversible actions like account deletion"

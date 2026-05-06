@@ -5,11 +5,11 @@ import { generateObject } from 'ai'
 import { taskModel } from '../lib/ai-models'
 import { z } from 'zod'
 import {
-  endOfLocalDayUtc,
-  localDayOfWeek,
   localTimeToUtc,
-  startOfLocalDayUtc,
+  localYmd,
+  ymdToLocalDayUtc,
 } from '@repo/shared/utils'
+import { collectBusyBlocks, computeGaps, getDayWindow } from './scheduling/gap-finder'
 
 class CalendarService {
   async listAccounts(userId: string) {
@@ -286,6 +286,13 @@ class CalendarService {
         }
       }
 
+      // Initial pull: populate CalendarEvent cache so gap-finder sees external
+      // events on the very next scheduling request (fire-and-forget; webhooks
+      // will keep it fresh going forward).
+      this.syncCalendars(userId).catch((err) =>
+        console.error('[CAL_SYNC] initial pull on connect failed', err),
+      )
+
       return { data: account }
     } catch (err) {
       console.error('[GOOGLE_CALLBACK] unexpected error', err)
@@ -352,97 +359,133 @@ class CalendarService {
     return calendarRepo.findGoogleAccountWithRefreshToken(userId)
   }
 
+  /**
+   * Pull events from Google for the user's selected calendars and upsert them
+   * into the local `CalendarEvent` cache. The scheduling engine reads that
+   * cache as hard busy-block constraints, so without this, gap-finder sees
+   * "nothing scheduled" even when the user has external meetings.
+   *
+   * - If `calendarId` is given, syncs only that one (must belong to user).
+   * - Window: 7 days back to 60 days forward, expanding recurrences.
+   * - Idempotent: relies on `upsertCalendarEventCache` (unique on
+   *   calendarId + externalId).
+   */
   async syncCalendars(userId: string, calendarId?: string) {
-    if (!calendarId) {
-      const accounts = await calendarRepo.findAccountsWithSyncCalendars(userId)
-      let totalSynced = 0
-      for (const acc of accounts) {
-        totalSynced += acc.calendars.length
+    const accounts = await calendarRepo.findAccountsWithSyncCalendars(userId)
+    if (accounts.length === 0) return { success: true, count: 0, eventsSynced: 0 }
+
+    const timeMin = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString()
+    const timeMax = new Date(Date.now() + 60 * 24 * 3600 * 1000).toISOString()
+
+    let calendarsSynced = 0
+    let eventsSynced = 0
+    const errors: Array<{ calendarId: string; reason: string }> = []
+
+    for (const account of accounts) {
+      const accessToken = await this.ensureAccessToken(account.id)
+      if (!accessToken) {
+        for (const cal of account.calendars) {
+          if (calendarId && cal.id !== calendarId) continue
+          errors.push({ calendarId: cal.id, reason: 'no_access_token' })
+        }
+        continue
       }
-      return { success: true, count: totalSynced }
+
+      for (const cal of account.calendars) {
+        if (calendarId && cal.id !== calendarId) continue
+        const providerCalId = (cal as any).providerCalendarId || (cal as any).externalId
+        if (!providerCalId) {
+          errors.push({ calendarId: cal.id, reason: 'no_provider_id' })
+          continue
+        }
+
+        let pageToken: string | undefined
+        let pages = 0
+        try {
+          do {
+            const params = new URLSearchParams({
+              singleEvents: 'true',
+              showDeleted: 'true',
+              maxResults: '250',
+              timeMin,
+              timeMax,
+              orderBy: 'startTime',
+            })
+            if (pageToken) params.set('pageToken', pageToken)
+
+            const res = await fetch(
+              `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(providerCalId)}/events?${params.toString()}`,
+              { headers: { Authorization: `Bearer ${accessToken}` } },
+            )
+            if (!res.ok) {
+              const txt = await res.text().catch(() => '')
+              errors.push({ calendarId: cal.id, reason: `list_${res.status}:${txt.slice(0, 80)}` })
+              break
+            }
+            const body = (await res.json()) as { items?: any[]; nextPageToken?: string }
+            for (const evt of body.items ?? []) {
+              await this.upsertCalendarEventCache(cal.id, evt).catch((e) =>
+                console.error('[CAL_SYNC] upsert error', { calendarId: cal.id, eventId: evt?.id, error: e }),
+              )
+              eventsSynced++
+            }
+            pageToken = body.nextPageToken
+            pages++
+          } while (pageToken && pages < 20) // hard safety cap
+          calendarsSynced++
+        } catch (err) {
+          errors.push({ calendarId: cal.id, reason: `exception:${(err as Error).message?.slice(0, 80)}` })
+        }
+      }
     }
-    return { success: true, syncedCount: 0 }
+
+    return {
+      success: errors.length === 0,
+      count: calendarsSynced,
+      eventsSynced,
+      errors: errors.length > 0 ? errors : undefined,
+    }
   }
 
+  /**
+   * Free slots inside the user's working window for a date, that are at least
+   * `duration` minutes long. Backed by gap-finder so the result is consistent
+   * with what auto-schedule would actually pick: CalendarEvent cache (busy +
+   * not declined) + existing WorkingSessions, expanded by the user's gap minutes.
+   */
   async getFreeSlots(userId: string, date: string, duration: number) {
-    // Get user's working hours (per-weekday rows; channelId=null = default)
-    const workingHoursRows = await prisma.workingHours.findMany({
-      where: { userId, channelId: null },
-    })
+    const settings = await prisma.userSettings.findUnique({ where: { userId } })
+    const tz = settings?.timezone ?? 'UTC'
+    const gapMin = settings?.autoSchedulingGapMinutes ?? 5
+    const day = ymdToLocalDayUtc(date, tz)
 
-    if (workingHoursRows.length === 0) {
-      return { error: 'no_work_preferences' as const }
-    }
-
-    const userSettings = await prisma.userSettings.findUnique({
-      where: { userId },
-      select: { timezone: true },
-    })
-    const tz = userSettings?.timezone ?? 'UTC'
-
-    // Parse date and create time bounds
-    const dateObj = new Date(date)
-    const dayOfWeek = localDayOfWeek(dateObj, tz)
-
-    // Check if this is a work day
-    const todayRow = workingHoursRows.find((r: { dayOfWeek: number }) => r.dayOfWeek === dayOfWeek)
-    if (!todayRow) {
+    const window = await getDayWindow(userId, null, day)
+    if (!window) {
+      // No working hours configured for this day → preserve legacy "no preferences" surface.
+      const hasAnyHours = await prisma.workingHours.findFirst({ where: { userId } })
+      if (!hasAnyHours) return { error: 'no_work_preferences' as const }
       return { freeSlots: [] }
     }
 
-    // Day bounds in user's local day, projected back to UTC
-    const dayStart = startOfLocalDayUtc(dateObj, tz)
-    const dayEnd = endOfLocalDayUtc(dateObj, tz)
+    const blocks = await collectBusyBlocks(userId, day, gapMin)
+    const gaps = computeGaps(blocks, window.start, window.end)
 
-    // Get all events for this day
-    const events = await this.getGoogleEvents(userId, dayStart.toISOString(), dayEnd.toISOString())
-
-    // Convert events to have start/end as Date objects
-    const occupiedSlots = (events as any[])
-      .filter((e) => e.start && e.end)
-      .map((e) => ({
-        start: new Date(typeof e.start === 'string' ? e.start : e.start.dateTime),
-        end: new Date(typeof e.end === 'string' ? e.end : e.end.dateTime),
-      }))
-      .sort((a, b) => a.start.getTime() - b.start.getTime())
-
-    // Working hours are local-clock "HH:mm" interpreted in the user's tz.
-    const workStartDate = localTimeToUtc(dateObj, todayRow.startTime, tz)
-    const workEndDate = localTimeToUtc(dateObj, todayRow.endTime, tz)
-
-    const freeSlots: Array<{ start: string; end: string; durationMinutes: number }> = []
-    let currentTime = workStartDate
-
-    for (const occupied of occupiedSlots) {
-      // If there's a gap before this event
-      if (currentTime < occupied.start) {
-        const gapDuration = (occupied.start.getTime() - currentTime.getTime()) / (1000 * 60)
-        if (gapDuration >= duration) {
-          freeSlots.push({
-            start: currentTime.toISOString(),
-            end: occupied.start.toISOString(),
-            durationMinutes: Math.floor(gapDuration),
-          })
-        }
-      }
-      currentTime = new Date(Math.max(currentTime.getTime(), occupied.end.getTime()))
+    return {
+      freeSlots: gaps
+        .filter((g) => g.durationMinutes >= duration)
+        .map((g) => ({
+          start: g.start.toISOString(),
+          end: g.end.toISOString(),
+          durationMinutes: g.durationMinutes,
+        })),
     }
-
-    // Check if there's free time after last event until work end
-    if (currentTime < workEndDate) {
-      const gapDuration = (workEndDate.getTime() - currentTime.getTime()) / (1000 * 60)
-      if (gapDuration >= duration) {
-        freeSlots.push({
-          start: currentTime.toISOString(),
-          end: workEndDate.toISOString(),
-          durationMinutes: Math.floor(gapDuration),
-        })
-      }
-    }
-
-    return { freeSlots }
   }
 
+  /**
+   * Free-time analytics across a date range. Backed by gap-finder.collectBusyBlocks
+   * so the busy view matches what the scheduler sees: cached CalendarEvent rows
+   * (excluding declined) plus existing WorkingSessions.
+   */
   async analyzeFreeTime(
     userId: string,
     startDate: string,
@@ -450,25 +493,13 @@ class CalendarService {
     workStartHour = 8,
     workEndHour = 22,
   ) {
-    const userSettings = await prisma.userSettings.findUnique({
-      where: { userId },
-      select: { timezone: true },
-    })
-    const tz = userSettings?.timezone ?? 'UTC'
-    const start = new Date(startDate)
-    const end = new Date(endDate)
-
-    // Fetch all events for the entire range in one call
-    const rangeStart = startOfLocalDayUtc(start, tz)
-    const rangeEnd = endOfLocalDayUtc(end, tz)
-
-    const allEvents = (await this.getGoogleEvents(
-      userId,
-      rangeStart.toISOString(),
-      rangeEnd.toISOString(),
-    )) as Array<{ start?: any; end?: any }>
+    const settings = await prisma.userSettings.findUnique({ where: { userId } })
+    const tz = settings?.timezone ?? 'UTC'
+    const gapMin = settings?.autoSchedulingGapMinutes ?? 0
 
     const totalWorkMinutesPerDay = (workEndHour - workStartHour) * 60
+    const hh = `${String(workStartHour).padStart(2, '0')}:00`
+    const eh = `${String(workEndHour).padStart(2, '0')}:00`
 
     const days: Array<{
       date: string
@@ -479,82 +510,46 @@ class CalendarService {
       eventCount: number
     }> = []
 
-    // Iterate over each day in the range — anchor day boundaries in user's tz.
-    const current = new Date(start)
-    while (current <= end) {
-      const dateStr = current.toISOString().split('T')[0]!
-      const hh = String(workStartHour).padStart(2, '0')
-      const eh = String(workEndHour).padStart(2, '0')
-      const dayStart = localTimeToUtc(current, `${hh}:00`, tz)
-      const dayEnd = localTimeToUtc(current, `${eh}:00`, tz)
-      void dateStr // dateStr retained for downstream slot labelling
+    // Walk the range one local day at a time so each iteration anchors on a
+    // unambiguous YMD in the user's tz.
+    const startYmd = localYmd(new Date(startDate), tz)
+    const endYmd = localYmd(new Date(endDate), tz)
+    let cursor = ymdToLocalDayUtc(startYmd, tz)
+    const stop = ymdToLocalDayUtc(endYmd, tz)
 
-      // Filter events that overlap with this day's working hours
-      const dayEvents = allEvents
-        .filter((e) => e.start && e.end)
-        .map((e) => {
-          const eStart = new Date(typeof e.start === 'string' ? e.start : e.start.dateTime || e.start.date)
-          const eEnd = new Date(typeof e.end === 'string' ? e.end : e.end.dateTime || e.end.date)
-          return {
-            start: eStart < dayStart ? dayStart : eStart,
-            end: eEnd > dayEnd ? dayEnd : eEnd,
-          }
-        })
-        .filter((e) => e.start < dayEnd && e.end > dayStart)
-        .sort((a, b) => a.start.getTime() - b.start.getTime())
+    while (cursor.getTime() <= stop.getTime()) {
+      const dateStr = localYmd(cursor, tz)
+      const dayStart = localTimeToUtc(cursor, hh, tz)
+      const dayEnd = localTimeToUtc(cursor, eh, tz)
 
-      // Merge overlapping events
-      const merged: Array<{ start: Date; end: Date }> = []
-      for (const ev of dayEvents) {
-        const last = merged[merged.length - 1]
-        if (last && ev.start <= last.end) {
-          last.end = ev.end > last.end ? ev.end : last.end
-        } else {
-          merged.push({ start: new Date(ev.start), end: new Date(ev.end) })
-        }
-      }
+      const blocks = await collectBusyBlocks(userId, cursor, gapMin)
+      const gaps = computeGaps(blocks, dayStart, dayEnd)
 
-      // Calculate free slots from gaps between merged events
-      const freeSlots: Array<{ start: string; end: string; durationMinutes: number }> = []
-      let cursor = dayStart
-      let longestFreeBlock = 0
-
-      for (const occupied of merged) {
-        if (cursor < occupied.start) {
-          const durationMinutes = Math.floor((occupied.start.getTime() - cursor.getTime()) / 60000)
-          freeSlots.push({
-            start: cursor.toISOString(),
-            end: occupied.start.toISOString(),
-            durationMinutes,
-          })
-          if (durationMinutes > longestFreeBlock) longestFreeBlock = durationMinutes
-        }
-        cursor = new Date(Math.max(cursor.getTime(), occupied.end.getTime()))
-      }
-
-      // Gap after last event
-      if (cursor < dayEnd) {
-        const durationMinutes = Math.floor((dayEnd.getTime() - cursor.getTime()) / 60000)
-        freeSlots.push({
-          start: cursor.toISOString(),
-          end: dayEnd.toISOString(),
-          durationMinutes,
-        })
-        if (durationMinutes > longestFreeBlock) longestFreeBlock = durationMinutes
-      }
-
-      const totalFreeMinutes = freeSlots.reduce((sum, s) => sum + s.durationMinutes, 0)
+      const freeSlots = gaps.map((g) => ({
+        start: g.start.toISOString(),
+        end: g.end.toISOString(),
+        durationMinutes: g.durationMinutes,
+      }))
+      const longestFreeBlock = freeSlots.reduce((m, s) => Math.max(m, s.durationMinutes), 0)
+      const totalFreeMinutes = freeSlots.reduce((s, x) => s + x.durationMinutes, 0)
+      // Count busy "events" inside the working window (events only, not sessions).
+      const eventCount = blocks.filter(
+        (b) => b.source === 'EVENT' && b.start < dayEnd && b.end > dayStart,
+      ).length
 
       days.push({
         date: dateStr,
         totalFreeMinutes,
-        totalBusyMinutes: totalWorkMinutesPerDay - totalFreeMinutes,
+        totalBusyMinutes: Math.max(0, totalWorkMinutesPerDay - totalFreeMinutes),
         longestFreeBlock,
         freeSlots,
-        eventCount: dayEvents.length,
+        eventCount,
       })
 
-      current.setDate(current.getDate() + 1)
+      // Advance to next local day at noon (DST-safe) and re-anchor.
+      const nextYmd = localYmd(new Date(cursor.getTime() + 26 * 3600 * 1000), tz)
+      if (nextYmd === dateStr) break // safety against bad tz / edge cases
+      cursor = ymdToLocalDayUtc(nextYmd, tz)
     }
 
     // Build summary
@@ -984,50 +979,48 @@ class CalendarService {
     }
   }
 
+  /**
+   * AI-driven day plan. The AI no longer discovers gaps — it receives
+   * pre-computed gaps from gap-finder (the same source the scheduler uses)
+   * and only assigns tasks to those slots. This eliminates the timezone bugs
+   * the previous implementation had and keeps suggestions consistent with what
+   * autoSchedule would actually accept.
+   */
   async generateTimeBlocks(userId: string, date: string) {
-    // 1. Fetch user's working hours for scheduling bounds
-    const dow = new Date(date).getDay()
-    const todayRow = await prisma.workingHours.findFirst({
-      where: { userId, channelId: null, dayOfWeek: dow },
-    })
-    const workStartHour = todayRow ? parseInt(todayRow.startTime.split(':')[0] ?? '9', 10) : 9
-    const workEndHour = todayRow ? parseInt(todayRow.endTime.split(':')[0] ?? '17', 10) : 17
+    const settings = await prisma.userSettings.findUnique({ where: { userId } })
+    const tz = settings?.timezone ?? 'UTC'
+    const gapMin = settings?.autoSchedulingGapMinutes ?? 5
+    const day = ymdToLocalDayUtc(date, tz)
 
-    // 2. Fetch pending/in-progress tasks for the date (scheduled or due)
-    const dayStart = new Date(`${date}T00:00:00.000Z`)
-    const dayEnd = new Date(`${date}T23:59:59.999Z`)
+    const window = await getDayWindow(userId, null, day)
+    if (!window) return { blocks: [], unscheduled: [] }
+    const dayStart = window.start
+    const dayEnd = window.end
 
     const allOpenTasks = await tasksRepository.findMany(userId, {
       status: 'open',
       archivedAt: null,
     })
 
-    // Include tasks scheduled for this date, due on this date, or unscheduled
+    // Candidate tasks = scheduled today, due today, or backlog (no schedule).
     const candidateTasks = allOpenTasks.filter((t: any) => {
       const scheduled = t.scheduledDate ? new Date(t.scheduledDate) : null
       const due = t.dueDate ? new Date(t.dueDate) : null
-
       if (scheduled && scheduled >= dayStart && scheduled <= dayEnd) return true
       if (due && due >= dayStart && due <= dayEnd) return true
-      if (!scheduled && !due) return true // backlog tasks are candidates
+      if (!scheduled && !due) return true
       return false
     })
+    if (!candidateTasks.length) return { blocks: [], unscheduled: [] }
 
-    // 3. Fetch existing Google Calendar events for the date
-    const existingEvents = await this.getGoogleEvents(
-      userId,
-      dayStart.toISOString(),
-      dayEnd.toISOString(),
-    )
+    const blocks = await collectBusyBlocks(userId, day, gapMin)
+    const gaps = computeGaps(blocks, dayStart, dayEnd)
 
-    const eventsText = (existingEvents as any[])
-      .filter((e) => e.start && e.end)
-      .map((e: any) => {
-        const start = typeof e.start === 'string' ? e.start : e.start?.dateTime || e.start?.date
-        const end = typeof e.end === 'string' ? e.end : e.end?.dateTime || e.end?.date
-        return `- "${e.summary || 'Untitled'}" from ${start} to ${end}`
-      })
-      .join('\n')
+    const gapsText = gaps.length
+      ? gaps
+          .map((g, i) => `- gap ${i + 1}: ${g.start.toISOString()} → ${g.end.toISOString()} (${g.durationMinutes} min)`)
+          .join('\n')
+      : '(No free gaps inside working hours)'
 
     const tasksText = candidateTasks
       .map((t: any) => {
@@ -1037,171 +1030,156 @@ class CalendarService {
       })
       .join('\n')
 
-    if (!candidateTasks.length) {
-      return { blocks: [], unscheduled: [] }
-    }
-
-    // 4. AI generates optimal time-block schedule
     const timeBlockSchema = z.object({
       blocks: z.array(
         z.object({
           taskId: z.string().describe('Exact task ID from the list'),
           taskTitle: z.string().describe('Task title for display'),
-          startTime: z.string().describe('Start time in HH:MM format (24h)'),
-          endTime: z.string().describe('End time in HH:MM format (24h)'),
+          startTime: z.string().describe('Start time as ISO 8601 (within one of the provided gaps)'),
+          endTime: z.string().describe('End time as ISO 8601 (within one of the provided gaps)'),
           reason: z.string().describe('Brief reason for this time slot'),
         }),
-      ).describe('Scheduled time blocks for the day'),
+      ),
       unscheduled: z.array(
         z.object({
-          taskId: z.string().describe('Exact task ID from the list'),
-          taskTitle: z.string().describe('Task title for display'),
-          reason: z.string().describe('Why this task could not be scheduled'),
+          taskId: z.string(),
+          taskTitle: z.string(),
+          reason: z.string(),
         }),
-      ).describe('Tasks that could not fit into the schedule'),
+      ),
     })
 
     const result = await generateObject({
       model: taskModel,
       schema: timeBlockSchema,
-      prompt: `You are a productivity scheduling assistant for ThePrimeWay. Analyze the user's tasks and existing calendar events, then generate an optimal time-block schedule for the day.
+      prompt: `You are a productivity scheduling assistant. Place tasks into the user's actually-free gaps for the day. Do NOT invent slots outside the provided gaps and do NOT overlap.
 
-DATE: ${date}
-WORK HOURS: ${String(workStartHour).padStart(2, '0')}:00 to ${String(workEndHour).padStart(2, '0')}:00
+DATE (user's local day): ${date}
+USER TIMEZONE: ${tz}
+WORKING WINDOW (UTC): ${dayStart.toISOString()} → ${dayEnd.toISOString()}
 
-EXISTING CALENDAR EVENTS (do NOT overlap with these):
-${eventsText || '(No existing events)'}
+FREE GAPS (use only these — they already exclude calendar events and existing sessions):
+${gapsText}
 
-TASKS TO SCHEDULE:
+TASKS TO PLACE:
 ${tasksText}
 
-SCHEDULING RULES:
-1. NEVER overlap with existing calendar events.
-2. Place high-priority tasks in morning slots when energy is highest.
-3. Group tasks with similar tags/topics together when possible.
-4. Include 5-10 minute breaks between blocks.
-5. Respect the estimated duration of each task (use 30 min if not specified).
-6. If a task cannot fit in the remaining available time, add it to the unscheduled list with a reason.
-7. Use 24-hour HH:MM format for all times (e.g., "09:00", "14:30").
-8. Return the EXACT task IDs from the list — do not invent new ones.
-9. Order blocks chronologically from earliest to latest.
-10. Leave buffer time around existing events (at least 5 minutes).`,
+RULES:
+1. Each task must fit fully inside one gap. Do not split a task across gaps.
+2. startTime/endTime must be valid ISO 8601 timestamps INSIDE the listed gaps.
+3. If a task is longer than every available gap, add it to "unscheduled" with a clear reason.
+4. Prefer placing higher-priority tasks earlier in the day.
+5. Group tasks with similar tags when both fit in adjacent gaps.
+6. Return the EXACT task IDs from the list — do not invent IDs.
+7. Order "blocks" chronologically.`,
     })
 
     return result.object
   }
 
+  /**
+   * AI-driven slot suggestions for a single task. Now feeds the AI the same
+   * pre-computed gaps that auto-schedule would see (CalendarEvent cache +
+   * existing WorkingSessions, in the user's tz). The AI's job is to score
+   * and rank — not to discover availability.
+   */
   async findSmartSlots(userId: string, taskId: string, date: string) {
-    // 1. Fetch the task details
     const task = await tasksRepository.findById(userId, taskId)
-    if (!task) {
-      return { error: 'task_not_found' as const }
+    if (!task) return { error: 'task_not_found' as const }
+
+    const settings = await prisma.userSettings.findUnique({ where: { userId } })
+    const tz = settings?.timezone ?? 'UTC'
+    const gapMin = settings?.autoSchedulingGapMinutes ?? 5
+    const day = ymdToLocalDayUtc(date, tz)
+
+    const window = await getDayWindow(userId, (task as any).channelId ?? null, day)
+    if (!window) {
+      return {
+        slots: [],
+        bestSlot: { startTime: '', endTime: '', reason: 'No working hours configured for this day.' },
+      }
     }
 
-    // 2. Fetch Google Calendar events for the date
-    const dayStart = new Date(`${date}T00:00:00.000Z`)
-    const dayEnd = new Date(`${date}T23:59:59.999Z`)
-    const events = await this.getGoogleEvents(userId, dayStart.toISOString(), dayEnd.toISOString())
+    const blocksForDay = await collectBusyBlocks(userId, day, gapMin)
+    const allGaps = computeGaps(blocksForDay, window.start, window.end)
+    const taskDuration = (task as any).estimatedDurationMinutes ?? 30
+    const fittingGaps = allGaps.filter((g) => g.durationMinutes >= taskDuration)
+    if (fittingGaps.length === 0) {
+      return {
+        slots: [],
+        bestSlot: {
+          startTime: '',
+          endTime: '',
+          reason: `No gap of ${taskDuration}+ minutes available for this task today.`,
+        },
+      }
+    }
 
-    const eventsText = (events as any[])
-      .filter((e) => e.start && e.end)
-      .map((e: any) => {
-        const start = typeof e.start === 'string' ? e.start : e.start?.dateTime || e.start?.date
-        const end = typeof e.end === 'string' ? e.end : e.end?.dateTime || e.end?.date
-        return `- "${e.summary || 'Untitled'}" from ${start} to ${end}`
-      })
-      .join('\n')
-
-    // 3. Fetch user's recent completed tasks with actualStart for productivity patterns
+    // Productivity context (which UTC hours the user historically completes tasks in).
     const completedTasks = await tasksRepository.findCompletedWithActualStart(userId, 50)
-
-    const productivityData = completedTasks
-      .filter((t) => t.actualStart)
-      .map((t) => {
-        const startHour = new Date(t.actualStart!).getUTCHours()
-        const duration = t.actualDurationMinutes ?? t.estimatedDurationMinutes ?? 30
-        return { hour: startHour, priority: t.priority, tags: t.tags, duration }
-      })
-
-    // Build hour-frequency map for productivity pattern summary
     const hourCounts: Record<number, number> = {}
-    for (const entry of productivityData) {
-      hourCounts[entry.hour] = (hourCounts[entry.hour] || 0) + 1
+    for (const t of completedTasks) {
+      if (!t.actualStart) continue
+      const h = new Date(t.actualStart).getUTCHours()
+      hourCounts[h] = (hourCounts[h] || 0) + 1
     }
     const sortedHours = Object.entries(hourCounts)
       .sort(([, a], [, b]) => b - a)
-      .map(([hour, count]) => `${String(hour).padStart(2, '0')}:00 (${count} tasks)`)
+      .map(([h, c]) => `${String(h).padStart(2, '0')}:00 UTC (${c} tasks)`)
       .slice(0, 5)
-
-    const productivitySummary = sortedHours.length > 0
-      ? `Most productive hours (by completed task count): ${sortedHours.join(', ')}`
+    const productivitySummary = sortedHours.length
+      ? `Most productive hours: ${sortedHours.join(', ')}`
       : 'No historical productivity data available.'
 
-    // 4. Fetch working hours for scheduling bounds
-    const dow = new Date(date).getDay()
-    const todayRow = await prisma.workingHours.findFirst({
-      where: { userId, channelId: null, dayOfWeek: dow },
-    })
-    const workStartHour = todayRow ? parseInt(todayRow.startTime.split(':')[0] ?? '9', 10) : 9
-    const workEndHour = todayRow ? parseInt(todayRow.endTime.split(':')[0] ?? '17', 10) : 17
-
-    // 5. Build task info
-    const taskDuration = (task as any).estimatedDurationMinutes ?? 30
     const taskTags = Array.isArray((task as any).tags) ? ((task as any).tags as string[]).join(', ') : ''
+    const gapsText = fittingGaps
+      .map((g, i) => `- candidate ${i + 1}: ${g.start.toISOString()} → ${g.end.toISOString()} (${g.durationMinutes} min)`)
+      .join('\n')
 
-    // 6. AI generates smart slot suggestions
     const smartSlotsSchema = z.object({
       slots: z.array(
         z.object({
-          startTime: z.string().describe('Start time in ISO 8601 format (e.g., 2026-04-14T09:00:00Z)'),
-          endTime: z.string().describe('End time in ISO 8601 format (e.g., 2026-04-14T10:00:00Z)'),
-          score: z.number().min(0).max(100).describe('Score from 0-100 indicating how optimal this slot is'),
-          reason: z.string().describe('Brief explanation of why this slot is recommended'),
+          startTime: z.string().describe('Start time in ISO 8601 (must be inside one of the candidate gaps)'),
+          endTime: z.string().describe('End time in ISO 8601 (must fit within the same gap)'),
+          score: z.number().min(0).max(100),
+          reason: z.string(),
         }),
-      ).describe('Ranked time slot suggestions, best first'),
+      ),
       bestSlot: z.object({
-        startTime: z.string().describe('Start time in ISO 8601 format'),
-        endTime: z.string().describe('End time in ISO 8601 format'),
-        reason: z.string().describe('Why this is the best slot for this task'),
-      }).describe('The single best recommended slot'),
+        startTime: z.string(),
+        endTime: z.string(),
+        reason: z.string(),
+      }),
     })
 
     const result = await generateObject({
       model: taskModel,
       schema: smartSlotsSchema,
-      prompt: `You are a smart scheduling assistant for ThePrimeWay. Find the optimal time slots for a specific task based on calendar availability, task characteristics, and the user's historical productivity patterns.
+      prompt: `You are a smart scheduling assistant. Score the user's free slots for this task — do NOT invent slots outside the provided candidates.
 
-DATE: ${date}
-WORK HOURS: ${String(workStartHour).padStart(2, '0')}:00 to ${String(workEndHour).padStart(2, '0')}:00
+DATE (user's local day): ${date}
+USER TIMEZONE: ${tz}
+WORKING WINDOW (UTC): ${window.start.toISOString()} → ${window.end.toISOString()}
 
-TASK TO SCHEDULE:
+TASK:
 - Title: "${task.title}"
 - Priority: ${(task as any).priority || 'medium'}
 - Estimated duration: ${taskDuration} minutes
 - Tags: ${taskTags || 'none'}
 
-EXISTING CALENDAR EVENTS (must NOT overlap):
-${eventsText || '(No existing events)'}
+CANDIDATE GAPS (only suggest slots inside these — exact ISO 8601):
+${gapsText}
 
-USER PRODUCTIVITY PATTERNS:
+USER PRODUCTIVITY PATTERN:
 ${productivitySummary}
-Total completed tasks analyzed: ${productivityData.length}
 
-SCHEDULING GUIDELINES:
-1. Find 3-5 available time slots that fit the task's duration within work hours.
-2. Score each slot from 0-100 based on:
-   - Calendar availability (no overlaps with existing events)
-   - Task priority: high-priority tasks score better in morning slots when focus is highest
-   - Creative/deep-work tasks: score better in mid-morning or early afternoon
-   - Routine/administrative tasks: can go in any slot, slightly prefer afternoon
-   - User's historical patterns: slots during the user's most productive hours score higher
-   - Buffer time: slots with natural breaks before/after events score slightly higher
-3. Rank slots from highest to lowest score.
-4. The bestSlot should be the slot with the highest score.
-5. Use ISO 8601 datetime format for all times (e.g., "${date}T09:00:00Z").
-6. Each slot must accommodate the full estimated duration of ${taskDuration} minutes.
-7. Leave at least 5 minutes buffer around existing events.
-8. Do not suggest slots outside work hours.`,
+RULES:
+1. Each slot must fit fully inside one candidate gap.
+2. Each slot must last exactly ${taskDuration} minutes.
+3. Suggest 3 to ${Math.min(5, fittingGaps.length)} slots, ranked by score (highest first).
+4. Score 0-100 considering: priority+morning bias, deep-work mid-morning bias, productivity pattern overlap, buffer around adjacent gaps.
+5. The bestSlot equals the highest-scored slot.
+6. Use the EXACT ISO 8601 timestamps from the candidate gaps as starting points; never go outside them.`,
     })
 
     return result.object
@@ -1235,8 +1213,12 @@ SCHEDULING GUIDELINES:
   }
 
   /**
-   * Push a WorkingSession to the Google Calendar linked via Channel.timeboxToCalendarId.
-   * No-op if task has no channel or channel has no target calendar.
+   * Push a WorkingSession to Google Calendar.
+   * Calendar resolution order:
+   *   1. Channel.timeboxToCalendarId (per-channel target)
+   *   2. CalendarAccount.defaultTargetCalendarId (user-level default)
+   *   3. The user's primary selected-for-sync calendar
+   * If none resolve, the session stays local and we return `no_target_calendar`.
    * Persists externalEventId / externalCalendarId on the session for later update/delete.
    */
   async pushSessionToCalendar(
@@ -1248,25 +1230,44 @@ SCHEDULING GUIDELINES:
     })
     if (!session) return { ok: false, reason: 'session_not_found' }
     if (session.externalEventId) return { ok: true, eventId: session.externalEventId }
-    if (!session.task?.channelId) return { ok: false, reason: 'no_channel' }
 
-    const channel = await prisma.channel.findUnique({ where: { id: session.task.channelId } })
-    if (!channel?.timeboxToCalendarId) return { ok: false, reason: 'no_target_calendar' }
+    // Try the channel binding first.
+    let calendar: Awaited<ReturnType<typeof prisma.calendar.findUnique>> | null = null
+    if (session.task?.channelId) {
+      const channel = await prisma.channel.findUnique({ where: { id: session.task.channelId } })
+      if (channel?.timeboxToCalendarId) {
+        calendar = await prisma.calendar.findUnique({
+          where: { id: channel.timeboxToCalendarId },
+          include: { account: true },
+        })
+      }
+    }
 
-    const calendar = await prisma.calendar.findUnique({
-      where: { id: channel.timeboxToCalendarId },
-      include: { account: true },
-    })
+    // Fallback: account default / primary calendar for this user.
+    if (!calendar) {
+      const target = await calendarRepo.findTargetCalendarForUser(session.userId)
+      if (!target) return { ok: false, reason: 'no_target_calendar' }
+      calendar = await prisma.calendar.findUnique({
+        where: { id: target.calendar.id },
+        include: { account: true },
+      })
+    }
     if (!calendar) return { ok: false, reason: 'calendar_not_found' }
 
     const accessToken = await this.ensureAccessToken(calendar.calendarAccountId)
     if (!accessToken) return { ok: false, reason: 'no_access_token' }
 
+    const userSettings = await prisma.userSettings.findUnique({
+      where: { userId: session.userId },
+      select: { timezone: true },
+    })
+    const tz = userSettings?.timezone ?? 'UTC'
+
     const body = {
-      summary: session.task.title,
+      summary: session.task?.title ?? 'Working session',
       description: 'Auto-scheduled by ThePrimeWay',
-      start: { dateTime: session.start.toISOString(), timeZone: 'UTC' },
-      end: { dateTime: session.end.toISOString(), timeZone: 'UTC' },
+      start: { dateTime: session.start.toISOString(), timeZone: tz },
+      end: { dateTime: session.end.toISOString(), timeZone: tz },
       extendedProperties: { private: { theprimewaySessionId: session.id } },
     }
     const res = await fetch(
@@ -1332,9 +1333,15 @@ SCHEDULING GUIDELINES:
     const accessToken = await this.ensureAccessToken(calendar.calendarAccountId)
     if (!accessToken) return { ok: false, reason: 'no_access_token' }
 
+    const userSettings = await prisma.userSettings.findUnique({
+      where: { userId: session.userId },
+      select: { timezone: true },
+    })
+    const tz = userSettings?.timezone ?? 'UTC'
+
     const body = {
-      start: { dateTime: session.start.toISOString(), timeZone: 'UTC' },
-      end: { dateTime: session.end.toISOString(), timeZone: 'UTC' },
+      start: { dateTime: session.start.toISOString(), timeZone: tz },
+      end: { dateTime: session.end.toISOString(), timeZone: tz },
       summary: session.task?.title ?? 'Working session',
     }
     const res = await fetch(
@@ -1551,6 +1558,54 @@ SCHEDULING GUIDELINES:
       }
     }
     return { renewed, failed }
+  }
+
+  /**
+   * List cached CalendarEvent rows in [from, to] for the user, in a shape the
+   * web client already understands (the same defensive normalization in
+   * `use-calendar-items.ts` handles both the raw Google shape and this
+   * cache-derived shape). Triggers a background sync if no events are cached
+   * AND the user has selected calendars — protects fresh users whose first
+   * call would otherwise see "no events" until the next webhook fires.
+   */
+  async listCachedEventsForUi(userId: string, from: Date, to: Date) {
+    const events = await prisma.calendarEvent.findMany({
+      where: {
+        calendar: { account: { userId } },
+        start: { lt: to },
+        end: { gt: from },
+        isDeclined: false,
+      },
+      include: {
+        calendar: { select: { id: true, name: true, color: true, providerCalendarId: true, accessRole: true } },
+      },
+      orderBy: { start: 'asc' },
+    })
+
+    if (events.length === 0) {
+      // Fire-and-forget pull so the next request sees data, even if Google
+      // never sent us a webhook for this calendar yet.
+      this.syncCalendars(userId).catch((err) =>
+        console.error('[CAL_LIST] background sync failed', err),
+      )
+    }
+
+    return events.map((e: any) => ({
+      id: e.externalId,
+      summary: e.title,
+      title: e.title,
+      startTime: e.start.toISOString(),
+      endTime: e.end.toISOString(),
+      start: { dateTime: e.start.toISOString() },
+      end: { dateTime: e.end.toISOString() },
+      isAllDay: e.isAllDay,
+      isBusy: e.isBusy,
+      calendarId: e.calendar?.providerCalendarId ?? null,
+      internalCalendarId: e.calendar?.id ?? e.calendarId,
+      calendarName: e.calendar?.name ?? null,
+      calendarColor: e.calendar?.color ?? null,
+      calendarAccessRole: e.calendar?.accessRole ?? null,
+    }))
   }
 
   /** List cached CalendarEvent rows for [from, to] that are not declined. */

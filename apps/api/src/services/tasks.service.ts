@@ -13,8 +13,9 @@ import { gamificationService } from './gamification.service'
 import { gamificationEvents } from './gamification/events'
 import { syncService } from './sync.service'
 import { webhooksService } from './webhooks.service'
-import { scheduleOptimizer } from './schedule-optimizer'
-import { autoSchedule } from './scheduling/auto-schedule'
+import { schedulingFacade } from './scheduling/scheduling-facade'
+import { collectBusyBlocks, computeGaps, getDayWindow, dt } from './scheduling/gap-finder'
+import { ymdToLocalDayUtc } from '@repo/shared/utils'
 import { enforceLimit } from '../lib/limits'
 import { FEATURES } from '@repo/shared/constants'
 import { prisma } from '../lib/prisma'
@@ -246,8 +247,7 @@ class TasksService {
       !input.isAllDay
     ) {
       try {
-        const day = new Date(`${input.scheduledDate.slice(0, 10)}T00:00:00.000Z`)
-        const result = await autoSchedule(task.id, day, { triggeredBy: 'USER_ACTION' })
+        const result = await schedulingFacade.scheduleTask(task.id, input.scheduledDate.slice(0, 10), { triggeredBy: 'USER_ACTION' })
         if (result.type === 'Success' && result.sessions.length > 0) {
           const first = result.sessions[0]!
           const last = result.sessions[result.sessions.length - 1]!
@@ -377,55 +377,43 @@ class TasksService {
     return ok
   }
 
-  /** Get schedule suggestion based on calendar events and existing tasks */
+  /**
+   * Suggest the next free slot of `estimatedDuration` minutes for the user
+   * on `targetDate`. Reuses the same gap-finder the scheduler uses, so the
+   * suggestion is consistent with what auto-schedule would actually pick.
+   * Honors `preferredTime` by skipping gaps before the preferred window.
+   */
   async getScheduleSuggestion(
     userId: string,
     targetDate: string, // YYYY-MM-DD
     estimatedDuration: number, // minutes
     preferredTime?: 'morning' | 'afternoon' | 'evening',
-  ) {
-    // Get all tasks for this day
-    const tasks = await tasksRepository.findMany(userId, {})
-
-    // Normalize to YYYY-MM-DD — caller may pass full ISO string
+  ): Promise<{ start: string; end: string } | null> {
     const dateOnly = targetDate.includes('T') ? targetDate.split('T')[0]! : targetDate
+    const settings = await prisma.userSettings.findUnique({ where: { userId } })
+    const tz = settings?.timezone ?? 'UTC'
+    const gapMin = settings?.autoSchedulingGapMinutes ?? 5
+    const day = ymdToLocalDayUtc(dateOnly, tz)
 
-    // Get calendar events for this day and the next (to handle time zones properly)
-    const startOfDay = `${dateOnly}T00:00:00Z`
-    const endOfDay = `${dateOnly}T23:59:59Z`
+    const window = await getDayWindow(userId, null, day)
+    if (!window) return null
 
-    let calendarEvents: any[] = []
-    try {
-      calendarEvents = await calendarService.getGoogleEvents(userId, startOfDay, endOfDay)
-    } catch {
-      // Calendar not connected or fetch failed — proceed without events
-      calendarEvents = []
-    }
+    const blocks = await collectBusyBlocks(userId, day, gapMin)
+    const gaps = computeGaps(blocks, window.start, window.end)
 
-    // Convert calendar events to the format expected by scheduleOptimizer
-    const events = calendarEvents.map((event: any) => ({
-      start: event.start?.dateTime || event.start?.date,
-      end: event.end?.dateTime || event.end?.date,
-      title: event.summary || 'Event',
-    }))
+    // Apply preferred-time floor (in user's tz). The first gap whose START is
+    // >= preferred floor and whose duration fits the task wins.
+    const prefHour =
+      preferredTime === 'morning' ? 9 : preferredTime === 'afternoon' ? 13 : preferredTime === 'evening' ? 17 : null
+    const prefFloor = prefHour !== null ? dt.combineDateTime(day, `${String(prefHour).padStart(2, '0')}:00`, tz) : null
 
-    // Get all planned tasks (with scheduledDate and times)
-    const plannedTasks = tasks.filter((t) => t.scheduledDate).map((t) => ({
-      scheduledDate: t.scheduledDate ? t.scheduledDate.toISOString().split('T')[0] : undefined,
-      scheduledStart: t.scheduledStart ? t.scheduledStart.toISOString() : undefined,
-      scheduledEnd: t.scheduledEnd ? t.scheduledEnd.toISOString() : undefined,
-    }))
+    const eligible = prefFloor ? gaps.filter((g) => g.end > prefFloor) : gaps
+    const target = eligible.find((g) => g.durationMinutes >= estimatedDuration) ?? gaps.find((g) => g.durationMinutes >= estimatedDuration)
+    if (!target) return null
 
-    // Get schedule suggestion
-    const suggestion = scheduleOptimizer.getSuggestion(
-      plannedTasks,
-      events,
-      dateOnly,
-      estimatedDuration,
-      preferredTime,
-    )
-
-    return suggestion
+    const start = prefFloor && target.start < prefFloor ? prefFloor : target.start
+    const end = dt.addMinutes(start, estimatedDuration)
+    return { start: start.toISOString(), end: end.toISOString() }
   }
 
   // ---------------------------------------------------------------------------

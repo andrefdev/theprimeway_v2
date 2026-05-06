@@ -27,8 +27,9 @@ export async function onTimerStart(taskId: string, startedAt: Date = new Date())
   const settings = await prisma.userSettings.findUnique({ where: { userId } })
   if (!settings?.detectLateTimerStart) return { action: 'NONE' }
 
-  const day = dt.startOfDay(startedAt)
-  const dayEnd = dt.endOfDay(startedAt)
+  const tz = settings.timezone ?? 'UTC'
+  const day = dt.startOfDay(startedAt, tz)
+  const dayEnd = dt.endOfDay(startedAt, tz)
 
   // Prefer: session containing `startedAt` > next upcoming > last of day
   const containing = await prisma.workingSession.findFirst({

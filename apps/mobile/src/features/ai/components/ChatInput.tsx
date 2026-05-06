@@ -1,6 +1,6 @@
 import { View, TextInput, Pressable } from 'react-native';
 import { Icon } from '@/shared/components/ui/icon';
-import { Send } from 'lucide-react-native';
+import { Plus, Send } from 'lucide-react-native';
 import { cn } from '@/shared/utils/cn';
 import { useTranslation } from '@/shared/hooks/useTranslation';
 import { VoiceInputButton } from './VoiceInputButton';
@@ -18,9 +18,12 @@ export function ChatInput({ value, onChange, onSend, disabled }: Props) {
   const canSend = !!value.trim() && !disabled;
 
   return (
-    <View className="border-t border-border px-4 py-3">
+    <View className="border-t border-border/60 bg-background/95 px-4 py-3">
       <View className="flex-row items-end gap-2">
-        <View className="min-h-[44px] flex-1 flex-row items-center rounded-2xl border border-border bg-card px-4">
+        <Pressable className="h-11 w-11 items-center justify-center rounded-full border border-border/70 bg-card">
+          <Icon as={Plus} size={18} className="text-muted-foreground" />
+        </Pressable>
+        <View className="min-h-[44px] flex-1 flex-row items-center rounded-full border border-border/70 bg-card px-4 shadow-sm shadow-black/5">
           <TextInput
             className="max-h-24 flex-1 py-2.5 text-sm text-foreground"
             placeholder={t('askAnything')}
@@ -32,6 +35,7 @@ export function ChatInput({ value, onChange, onSend, disabled }: Props) {
           />
         </View>
         <VoiceInputButton
+          size={44}
           lang={voiceLang}
           onInterim={(text) => onChange(text)}
           onTranscript={(text) => {

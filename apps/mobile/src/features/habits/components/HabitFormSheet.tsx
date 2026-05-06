@@ -9,16 +9,17 @@ import { useCreateHabit } from '../hooks/useHabits';
 import { cn } from '@/shared/utils/cn';
 import type { ThreeYearGoal } from '@shared/types/models';
 import { ThreeYearGoalPickerSheet } from '@features/goals/components/ThreeYearGoalPickerSheet';
+import { useTranslation } from '@/shared/hooks/useTranslation';
 
 const CATEGORIES = [
-  { key: 'health', label: 'Health', emoji: '💪' },
-  { key: 'learning', label: 'Learning', emoji: '📚' },
-  { key: 'work', label: 'Work', emoji: '💼' },
-  { key: 'mindfulness', label: 'Mindfulness', emoji: '🧘' },
-  { key: 'social', label: 'Social', emoji: '👥' },
-  { key: 'creative', label: 'Creative', emoji: '🎨' },
-  { key: 'finance', label: 'Finance', emoji: '💰' },
-  { key: 'home', label: 'Home', emoji: '🏠' },
+  { key: 'health', labelKey: 'categories.healthFitness', emoji: '💪' },
+  { key: 'learning', labelKey: 'categories.learningDevelopment', emoji: '📚' },
+  { key: 'work', labelKey: 'categories.workProductivity', emoji: '💼' },
+  { key: 'mindfulness', labelKey: 'categories.mindfulnessWellbeing', emoji: '🧘' },
+  { key: 'social', labelKey: 'categories.socialRelationships', emoji: '👥' },
+  { key: 'creative', labelKey: 'categories.creativeHobbies', emoji: '🎨' },
+  { key: 'finance', labelKey: 'categories.financeMoney', emoji: '💰' },
+  { key: 'home', labelKey: 'categories.homeEnvironment', emoji: '🏠' },
 ];
 
 const COLORS = ['#280FFB', '#10B981', '#8B5CF6', '#EF4444', '#F59E0B', '#EC4899', '#06B6D4', '#6366F1'];
@@ -30,6 +31,7 @@ interface HabitFormSheetProps {
 }
 
 export function HabitFormSheet({ isOpen, onClose }: HabitFormSheetProps) {
+  const { t } = useTranslation('features.habits');
   const createHabit = useCreateHabit();
   const [name, setName] = useState('');
   const [category, setCategory] = useState('health');
@@ -63,15 +65,15 @@ export function HabitFormSheet({ isOpen, onClose }: HabitFormSheetProps) {
       setLinkedGoal(null);
       onClose();
     } catch {
-      Alert.alert('Error', 'Could not create habit');
+      Alert.alert(t('errors.title'), t('errors.create'));
     }
   };
 
   return (
-    <FormSheet isOpen={isOpen} onClose={onClose} title="New Habit">
+    <FormSheet isOpen={isOpen} onClose={onClose} title={t('newHabit')}>
       <TextInput
         className="rounded-xl border border-border bg-card px-4 py-3.5 text-base font-medium text-foreground"
-        placeholder="What habit do you want to build?"
+        placeholder={t('habitNamePlaceholder')}
         placeholderTextColor="hsl(210, 10%, 55%)"
         value={name}
         onChangeText={setName}
@@ -79,7 +81,7 @@ export function HabitFormSheet({ isOpen, onClose }: HabitFormSheetProps) {
 
       {/* Category */}
       <View>
-        <Text className="mb-2 text-xs font-medium text-muted-foreground">Category</Text>
+        <Text className="mb-2 text-xs font-medium text-muted-foreground">{t('habitCategory')}</Text>
         <View className="flex-row flex-wrap gap-2">
           {CATEGORIES.map((c) => (
             <Pressable
@@ -92,7 +94,7 @@ export function HabitFormSheet({ isOpen, onClose }: HabitFormSheetProps) {
             >
               <Text className="text-sm">{c.emoji}</Text>
               <Text className={cn('text-xs font-medium', category === c.key ? 'text-primary' : 'text-muted-foreground')}>
-                {c.label}
+                {t(c.labelKey)}
               </Text>
             </Pressable>
           ))}
@@ -101,7 +103,7 @@ export function HabitFormSheet({ isOpen, onClose }: HabitFormSheetProps) {
 
       {/* Color */}
       <View>
-        <Text className="mb-2 text-xs font-medium text-muted-foreground">Color</Text>
+        <Text className="mb-2 text-xs font-medium text-muted-foreground">{t('habitColor')}</Text>
         <View className="flex-row gap-3">
           {COLORS.map((c) => (
             <Pressable
@@ -116,7 +118,7 @@ export function HabitFormSheet({ isOpen, onClose }: HabitFormSheetProps) {
 
       {/* Frequency */}
       <View>
-        <Text className="mb-2 text-xs font-medium text-muted-foreground">Frequency</Text>
+        <Text className="mb-2 text-xs font-medium text-muted-foreground">{t('frequency.label')}</Text>
         <View className="flex-row gap-2">
           {['daily', 'week_days'].map((f) => (
             <Pressable
@@ -128,7 +130,7 @@ export function HabitFormSheet({ isOpen, onClose }: HabitFormSheetProps) {
               )}
             >
               <Text className={cn('text-sm font-medium', freqType === f ? 'text-primary' : 'text-muted-foreground')}>
-                {f === 'daily' ? 'Daily' : 'Custom Days'}
+                {f === 'daily' ? t('frequency.dailyLabel') : t('frequency.weekDaysLabel')}
               </Text>
             </Pressable>
           ))}
@@ -156,14 +158,14 @@ export function HabitFormSheet({ isOpen, onClose }: HabitFormSheetProps) {
 
       {/* Link to Goal */}
       <View>
-        <Text className="mb-2 text-xs font-medium text-muted-foreground">Link to Three-Year Goal</Text>
+        <Text className="mb-2 text-xs font-medium text-muted-foreground">{t('goalLink.title')}</Text>
         <Pressable
           onPress={() => setShowGoalPicker(true)}
           className="flex-row items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 active:opacity-70"
         >
           <Icon as={Layers} size={16} className="text-muted-foreground" />
           <Text className="flex-1 text-sm text-foreground" numberOfLines={1}>
-            {linkedGoal ? linkedGoal.title : 'Link a goal (optional)'}
+            {linkedGoal ? linkedGoal.title : t('goalLink.placeholder')}
           </Text>
           {linkedGoal ? (
             <Pressable
@@ -183,7 +185,7 @@ export function HabitFormSheet({ isOpen, onClose }: HabitFormSheetProps) {
         {createHabit.isPending ? (
           <ActivityIndicator size="small" color="white" />
         ) : (
-          <Text className="text-sm font-bold text-primary-foreground">Create Habit</Text>
+          <Text className="text-sm font-bold text-primary-foreground">{t('actions.create')}</Text>
         )}
       </Button>
 

@@ -20,7 +20,6 @@ export default function AppLayout() {
         <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="calendar" />
-        <Stack.Screen name="ai" />
         <Stack.Screen name="pomodoro" options={{ presentation: 'modal' }} />
         <Stack.Screen name="profile" />
         <Stack.Screen name="settings" />

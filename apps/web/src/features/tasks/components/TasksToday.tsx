@@ -16,6 +16,7 @@ import {
   useWorkingHoursOverride,
   useUpsertWorkingHoursOverride,
   useAutoSchedule,
+  useMoveSession,
 } from '@/features/scheduling/queries'
 import { useRitualsToday } from '@/features/rituals/queries'
 import { DailyPlanDialog } from '@/features/rituals/components/DailyPlanDialog'
@@ -60,6 +61,7 @@ export function TasksToday() {
   const deleteTask = useDeleteTask()
   const showImpact = useCompletionImpact()
   const autoSchedule = useAutoSchedule()
+  const moveSession = useMoveSession()
   const overrideQuery = useWorkingHoursOverride(dayKey)
   const upsertOverride = useUpsertWorkingHoursOverride()
 
@@ -164,21 +166,62 @@ export function TasksToday() {
   async function planDay() {
     if (unscheduled.length === 0) return
     let ok = 0
-    let fail = 0
+    const failures: Record<'NO_WORKING_HOURS' | 'NO_GAPS' | 'WOULD_NOT_FIT' | 'UNKNOWN', number> = {
+      NO_WORKING_HOURS: 0,
+      NO_GAPS: 0,
+      WOULD_NOT_FIT: 0,
+      UNKNOWN: 0,
+    }
     for (const task of unscheduled) {
       try {
         const r = await autoSchedule.mutateAsync({ taskId: task.id, day: dayKey })
         if (r.type === 'Success') ok++
-        else fail++
+        else failures[r.reason] = (failures[r.reason] ?? 0) + 1
       } catch {
-        fail++
+        failures.UNKNOWN++
       }
     }
     if (ok > 0) toast.success(`Scheduled ${ok} task${ok === 1 ? '' : 's'}`)
-    if (fail > 0) toast.warning(`${fail} couldn't fit — review manually`)
+    if (failures.NO_WORKING_HOURS > 0) {
+      toast.warning(
+        `${failures.NO_WORKING_HOURS} task${failures.NO_WORKING_HOURS === 1 ? '' : 's'} skipped — no working hours set for this day`,
+      )
+    }
+    if (failures.NO_GAPS > 0) {
+      toast.warning(
+        `${failures.NO_GAPS} task${failures.NO_GAPS === 1 ? '' : 's'} skipped — your day is already full`,
+      )
+    }
+    if (failures.WOULD_NOT_FIT > 0) {
+      toast.warning(
+        `${failures.WOULD_NOT_FIT} task${failures.WOULD_NOT_FIT === 1 ? '' : 's'} too long for any free gap — try splitting or rescheduling`,
+      )
+    }
+    if (failures.UNKNOWN > 0) {
+      toast.error(`${failures.UNKNOWN} task${failures.UNKNOWN === 1 ? '' : 's'} failed to schedule`)
+    }
   }
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
+
+  async function placeTaskAt(taskId: string, start: Date, end: Date) {
+    // Prefer moving an existing WorkingSession over creating a new one so split
+    // sessions don't accumulate. The first session for the task on the visible
+    // day wins; multi-session splits would need a richer drag UX.
+    const existing = calendarItems.find(
+      (i) => i.type === 'session' && i.task?.id === taskId,
+    )
+    try {
+      await moveSession.mutateAsync({
+        sessionId: existing?.sessionId,
+        taskId: existing?.sessionId ? undefined : taskId,
+        start: start.toISOString(),
+        end: end.toISOString(),
+      })
+    } catch {
+      toast.error(t('failedToUpdate'))
+    }
+  }
 
   async function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event
@@ -195,19 +238,7 @@ export function TasksToday() {
       const start = new Date(overData.start)
       const duration = task.estimatedDuration ?? 30
       const end = new Date(start.getTime() + duration * 60_000)
-      try {
-        await updateTask.mutateAsync({
-          id: taskId,
-          data: {
-            scheduledStart: start.toISOString(),
-            scheduledEnd: end.toISOString(),
-            scheduledDate: dayKey,
-            isAllDay: false,
-          },
-        })
-      } catch {
-        toast.error(t('failedToUpdate'))
-      }
+      await placeTaskAt(taskId, start, end)
       return
     }
 
@@ -230,19 +261,7 @@ export function TasksToday() {
         start = base
       }
       const end = new Date(start.getTime() + duration * 60_000)
-      try {
-        await updateTask.mutateAsync({
-          id: taskId,
-          data: {
-            scheduledStart: start.toISOString(),
-            scheduledEnd: end.toISOString(),
-            scheduledDate: dayKey,
-            isAllDay: false,
-          },
-        })
-      } catch {
-        toast.error(t('failedToUpdate'))
-      }
+      await placeTaskAt(taskId, start, end)
     }
   }
 
@@ -350,7 +369,9 @@ export function TasksToday() {
                     today={new Date()}
                     onSlotClick={(start) => openCreate(start)}
                     onItemClick={(item: CalendarItem) => {
-                      if (item.type === 'task' && item.task) openEdit(item.task)
+                      if ((item.type === 'task' || item.type === 'session') && item.task) {
+                        openEdit(item.task)
+                      }
                     }}
                     enableSlotDrop
                     dayStartHour={dayBounds.startHour}

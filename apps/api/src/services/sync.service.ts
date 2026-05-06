@@ -13,6 +13,9 @@ export type SyncEventType =
   | 'pomodoro.started'
   | 'pomodoro.stopped'
   | 'calendar.event.updated'
+  | 'session.created'
+  | 'session.updated'
+  | 'session.deleted'
 
 export interface SyncEvent {
   type: SyncEventType

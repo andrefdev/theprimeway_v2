@@ -17,7 +17,7 @@ interface AnnualGoalItemProps {
 export function AnnualGoalItem({ goal, color = '#3b82f6', className }: AnnualGoalItemProps) {
   const { locale } = useTranslation();
   const handlePress = () => {
-    router.push(`/(app)/(tabs)/goals/annual/${goal.id}` as any);
+    router.push('/(app)/(tabs)' as any);
   };
 
   const formattedDate = goal.targetDate

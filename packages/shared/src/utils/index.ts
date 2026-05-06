@@ -7,6 +7,7 @@ export {
   formatInTz,
   startOfLocalDayUtc,
   endOfLocalDayUtc,
+  ymdToLocalDayUtc,
   localYmd,
   localIsoWeekStartYmd,
   localDayOfWeek,

@@ -5,6 +5,7 @@ import { router } from 'expo-router';
 import type { User, LoginCredentials, RegisterData, AuthResponse } from '@shared/types/models';
 import { AUTH } from '@shared/api/endpoints';
 import { apiClient } from '@shared/api/client';
+import { configureAuthSession } from '@shared/api/authSession';
 
 type LoginResponse = AuthResponse | { requiresVerification: true; email: string };
 
@@ -156,3 +157,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   setUser: (user) => set({ user }),
   setTokens: (token, _refreshToken) => set({ token, isAuthenticated: true }),
 }));
+
+configureAuthSession({
+  getToken: () => useAuthStore.getState().token,
+  setTokens: (token, refreshToken) => useAuthStore.getState().setTokens(token, refreshToken),
+  logout: () => useAuthStore.getState().logout(),
+});

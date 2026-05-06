@@ -23,13 +23,13 @@ export function routeFromNotification(response: Notifications.NotificationRespon
 
   switch (data.type) {
     case 'task':
-      router.push('/(app)/(tabs)' as any);
+      router.push('/(app)/(tabs)/manual' as any);
       return;
     case 'habit':
-      router.push('/(app)/(tabs)/habits' as any);
+      router.push('/(app)/(tabs)/manual' as any);
       return;
     case 'goal':
-      router.push('/(app)/(tabs)/goals' as any);
+      router.push('/(app)/(tabs)' as any);
       return;
     case 'weekly_review':
       router.push('/(app)/weekly-review' as any);

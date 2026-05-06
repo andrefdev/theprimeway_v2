@@ -8,6 +8,7 @@ import { prisma } from '../../lib/prisma'
 import { collectBusyBlocks, computeGaps, getDayWindow, dt, Gap } from './gap-finder'
 import { commandManager, CommandChange } from './CommandManager'
 import { calendarService } from '../calendar.service'
+import { ymdToLocalDayUtc } from '@repo/shared/utils'
 
 export type SchedulingResult =
   | { type: 'Success'; sessions: Array<{ id: string; start: Date; end: Date }>; commandId: string }
@@ -30,7 +31,7 @@ const MIN_CHUNK = 15
 
 export async function autoSchedule(
   taskId: string,
-  day: Date,
+  day: Date | string,
   opts: AutoScheduleOptions = {},
 ): Promise<SchedulingResult> {
   const task = await prisma.task.findFirst({ where: { id: taskId } })
@@ -38,22 +39,28 @@ export async function autoSchedule(
   const userId = task.userId
 
   const settings = await prisma.userSettings.findUnique({ where: { userId } })
+  const tz = settings?.timezone ?? 'UTC'
   const gapMin = settings?.autoSchedulingGapMinutes ?? 5
   const defaultDuration = settings?.defaultTaskDurationMinutes ?? 30
   const duration = task.plannedTimeMinutes ?? task.estimatedDurationMinutes ?? defaultDuration
 
-  const window = await getDayWindow(userId, task.channelId, day)
+  // Resolve `day` to an instant inside the user's local target day. Strings
+  // ("YYYY-MM-DD") map directly to local midnight; Dates are taken as-is and
+  // the gap-finder will re-extract Y-M-D in tz when computing the window.
+  const dayDate = typeof day === 'string' ? ymdToLocalDayUtc(day, tz) : day
+
+  const window = await getDayWindow(userId, task.channelId, dayDate)
   if (!window) return { type: 'Overcommitted', reason: 'NO_WORKING_HOURS', options: ['SCHEDULE_ANYWAY', 'ANOTHER_DAY', 'DEFER'] }
 
   const now = opts.now ?? new Date()
-  const isToday = dt.startOfDay(day).getTime() === dt.startOfDay(now).getTime()
+  const isToday = dt.startOfDay(dayDate, tz).getTime() === dt.startOfDay(now, tz).getTime()
   let windowStart = isToday && now > window.start ? now : window.start
   if (opts.earliestStart && opts.earliestStart > windowStart) windowStart = opts.earliestStart
   if (windowStart >= window.end) {
     return { type: 'Overcommitted', reason: 'NO_GAPS', options: ['SCHEDULE_ANYWAY', 'ANOTHER_DAY', 'DEFER'] }
   }
 
-  const blocks = await collectBusyBlocks(userId, day, gapMin)
+  const blocks = await collectBusyBlocks(userId, dayDate, gapMin)
   const gaps = computeGaps(blocks, windowStart, window.end)
 
   // Attempt 1: fits whole in one gap
