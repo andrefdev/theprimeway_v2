@@ -25,6 +25,8 @@ export interface AutoScheduleOptions {
   parentCommandId?: string
   /** Override command.triggeredBy. Default 'USER_ACTION'. */
   triggeredBy?: 'USER_ACTION' | 'AUTO_RESCHEDULER' | 'ROLLOVER_JOB' | 'SYNC_JOB'
+  /** Idempotency key recorded on the Command so retries replay the same result. */
+  idempotencyKey?: string
 }
 
 const MIN_CHUNK = 15
@@ -137,12 +139,15 @@ async function writeSessions(
     before: null,
     after: { id: s.id, userId, taskId, start: s.start, end: s.end, createdBy: s.createdBy, kind: s.kind },
   }))
+  const sessionsResult = created.map((s: any) => ({ id: s.id, start: s.start, end: s.end }))
   const cmd = await commandManager.record({
     userId,
     type: chunks.length === 1 ? 'AUTO_SCHEDULE' : 'AUTO_SCHEDULE_SPLIT',
     changes,
     triggeredBy: opts.triggeredBy ?? 'USER_ACTION',
     parentCommandId: opts.parentCommandId,
+    idempotencyKey: opts.idempotencyKey,
+    result: { type: 'Success', sessions: sessionsResult },
   })
 
   // Fire-and-forget Google Calendar push (via Channel.timeboxToCalendarId)
@@ -154,7 +159,7 @@ async function writeSessions(
 
   return {
     type: 'Success',
-    sessions: created.map((s: any) => ({ id: s.id, start: s.start, end: s.end })),
+    sessions: sessionsResult,
     commandId: cmd.id,
   }
 }

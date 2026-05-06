@@ -59,12 +59,24 @@ export interface CommandRow {
   createdAt: string
 }
 
-export const schedulingApi = {
-  autoSchedule: (input: AutoScheduleInput) =>
-    api.post<{ data: SchedulingResult }>('/scheduling/auto-schedule', input).then((r) => r.data.data),
+function idemHeaders(key?: string) {
+  return key ? { 'Idempotency-Key': key } : undefined
+}
 
-  moveSession: (input: MoveSessionInput) =>
-    api.post<{ data: MoveSessionResult }>('/scheduling/sessions/move', input).then((r) => r.data.data),
+export const schedulingApi = {
+  autoSchedule: (input: AutoScheduleInput, idempotencyKey?: string) =>
+    api
+      .post<{ data: SchedulingResult }>('/scheduling/auto-schedule', input, {
+        headers: idemHeaders(idempotencyKey),
+      })
+      .then((r) => r.data.data),
+
+  moveSession: (input: MoveSessionInput, idempotencyKey?: string) =>
+    api
+      .post<{ data: MoveSessionResult }>('/scheduling/sessions/move', input, {
+        headers: idemHeaders(idempotencyKey),
+      })
+      .then((r) => r.data.data),
 
   deconflict: (input: DeconflictInput) =>
     api

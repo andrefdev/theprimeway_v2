@@ -1,11 +1,42 @@
 import { OpenAPIHono } from '@hono/zod-openapi'
 import { z } from 'zod'
+import type { Context } from 'hono'
 import type { AppEnv } from '../types/env'
 import { authMiddleware } from '../middleware/auth'
 import { schedulingFacade } from '../services/scheduling/scheduling-facade'
+import { commandManager } from '../services/scheduling/CommandManager'
 
 export const schedulingRoutes = new OpenAPIHono<AppEnv>()
 schedulingRoutes.use('*', authMiddleware)
+
+const IDEMPOTENCY_KEY_RE = /^[a-zA-Z0-9_-]{8,128}$/
+
+/**
+ * If the request carries a valid `Idempotency-Key` and a Command for that
+ * (userId, key) already exists, return the cached result and skip execution.
+ * Returns the lowercased validated key for the route to forward to the facade.
+ */
+async function resolveIdempotency(
+  c: Context<AppEnv>,
+  userId: string,
+): Promise<{ replay: Response | null; key: string | undefined }> {
+  const raw = c.req.header('idempotency-key') ?? c.req.header('Idempotency-Key')
+  if (!raw) return { replay: null, key: undefined }
+  if (!IDEMPOTENCY_KEY_RE.test(raw)) {
+    return { replay: c.json({ error: 'invalid Idempotency-Key' }, 400), key: undefined }
+  }
+  const existing = await commandManager.findByIdempotencyKey(userId, raw)
+  if (existing) {
+    const cached = (existing.payload as any)?.result
+    if (cached !== undefined) {
+      return { replay: c.json({ data: cached, replayed: true }), key: raw }
+    }
+    // Command exists but result wasn't cached (older row) — let it re-execute,
+    // the unique constraint will block the duplicate INSERT and we'll fall
+    // through to the catch below.
+  }
+  return { replay: null, key: raw }
+}
 
 const autoScheduleBody = z.object({
   taskId: z.string(),
@@ -22,13 +53,28 @@ const moveSessionBody = z.object({
 })
 
 schedulingRoutes.post('/auto-schedule', async (c) => {
+  const userId = (c.get('user') as any).userId as string
   const parse = autoScheduleBody.safeParse(await c.req.json())
   if (!parse.success) return c.json({ error: parse.error.message }, 400)
   const { taskId, day, preventSplit } = parse.data
+
+  const idem = await resolveIdempotency(c, userId)
+  if (idem.replay) return idem.replay
+
   try {
-    const result = await schedulingFacade.scheduleTask(taskId, day.slice(0, 10), { preventSplit })
+    const result = await schedulingFacade.scheduleTask(taskId, day.slice(0, 10), {
+      preventSplit,
+      idempotencyKey: idem.key,
+    })
     return c.json({ data: result })
   } catch (err) {
+    // Unique-constraint violation on idempotencyKey means a parallel request
+    // beat us to it — fetch and replay the winner.
+    if (idem.key && /idempotency_key|Unique constraint/i.test((err as Error).message)) {
+      const existing = await commandManager.findByIdempotencyKey(userId, idem.key)
+      const cached = (existing?.payload as any)?.result
+      if (cached !== undefined) return c.json({ data: cached, replayed: true })
+    }
     return c.json({ error: (err as Error).message }, 400)
   }
 })
@@ -61,10 +107,15 @@ schedulingRoutes.post('/sessions/move', async (c) => {
   if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
     return c.json({ error: 'invalid date' }, 400)
   }
+
+  const idem = await resolveIdempotency(c, userId)
+  if (idem.replay) return idem.replay
+
   try {
     if (sessionId) {
       const r = await schedulingFacade.moveSession(userId, sessionId, startDate, endDate, {
         deconflict: doDeconflict,
+        idempotencyKey: idem.key,
       })
       if (!r.ok) return c.json({ error: r.reason }, r.reason === 'not_found' ? 404 : 400)
       return c.json({ data: { session: r.session, commandId: r.commandId } })
@@ -72,10 +123,15 @@ schedulingRoutes.post('/sessions/move', async (c) => {
     if (!taskId) return c.json({ error: 'sessionId or taskId required' }, 400)
     const r = await schedulingFacade.createSession(
       { userId, taskId, start: startDate, end: endDate },
-      { deconflict: doDeconflict },
+      { deconflict: doDeconflict, idempotencyKey: idem.key },
     )
     return c.json({ data: { session: r.session, commandId: r.commandId } })
   } catch (err) {
+    if (idem.key && /idempotency_key|Unique constraint/i.test((err as Error).message)) {
+      const existing = await commandManager.findByIdempotencyKey(userId, idem.key)
+      const cached = (existing?.payload as any)?.result
+      if (cached !== undefined) return c.json({ data: cached, replayed: true })
+    }
     return c.json({ error: (err as Error).message }, 400)
   }
 })

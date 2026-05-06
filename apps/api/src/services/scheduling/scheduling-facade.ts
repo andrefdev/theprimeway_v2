@@ -24,6 +24,7 @@ import { onTimerStart } from './late-timer-detector'
 import { commandManager, CommandChange } from './CommandManager'
 import { calendarService } from '../calendar.service'
 import { syncService } from '../sync.service'
+import { withUserLock } from './user-lock'
 
 export interface CreateSessionInput {
   userId: string
@@ -39,6 +40,8 @@ export interface CreateOrMoveOptions {
   deconflict?: boolean
   /** Push/update on Google Calendar. Default true. */
   pushToCalendar?: boolean
+  /** Idempotency key — if a Command already exists for this key, replay its result. */
+  idempotencyKey?: string
 }
 
 class SchedulingFacade {
@@ -95,18 +98,23 @@ class SchedulingFacade {
     day: string | Date,
     opts: AutoScheduleOptions = {},
   ): Promise<SchedulingResult> {
-    const result = await autoSchedule(taskId, day, opts)
+    // Resolve userId up-front so the advisory lock can serialize concurrent
+    // scheduleTask calls of the same user (they all read gaps then write).
+    const task = await prisma.task.findUnique({
+      where: { id: taskId },
+      select: { userId: true },
+    })
+    if (!task?.userId) throw new Error('Task not found')
+
+    const result = await withUserLock(task.userId, () => autoSchedule(taskId, day, opts))
     if (result.type === 'Success') {
       // autoSchedule already mirrors Task and triggers pushSessionToCalendar;
       // we just publish for real-time clients.
-      const task = await prisma.task.findUnique({ where: { id: taskId }, select: { userId: true } })
-      if (task?.userId) {
-        for (const s of result.sessions) {
-          syncService.publish(task.userId, {
-            type: 'session.created',
-            payload: { id: s.id, taskId, start: s.start, end: s.end },
-          })
-        }
+      for (const s of result.sessions) {
+        syncService.publish(task.userId, {
+          type: 'session.created',
+          payload: { id: s.id, taskId, start: s.start, end: s.end },
+        })
       }
     }
     return result
@@ -125,7 +133,13 @@ class SchedulingFacade {
     opts: CreateOrMoveOptions = {},
   ): Promise<{ session: { id: string; start: Date; end: Date; taskId: string | null }; commandId: string }> {
     if (input.end <= input.start) throw new Error('end must be after start')
+    return withUserLock(input.userId, () => this.createSessionInner(input, opts))
+  }
 
+  private async createSessionInner(
+    input: CreateSessionInput,
+    opts: CreateOrMoveOptions,
+  ): Promise<{ session: { id: string; start: Date; end: Date; taskId: string | null }; commandId: string }> {
     const session = await prisma.workingSession.create({
       data: {
         userId: input.userId,
@@ -151,11 +165,14 @@ class SchedulingFacade {
         createdBy: session.createdBy,
       },
     }
+    const sessionResult = { id: session.id, start: session.start, end: session.end, taskId: session.taskId }
     const cmd = await commandManager.record({
       userId: input.userId,
       type: 'CREATE_SESSION',
       changes: [change],
       triggeredBy: 'USER_ACTION',
+      idempotencyKey: opts.idempotencyKey,
+      result: { session: sessionResult },
     })
 
     if (input.taskId) await this.syncTaskMirror(input.taskId)
@@ -179,10 +196,7 @@ class SchedulingFacade {
       payload: { id: session.id, taskId: session.taskId, start: session.start, end: session.end },
     })
 
-    return {
-      session: { id: session.id, start: session.start, end: session.end, taskId: session.taskId },
-      commandId: cmd.id,
-    }
+    return { session: sessionResult, commandId: cmd.id }
   }
 
   /**
@@ -201,6 +215,19 @@ class SchedulingFacade {
     | { ok: false; reason: 'not_found' | 'invalid_range' }
   > {
     if (newEnd <= newStart) return { ok: false, reason: 'invalid_range' }
+    return withUserLock(userId, () => this.moveSessionInner(userId, sessionId, newStart, newEnd, opts))
+  }
+
+  private async moveSessionInner(
+    userId: string,
+    sessionId: string,
+    newStart: Date,
+    newEnd: Date,
+    opts: CreateOrMoveOptions,
+  ): Promise<
+    | { ok: true; session: { id: string; start: Date; end: Date; taskId: string | null }; commandId: string }
+    | { ok: false; reason: 'not_found' | 'invalid_range' }
+  > {
     const existing = await prisma.workingSession.findFirst({
       where: { id: sessionId, userId },
     })
@@ -229,11 +256,14 @@ class SchedulingFacade {
         end: updated.end,
       },
     }
+    const sessionResult = { id: sessionId, start: updated.start, end: updated.end, taskId: updated.taskId }
     const cmd = await commandManager.record({
       userId,
       type: 'MOVE_SESSION',
       changes: [change],
       triggeredBy: 'USER_ACTION',
+      idempotencyKey: opts.idempotencyKey,
+      result: { session: sessionResult },
     })
 
     if (existing.taskId) await this.syncTaskMirror(existing.taskId)
@@ -255,11 +285,7 @@ class SchedulingFacade {
       payload: { id: sessionId, taskId: updated.taskId, start: updated.start, end: updated.end },
     })
 
-    return {
-      ok: true,
-      session: { id: sessionId, start: updated.start, end: updated.end, taskId: updated.taskId },
-      commandId: cmd.id,
-    }
+    return { ok: true, session: sessionResult, commandId: cmd.id }
   }
 
   /**

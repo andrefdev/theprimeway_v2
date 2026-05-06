@@ -25,6 +25,17 @@ export interface RecordCommandInput {
   changes: CommandChange[]
   triggeredBy: 'USER_ACTION' | 'AUTO_RESCHEDULER' | 'ROLLOVER_JOB' | 'SYNC_JOB'
   parentCommandId?: string
+  /**
+   * Optional client-supplied UUID. When set, the unique constraint on
+   * Command.idempotencyKey blocks duplicate inserts so a retried request
+   * resolves to the original Command row instead of creating new state.
+   */
+  idempotencyKey?: string
+  /**
+   * Result payload (e.g. { sessions, commandId }) cached on the Command so
+   * idempotent retries can replay the exact response the first call returned.
+   */
+  result?: unknown
 }
 
 type EntityHandler = {
@@ -98,10 +109,25 @@ export const commandManager = {
       data: {
         userId: input.userId,
         type: input.type,
-        payload: { changes: input.changes } as any,
+        payload: {
+          changes: input.changes,
+          ...(input.result !== undefined ? { result: input.result } : {}),
+        } as any,
         triggeredBy: input.triggeredBy,
         parentCommandId: input.parentCommandId ?? null,
+        ...(input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : {}),
       },
+    })
+  },
+
+  /**
+   * Look up a previously-recorded Command by its idempotency key. Used by HTTP
+   * handlers to short-circuit retries: if found, replay `payload.result`
+   * instead of re-executing the operation.
+   */
+  async findByIdempotencyKey(userId: string, key: string) {
+    return prisma.command.findFirst({
+      where: { idempotencyKey: key, userId },
     })
   },
 

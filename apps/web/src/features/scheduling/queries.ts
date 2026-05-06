@@ -116,10 +116,24 @@ export function useDeleteWorkingSession() {
   })
 }
 
+/**
+ * UUID v4 from the Web Crypto API. Falls back to a non-crypto random hex if
+ * called in an environment without `crypto.randomUUID` (older Safari, jsdom).
+ * Format matches the server's IDEMPOTENCY_KEY_RE (8-128 chars, [A-Za-z0-9_-]).
+ */
+function newIdempotencyKey(): string {
+  const c = (globalThis as any).crypto
+  if (c?.randomUUID) return c.randomUUID()
+  const bytes = new Uint8Array(16)
+  if (c?.getRandomValues) c.getRandomValues(bytes)
+  else for (let i = 0; i < 16; i++) bytes[i] = Math.floor(Math.random() * 256)
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('')
+}
+
 export function useAutoSchedule() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (input: AutoScheduleInput) => schedulingApi.autoSchedule(input),
+    mutationFn: (input: AutoScheduleInput) => schedulingApi.autoSchedule(input, newIdempotencyKey()),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['tasks'] })
       qc.invalidateQueries({ queryKey: schedulingKeys.sessions })
@@ -132,7 +146,7 @@ export function useAutoSchedule() {
 export function useMoveSession() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (input: MoveSessionInput) => schedulingApi.moveSession(input),
+    mutationFn: (input: MoveSessionInput) => schedulingApi.moveSession(input, newIdempotencyKey()),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['tasks'] })
       qc.invalidateQueries({ queryKey: schedulingKeys.sessions })

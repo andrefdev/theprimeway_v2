@@ -6,6 +6,8 @@
 >
 > **Nivel de ambición:** MVP completo + features avanzadas (Niveles 0–5, donde el Nivel 5 incluye comportamientos que Sunsama no tiene, como el detector de timer tardío).
 
+> **Implementación canónica** (post-refactor): toda mutación que crea/mueve/borra una `WorkingSession` o agenda una tarea pasa por `apps/api/src/services/scheduling/scheduling-facade.ts`. Algoritmos puros viven en `gap-finder.ts` (collectBusyBlocks/computeGaps), `auto-schedule.ts` (writeSessions + planSplit), `deconflict.ts`, `early-completion-reflow.ts` y `late-timer-detector.ts`. La fachada coordina deconflict, espejo en `Task.scheduledStart/End`, push a Google y publicación en sync server. No agendar saltándose la fachada.
+
 ---
 
 ## Tabla de contenidos

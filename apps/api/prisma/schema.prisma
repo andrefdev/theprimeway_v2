@@ -1193,12 +1193,16 @@ model Command {
   userId          String        @map("user_id")
   user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   type            String // "AUTO_RESCHEDULE" | "MOVE_SESSION" | ...
-  payload         Json // { changes: [{entity, id, before, after}, ...] }
+  payload         Json // { changes: [{entity, id, before, after}, ...], result?: any }
   isUndone        Boolean       @default(false) @map("is_undone")
   triggeredBy     CommandSource @map("triggered_by")
   parentCommandId String?       @map("parent_command_id")
   parent          Command?      @relation("CommandChildren", fields: [parentCommandId], references: [id], onDelete: SetNull)
   children        Command[]     @relation("CommandChildren")
+  // Client-supplied UUID for idempotent retries. When the same key arrives
+  // twice (network retry, mobile replay, double-click), the second request
+  // returns the cached result from the first command instead of re-executing.
+  idempotencyKey  String?       @unique @map("idempotency_key")
   createdAt       DateTime      @default(now()) @map("created_at")
 
   @@index([userId, createdAt])

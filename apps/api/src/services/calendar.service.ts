@@ -1361,6 +1361,57 @@ RULES:
 
   // -------------------------------------------------------------------------
 
+  /**
+   * Proactively refresh Google access tokens that expire in the next hour.
+   * Reactive `ensureAccessToken` already covers the on-demand path, but if a
+   * token expires between requests (e.g. overnight) the next push to Google
+   * pays the latency of a refresh round-trip while the user waits. Running
+   * this every 30 min keeps the pool warm.
+   */
+  async refreshExpiringGoogleTokens(): Promise<{
+    refreshed: number
+    failed: number
+    skipped: number
+  }> {
+    const horizon = new Date(Date.now() + 60 * 60 * 1000)
+    const accounts = await prisma.calendarAccount.findMany({
+      where: {
+        provider: 'google',
+        refreshToken: { not: null },
+        expiresAt: { lte: horizon },
+      },
+    })
+
+    let refreshed = 0
+    let failed = 0
+    let skipped = 0
+    for (const acc of accounts) {
+      if (!acc.refreshToken) {
+        skipped++
+        continue
+      }
+      const tokens = await this.refreshGoogleToken(acc.refreshToken)
+      if (!tokens) {
+        failed++
+        continue
+      }
+      await prisma.calendarAccount
+        .update({
+          where: { id: acc.id },
+          data: {
+            accessToken: tokens.access_token,
+            expiresAt: new Date(Date.now() + tokens.expires_in * 1000),
+          },
+        })
+        .catch((err) => {
+          console.error('[CAL_TOKEN_REFRESH] update failed', { accountId: acc.id, err })
+          failed++
+        })
+      refreshed++
+    }
+    return { refreshed, failed, skipped }
+  }
+
   private async refreshGoogleToken(
     refreshToken: string,
   ): Promise<{ access_token: string; expires_in: number } | null> {

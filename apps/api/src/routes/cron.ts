@@ -99,6 +99,17 @@ cronRoutes.post('/calendar-watch-renew', async (c) => {
   }
 })
 
+// POST /refresh-google-tokens — schedule every 30min to keep tokens warm.
+cronRoutes.post('/refresh-google-tokens', async (c) => {
+  try {
+    const result = await calendarService.refreshExpiringGoogleTokens()
+    return c.json({ data: result }, 200)
+  } catch (err: any) {
+    console.error('[CRON_GOOGLE_TOKEN_REFRESH]', err)
+    return c.json({ error: err.message || 'Failed' }, 500)
+  }
+})
+
 // POST /materialize-daily — ensure daily rituals + materialize recurring series
 cronRoutes.post('/materialize-daily', async (c) => {
   try {
