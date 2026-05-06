@@ -693,10 +693,14 @@ class CalendarService {
         return { success: false, error: 'event_creation_failed' }
       }
 
-      const event = (await res.json()) as {
-        id: string
-        hangoutLink?: string
-        htmlLink?: string
+      const event = (await res.json()) as Record<string, any>
+      // Write-through to local cache so the UI sees the new event on its next
+      // refetch — without this, the user has to wait for a Google webhook
+      // (which never fires in dev) or a manual sync.
+      if (targetCal && event.id) {
+        await this.upsertCalendarEventCache((targetCal as any).id, event).catch((err) =>
+          console.error('[TIME_BLOCK] cache write-through failed', err),
+        )
       }
       return {
         success: true,
@@ -843,7 +847,13 @@ class CalendarService {
         console.error('[UPDATE_EVENT] Failed:', errText)
         return { success: false, error: 'event_update_failed' }
       }
-      const event = await res.json()
+      const event = (await res.json()) as Record<string, any>
+      // Write-through to local cache so the UI sees the change immediately.
+      if (ctx.calendar?.id && event?.id) {
+        await this.upsertCalendarEventCache(ctx.calendar.id, event).catch((err) =>
+          console.error('[UPDATE_EVENT] cache write-through failed', err),
+        )
+      }
       return { success: true, event }
     } catch (err) {
       console.error('[UPDATE_EVENT] Error:', err)
@@ -870,6 +880,12 @@ class CalendarService {
         const errText = await res.text()
         console.error('[DELETE_EVENT] Failed:', errText)
         return { success: false, error: 'event_delete_failed' }
+      }
+      // Write-through: remove from local cache so the UI reflects the deletion.
+      if (ctx.calendar?.id) {
+        await prisma.calendarEvent
+          .deleteMany({ where: { calendarId: ctx.calendar.id, externalId: eventId } })
+          .catch((err) => console.error('[DELETE_EVENT] cache write-through failed', err))
       }
       return { success: true }
     } catch (err) {
@@ -972,6 +988,12 @@ class CalendarService {
       }
 
       const event = (await res.json()) as { id: string }
+      // Recurring events: Google returns the master, but the cache stores
+      // expanded singleEvents instances. Trigger a background sync so the UI
+      // sees individual occurrences in the visible range.
+      this.syncCalendars(userId).catch((err) =>
+        console.error('[CALENDAR_HABIT_BLOCK] post-create sync failed', err),
+      )
       return { success: true, eventId: event.id }
     } catch (err) {
       console.error('[CALENDAR_HABIT_BLOCK] Error:', err)
@@ -1547,7 +1569,14 @@ RULES:
 
   /**
    * Mirror a Google Calendar event into the local `CalendarEvent` cache.
-   * Consumed by the scheduling engine as busy-block hard constraints.
+   * Consumed by the scheduling engine as busy-block hard constraints AND by
+   * the calendar UI (post-refactor `/google/events` reads from this table).
+   *
+   * Skips events we created ourselves from a `WorkingSession` (marked via
+   * `extendedProperties.private.theprimewaySessionId`). Those are already
+   * rendered by the UI from the `WorkingSession` table and the scheduler
+   * sees them via `gap-finder.collectBusyBlocks`'s session branch — caching
+   * them again would double-render in the time grid.
    */
   private async upsertCalendarEventCache(calendarId: string, evt: any) {
     if (!evt?.id) return
@@ -1555,6 +1584,7 @@ RULES:
       await prisma.calendarEvent.deleteMany({ where: { calendarId, externalId: evt.id } }).catch(() => undefined)
       return
     }
+    if (evt.extendedProperties?.private?.theprimewaySessionId) return
     const startStr = evt.start?.dateTime ?? evt.start?.date
     const endStr = evt.end?.dateTime ?? evt.end?.date
     if (!startStr || !endStr) return
